@@ -1,67 +1,56 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shreshtha Pushkar - Private</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Protected Page</title>
   <style>
     body {
-      margin: 0;
       font-family: Arial, sans-serif;
-      background: #fff5f5;
+      background: #f1f1f1;
       display: flex;
       align-items: center;
       justify-content: center;
       height: 100vh;
     }
-    .login-box {
-      background: #ffeaea;
+    #loginBox {
+      background: white;
       padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      text-align: center;
+      border-radius: 10px;
+      box-shadow: 0px 0px 20px rgba(0,0,0,0.1);
     }
-    input[type="password"] {
+    input {
       padding: 10px;
       width: 100%;
-      border: 1px solid #ccc;
-      border-radius: 8px;
       margin-top: 10px;
     }
     button {
-      padding: 10px 20px;
-      background: #ffb6c1;
-      border: none;
-      border-radius: 8px;
-      margin-top: 15px;
-      cursor: pointer;
-      color: white;
-      font-weight: bold;
-    }
-    #error {
-      color: red;
+      padding: 10px;
+      width: 100%;
       margin-top: 10px;
-      display: none;
+      background: #673ab7;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
-  <div class="login-box">
-    <h2>Private Access Only</h2>
-    <p>Enter password to continue</p>
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="checkPassword()">Enter</button>
-    <div id="error">Incorrect password</div>
+  <div id="loginBox">
+    <h2>Enter Password</h2>
+    <input type="password" id="password" placeholder="Password"/>
+    <button onclick="checkPassword()">Submit</button>
+    <p id="error" style="color: red;"></p>
   </div>
 
   <script>
     function checkPassword() {
-      const input = document.getElementById("password").value;
-      if (input === "shreshtha123321") {
+      var pass = document.getElementById("password").value;
+      if(pass === "shreshtha123321") {
         window.location.href = "secret.html";
       } else {
-        document.getElementById("error").style.display = "block";
+        document.getElementById("error").innerText = "Wrong password!";
       }
     }
   </script>
