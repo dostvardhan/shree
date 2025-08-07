@@ -83,7 +83,21 @@
       } else {
         errorDiv.textContent = "Invalid username or password.";
       }
-    }
+    }<script>
+  // Initialize Netlify Identity
+  if (window.netlifyIdentity) {
+    window.netlifyIdentity.on("init", user => {
+      if (!user) {
+        // No user logged in, redirect to login
+        window.netlifyIdentity.open(); // Open login modal
+        window.netlifyIdentity.on("login", () => {
+          location.reload();
+        });
+      }
+    });
+  }
+</script>
+
   </script>
 </body>
 </html>
