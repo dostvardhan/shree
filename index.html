@@ -2,52 +2,80 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Shreshtha Pushkar</title>
+  <title>Shreshtha's World</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <style>
     body {
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #fceff9, #ffeef0);
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom right, #cce7ff, #e6f7ff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       text-align: center;
-      padding: 50px;
+      color: #004466;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.8);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 90%;
     }
     h1 {
-      color: #c92a5e;
+      margin-bottom: 10px;
+      font-size: 2em;
+    }
+    p {
+      font-size: 1.1em;
     }
     .btn {
       display: inline-block;
-      margin: 10px;
+      margin-top: 20px;
       padding: 10px 20px;
-      background: #c92a5e;
+      background: #0077b3;
       color: white;
-      text-decoration: none;
+      border: none;
       border-radius: 5px;
+      cursor: pointer;
+      font-size: 1em;
+      text-decoration: none;
     }
-    #life-link {
+    .btn:hover {
+      background: #005f8c;
+    }
+    #secret-link {
       display: none;
+      margin-top: 15px;
     }
   </style>
 </head>
 <body>
-  <h1>Welcome to Shreshtha's World 💖</h1>
-  <p>Let's celebrate Shreshtha's smile together.</p>
-
-  <a href="#" class="btn" onclick="netlifyIdentity.open()">Login</a>
-  <a href="life.html" id="life-link" class="btn">Go to Life</a>
+  <div class="container">
+    <h1>💙 Welcome to Shreshtha's World 💙</h1>
+    <p>Let's celebrate Shreshtha's smile together.</p>
+    <button class="btn" onclick="netlifyIdentity.open()">Login / Signup</button>
+    <div id="secret-link">
+      <a href="/life.html" class="btn">Go to Special Page</a>
+    </div>
+  </div>
 
   <script>
     if (window.netlifyIdentity) {
-      netlifyIdentity.on("init", user => {
+      netlifyIdentity.on('init', user => {
         if (user) {
-          document.getElementById("life-link").style.display = "inline-block";
+          document.getElementById('secret-link').style.display = 'block';
         }
       });
-      netlifyIdentity.on("login", () => {
-        document.getElementById("life-link").style.display = "inline-block";
+      netlifyIdentity.on('login', () => {
+        document.getElementById('secret-link').style.display = 'block';
+        netlifyIdentity.close();
       });
-      netlifyIdentity.on("logout", () => {
-        document.getElementById("life-link").style.display = "none";
+      netlifyIdentity.on('logout', () => {
+        document.getElementById('secret-link').style.display = 'none';
       });
       netlifyIdentity.init();
     }
