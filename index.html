@@ -1,103 +1,56 @@
-<!-- Ye code index.html ka hai — password login page -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>Shreshtha Pushkar</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Private Login</title>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .login-container {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-      width: 300px;
-    }
-    input[type="text"], input[type="password"] {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #45a049;
-    }
-    .error {
-      color: red;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #fceff9, #ffeef0);
       text-align: center;
+      padding: 50px;
+    }
+    h1 {
+      color: #c92a5e;
+    }
+    .btn {
+      display: inline-block;
+      margin: 10px;
+      padding: 10px 20px;
+      background: #c92a5e;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    #life-link {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <div class="login-container">
-    <h2>Enter Credentials</h2>
-    <input type="text" id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-    <p class="error" id="error"></p>
-  </div>
+  <h1>Welcome to Shreshtha's World 💖</h1>
+  <p>Let's celebrate Shreshtha's smile together.</p>
+
+  <a href="#" class="btn" onclick="netlifyIdentity.open()">Login</a>
+  <a href="life.html" id="life-link" class="btn">Go to Life</a>
 
   <script>
-    const users = {
-      "Shreshtha": {
-        password: "SHreSHtha@sep26",
-        role: "user"
-      },
-      "avtar": {
-        password: "weLOVEall@01",
-        role: "admin"
-      }
-    };
-
-    function login() {
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value;
-      const errorDiv = document.getElementById("error");
-
-      if (users[username] && users[username].password === password) {
-        if (users[username].role === 'admin') {
-          window.location.href = `host_dashboard.html?user=${username}`;
-        } else {
-          window.location.href = `secret.html?user=${username}`;
+    if (window.netlifyIdentity) {
+      netlifyIdentity.on("init", user => {
+        if (user) {
+          document.getElementById("life-link").style.display = "inline-block";
         }
-      } else {
-        errorDiv.textContent = "Invalid username or password.";
-      }
-    }<script>
-  // Initialize Netlify Identity
-  if (window.netlifyIdentity) {
-    window.netlifyIdentity.on("init", user => {
-      if (!user) {
-        // No user logged in, redirect to login
-        window.netlifyIdentity.open(); // Open login modal
-        window.netlifyIdentity.on("login", () => {
-          location.reload();
-        });
-      }
-    });
-  }
-</script>
-
+      });
+      netlifyIdentity.on("login", () => {
+        document.getElementById("life-link").style.display = "inline-block";
+      });
+      netlifyIdentity.on("logout", () => {
+        document.getElementById("life-link").style.display = "none";
+      });
+      netlifyIdentity.init();
+    }
   </script>
 </body>
 </html>
