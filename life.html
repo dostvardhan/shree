@@ -2,54 +2,74 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Life - Shreshtha</title>
+  <title>Life</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <style>
     body {
-      font-family: 'Arial', sans-serif;
-      background: #fceff9;
-      color: #333;
       margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      color: #c92a5e;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom right, #cce7ff, #d9e6cc);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       text-align: center;
+      color: #004433;
     }
     .container {
-      max-width: 600px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      background: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      max-width: 500px;
+      width: 90%;
     }
-    .logout-btn {
-      display: block;
-      margin: 20px auto 0;
+    h1 {
+      margin-bottom: 10px;
+      font-size: 2em;
+      color: #336600;
+    }
+    p {
+      font-size: 1.1em;
+      color: #004466;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
       padding: 10px 20px;
-      background: #c92a5e;
+      background: #668000;
       color: white;
       border: none;
       border-radius: 5px;
       cursor: pointer;
+      font-size: 1em;
+      text-decoration: none;
+    }
+    .btn:hover {
+      background: #4d6600;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Welcome to Life 💖</h1>
-    <p>This is a special, private page only for you.</p>
-    <button class="logout-btn" onclick="netlifyIdentity.logout()">Logout</button>
+    <h1>💙 Life 💚</h1>
+    <p>This page is special... just like Shreshtha’s smile.</p>
+    <a href="/" class="btn">Go to Home</a>
   </div>
 
   <script>
     if (window.netlifyIdentity) {
-      netlifyIdentity.on("init", user => {
+      netlifyIdentity.on('init', user => {
         if (!user) {
-          document.location.href = "/";
+          window.location.href = "/";
         }
+      });
+      netlifyIdentity.on('login', () => {
+        console.log("User logged in");
+      });
+      netlifyIdentity.on('logout', () => {
+        window.location.href = "/";
       });
       netlifyIdentity.init();
     }
