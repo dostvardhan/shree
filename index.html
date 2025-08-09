@@ -1,82 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Shreshtha's World</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shreshtha — Welcome</title>
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom right, #cce7ff, #e6f7ff);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      text-align: center;
-      color: #004466;
-    }
-    .container {
-      background: rgba(255, 255, 255, 0.8);
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      max-width: 400px;
-      width: 90%;
-    }
-    h1 {
-      margin-bottom: 10px;
-      font-size: 2em;
-    }
-    p {
-      font-size: 1.1em;
-    }
-    .btn {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 10px 20px;
-      background: #0077b3;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 1em;
-      text-decoration: none;
-    }
-    .btn:hover {
-      background: #005f8c;
-    }
-    #secret-link {
-      display: none;
-      margin-top: 15px;
-    }
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;height:100vh;
+      display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(135deg,#cce7ff,#ffeef4);}
+    .card{background:rgba(255,255,255,0.92);padding:28px;border-radius:12px;
+      width:96%;max-width:480px;box-shadow:0 8px 30px rgba(0,0,0,0.08);text-align:center;}
+    h1{margin:0 0 8px;color:#0b3a53}
+    p{margin:0 0 18px;color:#154a60}
+    .btn{display:inline-block;padding:10px 18px;border-radius:8px;border:none;
+      background:linear-gradient(90deg,#b8860b,#ffd27f);color:#2b1b00;font-weight:600;cursor:pointer;text-decoration:none}
+    .btn.secondary{background:transparent;border:2px solid rgba(43,27,0,0.12);color:#154a60;margin-left:10px}
+    #enter-life{display:none;margin-top:12px}
+    footer{font-size:0.85rem;color:#6b7982;margin-top:12px}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>💙 Welcome to Shreshtha's World 💙</h1>
+  <div class="card">
+    <h1>💙 Welcome to Shreshtha's World</h1>
     <p>Let's celebrate Shreshtha's smile together.</p>
-    <button class="btn" onclick="netlifyIdentity.open()">Login / Signup</button>
-    <div id="secret-link">
-      <a href="/life.html" class="btn">Go to Special Page</a>
-    </div>
+
+    <button class="btn" id="loginBtn">Login / Signup</button>
+    <div id="enter-life"><a class="btn" id="enterBtn" href="/welcome.html">Enter Life</a></div>
+
+    <footer>Private • Invite-only</footer>
   </div>
 
   <script>
+    // Netlify Identity UI handlers
     if (window.netlifyIdentity) {
+      const loginBtn = document.getElementById('loginBtn');
+      const enterArea = document.getElementById('enter-life');
+
       netlifyIdentity.on('init', user => {
-        if (user) {
-          document.getElementById('secret-link').style.display = 'block';
-        }
+        if (user) enterArea.style.display = 'block';
       });
+
       netlifyIdentity.on('login', () => {
-        document.getElementById('secret-link').style.display = 'block';
+        enterArea.style.display = 'block';
         netlifyIdentity.close();
       });
+
       netlifyIdentity.on('logout', () => {
-        document.getElementById('secret-link').style.display = 'none';
+        enterArea.style.display = 'none';
+        // optional: redirect home or reload
+        // location.href = '/';
       });
+
+      loginBtn.addEventListener('click', () => netlifyIdentity.open());
       netlifyIdentity.init();
     }
   </script>
