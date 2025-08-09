@@ -1,0 +1,9 @@
+[build]
+  publish = "."
+  command = ""
+
+[[redirects]]
+  from = "/life.html"
+  to = "/401.html"
+  status = 401
+  force = true
