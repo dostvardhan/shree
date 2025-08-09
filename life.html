@@ -1,78 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Life</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Life — Shreshtha</title>
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom right, #cce7ff, #d9e6cc);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      text-align: center;
-      color: #004433;
+    :root{
+      --maroon:#4a0f0f; --black:#0b0b0b; --gold:#c89a2f; --silver:#cfcfcf;
     }
-    .container {
-      background: rgba(255, 255, 255, 0.9);
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      max-width: 500px;
-      width: 90%;
-    }
-    h1 {
-      margin-bottom: 10px;
-      font-size: 2em;
-      color: #336600;
-    }
-    p {
-      font-size: 1.1em;
-      color: #004466;
-    }
-    .btn {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 10px 20px;
-      background: #668000;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 1em;
-      text-decoration: none;
-    }
-    .btn:hover {
-      background: #4d6600;
-    }
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;
+      min-height:100vh;display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(180deg,var(--maroon),var(--black));color:var(--silver);}
+    .card{background:rgba(255,255,255,0.03);backdrop-filter: blur(6px);
+      padding:28px;border-radius:14px;max-width:900px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.6);
+      border:1px solid rgba(255,255,255,0.04);text-align:center;}
+    h1{color:var(--gold);font-size:2.4rem;margin:0 0 8px}
+    p{color:var(--silver);font-size:1.05rem;line-height:1.5}
+    .imgrow{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+    .imgrow img{width:260px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.6);border:2px solid rgba(255,255,255,0.04)}
+    .controls{margin-top:20px}
+    .btn{padding:10px 16px;border-radius:8px;border:2px solid rgba(200,154,47,0.9);background:transparent;color:var(--gold);cursor:pointer;font-weight:700;margin:0 8px}
+    .btn:hover{color:#fff;background:linear-gradient(90deg,#c89a2f55,#ffffff11)}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>💙 Life 💚</h1>
-    <p>This page is special... just like Shreshtha’s smile.</p>
-    <a href="/" class="btn">Go to Home</a>
+  <div class="card" id="protected">
+    <h1>Life</h1>
+    <p>Private memories, notes and soft images — visible only to invited hearts. Treat this space with care.</p>
+
+    <div class="imgrow">
+      <img src="/pic1.jpg" alt="photo1">
+      <img src="/pic2.jpg" alt="photo2">
+      <img src="/pic3.jpg" alt="photo3">
+    </div>
+
+    <div class="controls">
+      <a class="btn" href="/">Home</a>
+      <button class="btn" id="logoutBtn">Logout</button>
+    </div>
   </div>
 
   <script>
-    if (window.netlifyIdentity) {
+    // protection: if not logged in, go to homepage
+    function protect() {
+      if (!window.netlifyIdentity) { location.href = '/'; return; }
       netlifyIdentity.on('init', user => {
-        if (!user) {
-          window.location.href = "/";
-        }
-      });
-      netlifyIdentity.on('login', () => {
-        console.log("User logged in");
-      });
-      netlifyIdentity.on('logout', () => {
-        window.location.href = "/";
+        if (!user) location.href = '/';
       });
       netlifyIdentity.init();
     }
+    document.addEventListener('DOMContentLoaded', () => {
+      protect();
+      const logout = document.getElementById('logoutBtn');
+      logout.addEventListener('click', () => {
+        netlifyIdentity.logout();
+      });
+      if (window.netlifyIdentity) {
+        netlifyIdentity.on('logout', () => { location.href = '/'; });
+      }
+    });
   </script>
 </body>
 </html>
