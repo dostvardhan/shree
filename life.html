@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Life</title>
 <style>
-/* Body & multi-color shaded background */
+/* Body & cinematic background */
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: radial-gradient(circle at top left, #ffb6c1, #ff4500, #ffd700);
+    background: radial-gradient(circle at top left, #ffdde1, #ee9ca7, #ffb347);
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
@@ -40,7 +40,7 @@ h1 {
     cursor: pointer;
     border-radius: 15px;
     overflow: hidden;
-    transition: transform 0.5s ease, box-shadow 0.5s ease;
+    transition: transform 0.4s ease, z-index 0.4s ease;
 }
 
 .photo-card img {
@@ -48,41 +48,58 @@ h1 {
     height: auto;
     border-radius: 15px;
     object-fit: cover;
-    transition: transform 0.5s ease;
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
 }
 
-/* Hover zoom - scale & elevate */
-.photo-card:hover {
-    transform: scale(1.5);
-    z-index: 100;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+/* Full-page hover zoom */
+.fullscreen-img {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 15px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Active state */
+.fullscreen-img.active {
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
 }
 
 /* Quote overlay */
-.photo-card .quote {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    padding: 10px 15px;
-    background: rgba(0,0,0,0.5);
-    color: #fff;
-    font-size: 14px;
+.fullscreen-quote {
+    position: fixed;
+    top: 75%;
+    left: 50%;
+    transform: translateX(-50%);
+    color: gold;
+    font-size: 22px;
+    background: rgba(0,0,0,0.6);
+    padding: 12px 25px;
+    border-radius: 15px;
     text-align: center;
+    max-width: 90%;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
     opacity: 0;
-    transition: opacity 0.4s ease, color 0.4s ease;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    transition: opacity 0.5s ease;
+    z-index: 1001;
 }
 
-.photo-card:hover .quote {
+.fullscreen-quote.active {
     opacity: 1;
-    color: gold;
 }
 
 /* Mobile responsiveness */
 @media (max-width: 600px) {
     h1 { font-size: 2rem; }
     .photo-card img { width: 80vw; }
+    .fullscreen-quote { font-size: 18px; padding: 10px 20px; }
 }
 </style>
 </head>
@@ -91,43 +108,59 @@ h1 {
 <h1>Life</h1>
 
 <div class="photo-container">
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Every day is a new beginning.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo1.jpg" alt="Photo 1">
-        <div class="quote">Every day is a new beginning.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Cherish the little moments.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo2.jpg" alt="Photo 2">
-        <div class="quote">Cherish the little moments.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Smile, it's free therapy.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo3.jpg" alt="Photo 3">
-        <div class="quote">Smile, it's free therapy.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Peace comes from within.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo4.jpg" alt="Photo 4">
-        <div class="quote">Peace comes from within.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Love yourself first.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo5.jpg" alt="Photo 5">
-        <div class="quote">Love yourself first.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Small joys make life big.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo6.jpg" alt="Photo 6">
-        <div class="quote">Small joys make life big.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Dream, believe, achieve.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo7.jpg" alt="Photo 7">
-        <div class="quote">Dream, believe, achieve.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Happiness is homemade.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo8.jpg" alt="Photo 8">
-        <div class="quote">Happiness is homemade.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Create memories, not regrets.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo9.jpg" alt="Photo 9">
-        <div class="quote">Create memories, not regrets.</div>
     </div>
 </div>
+
+<!-- Fullscreen image & quote -->
+<img class="fullscreen-img" id="fullscreen-img" src="" alt="Full Photo">
+<div class="fullscreen-quote" id="fullscreen-quote"></div>
+
+<script>
+const photoCards = document.querySelectorAll('.photo-card');
+const fullscreenImg = document.getElementById('fullscreen-img');
+const fullscreenQuote = document.getElementById('fullscreen-quote');
+
+photoCards.forEach(card => {
+    card.addEventListener('mouseenter', () => {
+        const imgSrc = card.querySelector('img').src;
+        const quote = card.dataset.quote;
+        fullscreenImg.src = imgSrc;
+        fullscreenImg.classList.add('active');
+        fullscreenQuote.textContent = quote;
+        fullscreenQuote.classList.add('active');
+    });
+    card.addEventListener('mouseleave', () => {
+        fullscreenImg.classList.remove('active');
+        fullscreenQuote.classList.remove('active');
+    });
+});
+</script>
 
 </body>
 </html>
