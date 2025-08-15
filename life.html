@@ -1,103 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Life — Loved Ones Only</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
+<meta charset="UTF-8">
+<title>Life</title>
+<style>
     body {
-      background: black;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      overflow: hidden;
-      font-family: sans-serif;
+        background-color: #f8f8f8;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        padding: 20px;
     }
-    #slide {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      transition: opacity 1s ease-in-out;
-      opacity: 0;
+    h1 {
+        color: #444;
+        margin-bottom: 20px;
     }
-    #slide.visible {
-      opacity: 1;
+    .gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
     }
-    #musicToggle {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255,255,255,0.7);
-      color: #000;
-      padding: 10px 20px;
-      border-radius: 30px;
-      cursor: pointer;
-      z-index: 999;
-      font-weight: bold;
+    .gallery img {
+        width: 100%;
+        height: auto;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
     }
-  </style>
+    .gallery img:hover {
+        transform: scale(1.05);
+    }
+</style>
 </head>
 <body>
 
-<img id="slide" src="" alt="Slideshow">
-
-<div id="musicToggle">⏸ Pause Music</div>
-
-<audio id="bgMusic" autoplay loop>
-  <source src="music.mp3" type="audio/mpeg">
-</audio>
-
-<script>
-  // 1. Netlify Identity check
-  netlifyIdentity.on('init', user => {
-    if (!user) {
-      alert("Oops… This page is for loved ones only 💖\nPlease go to home and login.");
-      window.location.href = "/";
-    }
-  });
-  netlifyIdentity.init();
-
-  // 2. Slideshow logic
-  const imgs = Array.from({ length: 9 }, (_, i) => `photo${i+1}.jpg`);
-  let idx = 0;
-  const slide = document.getElementById('slide');
-
-  function showNext() {
-    slide.classList.remove('visible');
-    setTimeout(() => {
-      slide.src = imgs[idx];
-      slide.onload = () => slide.classList.add('visible');
-    }, 500);
-    idx = (idx + 1) % imgs.length;
-  }
-
-  window.addEventListener('load', () => {
-    slide.src = imgs[0];
-    slide.onload = () => slide.classList.add('visible');
-    setInterval(showNext, 4000);
-  });
-
-  // 3. Music controls
-  const music = document.getElementById('bgMusic');
-  const toggle = document.getElementById('musicToggle');
-  music.volume = 0.2;
-
-  toggle.addEventListener('click', () => {
-    if (music.paused) {
-      music.play();
-      toggle.textContent = '⏸ Pause Music';
-    } else {
-      music.pause();
-      toggle.textContent = '▶ Play Music';
-    }
-  });
-</script>
-
-</body>
-</html>
+<h1>Life Moments</h1>
+<div class="gallery">
+    <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo1.jpg" alt="Photo 1">
+    <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo2.jpg" alt="Photo 2">
+    <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo3.jpg" alt="Photo 3">
+    <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo4.jpg" alt="Photo 4">
+    <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo5.jpg" alt="Photo 5">
+    <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo6.jpg" alt="Photo 6">
+    <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo7.jpg" alt="Photo 7">
+    <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo8.jpg" alt="Photo 8">
+    <img src="https://raw.githubusercontent.com/dostva
