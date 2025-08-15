@@ -25,6 +25,47 @@
   </style>
 </head>
 <body>
+  <style>
+  .music-controls {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.6);
+    padding: 10px 15px;
+    border-radius: 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .music-controls button {
+    background: #fff;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+</style>
+
+<audio id="bg-music" loop>
+  <source src="./music.mp3" type="audio/mpeg">
+</audio>
+
+<div class="music-controls">
+  <button onclick="music.play()">▶ Play</button>
+  <button onclick="music.pause()">⏸ Pause</button>
+  <button onclick="music.muted = !music.muted">
+    🔇/🔊
+  </button>
+  <button onclick="music.volume = Math.max(0, music.volume - 0.1)">🔉 -</button>
+  <button onclick="music.volume = Math.min(1, music.volume + 0.1)">🔊 +</button>
+</div>
+
+<script>
+  let music = document.getElementById("bg-music");
+  music.volume = 0.3; // 30% volume by default
+</script>
+
   <audio id="bg-music" autoplay loop>
   <source src="./music.mp3" type="audio/mpeg">
 </audio>
