@@ -15,9 +15,26 @@ body {
     align-items: center;
     padding: 40px 20px;
     min-height: 100vh;
-    /* Cinematic sunrise gradient + radial glow */
-    background: radial-gradient(circle at 40% 30%, #fff2b2, #ff7f50, #ff4e50, #9b003f);
+    background: radial-gradient(circle at 50% 30%, #1a1a40, #0b0b2b, #0d0d2f);
     position: relative;
+    color: white;
+}
+
+/* Stars */
+.star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.8;
+    animation: twinkle 2s infinite alternate;
+}
+
+@keyframes twinkle {
+    0% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 0.3; transform: scale(1); }
 }
 
 /* Floating hearts */
@@ -27,7 +44,7 @@ body {
     height: 8px;
     background: pink;
     transform: rotate(45deg);
-    opacity: 0.7;
+    opacity: 0.5;
     animation: floatHeart linear infinite;
     border-radius: 2px;
 }
@@ -43,8 +60,8 @@ body {
 .heart::after { left: -4px; top: 0; }
 
 @keyframes floatHeart {
-    0% { transform: translateY(0) rotate(45deg); opacity: 0.7; }
-    50% { opacity: 1; }
+    0% { transform: translateY(0) rotate(45deg); opacity: 0.5; }
+    50% { opacity: 0.7; }
     100% { transform: translateY(-800px) rotate(45deg); opacity: 0; }
 }
 
@@ -184,6 +201,19 @@ h1 {
 <div class="fullscreen-quote" id="fullscreen-quote"></div>
 
 <script>
+// Stars creation
+for(let i=0;i<100;i++){
+    const star = document.createElement('div');
+    star.classList.add('star');
+    star.style.left = Math.random()*100 + 'vw';
+    star.style.top = Math.random()*100 + 'vh';
+    star.style.width = (1+Math.random()*2) + 'px';
+    star.style.height = star.style.width;
+    star.style.opacity = 0.3 + Math.random()*0.7;
+    star.style.animationDuration = (1+Math.random()*3) + 's';
+    document.body.appendChild(star);
+}
+
 // Floating hearts
 for(let i=0;i<50;i++){
     const heart = document.createElement('div');
