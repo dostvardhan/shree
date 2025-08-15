@@ -9,64 +9,99 @@
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #f0e4f5, #d0f0f5); /* soft dreamy gradient */
+    background: radial-gradient(circle at top left, #fbe7f0, #d0f0f5, #eaf0ff);
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 30px 20px;
+    padding: 40px 20px;
+}
+
+/* Particles / glow effect */
+body::before {
+    content: '';
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: url('https://i.ibb.co/kK1rG0V/soft-particles.png') repeat;
+    opacity: 0.15;
+    pointer-events: none;
 }
 
 /* Page title */
 h1 {
     color: #333;
     margin-bottom: 30px;
-    font-size: 2.5rem;
-    text-shadow: 1px 1px 5px rgba(0,0,0,0.2);
+    font-size: 2.8rem;
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.2);
 }
 
-/* Photo grid */
+/* Photo container with artistic scattered layout */
 .photo-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
     justify-content: center;
+    gap: 20px;
 }
 
 /* Each photo card */
 .photo-card {
     position: relative;
     cursor: pointer;
-    transition: transform 0.3s ease;
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    border-radius: 15px;
+    overflow: hidden;
 }
 
 .photo-card img {
-    width: 250px;
-    height: auto; /* maintain aspect ratio */
+    width: 230px;
+    height: auto;
     border-radius: 15px;
     object-fit: cover;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.5s ease;
 }
 
+/* Hover effect - zoom + float */
 .photo-card:hover img {
-    transform: scale(1.1);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+    transform: scale(1.3) translateY(-10px);
+    z-index: 100;
 }
 
-/* Lightbox hover overlay */
+/* Quote overlay */
+.photo-card .quote {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    font-size: 14px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.photo-card:hover .quote {
+    opacity: 1;
+}
+
+/* Lightbox hover */
 .lightbox-hover {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%;
-    height: 100%;
+    top:0; left:0;
+    width:100%;
+    height:100%;
     background: rgba(0,0,0,0.95);
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
     z-index: 1000;
-    opacity: 0;
+    opacity:0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.4s ease;
 }
 
 .lightbox-hover img {
@@ -85,7 +120,6 @@ h1 {
     border-radius: 15px;
     text-align: center;
     max-width: 90%;
-    text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
 }
 
 /* Show lightbox on hover */
@@ -110,30 +144,39 @@ h1 {
 <div class="photo-container">
     <div class="photo-card">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo1.jpg" alt="Photo 1">
+        <div class="quote">Every day is a new beginning.</div>
     </div>
     <div class="photo-card">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo2.jpg" alt="Photo 2">
+        <div class="quote">Cherish the little moments.</div>
     </div>
     <div class="photo-card">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo3.jpg" alt="Photo 3">
+        <div class="quote">Smile, it's free therapy.</div>
     </div>
     <div class="photo-card">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo4.jpg" alt="Photo 4">
+        <div class="quote">Peace comes from within.</div>
     </div>
     <div class="photo-card">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo5.jpg" alt="Photo 5">
+        <div class="quote">Love yourself first.</div>
     </div>
     <div class="photo-card">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo6.jpg" alt="Photo 6">
+        <div class="quote">Small joys make life big.</div>
     </div>
     <div class="photo-card">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo7.jpg" alt="Photo 7">
+        <div class="quote">Dream, believe, achieve.</div>
     </div>
     <div class="photo-card">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo8.jpg" alt="Photo 8">
+        <div class="quote">Happiness is homemade.</div>
     </div>
     <div class="photo-card">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo9.jpg" alt="Photo 9">
+        <div class="quote">Create memories, not regrets.</div>
     </div>
 </div>
 
@@ -149,22 +192,10 @@ const lightbox = document.getElementById('lightbox');
 const lightboxImg = document.getElementById('lightbox-img');
 const lightboxQuote = document.getElementById('lightbox-quote');
 
-const quotes = [
-    "Every day is a new beginning.",
-    "Cherish the little moments.",
-    "Smile, it's free therapy.",
-    "Peace comes from within.",
-    "Love yourself first.",
-    "Small joys make life big.",
-    "Dream, believe, achieve.",
-    "Happiness is homemade.",
-    "Create memories, not regrets."
-];
-
-photoCards.forEach((card, index) => {
+photoCards.forEach(card => {
     card.addEventListener('mouseenter', () => {
         lightboxImg.src = card.querySelector('img').src;
-        lightboxQuote.textContent = quotes[index];
+        lightboxQuote.textContent = card.querySelector('.quote').textContent;
         lightbox.style.opacity = 1;
         lightbox.style.pointerEvents = 'auto';
     });
