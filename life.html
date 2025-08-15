@@ -1,69 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Our Life 💖</title>
-<style>
+  <meta charset="UTF-8">
+  <title>Life — Loved Ones Only</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
-        margin: 0;
-        background: black;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        overflow: hidden;
+      background: black;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: sans-serif;
     }
-    img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-        position: absolute;
-        transition: opacity 1s ease-in-out;
+    #slide {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: opacity 1s ease-in-out;
+      opacity: 0;
     }
-    audio {
-        position: fixed;
-        bottom: 20px;
-        left: 20px;
+    #slide.visible {
+      opacity: 1;
     }
-</style>
+    #musicToggle {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255,255,255,0.7);
+      color: #000;
+      padding: 10px 20px;
+      border-radius: 30px;
+      cursor: pointer;
+      z-index: 999;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
 
-<audio autoplay loop>
-    <source src="music.mp3" type="audio/mpeg">
+<img id="slide" src="" alt="Slideshow">
+
+<div id="musicToggle">⏸ Pause Music</div>
+
+<audio id="bgMusic" autoplay loop>
+  <source src="music.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-    // Slideshow setup
-    let images = [];
-    let currentIndex = 0;
-    let imgElement = document.createElement("img");
-    document.body.appendChild(imgElement);
-
-    // Load all images from 'images' folder (photo1.jpg, photo2.jpg ... photo9.jpg)
-    for (let i = 1; i <= 50; i++) { // 50 tak loop socha hai, agar 9 hai to sirf 9 load honge
-        let imgPath = `images/photo${i}.jpg`;
-        let img = new Image();
-        img.src = imgPath;
-        img.onload = function() {
-            images.push(imgPath);
-            if (images.length === 1) {
-                imgElement.src = imgPath;
-            }
-        };
+  // 1. Netlify Identity check
+  netlifyIdentity.on('init', user => {
+    if (!user) {
+      alert("Oops… This page is for loved ones only 💖\nPlease go to home and login.");
+      window.location.href = "/";
     }
+  });
+  netlifyIdentity.init();
 
-    // Change image every 3 seconds
-    setInterval(() => {
-        if (images.length > 0) {
-            currentIndex = (currentIndex + 1) % images.length;
-            imgElement.style.opacity = 0;
-            setTimeout(() => {
-                imgElement.src = images[currentIndex];
-                imgElement.style.opacity = 1;
-            }, 1000);
-        }
-    }, 3000);
+  // 2. Slideshow logic
+  const imgs = Array.from({ length: 9 }, (_, i) => `photo${i+1}.jpg`);
+  let idx = 0;
+  const slide = document.getElementById('slide');
+
+  function showNext() {
+    slide.classList.remove('visible');
+    setTimeout(() => {
+      slide.src = imgs[idx];
+      slide.onload = () => slide.classList.add('visible');
+    }, 500);
+    idx = (idx + 1) % imgs.length;
+  }
+
+  window.addEventListener('load', () => {
+    slide.src = imgs[0];
+    slide.onload = () => slide.classList.add('visible');
+    setInterval(showNext, 4000);
+  });
+
+  // 3. Music controls
+  const music = document.getElementById('bgMusic');
+  const toggle = document.getElementById('musicToggle');
+  music.volume = 0.2;
+
+  toggle.addEventListener('click', () => {
+    if (music.paused) {
+      music.play();
+      toggle.textContent = '⏸ Pause Music';
+    } else {
+      music.pause();
+      toggle.textContent = '▶ Play Music';
+    }
+  });
 </script>
 
 </body>
