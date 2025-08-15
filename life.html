@@ -3,23 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Life Moments</title>
+<title>Life</title>
 <style>
+/* Body & background */
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f5f5f5;
+    background: linear-gradient(135deg, #f0e4f5, #d0f0f5); /* soft dreamy gradient */
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px;
+    padding: 30px 20px;
 }
 
+/* Page title */
 h1 {
     color: #333;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+    font-size: 2.5rem;
+    text-shadow: 1px 1px 5px rgba(0,0,0,0.2);
 }
 
+/* Photo grid */
 .photo-container {
     display: flex;
     flex-wrap: wrap;
@@ -27,6 +32,7 @@ h1 {
     justify-content: center;
 }
 
+/* Each photo card */
 .photo-card {
     position: relative;
     cursor: pointer;
@@ -35,23 +41,24 @@ h1 {
 
 .photo-card img {
     width: 250px;
-    height: auto; /* Maintain original aspect ratio */
-    border-radius: 10px;
-    transition: transform 0.3s ease;
+    height: auto; /* maintain aspect ratio */
+    border-radius: 15px;
+    object-fit: cover;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .photo-card:hover img {
-    transform: scale(1.05);
+    transform: scale(1.1);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
 }
 
-/* Lightbox overlay on hover */
+/* Lightbox hover overlay */
 .lightbox-hover {
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 0; left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.9);
+    background: rgba(0,0,0,0.95);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -65,18 +72,20 @@ h1 {
 .lightbox-hover img {
     max-width: 90%;
     max-height: 80%;
-    border-radius: 10px;
+    border-radius: 15px;
     margin-bottom: 20px;
+    object-fit: contain;
 }
 
 .lightbox-hover .quote {
     color: #fff;
     font-size: 22px;
     background: rgba(0,0,0,0.6);
-    padding: 10px 20px;
-    border-radius: 10px;
+    padding: 12px 25px;
+    border-radius: 15px;
     text-align: center;
     max-width: 90%;
+    text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
 }
 
 /* Show lightbox on hover */
@@ -85,11 +94,19 @@ h1 {
     opacity: 1;
     pointer-events: auto;
 }
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+    h1 { font-size: 2rem; }
+    .photo-card img { width: 80vw; }
+    .lightbox-hover .quote { font-size: 18px; padding: 10px 20px; }
+}
 </style>
 </head>
 <body>
 
-<h1>Life Moments</h1>
+<h1>Life</h1>
+
 <div class="photo-container">
     <div class="photo-card">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo1.jpg" alt="Photo 1">
@@ -120,10 +137,10 @@ h1 {
     </div>
 </div>
 
-<!-- Lightbox container -->
+<!-- Lightbox overlay -->
 <div class="lightbox-hover" id="lightbox">
     <img id="lightbox-img" src="" alt="Full Photo">
-    <div class="quote" id="lightbox-quote">"Sample Quote"</div>
+    <div class="quote" id="lightbox-quote"></div>
 </div>
 
 <script>
