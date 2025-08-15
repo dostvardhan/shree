@@ -6,7 +6,7 @@
 <title>Life</title>
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 <style>
-/* Cinematic dark background with subtle glow */
+/* Cinematic energy background with opposite shade + yellow highlight */
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -16,17 +16,48 @@ body {
     align-items: center;
     padding: 40px 20px;
     min-height: 100vh;
-    background: #1b0035;
-    background: radial-gradient(circle at top left, #2a003f, #1b0035, #400020);
+    background: #ffd7000f; /* 10% yellow overlay */
+    background: radial-gradient(circle at top left, #400020, #2a003f, #1b0035);
+    position: relative;
+}
+
+/* Floating hearts */
+.heart {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: pink;
+    transform: rotate(45deg);
+    opacity: 0.7;
+    animation: floatHeart linear infinite;
+    border-radius: 2px;
+}
+.heart::before, .heart::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: pink;
+    border-radius: 50%;
+}
+.heart::before { top: -4px; left: 0; }
+.heart::after { left: -4px; top: 0; }
+
+@keyframes floatHeart {
+    0% { transform: translateY(0) rotate(45deg); opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { transform: translateY(-800px) rotate(45deg); opacity: 0; }
 }
 
 /* Page title */
 h1 {
     font-family: 'Great Vibes', cursive;
-    color: #ffd700;
+    color: gold;
     margin-bottom: 30px;
     font-size: 3rem;
     text-shadow: 2px 2px 15px rgba(0,0,0,0.8);
+    z-index: 10;
+    position: relative;
 }
 
 /* Photo container */
@@ -35,6 +66,8 @@ h1 {
     flex-wrap: wrap;
     justify-content: center;
     gap: 20px;
+    z-index: 10;
+    position: relative;
 }
 
 /* Each photo card */
@@ -152,6 +185,19 @@ h1 {
 <div class="fullscreen-quote" id="fullscreen-quote"></div>
 
 <script>
+// Floating hearts creation
+for(let i=0;i<50;i++){
+    const heart = document.createElement('div');
+    heart.classList.add('heart');
+    heart.style.left = Math.random()*100 + 'vw';
+    heart.style.top = Math.random()*100 + 'vh';
+    heart.style.animationDuration = (5+Math.random()*10) + 's';
+    heart.style.width = (5+Math.random()*5) + 'px';
+    heart.style.height = heart.style.width;
+    document.body.appendChild(heart);
+}
+
+// Hover zoom functionality
 const photoCards = document.querySelectorAll('.photo-card');
 const fullscreenImg = document.getElementById('fullscreen-img');
 const fullscreenQuote = document.getElementById('fullscreen-quote');
@@ -161,16 +207,12 @@ photoCards.forEach(card => {
         const imgSrc = card.querySelector('img').src;
         const quote = card.dataset.quote;
 
-        // Set fullscreen image & quote
         fullscreenImg.src = imgSrc;
         fullscreenImg.classList.add('active');
         fullscreenQuote.textContent = quote;
         fullscreenQuote.classList.add('active');
 
-        // Blur other photos
-        photoCards.forEach(c => {
-            if(c !== card) c.classList.add('blur');
-        });
+        photoCards.forEach(c => { if(c !== card) c.classList.add('blur'); });
     });
 
     card.addEventListener('mouseleave', () => {
