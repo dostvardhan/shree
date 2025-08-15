@@ -19,10 +19,6 @@
         max-width: 800px;
         margin: auto;
     }
-    audio {
-        width: 100%;
-        outline: none;
-    }
     .music-controls {
         position: fixed;
         bottom: 15px;
@@ -54,7 +50,7 @@
 </div>
 
 <audio id="bgMusic" autoplay loop>
-    <source src="your-music.mp3" type="audio/mpeg">
+    <source src="/music.mp3" type="audio/mpeg">
     Your browser does not support the audio element.
 </audio>
 
@@ -64,14 +60,16 @@
 </div>
 
 <script>
-    // Authentication check
-    document.addEventListener("DOMContentLoaded", function () {
-        const user = netlifyIdentity.currentUser();
+    // Ensure identity initialized before checking
+    netlifyIdentity.on('init', function(user) {
         if (!user) {
             alert("Oops… This page is for loved ones only 💖\nPlease go to home and login (invite-only access).");
             window.location.href = "/";
         }
     });
+
+    // Initialize identity widget
+    netlifyIdentity.init();
 
     // Music controls
     const music = document.getElementById("bgMusic");
