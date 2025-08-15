@@ -4,26 +4,36 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Life</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
 <style>
-/* Body & cinematic background */
+/* Animated cinematic gradient background */
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: radial-gradient(circle at top left, #ffdde1, #ee9ca7, #ffb347);
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 40px 20px;
     min-height: 100vh;
+    background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #fbc2eb, #a18cd1);
+    background-size: 400% 400%;
+    animation: gradientBG 20s ease infinite;
+}
+
+@keyframes gradientBG {
+    0% {background-position:0% 50%;}
+    50% {background-position:100% 50%;}
+    100% {background-position:0% 50%;}
 }
 
 /* Page title */
 h1 {
-    color: #fff;
+    font-family: 'Cinzel', serif;
+    color: #fff8dc;
     margin-bottom: 30px;
-    font-size: 2.8rem;
-    text-shadow: 2px 2px 12px rgba(0,0,0,0.5);
+    font-size: 3rem;
+    text-shadow: 2px 2px 15px rgba(0,0,0,0.7);
 }
 
 /* Photo container */
@@ -40,7 +50,7 @@ h1 {
     cursor: pointer;
     border-radius: 15px;
     overflow: hidden;
-    transition: transform 0.4s ease, z-index 0.4s ease;
+    transition: transform 0.5s ease, filter 0.5s ease;
 }
 
 .photo-card img {
@@ -51,22 +61,22 @@ h1 {
     transition: transform 0.5s ease, box-shadow 0.5s ease;
 }
 
-/* Full-page hover zoom */
+/* Fullscreen zoom image */
 .fullscreen-img {
     position: fixed;
-    top: 50%;
-    left: 50%;
+    top:50%;
+    left:50%;
     transform: translate(-50%, -50%) scale(0);
     max-width: 90%;
     max-height: 90%;
     border-radius: 15px;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+    box-shadow: 0 30px 70px rgba(0,0,0,0.8);
     transition: transform 0.5s ease, opacity 0.5s ease;
     z-index: 1000;
     pointer-events: none;
 }
 
-/* Active state */
+/* Active full image */
 .fullscreen-img.active {
     transform: translate(-50%, -50%) scale(1);
     pointer-events: auto;
@@ -75,17 +85,18 @@ h1 {
 /* Quote overlay */
 .fullscreen-quote {
     position: fixed;
-    top: 75%;
-    left: 50%;
+    top:75%;
+    left:50%;
     transform: translateX(-50%);
+    font-family: 'Cinzel', serif;
     color: gold;
-    font-size: 22px;
+    font-size: 24px;
     background: rgba(0,0,0,0.6);
     padding: 12px 25px;
     border-radius: 15px;
     text-align: center;
     max-width: 90%;
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+    text-shadow: 2px 2px 12px rgba(0,0,0,0.7);
     opacity: 0;
     transition: opacity 0.5s ease;
     z-index: 1001;
@@ -93,6 +104,12 @@ h1 {
 
 .fullscreen-quote.active {
     opacity: 1;
+}
+
+/* Blur effect for other photos when one is zoomed */
+.photo-card.blur {
+    filter: blur(6px);
+    transition: filter 0.5s ease;
 }
 
 /* Mobile responsiveness */
@@ -150,14 +167,23 @@ photoCards.forEach(card => {
     card.addEventListener('mouseenter', () => {
         const imgSrc = card.querySelector('img').src;
         const quote = card.dataset.quote;
+
+        // Set fullscreen image & quote
         fullscreenImg.src = imgSrc;
         fullscreenImg.classList.add('active');
         fullscreenQuote.textContent = quote;
         fullscreenQuote.classList.add('active');
+
+        // Blur other photos
+        photoCards.forEach(c => {
+            if(c !== card) c.classList.add('blur');
+        });
     });
+
     card.addEventListener('mouseleave', () => {
         fullscreenImg.classList.remove('active');
         fullscreenQuote.classList.remove('active');
+        photoCards.forEach(c => c.classList.remove('blur'));
     });
 });
 </script>
