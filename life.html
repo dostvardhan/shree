@@ -2,56 +2,69 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Life ❤️</title>
+<title>Our Life 💖</title>
 <style>
-    * {
+    body {
         margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-    html, body {
-        height: 100%;
-        overflow: hidden;
-        font-family: Arial, sans-serif;
         background: black;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
     }
-    .slideshow-container {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%;
-        height: 100%;
-    }
-    .slide {
+    img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
         position: absolute;
-        top: 0; left: 0;
-        width: 100%;
-        height: 100%;
-        background-size: cover;
-        background-position: center;
-        opacity: 0;
-        transition: opacity 2s ease-in-out;
+        transition: opacity 1s ease-in-out;
     }
-    .slide.active {
-        opacity: 1;
-    }
-    /* Dark overlay */
-    .overlay {
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0,0,0,0.3);
-        pointer-events: none;
-    }
-    /* Music control */
-    .music-control {
+    audio {
         position: fixed;
-        bottom: 15px;
-        right: 15px;
-        z-index: 100;
-        background: rgba(255,255,255,0.7);
-        padding: 10px 14px;
-        border-radius: 50px;
-        cursor: pointer;
-        font-size: 16px;
-        font-weight:
+        bottom: 20px;
+        left: 20px;
+    }
+</style>
+</head>
+<body>
+
+<audio autoplay loop>
+    <source src="music.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+    // Slideshow setup
+    let images = [];
+    let currentIndex = 0;
+    let imgElement = document.createElement("img");
+    document.body.appendChild(imgElement);
+
+    // Load all images from 'images' folder (photo1.jpg, photo2.jpg ... photo9.jpg)
+    for (let i = 1; i <= 50; i++) { // 50 tak loop socha hai, agar 9 hai to sirf 9 load honge
+        let imgPath = `images/photo${i}.jpg`;
+        let img = new Image();
+        img.src = imgPath;
+        img.onload = function() {
+            images.push(imgPath);
+            if (images.length === 1) {
+                imgElement.src = imgPath;
+            }
+        };
+    }
+
+    // Change image every 3 seconds
+    setInterval(() => {
+        if (images.length > 0) {
+            currentIndex = (currentIndex + 1) % images.length;
+            imgElement.style.opacity = 0;
+            setTimeout(() => {
+                imgElement.src = images[currentIndex];
+                imgElement.style.opacity = 1;
+            }, 1000);
+        }
+    }, 3000);
+</script>
+
+</body>
+</html>
