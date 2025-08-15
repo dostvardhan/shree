@@ -7,69 +7,120 @@
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <style>
     :root{
-      --maroon:#4a0f0f; --black:#0b0b0b; --gold:#c89a2f; --silver:#cfcfcf;
+      --maroon:#4a0f0f; 
+      --black:#0b0b0b; 
+      --gold:#c89a2f; 
+      --silver:#cfcfcf;
     }
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;
-      min-height:100vh;display:flex;align-items:center;justify-content:center;
-      background:linear-gradient(180deg,var(--maroon),var(--black));color:var(--silver);}
-    .card{background:rgba(255,255,255,0.03);backdrop-filter: blur(6px);
-      padding:28px;border-radius:14px;max-width:900px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.6);
-      border:1px solid rgba(255,255,255,0.04);text-align:center;}
-    h1{color:var(--gold);font-size:2.4rem;margin:0 0 8px}
-    p{color:var(--silver);font-size:1.05rem;line-height:1.5}
-    .imgrow{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:18px}
-    .imgrow img{width:260px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,0.6);border:2px solid rgba(255,255,255,0.04)}
-    .controls{margin-top:20px}
-    .btn{padding:10px 16px;border-radius:8px;border:2px solid rgba(200,154,47,0.9);background:transparent;color:var(--gold);cursor:pointer;font-weight:700;margin:0 8px}
-    .btn:hover{color:#fff;background:linear-gradient(90deg,#c89a2f55,#ffffff11)}
+    body{
+      margin:0;
+      font-family:Arial,Helvetica,sans-serif;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(180deg,var(--maroon),var(--black));
+      color:var(--silver);
+    }
+    .card{
+      background:rgba(255,255,255,0.03);
+      backdrop-filter: blur(6px);
+      padding:28px;
+      border-radius:14px;
+      max-width:900px;
+      width:90%;
+      box-shadow:0 10px 40px rgba(0,0,0,0.6);
+      border:1px solid rgba(255,255,255,0.04);
+      text-align:center;
+    }
+    h1{
+      color:var(--gold);
+      font-size:2.4rem;
+      margin:0 0 8px
+    }
+    p{
+      color:var(--silver);
+      font-size:1.05rem;
+      line-height:1.5
+    }
+    .imgrow{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      justify-content:center;
+      margin-top:18px
+    }
+    .imgrow img{
+      width:260px;
+      border-radius:12px;
+      box-shadow:0 8px 30px rgba(0,0,0,0.6);
+      border:2px solid rgba(255,255,255,0.04)
+    }
+    .controls{
+      margin-top:20px
+    }
+    .btn{
+      padding:10px 16px;
+      border-radius:8px;
+      border:2px solid rgba(200,154,47,0.9);
+      background:transparent;
+      color:var(--gold);
+      cursor:pointer;
+      font-weight:700;
+      margin:0 8px
+    }
+    .btn:hover{
+      color:#fff;
+      background:linear-gradient(90deg,#c89a2f55,#ffffff11)
+    }
+    /* Music control box */
+    .music-controls {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(200,154,47,0.15);
+      border: 1px solid var(--gold);
+      padding: 10px 15px;
+      border-radius: 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      backdrop-filter: blur(6px);
+    }
+    .music-controls button {
+      background: var(--gold);
+      color: var(--black);
+      border: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    .music-controls button:hover {
+      background: #e0b94d;
+    }
   </style>
 </head>
 <body>
-  <style>
-  .music-controls {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: rgba(0,0,0,0.6);
-    padding: 10px 15px;
-    border-radius: 12px;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-  .music-controls button {
-    background: #fff;
-    border: none;
-    padding: 6px 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-  }
-</style>
 
-<audio id="bg-music" loop>
-  <source src="./music.mp3" type="audio/mpeg">
-</audio>
+  <!-- Background Music -->
+  <audio id="bg-music" loop>
+    <source src="./music.mp3" type="audio/mpeg">
+  </audio>
 
-<div class="music-controls">
-  <button onclick="music.play()">▶ Play</button>
-  <button onclick="music.pause()">⏸ Pause</button>
-  <button onclick="music.muted = !music.muted">
-    🔇/🔊
-  </button>
-  <button onclick="music.volume = Math.max(0, music.volume - 0.1)">🔉 -</button>
-  <button onclick="music.volume = Math.min(1, music.volume + 0.1)">🔊 +</button>
-</div>
+  <!-- Floating Music Controls -->
+  <div class="music-controls">
+    <button onclick="music.play()">▶</button>
+    <button onclick="music.pause()">⏸</button>
+    <button onclick="music.muted = !music.muted">🔇/🔊</button>
+    <button onclick="music.volume = Math.max(0, music.volume - 0.1)">🔉</button>
+    <button onclick="music.volume = Math.min(1, music.volume + 0.1)">🔊</button>
+  </div>
 
-<script>
-  let music = document.getElementById("bg-music");
-  music.volume = 0.3; // 30% volume by default
-</script>
-
-  <audio id="bg-music" autoplay loop>
-  <source src="./music.mp3" type="audio/mpeg">
-</audio>
-
+  <!-- Protected Content -->
   <div class="card" id="protected">
     <h1>Life</h1>
     <p>Private memories, notes and soft images — visible only to invited hearts. Treat this space with care.</p>
@@ -93,7 +144,11 @@
   </div>
 
   <script>
-    // protection: if not logged in, go to homepage
+    // Music volume set
+    let music = document.getElementById("bg-music");
+    music.volume = 0.3; // 30% volume by default
+
+    // Protection: if not logged in, go to homepage
     function protect() {
       if (!window.netlifyIdentity) { location.href = '/'; return; }
       netlifyIdentity.on('init', user => {
