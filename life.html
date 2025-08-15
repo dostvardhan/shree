@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Life</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 <style>
-/* Animated cinematic gradient background */
+/* Cinematic dark background with subtle glow */
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -16,24 +16,17 @@ body {
     align-items: center;
     padding: 40px 20px;
     min-height: 100vh;
-    background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #fbc2eb, #a18cd1);
-    background-size: 400% 400%;
-    animation: gradientBG 20s ease infinite;
-}
-
-@keyframes gradientBG {
-    0% {background-position:0% 50%;}
-    50% {background-position:100% 50%;}
-    100% {background-position:0% 50%;}
+    background: #1b0035;
+    background: radial-gradient(circle at top left, #2a003f, #1b0035, #400020);
 }
 
 /* Page title */
 h1 {
-    font-family: 'Cinzel', serif;
-    color: #fff8dc;
+    font-family: 'Great Vibes', cursive;
+    color: #ffd700;
     margin-bottom: 30px;
     font-size: 3rem;
-    text-shadow: 2px 2px 15px rgba(0,0,0,0.7);
+    text-shadow: 2px 2px 15px rgba(0,0,0,0.8);
 }
 
 /* Photo container */
@@ -70,7 +63,7 @@ h1 {
     max-width: 90%;
     max-height: 90%;
     border-radius: 15px;
-    box-shadow: 0 30px 70px rgba(0,0,0,0.8);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.9);
     transition: transform 0.5s ease, opacity 0.5s ease;
     z-index: 1000;
     pointer-events: none;
@@ -88,15 +81,15 @@ h1 {
     top:75%;
     left:50%;
     transform: translateX(-50%);
-    font-family: 'Cinzel', serif;
+    font-family: 'Great Vibes', cursive;
     color: gold;
-    font-size: 24px;
-    background: rgba(0,0,0,0.6);
+    font-size: 26px;
+    background: rgba(0,0,0,0.5);
     padding: 12px 25px;
     border-radius: 15px;
     text-align: center;
     max-width: 90%;
-    text-shadow: 2px 2px 12px rgba(0,0,0,0.7);
+    text-shadow: 2px 2px 12px rgba(0,0,0,0.9);
     opacity: 0;
     transition: opacity 0.5s ease;
     z-index: 1001;
@@ -114,9 +107,9 @@ h1 {
 
 /* Mobile responsiveness */
 @media (max-width: 600px) {
-    h1 { font-size: 2rem; }
+    h1 { font-size: 2.2rem; }
     .photo-card img { width: 80vw; }
-    .fullscreen-quote { font-size: 18px; padding: 10px 20px; }
+    .fullscreen-quote { font-size: 20px; padding: 10px 20px; }
 }
 </style>
 </head>
