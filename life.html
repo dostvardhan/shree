@@ -6,7 +6,6 @@
 <title>Unmatched Memories</title>
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 <style>
-/* Sunrise cinematic background */
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -16,7 +15,8 @@ body {
     align-items: center;
     padding: 40px 20px;
     min-height: 100vh;
-    background: linear-gradient(120deg, #ff9a9e, #fad0c4, #fbc2eb, #fddb92);
+    /* Cinematic sunrise gradient + radial glow */
+    background: radial-gradient(circle at 40% 30%, #fff2b2, #ff7f50, #ff4e50, #9b003f);
     position: relative;
 }
 
@@ -48,15 +48,16 @@ body {
     100% { transform: translateY(-800px) rotate(45deg); opacity: 0; }
 }
 
-/* Page title */
+/* Title */
 h1 {
     font-family: 'Great Vibes', cursive;
     color: gold;
     margin-bottom: 30px;
-    font-size: 3rem;
-    text-shadow: 2px 2px 15px rgba(0,0,0,0.6);
+    font-size: 3.5rem;
+    text-shadow: 2px 2px 20px rgba(0,0,0,0.7);
     z-index: 10;
     position: relative;
+    text-align: center;
 }
 
 /* Photo container */
@@ -69,7 +70,7 @@ h1 {
     position: relative;
 }
 
-/* Each photo card */
+/* Photo card */
 .photo-card {
     position: relative;
     cursor: pointer;
@@ -86,7 +87,7 @@ h1 {
     transition: transform 0.5s ease, box-shadow 0.5s ease;
 }
 
-/* Fullscreen zoom image */
+/* Fullscreen zoom */
 .fullscreen-img {
     position: fixed;
     top:50%;
@@ -115,13 +116,13 @@ h1 {
     transform: translateX(-50%);
     font-family: 'Great Vibes', cursive;
     color: gold;
-    font-size: 26px;
+    font-size: 28px;
     background: rgba(0,0,0,0.4);
-    padding: 12px 25px;
+    padding: 14px 28px;
     border-radius: 15px;
     text-align: center;
     max-width: 90%;
-    text-shadow: 2px 2px 12px rgba(0,0,0,0.7);
+    text-shadow: 2px 2px 15px rgba(0,0,0,0.8);
     opacity: 0;
     transition: opacity 0.5s ease;
     z-index: 1001;
@@ -131,17 +132,17 @@ h1 {
     opacity: 1;
 }
 
-/* Blur effect for other photos when one is zoomed */
+/* Blur other photos */
 .photo-card.blur {
     filter: blur(6px);
     transition: filter 0.5s ease;
 }
 
-/* Mobile responsiveness */
+/* Responsive */
 @media (max-width: 600px) {
-    h1 { font-size: 2.2rem; }
+    h1 { font-size: 2.5rem; }
     .photo-card img { width: 80vw; }
-    .fullscreen-quote { font-size: 20px; padding: 10px 20px; }
+    .fullscreen-quote { font-size: 22px; padding: 10px 20px; }
 }
 </style>
 </head>
@@ -179,20 +180,21 @@ h1 {
     </div>
 </div>
 
-<!-- Fullscreen image & quote -->
 <img class="fullscreen-img" id="fullscreen-img" src="" alt="Full Photo">
 <div class="fullscreen-quote" id="fullscreen-quote"></div>
 
 <script>
-// Floating hearts creation
+// Floating hearts
 for(let i=0;i<50;i++){
     const heart = document.createElement('div');
     heart.classList.add('heart');
     heart.style.left = Math.random()*100 + 'vw';
     heart.style.top = Math.random()*100 + 'vh';
     heart.style.animationDuration = (5+Math.random()*10) + 's';
-    heart.style.width = (5+Math.random()*5) + 'px';
-    heart.style.height = heart.style.width;
+    let size = 5+Math.random()*5;
+    heart.style.width = size + 'px';
+    heart.style.height = size + 'px';
+    heart.style.opacity = 0.4 + Math.random()*0.6;
     document.body.appendChild(heart);
 }
 
