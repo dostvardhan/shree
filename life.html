@@ -9,17 +9,18 @@
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #4b0000, #800000, #a52a2a);
+    background: radial-gradient(circle at top left, #5c0000, #800000, #a52a2a);
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 40px 20px;
+    min-height: 100vh;
 }
 
 /* Page title */
 h1 {
-    color: #fff8dc; /* soft cream for contrast */
+    color: #fff8dc;
     margin-bottom: 30px;
     font-size: 2.8rem;
     text-shadow: 2px 2px 12px rgba(0,0,0,0.5);
@@ -37,7 +38,7 @@ h1 {
 .photo-card {
     position: relative;
     cursor: pointer;
-    transition: transform 0.5s ease, box-shadow 0.5s ease;
+    transition: transform 0.3s ease;
     border-radius: 15px;
     overflow: hidden;
 }
@@ -47,39 +48,11 @@ h1 {
     height: auto;
     border-radius: 15px;
     object-fit: cover;
-    transition: transform 0.5s ease, box-shadow 0.5s ease;
+    transition: transform 0.4s ease;
 }
 
-/* Hover zoom + elevate */
-.photo-card:hover img {
-    transform: scale(1.4);
-    z-index: 100;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.7);
-}
-
-/* Quote overlay */
-.photo-card .quote {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    padding: 10px 15px;
-    background: rgba(0,0,0,0.5);
-    color: #fff;
-    font-size: 14px;
-    text-align: center;
-    opacity: 0;
-    transition: opacity 0.4s ease, color 0.4s ease;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-}
-
-.photo-card:hover .quote {
-    opacity: 1;
-    color: gold; /* golden on hover */
-}
-
-/* Lightbox hover */
-.lightbox-hover {
+/* Lightbox hover - full screen */
+.lightbox {
     position: fixed;
     top:0; left:0;
     width:100%;
@@ -95,7 +68,7 @@ h1 {
     transition: opacity 0.4s ease;
 }
 
-.lightbox-hover img {
+.lightbox img {
     max-width: 90%;
     max-height: 80%;
     border-radius: 15px;
@@ -103,7 +76,7 @@ h1 {
     object-fit: contain;
 }
 
-.lightbox-hover .quote {
+.lightbox .quote {
     color: gold;
     font-size: 22px;
     background: rgba(0,0,0,0.6);
@@ -114,9 +87,8 @@ h1 {
     text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
 }
 
-/* Show lightbox on hover */
-.photo-card:hover + .lightbox-hover,
-.lightbox-hover:hover {
+/* Show lightbox when active */
+.lightbox.active {
     opacity: 1;
     pointer-events: auto;
 }
@@ -125,7 +97,7 @@ h1 {
 @media (max-width: 600px) {
     h1 { font-size: 2rem; }
     .photo-card img { width: 80vw; }
-    .lightbox-hover .quote { font-size: 18px; padding: 10px 20px; }
+    .lightbox .quote { font-size: 18px; padding: 10px 20px; }
 }
 </style>
 </head>
@@ -134,46 +106,37 @@ h1 {
 <h1>Life</h1>
 
 <div class="photo-container">
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Every day is a new beginning.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo1.jpg" alt="Photo 1">
-        <div class="quote">Every day is a new beginning.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Cherish the little moments.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo2.jpg" alt="Photo 2">
-        <div class="quote">Cherish the little moments.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Smile, it's free therapy.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo3.jpg" alt="Photo 3">
-        <div class="quote">Smile, it's free therapy.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Peace comes from within.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo4.jpg" alt="Photo 4">
-        <div class="quote">Peace comes from within.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Love yourself first.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo5.jpg" alt="Photo 5">
-        <div class="quote">Love yourself first.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Small joys make life big.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo6.jpg" alt="Photo 6">
-        <div class="quote">Small joys make life big.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Dream, believe, achieve.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo7.jpg" alt="Photo 7">
-        <div class="quote">Dream, believe, achieve.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Happiness is homemade.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo8.jpg" alt="Photo 8">
-        <div class="quote">Happiness is homemade.</div>
     </div>
-    <div class="photo-card">
+    <div class="photo-card" data-quote="Create memories, not regrets.">
         <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo9.jpg" alt="Photo 9">
-        <div class="quote">Create memories, not regrets.</div>
     </div>
 </div>
 
 <!-- Lightbox overlay -->
-<div class="lightbox-hover" id="lightbox">
+<div class="lightbox" id="lightbox">
     <img id="lightbox-img" src="" alt="Full Photo">
     <div class="quote" id="lightbox-quote"></div>
 </div>
@@ -186,14 +149,14 @@ const lightboxQuote = document.getElementById('lightbox-quote');
 
 photoCards.forEach(card => {
     card.addEventListener('mouseenter', () => {
-        lightboxImg.src = card.querySelector('img').src;
-        lightboxQuote.textContent = card.querySelector('.quote').textContent;
-        lightbox.style.opacity = 1;
-        lightbox.style.pointerEvents = 'auto';
+        const img = card.querySelector('img').src;
+        const quote = card.dataset.quote;
+        lightboxImg.src = img;
+        lightboxQuote.textContent = quote;
+        lightbox.classList.add('active');
     });
     card.addEventListener('mouseleave', () => {
-        lightbox.style.opacity = 0;
-        lightbox.style.pointerEvents = 'none';
+        lightbox.classList.remove('active');
     });
 });
 </script>
