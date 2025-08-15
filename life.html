@@ -1,111 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f5f5;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-height: 100vh;
-            padding: 20px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life Moments</title>
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
 
-        h1 {
-            margin-bottom: 20px;
-            color: #333;
-        }
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
 
-        .photo-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-        }
+.photo-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
 
-        .photo-card {
-            position: relative;
-            width: 250px;
-            height: 250px;
-            overflow: hidden;
-            border-radius: 15px;
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
+.photo-card {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    overflow: hidden;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 
-        .photo-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
+.photo-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
 
-        .photo-card:hover img {
-            transform: scale(1.1);
-        }
+.photo-card:hover img {
+    transform: scale(1.05);
+}
 
-        .photo-card:hover {
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
+.photo-card:hover {
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
 
-        .quote {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.7);
-            text-align: center;
-            font-weight: bold;
-            color: #333;
-            font-size: 14px;
-        }
-    </style>
+.quote {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+}
+
+/* Lightbox overlay */
+#lightbox {
+    display: none;
+    position: fixed;
+    top:0; left:0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    flex-direction: column;
+}
+
+#lightbox img {
+    max-width: 90%;
+    max-height: 80%;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+#lightbox .quote {
+    color: #fff;
+    font-size: 20px;
+    background: rgba(0,0,0,0.6);
+    padding: 10px 20px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 90%;
+}
+
+/* Close button */
+#lightbox span {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 40px;
+    color: #fff;
+    cursor: pointer;
+}
+</style>
 </head>
 <body>
-    <h1>Life Moments</h1>
-    <div class="photo-container">
-        <div class="photo-card">
-            <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo1.jpg" alt="Life Photo 1">
-            <div class="quote">"Every day is a new beginning."</div>
-        </div>
-        <div class="photo-card">
-            <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo2.jpg" alt="Life Photo 2">
-            <div class="quote">"Cherish the little moments."</div>
-        </div>
-        <div class="photo-card">
-            <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo3.jpg" alt="Life Photo 3">
-            <div class="quote">"Smile, it's free therapy."</div>
-        </div>
-        <div class="photo-card">
-            <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo4.jpg" alt="Life Photo 4">
-            <div class="quote">"Peace comes from within."</div>
-        </div>
-        <div class="photo-card">
-            <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo5.jpg" alt="Life Photo 5">
-            <div class="quote">"Love yourself first."</div>
-        </div>
-        <div class="photo-card">
-            <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo6.jpg" alt="Life Photo 6">
-            <div class="quote">"Small joys make life big."</div>
-        </div>
-        <div class="photo-card">
-            <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo7.jpg" alt="Life Photo 7">
-            <div class="quote">"Dream, believe, achieve."</div>
-        </div>
-        <div class="photo-card">
-            <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo8.jpg" alt="Life Photo 8">
-            <div class="quote">"Happiness is homemade."</div>
-        </div>
-        <div class="photo-card">
-            <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo9.jpg" alt="Life Photo 9">
-            <div class="quote">"Create memories, not regrets."</div>
-        </div>
+
+<h1>Life Moments</h1>
+<div class="photo-container">
+    <div class="photo-card" data-quote="Every day is a new beginning." data-src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo1.jpg">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo1.jpg" alt="Photo 1">
+        <div class="quote">"Every day is a new beginning."</div>
     </div>
+    <div class="photo-card" data-quote="Cherish the little moments." data-src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo2.jpg">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo2.jpg" alt="Photo 2">
+        <div class="quote">"Cherish the little moments."</div>
+    </div>
+    <div class="photo-card" data-quote="Smile, it's free therapy." data-src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo3.jpg">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo3.jpg" alt="Photo 3">
+        <div class="quote">"Smile, it's free therapy."</div>
+    </div>
+    <div class="photo-card" data-quote="Peace comes from within." data-src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo4.jpg">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo4.jpg" alt="Photo 4">
+        <div class="quote">"Peace comes from within."</div>
+    </div>
+    <div class="photo-card" data-quote="Love yourself first." data-src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo5.jpg">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo5.jpg" alt="Photo 5">
+        <div class="quote">"Love yourself first."</div>
+    </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox">
+    <span onclick="closeLightbox()">&times;</span>
+    <img id="lightbox-img" src="" alt="Full Photo">
+    <div class="quote" id="lightbox-quote"></div>
+</div>
+
+<script>
+const photoCards = document.querySelectorAll('.photo-card');
+const lightbox = document.getElementById('lightbox');
+const lightboxImg = document.getElementById('lightbox-img');
+const lightboxQuote = document.getElementById('lightbox-quote');
+
+photoCards.forEach(card => {
+    card.addEventListener('click', () => {
+        lightbox.style.display = 'flex';
+        lightboxImg.src = card.dataset.src;
+        lightboxQuote.textContent = card.dataset.quote;
+    });
+});
+
+function closeLightbox() {
+    lightbox.style.display = 'none';
+}
+</script>
+
 </body>
 </html>
