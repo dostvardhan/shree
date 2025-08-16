@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Unmatched Memories</title>
+<title>Unmatched Memories - Dark Mist</title>
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 <style>
 body {
@@ -15,12 +15,11 @@ body {
     align-items: center;
     padding: 40px 20px;
     position: relative;
-    /* Cinematic misty pastel background */
-    background: linear-gradient(160deg, #f3e7e9, #e3f2fd, #fefcea);
-    background-image: url('https://images.unsplash.com/photo-1603398938378-9a4b5e22d156?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080');
+    background: linear-gradient(135deg, #0d1117, #1b1f28, #2c2f3a);
+    background-image: url('https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080');
     background-size: cover;
     background-position: center;
-    color: #333;
+    color: #f5d76e;
 }
 
 /* Title */
@@ -29,7 +28,7 @@ h1 {
     color: #f5d76e;
     margin-bottom: 30px;
     font-size: 3.5rem;
-    text-shadow: 2px 2px 12px rgba(0,0,0,0.5);
+    text-shadow: 2px 2px 12px rgba(0,0,0,0.7);
     text-align: center;
 }
 
@@ -60,113 +59,3 @@ h1 {
 
 /* Fullscreen zoom */
 .fullscreen-img {
-    position: fixed;
-    top:50%;
-    left:50%;
-    transform: translate(-50%, -50%) scale(0);
-    max-width: 90%;
-    max-height: 90%;
-    border-radius: 15px;
-    box-shadow: 0 25px 80px rgba(0,0,0,0.8);
-    transition: transform 0.5s ease, opacity 0.5s ease;
-    z-index: 1000;
-    pointer-events: none;
-}
-
-/* Active full image */
-.fullscreen-img.active {
-    transform: translate(-50%, -50%) scale(1);
-    pointer-events: auto;
-}
-
-/* Quote overlay */
-.fullscreen-quote {
-    position: fixed;
-    top:75%;
-    left:50%;
-    transform: translateX(-50%);
-    font-family: 'Great Vibes', cursive;
-    color: #f5d76e;
-    font-size: 28px;
-    background: rgba(0,0,0,0.25);
-    padding: 14px 28px;
-    border-radius: 15px;
-    text-align: center;
-    max-width: 90%;
-    text-shadow: 2px 2px 15px rgba(0,0,0,0.7);
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    z-index: 1001;
-}
-
-.fullscreen-quote.active {
-    opacity: 1;
-}
-
-/* Blur other photos */
-.photo-card.blur {
-    filter: blur(5px);
-    transition: filter 0.5s ease;
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-    h1 { font-size: 2.5rem; }
-    .photo-card img { width: 80vw; }
-    .fullscreen-quote { font-size: 22px; padding: 10px 20px; }
-}
-</style>
-</head>
-<body>
-
-<h1>Unmatched Memories</h1>
-
-<div class="photo-container">
-    <div class="photo-card" data-quote="Every day is a new beginning.">
-        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo1.jpg" alt="Photo 1">
-    </div>
-    <div class="photo-card" data-quote="Cherish the little moments.">
-        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo2.jpg" alt="Photo 2">
-    </div>
-    <div class="photo-card" data-quote="Smile, it's free therapy.">
-        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo3.jpg" alt="Photo 3">
-    </div>
-    <div class="photo-card" data-quote="Peace comes from within.">
-        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo4.jpg" alt="Photo 4">
-    </div>
-    <div class="photo-card" data-quote="Love yourself first.">
-        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo5.jpg" alt="Photo 5">
-    </div>
-</div>
-
-<img class="fullscreen-img" id="fullscreen-img" src="" alt="Full Photo">
-<div class="fullscreen-quote" id="fullscreen-quote"></div>
-
-<script>
-const photoCards = document.querySelectorAll('.photo-card');
-const fullscreenImg = document.getElementById('fullscreen-img');
-const fullscreenQuote = document.getElementById('fullscreen-quote');
-
-photoCards.forEach(card => {
-    card.addEventListener('mouseenter', () => {
-        const imgSrc = card.querySelector('img').src;
-        const quote = card.dataset.quote;
-
-        fullscreenImg.src = imgSrc;
-        fullscreenImg.classList.add('active');
-        fullscreenQuote.textContent = quote;
-        fullscreenQuote.classList.add('active');
-
-        photoCards.forEach(c => { if(c !== card) c.classList.add('blur'); });
-    });
-
-    card.addEventListener('mouseleave', () => {
-        fullscreenImg.classList.remove('active');
-        fullscreenQuote.classList.remove('active');
-        photoCards.forEach(c => c.classList.remove('blur'));
-    });
-});
-</script>
-
-</body>
-</html>
