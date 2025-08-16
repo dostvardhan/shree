@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Unmatched Memories - Rain on Glass</title>
+<title>Unmatched Memories - Wow Factor</title>
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 <style>
 body {
@@ -14,7 +14,7 @@ body {
     flex-direction: column;
     align-items: center;
     padding: 40px 20px;
-    background: linear-gradient(to bottom, #0d1117, #1b1f28);
+    background: linear-gradient(to bottom, #0d0f14, #1c1f28);
     overflow: hidden;
     color: #f5d76e;
     position: relative;
@@ -34,7 +34,7 @@ h1 {
     color: #f5d76e;
     margin-bottom: 30px;
     font-size: 3.5rem;
-    text-shadow: 2px 2px 12px rgba(0,0,0,0.7);
+    text-shadow: 2px 2px 18px rgba(0,0,0,0.7);
     text-align: center;
     z-index: 2;
 }
@@ -53,7 +53,7 @@ h1 {
     cursor: pointer;
     border-radius: 15px;
     overflow: hidden;
-    transition: transform 0.5s ease, filter 0.5s ease;
+    transition: transform 0.5s ease, filter 0.5s ease, box-shadow 0.5s ease;
 }
 .photo-card img {
     width: 230px;
@@ -71,7 +71,7 @@ h1 {
     max-width: 90%;
     max-height: 90%;
     border-radius: 15px;
-    box-shadow: 0 25px 80px rgba(0,0,0,0.9);
+    box-shadow: 0 30px 120px rgba(0,0,0,0.9);
     transition: transform 0.5s ease, opacity 0.5s ease;
     z-index: 1000;
     pointer-events: none;
@@ -88,14 +88,14 @@ h1 {
     left:50%;
     transform: translateX(-50%);
     font-family: 'Great Vibes', cursive;
-    color: #f5d76e;
+    color: #ffd700;
     font-size: 28px;
-    background: rgba(0,0,0,0.35);
+    background: rgba(0,0,0,0.3);
     padding: 14px 28px;
     border-radius: 15px;
     text-align: center;
     max-width: 90%;
-    text-shadow: 2px 2px 15px rgba(0,0,0,0.9);
+    text-shadow: 2px 2px 18px rgba(0,0,0,0.9);
     opacity: 0;
     transition: opacity 0.5s ease;
     z-index: 1001;
@@ -106,7 +106,7 @@ h1 {
 }
 
 .photo-card.blur {
-    filter: blur(5px);
+    filter: blur(6px);
     transition: filter 0.5s ease;
 }
 
@@ -188,9 +188,13 @@ class Heart {
         this.size = 8 + Math.random()*12;
         this.speed = 0.5 + Math.random();
         this.color = ['#ff4d6d','#b3003b','#ff1a1a'][Math.floor(Math.random()*3)];
+        this.glow = Math.random()*5 + 5;
     }
     update(){ this.y -= this.speed; if(this.y + this.size < 0) this.reset(); }
     draw(){
+        ctx.save();
+        ctx.shadowBlur = this.glow;
+        ctx.shadowColor = this.color;
         ctx.fillStyle = this.color;
         ctx.beginPath();
         let topCurveHeight = this.size * 0.3;
@@ -200,10 +204,11 @@ class Heart {
         ctx.bezierCurveTo(this.x, this.y + this.size*0.75, this.x + this.size/2, this.y + this.size/2, this.x + this.size/2, this.y);
         ctx.bezierCurveTo(this.x + this.size/2, this.y - topCurveHeight, this.x, this.y - topCurveHeight, this.x, this.y);
         ctx.fill();
+        ctx.restore();
     }
 }
 
-// Rain drops with trail (glass effect)
+// Realistic rain drops
 class RainDrop {
     constructor(){
         this.reset();
@@ -213,16 +218,32 @@ class RainDrop {
         this.x = Math.random()*width;
         this.y = Math.random()*-height;
         this.length = 10 + Math.random()*20;
-        this.speed = 2 + Math.random()*2;
-        this.width = 1 + Math.random()*1;
+        this.speed = 2 + Math.random()*3;
+        this.width = 1 + Math.random()*1.5;
         this.opacity = 0.2 + Math.random()*0.3;
         this.trail = [];
+        this.dripTimer = 0;
     }
     fall(){
         this.y += this.speed;
-        this.x += Math.sin(this.y*0.01)*2; // slight horizontal slip
+        this.x += Math.sin(this.y*0.01)*2;
         this.trail.push({x:this.x, y:this.y});
         if(this.trail.length>5) this.trail.shift();
+
+        // Drip effect
+        if(Math.random() < 0.002){
+            this.dripTimer = 5 + Math.random()*10;
+        }
+        if(this.dripTimer>0){
+            ctx.strokeStyle = `rgba(255,255,255,${this.opacity})`;
+            ctx.lineWidth = this.width/2;
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y + this.length);
+            ctx.lineTo(this.x + Math.random()*2, this.y + this.length + 5);
+            ctx.stroke();
+            this.dripTimer--;
+        }
+
         if(this.y > height) this.reset();
     }
     draw(){
@@ -239,10 +260,10 @@ class RainDrop {
 }
 
 let hearts = [];
-for(let i=0;i<30;i++) hearts.push(new Heart());
+for(let i=0;i<40;i++) hearts.push(new Heart());
 
 let raindrops = [];
-for(let i=0;i<200;i++) raindrops.push(new RainDrop());
+for(let i=0;i<250;i++) raindrops.push(new RainDrop());
 
 function animate(){
     ctx.clearRect(0,0,width,height);
