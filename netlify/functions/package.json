@@ -1,0 +1,10 @@
+{
+  "name": "photo-functions",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "cloudinary": "^1.41.3",
+    "firebase-admin": "^12.5.0",
+    "formidable": "^3.5.1"
+  }
+}
