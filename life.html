@@ -3,40 +3,109 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Life Moments</title>
+<title>Unmatched Memories</title>
+
+<!-- Netlify Identity check -->
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script>
 if (window.netlifyIdentity) {
     window.netlifyIdentity.on('init', user => {
         if (!user) {
-            window.location.href = "/"; // redirect to login page if not logged in
+            window.location.href = "/";
         }
     });
 }
 </script>
+
 <style>
-body {margin:0;font-family:'Segoe UI',sans-serif;background: linear-gradient(135deg, #a3c4f3, #f8e1a0);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;color:#4b3f2f;text-align:center;}
-.particle {position:absolute;width:6px;height:6px;background: rgba(255,215,100,0.5);border-radius:50%;animation: float 12s linear infinite;}
-@keyframes float {0% {transform: translateY(0) translateX(0);}50% {transform: translateY(-30px) translateX(20px);}100% {transform: translateY(0) translateX(0);}}
-img {max-width:30%;margin:15px;border-radius:15px;object-fit:cover;transition: transform 0.5s ease, box-shadow 0.5s ease;}
-img:hover {transform: scale(1.2); box-shadow:0 0 50px rgba(255,215,150,0.5);}
+body {
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background: linear-gradient(135deg, #dce3f0, #f3e9d2); /* soft misty tones */
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  min-height:100vh;
+  color:#4b3f2f;
+  text-align:center;
+  overflow-x:hidden;
+  overflow-y:auto;
+}
+h1 {
+  margin-top:30px;
+  font-size:38px;
+  color:#5a4a3f;
+  text-shadow:1px 1px 6px rgba(0,0,0,0.2);
+}
+.gallery {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin:40px 0;
+  gap:20px;
+}
+.gallery img {
+  width:250px;
+  height:200px;
+  object-fit:cover;
+  border-radius:15px;
+  box-shadow:0 0 40px rgba(0,0,0,0.2);
+  transition: transform 0.5s ease, box-shadow 0.5s ease;
+  cursor:pointer;
+}
+.gallery img:hover {
+  transform: scale(1.2);
+  z-index:10;
+  box-shadow:0 0 90px rgba(255,215,150,0.7);
+}
+.quote {
+  font-size:22px;
+  margin-bottom:50px;
+  max-width:80%;
+  text-shadow: 1px 1px 6px rgba(0,0,0,0.2);
+}
+
+/* Floating hearts */
+.particle {
+  position:absolute;
+  width:10px;
+  height:10px;
+  background:red;
+  border-radius:50%;
+  animation: float 12s linear infinite;
+}
+@keyframes float {
+  0% {transform: translateY(0) translateX(0);}
+  50% {transform: translateY(-30px) translateX(20px);}
+  100% {transform: translateY(0) translateX(0);}
+}
 </style>
 </head>
+
 <body>
-<div class="particle" style="top:10%; left:20%; animation-duration:12s;"></div>
-<div class="particle" style="top:30%; left:50%; animation-duration:15s;"></div>
-<div class="particle" style="top:60%; left:70%; animation-duration:10s;"></div>
-<div class="particle" style="top:80%; left:40%; animation-duration:18s;"></div>
 
 <h1>Unmatched Memories</h1>
-<a href="photo1.html"><img src="photo1.jpg" alt="Photo 1"></a>
-<a href="photo2.html"><img src="photo2.jpg" alt="Photo 2"></a>
-<a href="photo3.html"><img src="photo3.jpg" alt="Photo 3"></a>
-<a href="photo4.html"><img src="photo4.jpg" alt="Photo 4"></a>
-<a href="photo5.html"><img src="photo5.jpg" alt="Photo 5"></a>
-<a href="photo6.html"><img src="photo6.jpg" alt="Photo 6"></a>
-<a href="photo7.html"><img src="photo7.jpg" alt="Photo 7"></a>
-<a href="photo8.html"><img src="photo8.jpg" alt="Photo 8"></a>
-<a href="photo9.html"><img src="photo9.jpg" alt="Photo 9"></a>
+
+<div class="gallery">
+  <a href="photo1.html"><img src="images/photo1.jpg" alt="Photo 1"></a>
+  <a href="photo2.html"><img src="images/photo2.jpg" alt="Photo 2"></a>
+  <a href="photo3.html"><img src="images/photo3.jpg" alt="Photo 3"></a>
+  <a href="photo4.html"><img src="images/photo4.jpg" alt="Photo 4"></a>
+  <a href="photo5.html"><img src="images/photo5.jpg" alt="Photo 5"></a>
+  <a href="images/photo6.html"><img src="images/photo6.jpg" alt="Photo 6"></a>
+  <a href="photo7.html"><img src="images/photo7.jpg" alt="Photo 7"></a>
+  <a href="photo8.html"><img src="images/photo8.jpg" alt="Photo 8"></a>
+  <a href="photo9.html"><img src="images/photo9.jpg" alt="Photo 9"></a>
+</div>
+
+<div class="quote">Life is a collection of moments, each memory a heartbeat in our story.</div>
+
+<!-- Floating particles hearts -->
+<div class="particle" style="top:10%; left:20%; background:pink;"></div>
+<div class="particle" style="top:30%; left:50%; background:maroon;"></div>
+<div class="particle" style="top:60%; left:70%; background:red;"></div>
+<div class="particle" style="top:80%; left:40%; background:pink;"></div>
+
 </body>
 </html>
