@@ -1,148 +1,21 @@
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<!-- 30 tiny pink floating hearts from bottom -->
 <script>
-window.addEventListener('load', () => {
-    if (window.netlifyIdentity) {
-        window.netlifyIdentity.on('init', user => {
-            if (!user) {
-                window.location.href = "/";
-            }
-        });
-    }
-});
-</script>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Life is Beautiful</title>
-
-<!-- Netlify Identity -->
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script>
-window.addEventListener('load', () => {
-    if (window.netlifyIdentity) {
-        window.netlifyIdentity.on('init', user => {
-            if (!user) {
-                window.location.href = "/";
-            }
-        });
-    }
-});
-</script>
-
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Roboto:wght@400;700&display=swap');
-
-body {
-    margin:0;
-    font-family:'Roboto', sans-serif;
-    background: linear-gradient(135deg, #cfe0f2, #f5e6d0);
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    min-height:100vh;
-    color:#4b3f2f;
-    text-align:center;
-    overflow-x:hidden;
-    overflow-y:auto;
-}
-h1 {
-    margin-top:30px;
-    font-size:46px;
-    font-family: 'Great Vibes', cursive;
-    color:#5a4a3f;
-    text-shadow:1px 1px 6px rgba(0,0,0,0.2);
-}
-.gallery {
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    margin:40px 0;
-    gap:20px;
-}
-.gallery img {
-    width:250px;
-    height:auto;
-    max-height:200px;
-    object-fit: contain;
-    border-radius:15px;
-    box-shadow:0 0 40px rgba(0,0,0,0.2);
-    transition: transform 0.5s ease, box-shadow 0.5s ease;
-    cursor:pointer;
-}
-.gallery img:hover {
-    transform: scale(1.2);
-    z-index:10;
-    box-shadow:0 0 90px rgba(255,215,150,0.7);
-}
-.quote {
-    font-size:22px;
-    margin-bottom:50px;
-    max-width:80%;
-    text-shadow: 1px 1px 6px rgba(0,0,0,0.2);
-}
-
-/* Heart shape */
-.heart {
-    position:absolute;
-    width:8px;  /* smaller hearts */
-    height:8px;
-    background:pink;
-    transform: rotate(-45deg);
-    animation: float 12s linear infinite;
-}
-.heart::before,
-.heart::after {
-    content:"";
-    position:absolute;
-    width:8px;
-    height:8px;
-    background:pink;
-    border-radius:50%;
-}
-.heart::before { top:-4px; left:0; }
-.heart::after  { top:0; left:4px; }
-
-@keyframes float {
-    0% {transform: translateY(0) rotate(-45deg);}
-    50% {transform: translateY(-30px) translateX(15px) rotate(-45deg);}
-    100% {transform: translateY(0) rotate(-45deg);}
-}
-</style>
-</head>
-
-<body>
-
-<h1>Life is Beautiful</h1>
-
-<div class="gallery">
-  <a href="photo1.html"><img src="photo1.jpg" alt="Photo 1"></a>
-  <a href="photo2.html"><img src="photo2.jpg" alt="Photo 2"></a>
-  <a href="photo3.html"><img src="photo3.jpg" alt="Photo 3"></a>
-  <a href="photo4.html"><img src="photo4.jpg" alt="Photo 4"></a>
-  <a href="photo5.html"><img src="photo5.jpg" alt="Photo 5"></a>
-  <a href="photo6.html"><img src="photo6.jpg" alt="Photo 6"></a>
-  <a href="photo7.html"><img src="photo7.jpg" alt="Photo 7"></a>
-  <a href="photo8.html"><img src="photo8.jpg" alt="Photo 8"></a>
-  <a href="photo9.html"><img src="photo9.jpg" alt="Photo 9"></a>
-</div>
-
-<div class="quote">Life is a collection of moments, each memory a heartbeat in our story.</div>
-
-<!-- 15 tiny pink floating hearts -->
-<script>
-for(let i=0;i<15;i++){
+for(let i=0;i<30;i++){
     const heart = document.createElement('div');
     heart.className = 'heart';
-    heart.style.top = Math.random()*100+'%';
+    heart.style.bottom = '-10px'; // start from bottom
     heart.style.left = Math.random()*100+'%';
     heart.style.animationDuration = 8 + Math.random()*4 + 's';
     heart.style.animationDelay = Math.random()*5 + 's';
+    heart.style.animationName = 'floatUp';
     document.body.appendChild(heart);
 }
 </script>
 
-</body>
-</html>
+<style>
+@keyframes floatUp {
+    0% {transform: translateY(0) rotate(-45deg);}
+    50% {transform: translateY(-150px) translateX(15px) rotate(-45deg);}
+    100% {transform: translateY(-300px) rotate(-45deg);}
+}
+</style>
