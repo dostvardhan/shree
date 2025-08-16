@@ -1,72 +1,266 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimalist Misty Background</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #f0f0f0, #d3d3d3, #a9a9a9);
-            color: #333;
-            height: 100vh;
-            overflow: hidden;
-            position: relative;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unmatched Memories</title>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f5dc, #d3d3d3, #c8e6c9, #add8e6);
+    position: relative;
+    color: #333;
+}
 
-        .mist {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.6);
-            pointer-events: none;
-            animation: mistyEffect 10s infinite;
-        }
+/* Mist overlay */
+body::before {
+    content: '';
+    position: absolute;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(255,255,255,0.3);
+    pointer-events: none;
+    filter: blur(20px);
+}
 
-        @keyframes mistyEffect {
-            0% {
-                opacity: 0.5;
-                transform: translateX(-100%) translateY(-100%);
-            }
-            50% {
-                opacity: 0.8;
-                transform: translateX(100%) translateY(100%);
-            }
-            100% {
-                opacity: 0.5;
-                transform: translateX(-100%) translateY(-100%);
-            }
-        }
+/* Floating particles */
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 50%;
+    animation: floatParticle linear infinite;
+}
+@keyframes floatParticle {
+    0% { transform: translateY(0) translateX(0); opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { transform: translateY(-800px) translateX(50px); opacity: 0; }
+}
 
-        .content {
-            position: relative;
-            z-index: 1;
-            text-align: center;
-            padding: 20px;
-        }
+/* Floating hearts */
+.heart {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #f5c2c2;
+    transform: rotate(45deg);
+    opacity: 0.5;
+    animation: floatHeart linear infinite;
+    border-radius: 2px;
+}
+.heart::before, .heart::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #f5c2c2;
+    border-radius: 50%;
+}
+.heart::before { top: -4px; left: 0; }
+.heart::after { left: -4px; top: 0; }
 
-        h1 {
-            font-size: 3rem;
-            color: #2f4f4f;
-        }
+@keyframes floatHeart {
+    0% { transform: translateY(0) rotate(45deg); opacity: 0.5; }
+    50% { opacity: 0.7; }
+    100% { transform: translateY(-800px) rotate(45deg); opacity: 0; }
+}
 
-        p {
-            font-size: 1.2rem;
-            color: #696969;
-        }
-    </style>
+/* Title */
+h1 {
+    font-family: 'Great Vibes', cursive;
+    color: gold;
+    margin-bottom: 30px;
+    font-size: 3.5rem;
+    text-shadow: 2px 2px 15px rgba(0,0,0,0.6);
+    z-index: 10;
+    position: relative;
+    text-align: center;
+}
+
+/* Photo container */
+.photo-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    z-index: 10;
+    position: relative;
+}
+
+/* Photo card */
+.photo-card {
+    position: relative;
+    cursor: pointer;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: transform 0.5s ease, filter 0.5s ease;
+}
+.photo-card img {
+    width: 230px;
+    height: auto;
+    border-radius: 15px;
+    object-fit: cover;
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* Fullscreen zoom */
+.fullscreen-img {
+    position: fixed;
+    top:50%;
+    left:50%;
+    transform: translate(-50%, -50%) scale(0);
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 15px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Active full image */
+.fullscreen-img.active {
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+}
+
+/* Quote overlay */
+.fullscreen-quote {
+    position: fixed;
+    top:75%;
+    left:50%;
+    transform: translateX(-50%);
+    font-family: 'Great Vibes', cursive;
+    color: gold;
+    font-size: 28px;
+    background: rgba(0,0,0,0.25);
+    padding: 14px 28px;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 90%;
+    text-shadow: 2px 2px 15px rgba(0,0,0,0.7);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 1001;
+}
+
+.fullscreen-quote.active {
+    opacity: 1;
+}
+
+/* Blur other photos */
+.photo-card.blur {
+    filter: blur(6px);
+    transition: filter 0.5s ease;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    h1 { font-size: 2.5rem; }
+    .photo-card img { width: 80vw; }
+    .fullscreen-quote { font-size: 22px; padding: 10px 20px; }
+}
+</style>
 </head>
 <body>
 
-    <div class="mist"></div>
+<h1>Unmatched Memories</h1>
 
-    <div class="content">
-        <h1>Welcome to the Misty World</h1>
-        <p>Experience the serenity of neutral tones and misty vibes.</p>
+<div class="photo-container">
+    <div class="photo-card" data-quote="Every day is a new beginning.">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo1.jpg" alt="Photo 1">
     </div>
+    <div class="photo-card" data-quote="Cherish the little moments.">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo2.jpg" alt="Photo 2">
+    </div>
+    <div class="photo-card" data-quote="Smile, it's free therapy.">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo3.jpg" alt="Photo 3">
+    </div>
+    <div class="photo-card" data-quote="Peace comes from within.">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo4.jpg" alt="Photo 4">
+    </div>
+    <div class="photo-card" data-quote="Love yourself first.">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo5.jpg" alt="Photo 5">
+    </div>
+    <div class="photo-card" data-quote="Small joys make life big.">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo6.jpg" alt="Photo 6">
+    </div>
+    <div class="photo-card" data-quote="Dream, believe, achieve.">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo7.jpg" alt="Photo 7">
+    </div>
+    <div class="photo-card" data-quote="Happiness is homemade.">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo8.jpg" alt="Photo 8">
+    </div>
+    <div class="photo-card" data-quote="Create memories, not regrets.">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo9.jpg" alt="Photo 9">
+    </div>
+</div>
+
+<img class="fullscreen-img" id="fullscreen-img" src="" alt="Full Photo">
+<div class="fullscreen-quote" id="fullscreen-quote"></div>
+
+<script>
+// Magical particles
+for(let i=0;i<80;i++){
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+    particle.style.left = Math.random()*100 + 'vw';
+    particle.style.top = Math.random()*100 + 'vh';
+    let size = 2+Math.random()*3;
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.opacity = 0.3 + Math.random()*0.7;
+    particle.style.animationDuration = (5+Math.random()*5) + 's';
+    document.body.appendChild(particle);
+}
+
+// Floating hearts
+for(let i=0;i<50;i++){
+    const heart = document.createElement('div');
+    heart.classList.add('heart');
+    heart.style.left = Math.random()*100 + 'vw';
+    heart.style.top = Math.random()*100 + 'vh';
+    heart.style.animationDuration = (5+Math.random()*10) + 's';
+    let size = 5+Math.random()*5;
+    heart.style.width = size + 'px';
+    heart.style.height = size + 'px';
+    heart.style.opacity = 0.4 + Math.random()*0.6;
+    document.body.appendChild(heart);
+}
+
+// Hover zoom functionality
+const photoCards = document.querySelectorAll('.photo-card');
+const fullscreenImg = document.getElementById('fullscreen-img');
+const fullscreenQuote = document.getElementById('fullscreen-quote');
+
+photoCards.forEach(card => {
+    card.addEventListener('mouseenter', () => {
+        const imgSrc = card.querySelector('img').src;
+        const quote = card.dataset.quote;
+
+        fullscreenImg.src = imgSrc;
+        fullscreenImg.classList.add('active');
+        fullscreenQuote.textContent = quote;
+        fullscreenQuote.classList.add('active');
+
+        photoCards.forEach(c => { if(c !== card) c.classList.add('blur'); });
+    });
+
+    card.addEventListener('mouseleave', () => {
+        fullscreenImg.classList.remove('active');
+        fullscreenQuote.classList.remove('active');
+        photoCards.forEach(c => c.classList.remove('blur'));
+    });
+});
+</script>
 
 </body>
 </html>
