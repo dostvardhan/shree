@@ -74,9 +74,9 @@ h1 {
 /* Heart shape */
 .heart {
     position:absolute;
-    width:12px;
-    height:12px;
-    background:red;
+    width:8px;  /* smaller hearts */
+    height:8px;
+    background:pink;
     transform: rotate(-45deg);
     animation: float 12s linear infinite;
 }
@@ -84,17 +84,17 @@ h1 {
 .heart::after {
     content:"";
     position:absolute;
-    width:12px;
-    height:12px;
-    background:red;
+    width:8px;
+    height:8px;
+    background:pink;
     border-radius:50%;
 }
-.heart::before { top:-6px; left:0; }
-.heart::after  { top:0; left:6px; }
+.heart::before { top:-4px; left:0; }
+.heart::after  { top:0; left:4px; }
 
 @keyframes float {
     0% {transform: translateY(0) rotate(-45deg);}
-    50% {transform: translateY(-40px) translateX(20px) rotate(-45deg);}
+    50% {transform: translateY(-30px) translateX(15px) rotate(-45deg);}
     100% {transform: translateY(0) rotate(-45deg);}
 }
 </style>
@@ -118,18 +118,15 @@ h1 {
 
 <div class="quote">Life is a collection of moments, each memory a heartbeat in our story.</div>
 
-<!-- 30 tiny floating hearts -->
+<!-- 15 tiny pink floating hearts -->
 <script>
-const colors = ["pink","red","maroon"];
-for(let i=0;i<30;i++){
+for(let i=0;i<15;i++){
     const heart = document.createElement('div');
     heart.className = 'heart';
     heart.style.top = Math.random()*100+'%';
     heart.style.left = Math.random()*100+'%';
-    heart.style.background = colors[Math.floor(Math.random()*colors.length)];
     heart.style.animationDuration = 8 + Math.random()*4 + 's';
     heart.style.animationDelay = Math.random()*5 + 's';
-    heart.querySelector = null;
     document.body.appendChild(heart);
 }
 </script>
