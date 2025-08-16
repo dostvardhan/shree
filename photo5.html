@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photo 1 Memories</title>
+<style>
+body {
+    margin:0;
+    font-family: 'Segoe UI', sans-serif;
+    background: radial-gradient(circle at top, #0d0f14, #1c1f28);
+    color:#ffd700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    overflow:hidden;
+    text-align:center;
+}
+img {
+    max-width:80%;
+    max-height:70vh;
+    object-fit:contain;
+    border-radius:15px;
+    box-shadow:0 0 50px rgba(255,215,0,0.8);
+}
+.quote {
+    font-size:24px;
+    margin-top:20px;
+    text-shadow:2px 2px 10px rgba(0,0,0,0.7);
+    max-width:80%;
+}
+.heart-nav {
+    position:absolute;
+    top:50%;
+    font-size:50px;
+    cursor:pointer;
+    color:#ff4d6d;
+    transition: all 0.3s ease;
+    user-select:none;
+}
+.heart-nav:hover {
+    transform:scale(1.2);
+    text-shadow:0 0 20px #ff4d6d, 0 0 40px #ff1a1a;
+}
+#prev { left:30px; }
+#next { right:30px; }
+</style>
+</head>
+<body>
+
+<a id="prev" class="heart-nav" href="photo9.html">&#10084;&#65039;</a>
+<img src="photo1.jpg" alt="Photo 1">
+<a id="next" class="heart-nav" href="photo2.html">&#10084;&#65039;</a>
+<div class="quote">Every day is a new beginning. This photo reminds me of hope and fresh mornings.</div>
+
+</body>
+</html>
