@@ -16,10 +16,41 @@ body {
     padding: 40px 20px;
     position: relative;
     background: linear-gradient(135deg, #0d1117, #1b1f28, #2c2f3a);
-    background-image: url('https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080');
-    background-size: cover;
-    background-position: center;
     color: #f5d76e;
+    overflow: hidden;
+}
+
+/* Tiny floating hearts */
+.heart {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: rgba(245, 215, 110, 0.8);
+    transform: rotate(45deg);
+    opacity: 0.7;
+    animation: floatUp linear infinite;
+}
+.heart::before,
+.heart::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: rgba(245, 215, 110, 0.8);
+    border-radius: 50%;
+}
+.heart::before {
+    top: -5px;
+    left: 0;
+}
+.heart::after {
+    left: 5px;
+    top: 0;
+}
+
+@keyframes floatUp {
+    0% { transform: translateY(0) rotate(45deg); opacity: 0.7; }
+    100% { transform: translateY(-1000px) rotate(45deg); opacity: 0; }
 }
 
 /* Title */
@@ -39,6 +70,7 @@ h1 {
     justify-content: center;
     gap: 20px;
     position: relative;
+    z-index: 2; /* ensures photos are above hearts */
 }
 
 /* Photo card */
@@ -59,3 +91,40 @@ h1 {
 
 /* Fullscreen zoom */
 .fullscreen-img {
+    position: fixed;
+    top:50%;
+    left:50%;
+    transform: translate(-50%, -50%) scale(0);
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 15px;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.9);
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Active full image */
+.fullscreen-img.active {
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+}
+
+/* Quote overlay */
+.fullscreen-quote {
+    position: fixed;
+    top:75%;
+    left:50%;
+    transform: translateX(-50%);
+    font-family: 'Great Vibes', cursive;
+    color: #f5d76e;
+    font-size: 28px;
+    background: rgba(0,0,0,0.35);
+    padding: 14px 28px;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 90%;
+    text-shadow: 2px 2px 15px rgba(0,0,0,0.9);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index:
