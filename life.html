@@ -79,4 +79,137 @@ h1 {
     cursor: pointer;
     border-radius: 15px;
     overflow: hidden;
-    transition:
+    transition: transform 0.5s ease, filter 0.5s ease;
+}
+.photo-card img {
+    width: 230px;
+    height: auto;
+    border-radius: 15px;
+    object-fit: cover;
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* Fullscreen zoom */
+.fullscreen-img {
+    position: fixed;
+    top:50%;
+    left:50%;
+    transform: translate(-50%, -50%) scale(0);
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 15px;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.9);
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Active full image */
+.fullscreen-img.active {
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+}
+
+/* Quote overlay */
+.fullscreen-quote {
+    position: fixed;
+    top:75%;
+    left:50%;
+    transform: translateX(-50%);
+    font-family: 'Great Vibes', cursive;
+    color: #f5d76e;
+    font-size: 28px;
+    background: rgba(0,0,0,0.35);
+    padding: 14px 28px;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 90%;
+    text-shadow: 2px 2px 15px rgba(0,0,0,0.9);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 1001;
+}
+
+.fullscreen-quote.active {
+    opacity: 1;
+}
+
+/* Blur other photos */
+.photo-card.blur {
+    filter: blur(5px);
+    transition: filter 0.5s ease;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    h1 { font-size: 2.5rem; }
+    .photo-card img { width: 80vw; }
+    .fullscreen-quote { font-size: 22px; padding: 10px 20px; }
+}
+</style>
+</head>
+<body>
+
+<h1>Unmatched Memories</h1>
+
+<div class="photo-container">
+    <div class="photo-card" data-quote="Every day is a new beginning.">
+        <img src="photo1.jpg" alt="Photo 1">
+    </div>
+    <div class="photo-card" data-quote="Cherish the little moments.">
+        <img src="photo2.jpg" alt="Photo 2">
+    </div>
+    <div class="photo-card" data-quote="Smile, it's free therapy.">
+        <img src="photo3.jpg" alt="Photo 3">
+    </div>
+    <div class="photo-card" data-quote="Peace comes from within.">
+        <img src="photo4.jpg" alt="Photo 4">
+    </div>
+    <div class="photo-card" data-quote="Love yourself first.">
+        <img src="photo5.jpg" alt="Photo 5">
+    </div>
+</div>
+
+<img class="fullscreen-img" id="fullscreen-img" src="" alt="Full Photo">
+<div class="fullscreen-quote" id="fullscreen-quote"></div>
+
+<script>
+// Floating hearts creation
+for(let i=0;i<30;i++){
+    const heart = document.createElement('div');
+    heart.classList.add('heart');
+    heart.style.left = Math.random()*100+'%';
+    heart.style.animationDuration = 5 + Math.random()*5+'s';
+    heart.style.width = 8 + Math.random()*12+'px';
+    heart.style.height = 8 + Math.random()*12+'px';
+    document.body.appendChild(heart);
+}
+
+// Photo hover effect
+const photoCards = document.querySelectorAll('.photo-card');
+const fullscreenImg = document.getElementById('fullscreen-img');
+const fullscreenQuote = document.getElementById('fullscreen-quote');
+
+photoCards.forEach(card => {
+    card.addEventListener('mouseenter', () => {
+        const imgSrc = card.querySelector('img').src;
+        const quote = card.dataset.quote;
+
+        fullscreenImg.src = imgSrc;
+        fullscreenImg.classList.add('active');
+        fullscreenQuote.textContent = quote;
+        fullscreenQuote.classList.add('active');
+
+        photoCards.forEach(c => { if(c !== card) c.classList.add('blur'); });
+    });
+
+    card.addEventListener('mouseleave', () => {
+        fullscreenImg.classList.remove('active');
+        fullscreenQuote.classList.remove('active');
+        photoCards.forEach(c => c.classList.remove('blur'));
+    });
+});
+</script>
+
+</body>
+</html>
