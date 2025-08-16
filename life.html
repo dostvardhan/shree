@@ -3,19 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Unmatched Memories - 9 Photos</title>
+<title>Unmatched Memories - Slider</title>
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 <style>
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 40px 20px;
     background: linear-gradient(to bottom, #0d0f14, #1c1f28);
-    overflow: hidden;
+    overflow-x: hidden;
     color: #f5d76e;
     position: relative;
 }
@@ -32,31 +28,40 @@ body {
 h1 {
     font-family: 'Great Vibes', cursive;
     color: #f5d76e;
-    margin-bottom: 30px;
-    font-size: 3.5rem;
-    text-shadow: 2px 2px 18px rgba(0,0,0,0.7);
+    margin: 20px 0;
+    font-size: 3rem;
     text-align: center;
+    text-shadow: 2px 2px 18px rgba(0,0,0,0.7);
     z-index: 2;
 }
 
+/* Horizontal slider container */
 .photo-container {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
     gap: 20px;
-    max-width: 1200px;
-    position: relative;
+    overflow-x: auto;
+    padding: 20px;
+    scroll-behavior: smooth;
     z-index: 2;
+}
+
+.photo-container::-webkit-scrollbar {
+    height: 10px;
+}
+
+.photo-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 215, 0, 0.5);
+    border-radius: 5px;
 }
 
 .photo-card {
+    flex: 0 0 auto;
     position: relative;
     cursor: pointer;
     border-radius: 15px;
     overflow: hidden;
     transition: transform 0.5s ease, filter 0.5s ease, box-shadow 0.5s ease;
-    flex: 1 1 200px;
-    max-width: 230px;
+    width: 250px;
 }
 .photo-card img {
     width: 100%;
@@ -114,8 +119,8 @@ h1 {
 }
 
 @media (max-width: 600px) {
-    h1 { font-size: 2.5rem; }
-    .photo-card { max-width: 80vw; }
+    h1 { font-size: 2rem; }
+    .photo-card { width: 70vw; }
     .fullscreen-quote { font-size: 22px; padding: 10px 20px; }
 }
 </style>
@@ -216,7 +221,7 @@ class Heart {
     }
 }
 
-// Rain drops with subtle streak
+// Rain drops
 class RainDrop {
     constructor(){ this.reset(); this.trail = []; }
     reset(){
