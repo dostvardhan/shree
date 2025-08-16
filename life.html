@@ -9,14 +9,17 @@
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 40px 20px;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f5f5dc, #d3d3d3, #c8e6c9, #add8e6);
     position: relative;
+    background: linear-gradient(135deg, #f5f5dc, #d3d3d3, #c8e6c9, #add8e6);
+    background-image: url('https://img.freepik.com/free-vector/rectangle-gold-frame-with-foliage-pattern-background_53876-99796.jpg?w=740&t=st=1755407146~exp=1755407746~hmac=sample'); /* Unique gold-floral inspired background */
+    background-size: cover;
+    background-position: center;
     color: #333;
 }
 
@@ -146,121 +149,4 @@ h1 {
     border-radius: 15px;
     text-align: center;
     max-width: 90%;
-    text-shadow: 2px 2px 15px rgba(0,0,0,0.7);
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    z-index: 1001;
-}
-
-.fullscreen-quote.active {
-    opacity: 1;
-}
-
-/* Blur other photos */
-.photo-card.blur {
-    filter: blur(6px);
-    transition: filter 0.5s ease;
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-    h1 { font-size: 2.5rem; }
-    .photo-card img { width: 80vw; }
-    .fullscreen-quote { font-size: 22px; padding: 10px 20px; }
-}
-</style>
-</head>
-<body>
-
-<h1>Unmatched Memories</h1>
-
-<div class="photo-container">
-    <div class="photo-card" data-quote="Every day is a new beginning.">
-        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo1.jpg" alt="Photo 1">
-    </div>
-    <div class="photo-card" data-quote="Cherish the little moments.">
-        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo2.jpg" alt="Photo 2">
-    </div>
-    <div class="photo-card" data-quote="Smile, it's free therapy.">
-        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo3.jpg" alt="Photo 3">
-    </div>
-    <div class="photo-card" data-quote="Peace comes from within.">
-        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo4.jpg" alt="Photo 4">
-    </div>
-    <div class="photo-card" data-quote="Love yourself first.">
-        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo5.jpg" alt="Photo 5">
-    </div>
-    <div class="photo-card" data-quote="Small joys make life big.">
-        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo6.jpg" alt="Photo 6">
-    </div>
-    <div class="photo-card" data-quote="Dream, believe, achieve.">
-        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo7.jpg" alt="Photo 7">
-    </div>
-    <div class="photo-card" data-quote="Happiness is homemade.">
-        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo8.jpg" alt="Photo 8">
-    </div>
-    <div class="photo-card" data-quote="Create memories, not regrets.">
-        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo9.jpg" alt="Photo 9">
-    </div>
-</div>
-
-<img class="fullscreen-img" id="fullscreen-img" src="" alt="Full Photo">
-<div class="fullscreen-quote" id="fullscreen-quote"></div>
-
-<script>
-// Magical particles
-for(let i=0;i<80;i++){
-    const particle = document.createElement('div');
-    particle.classList.add('particle');
-    particle.style.left = Math.random()*100 + 'vw';
-    particle.style.top = Math.random()*100 + 'vh';
-    let size = 2+Math.random()*3;
-    particle.style.width = size + 'px';
-    particle.style.height = size + 'px';
-    particle.style.opacity = 0.3 + Math.random()*0.7;
-    particle.style.animationDuration = (5+Math.random()*5) + 's';
-    document.body.appendChild(particle);
-}
-
-// Floating hearts
-for(let i=0;i<50;i++){
-    const heart = document.createElement('div');
-    heart.classList.add('heart');
-    heart.style.left = Math.random()*100 + 'vw';
-    heart.style.top = Math.random()*100 + 'vh';
-    heart.style.animationDuration = (5+Math.random()*10) + 's';
-    let size = 5+Math.random()*5;
-    heart.style.width = size + 'px';
-    heart.style.height = size + 'px';
-    heart.style.opacity = 0.4 + Math.random()*0.6;
-    document.body.appendChild(heart);
-}
-
-// Hover zoom functionality
-const photoCards = document.querySelectorAll('.photo-card');
-const fullscreenImg = document.getElementById('fullscreen-img');
-const fullscreenQuote = document.getElementById('fullscreen-quote');
-
-photoCards.forEach(card => {
-    card.addEventListener('mouseenter', () => {
-        const imgSrc = card.querySelector('img').src;
-        const quote = card.dataset.quote;
-
-        fullscreenImg.src = imgSrc;
-        fullscreenImg.classList.add('active');
-        fullscreenQuote.textContent = quote;
-        fullscreenQuote.classList.add('active');
-
-        photoCards.forEach(c => { if(c !== card) c.classList.add('blur'); });
-    });
-
-    card.addEventListener('mouseleave', () => {
-        fullscreenImg.classList.remove('active');
-        fullscreenQuote.classList.remove('active');
-        photoCards.forEach(c => c.classList.remove('blur'));
-    });
-});
-</script>
-
-</body>
-</html>
+    text-shadow: 2px 2
