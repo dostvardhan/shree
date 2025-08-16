@@ -1,9 +1,12 @@
 [build]
+  functions = "netlify/functions"
   publish = "."
-  command = ""
 
-[[redirects]]
-  from = "/life.html"
-  to = "/401.html"
-  status = 401
-  force = true
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["cloudinary", "formidable", "firebase-admin"]
+  included_files = []
+
+# Optional: increase function timeout if you want
+#[[functions]], name="upload"
+#  timeout = 20
