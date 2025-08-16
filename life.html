@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Unmatched Memories - Rainy Mood</title>
+<title>Unmatched Memories - Rain on Glass</title>
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 <style>
 body {
@@ -15,43 +15,9 @@ body {
     align-items: center;
     padding: 40px 20px;
     position: relative;
-    background: url('rainy-glass.jpg') no-repeat center center fixed;
-    background-size: cover;
-    color: #f5d76e;
+    background: linear-gradient(to bottom, #0d1117, #1b1f28);
     overflow: hidden;
-}
-
-/* Tiny floating hearts */
-.heart {
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    background: rgba(245, 215, 110, 0.8);
-    transform: rotate(45deg);
-    opacity: 0.7;
-    animation: floatUp linear infinite;
-}
-.heart::before,
-.heart::after {
-    content: '';
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    background: rgba(245, 215, 110, 0.8);
-    border-radius: 50%;
-}
-.heart::before {
-    top: -5px;
-    left: 0;
-}
-.heart::after {
-    left: 5px;
-    top: 0;
-}
-
-@keyframes floatUp {
-    0% { transform: translateY(0) rotate(45deg); opacity: 0.7; }
-    100% { transform: translateY(-1000px) rotate(45deg); opacity: 0; }
+    color: #f5d76e;
 }
 
 /* Title */
@@ -62,6 +28,7 @@ h1 {
     font-size: 3.5rem;
     text-shadow: 2px 2px 12px rgba(0,0,0,0.7);
     text-align: center;
+    z-index: 2;
 }
 
 /* Photo container */
@@ -71,7 +38,7 @@ h1 {
     justify-content: center;
     gap: 20px;
     position: relative;
-    z-index: 2; 
+    z-index: 2;
 }
 
 /* Photo card */
@@ -141,6 +108,46 @@ h1 {
     transition: filter 0.5s ease;
 }
 
+/* Floating hearts */
+.heart {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: rgba(245, 215, 110, 0.8);
+    transform: rotate(45deg);
+    opacity: 0.7;
+    animation: floatUp linear infinite;
+}
+.heart::before,
+.heart::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: rgba(245, 215, 110, 0.8);
+    border-radius: 50%;
+}
+.heart::before { top: -5px; left: 0; }
+.heart::after { left: 5px; top: 0; }
+@keyframes floatUp {
+    0% { transform: translateY(0) rotate(45deg); opacity: 0.7; }
+    100% { transform: translateY(-1000px) rotate(45deg); opacity: 0; }
+}
+
+/* Raindrops */
+.raindrop {
+    position: absolute;
+    width: 2px;
+    height: 12px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%;
+    animation: fall linear infinite;
+}
+@keyframes fall {
+    0% { transform: translateY(-20px); opacity: 0.5; }
+    100% { transform: translateY(110vh); opacity: 0; }
+}
+
 /* Responsive */
 @media (max-width: 600px) {
     h1 { font-size: 2.5rem; }
@@ -175,7 +182,7 @@ h1 {
 <div class="fullscreen-quote" id="fullscreen-quote"></div>
 
 <script>
-// Floating hearts creation
+// Floating hearts
 for(let i=0;i<30;i++){
     const heart = document.createElement('div');
     heart.classList.add('heart');
@@ -186,7 +193,17 @@ for(let i=0;i<30;i++){
     document.body.appendChild(heart);
 }
 
-// Photo hover effect
+// Raindrops
+for(let i=0;i<100;i++){
+    const drop = document.createElement('div');
+    drop.classList.add('raindrop');
+    drop.style.left = Math.random()*100+'vw';
+    drop.style.animationDuration = 1 + Math.random()*1.5+'s';
+    drop.style.height = 5 + Math.random()*15+'px';
+    document.body.appendChild(drop);
+}
+
+// Photo hover zoom
 const photoCards = document.querySelectorAll('.photo-card');
 const fullscreenImg = document.getElementById('fullscreen-img');
 const fullscreenQuote = document.getElementById('fullscreen-quote');
