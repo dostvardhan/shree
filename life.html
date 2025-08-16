@@ -111,27 +111,15 @@ h1 {
 /* Floating hearts */
 .heart {
     position: absolute;
-    width: 10px;
-    height: 10px;
-    background: rgba(245, 215, 110, 0.8);
-    transform: rotate(45deg);
-    opacity: 0.7;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    opacity: 0.8;
     animation: floatUp linear infinite;
 }
-.heart::before,
-.heart::after {
-    content: '';
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    background: rgba(245, 215, 110, 0.8);
-    border-radius: 50%;
-}
-.heart::before { top: -5px; left: 0; }
-.heart::after { left: 5px; top: 0; }
 @keyframes floatUp {
-    0% { transform: translateY(0) rotate(45deg); opacity: 0.7; }
-    100% { transform: translateY(-1000px) rotate(45deg); opacity: 0; }
+    0% { transform: translateY(0); opacity:0.8; }
+    100% { transform: translateY(-1000px); opacity:0; }
 }
 
 /* Raindrops */
@@ -141,11 +129,7 @@ h1 {
     height: 12px;
     background: rgba(255,255,255,0.3);
     border-radius: 50%;
-    animation: fall linear infinite;
-}
-@keyframes fall {
-    0% { transform: translateY(-20px); opacity: 0.5; }
-    100% { transform: translateY(110vh); opacity: 0; }
+    opacity: 0.6;
 }
 
 /* Responsive */
@@ -183,25 +167,44 @@ h1 {
 
 <script>
 // Floating hearts
+const heartColors = ['#ff4d6d','#b3003b','#ff1a1a'];
 for(let i=0;i<30;i++){
     const heart = document.createElement('div');
     heart.classList.add('heart');
     heart.style.left = Math.random()*100+'%';
-    heart.style.animationDuration = 5 + Math.random()*5+'s';
+    heart.style.bottom = '0px';
+    heart.style.backgroundColor = heartColors[Math.floor(Math.random()*heartColors.length)];
     heart.style.width = 8 + Math.random()*12+'px';
     heart.style.height = 8 + Math.random()*12+'px';
+    heart.style.animationDuration = 4 + Math.random()*4+'s';
     document.body.appendChild(heart);
 }
 
-// Raindrops
-for(let i=0;i<100;i++){
+// Raindrops sliding effect
+for(let i=0;i<120;i++){
     const drop = document.createElement('div');
     drop.classList.add('raindrop');
     drop.style.left = Math.random()*100+'vw';
-    drop.style.animationDuration = 1 + Math.random()*1.5+'s';
+    drop.style.top = Math.random()*-100+'vh';
     drop.style.height = 5 + Math.random()*15+'px';
+    drop.style.animationDuration = 2 + Math.random()*3+'s';
     document.body.appendChild(drop);
 }
+
+function animateRaindrops(){
+    const drops = document.querySelectorAll('.raindrop');
+    drops.forEach(drop=>{
+        let top = parseFloat(drop.style.top);
+        top += 2 + Math.random()*2;
+        if(top > window.innerHeight){
+            top = -20 - Math.random()*50;
+            drop.style.left = Math.random()*100+'vw';
+        }
+        drop.style.top = top + 'px';
+    });
+    requestAnimationFrame(animateRaindrops);
+}
+animateRaindrops();
 
 // Photo hover zoom
 const photoCards = document.querySelectorAll('.photo-card');
