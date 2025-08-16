@@ -1,88 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Upload Memories</title>
+  <title>Upload Photo</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
-    header {
-      background: #6a1b9a;
-      color: #fff;
-      padding: 1rem;
-    }
-    .container {
-      margin-top: 2rem;
-    }
-    .hidden {
-      display: none;
-    }
-    form {
-      background: #fff;
-      padding: 2rem;
-      margin: auto;
-      max-width: 400px;
-      border-radius: 10px;
-      box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
-    }
-    input[type="file"], input[type="submit"] {
-      margin-top: 1rem;
-      width: 100%;
-      padding: 0.5rem;
-    }
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    form { display: flex; flex-direction: column; gap: 10px; width: 300px; }
+    input, textarea, button { padding: 10px; font-size: 16px; }
+    .feed { margin-top: 30px; }
+    .post { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+    .post img { max-width: 100%; border-radius: 8px; }
+    .date { color: gray; font-size: 12px; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Upload Your Memories</h1>
-  </header>
+  <h2>Upload a Photo</h2>
+  <form id="uploadForm">
+    <input type="file" id="photo" accept="image/*" required>
+    <textarea id="caption" placeholder="Write something..." required></textarea>
+    <button type="submit">Upload</button>
+  </form>
 
-  <!-- Netlify Identity Widget -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-
-  <!-- Login/Logout buttons -->
-  <div data-netlify-identity-menu></div>
-  <div data-netlify-identity-button></div>
-
-  <div class="container">
-    <!-- Upload form (hidden until login) -->
-    <form id="uploadForm" class="hidden">
-      <h2>Welcome! Share Your File</h2>
-      <input type="file" name="file" required />
-      <input type="submit" value="Upload" />
-    </form>
-  </div>
+  <div class="feed" id="feed"></div>
 
   <script>
-    // Listen for login/logout events
-    if (window.netlifyIdentity) {
-      window.netlifyIdentity.on("init", user => {
-        toggleForm(user);
-      });
+    const form = document.getElementById("uploadForm");
+    const feed = document.getElementById("feed");
 
-      window.netlifyIdentity.on("login", user => {
-        toggleForm(user);
-      });
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const file = document.getElementById("photo").files[0];
+      const caption = document.getElementById("caption").value;
+      const date = new Date().toLocaleString();
 
-      window.netlifyIdentity.on("logout", () => {
-        toggleForm(null);
-      });
-    }
+      // Frontend only demo (not saving to backend yet)
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const div = document.createElement("div");
+        div.classList.add("post");
+        div.innerHTML = `
+          <img src="${event.target.result}" />
+          <p>${caption}</p>
+          <p class="date">${date}</p>
+        `;
+        feed.prepend(div);
+      };
+      reader.readAsDataURL(file);
 
-    function toggleForm(user) {
-      const form = document.getElementById("uploadForm");
-      if (user) {
-        form.classList.remove("hidden");
-      } else {
-        form.classList.add("hidden");
-      }
-    }
+      form.reset();
+    });
   </script>
 </body>
 </html>
