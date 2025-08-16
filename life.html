@@ -10,11 +10,13 @@
 <script>
 window.addEventListener('load', () => {
     if (window.netlifyIdentity) {
-        window.netlifyIdentity.on('init', user => {
-            if (!user) {
-                window.location.href = "/";
-            }
-        });
+        window.netlifyIdentity.init();
+        const user = window.netlifyIdentity.currentUser();
+        if (!user) {
+            window.location.href = "/"; // redirect if not logged in
+        }
+    } else {
+        window.location.href = "/"; // redirect if identity not loaded
     }
 });
 </script>
@@ -81,14 +83,33 @@ h1 {
     z-index:1;
 }
 
-canvas {
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    pointer-events:none; /* allow clicks through hearts */
-    z-index:0;
+/* Hearts */
+.heart {
+    position:absolute;
+    width:10px;
+    height:10px;
+    background:red;
+    transform: rotate(-45deg);
+    bottom:0;
+    border-radius:2px;
+    animation: floatUp linear infinite;
+}
+
+.heart::before,
+.heart::after {
+    content:"";
+    position:absolute;
+    width:10px;
+    height:10px;
+    background:red;
+    border-radius:50%;
+}
+.heart::before { top:-5px; left:0; }
+.heart::after  { top:0; left:5px; }
+
+@keyframes floatUp {
+    0% {transform: translateY(0) rotate(-45deg);}
+    100% {transform: translateY(-600px) rotate(-45deg);}
 }
 </style>
 </head>
@@ -110,62 +131,18 @@ canvas {
 
 <div class="quote">Life is a collection of moments, each memory a heartbeat in our story.</div>
 
-<!-- Canvas for floating hearts -->
-<canvas id="heartsCanvas"></canvas>
-
+<!-- Hearts -->
 <script>
-const canvas = document.getElementById('heartsCanvas');
-const ctx = canvas.getContext('2d');
-
-let W = canvas.width = window.innerWidth;
-let H = canvas.height = window.innerHeight;
-
-window.addEventListener('resize', () => {
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-});
-
-class Heart {
-    constructor(){
-        this.x = Math.random()*W;
-        this.y = H + Math.random()*100; // start below bottom
-        this.size = 5 + Math.random()*5;
-        this.speed = 0.5 + Math.random()*1.0;
-        this.drift = Math.random()*2 - 1;
-        this.color = ['#ff7f7f','#ff4d6d','#ff99aa'][Math.floor(Math.random()*3)];
-    }
-    draw(){
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.moveTo(this.x, this.y);
-        ctx.bezierCurveTo(this.x, this.y - this.size/2, this.x - this.size/2, this.y - this.size, this.x, this.y - this.size);
-        ctx.bezierCurveTo(this.x + this.size/2, this.y - this.size, this.x + this.size, this.y - this.size/2, this.x, this.y);
-        ctx.fill();
-    }
-    update(){
-        this.y -= this.speed;
-        this.x += this.drift;
-        if(this.y < -10) {
-            this.y = H + 10;
-            this.x = Math.random()*W;
-        }
-        this.draw();
-    }
-}
-
-let hearts = [];
+const colors = ['#ff7f7f','#ff4d6d','#ff99aa'];
 for(let i=0;i<30;i++){
-    hearts.push(new Heart());
+    const heart = document.createElement('div');
+    heart.className = 'heart';
+    heart.style.left = Math.random()*100+'%';
+    heart.style.animationDuration = (5 + Math.random()*5) + 's';
+    heart.style.background = colors[Math.floor(Math.random()*colors.length)];
+    heart.style.setProperty('--delay', Math.random()*5+'s');
+    document.body.appendChild(heart);
 }
-
-function animate(){
-    ctx.clearRect(0,0,W,H);
-    for(let h of hearts){
-        h.update();
-    }
-    requestAnimationFrame(animate);
-}
-animate();
 </script>
 
 </body>
