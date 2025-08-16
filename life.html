@@ -10,11 +10,163 @@ body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
-    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 40px 20px;
     position: relative;
-    background: linear-gradient(135deg, #f5f5dc, #d3d3d3, #c8e6c9, #add8e6);
-    background-image: url('https://img.freepik.com/free-vector/rectangle-gold-frame-with-foliage-pat
+    background: linear-gradient(135deg, #ffeedd, #f5f5f5, #e0f7fa, #fce4ec);
+    background-image: url('https://images.unsplash.com/photo-1615485977884-417e94edb019?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8cGFzdGVsJTIwZmxvcmFsfHx8fHx8MTY5MjkxNzY2Ng&ixlib=rb-4.0.3&q=80&w=1080');
+    background-size: cover;
+    background-position: center;
+    color: #333;
+}
+
+/* Title */
+h1 {
+    font-family: 'Great Vibes', cursive;
+    color: #d4af37;
+    margin-bottom: 30px;
+    font-size: 3.5rem;
+    text-shadow: 1px 1px 8px rgba(0,0,0,0.4);
+    text-align: center;
+}
+
+/* Photo container */
+.photo-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    position: relative;
+}
+
+/* Photo card */
+.photo-card {
+    position: relative;
+    cursor: pointer;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: transform 0.5s ease, filter 0.5s ease;
+}
+.photo-card img {
+    width: 230px;
+    height: auto;
+    border-radius: 15px;
+    object-fit: cover;
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* Fullscreen zoom */
+.fullscreen-img {
+    position: fixed;
+    top:50%;
+    left:50%;
+    transform: translate(-50%, -50%) scale(0);
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 15px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Active full image */
+.fullscreen-img.active {
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+}
+
+/* Quote overlay */
+.fullscreen-quote {
+    position: fixed;
+    top:75%;
+    left:50%;
+    transform: translateX(-50%);
+    font-family: 'Great Vibes', cursive;
+    color: #d4af37;
+    font-size: 28px;
+    background: rgba(0,0,0,0.2);
+    padding: 12px 24px;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 90%;
+    text-shadow: 1px 1px 8px rgba(0,0,0,0.5);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    z-index: 1001;
+}
+
+.fullscreen-quote.active {
+    opacity: 1;
+}
+
+/* Blur other photos */
+.photo-card.blur {
+    filter: blur(4px);
+    transition: filter 0.5s ease;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    h1 { font-size: 2.5rem; }
+    .photo-card img { width: 80vw; }
+    .fullscreen-quote { font-size: 22px; padding: 10px 20px; }
+}
+</style>
+</head>
+<body>
+
+<h1>Unmatched Memories</h1>
+
+<div class="photo-container">
+    <div class="photo-card" data-quote="Every day is a new beginning.">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo1.jpg" alt="Photo 1">
+    </div>
+    <div class="photo-card" data-quote="Cherish the little moments.">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo2.jpg" alt="Photo 2">
+    </div>
+    <div class="photo-card" data-quote="Smile, it's free therapy.">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo3.jpg" alt="Photo 3">
+    </div>
+    <div class="photo-card" data-quote="Peace comes from within.">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo4.jpg" alt="Photo 4">
+    </div>
+    <div class="photo-card" data-quote="Love yourself first.">
+        <img src="https://raw.githubusercontent.com/dostvardhan/shree/main/photo5.jpg" alt="Photo 5">
+    </div>
+</div>
+
+<img class="fullscreen-img" id="fullscreen-img" src="" alt="Full Photo">
+<div class="fullscreen-quote" id="fullscreen-quote"></div>
+
+<script>
+// Hover zoom functionality
+const photoCards = document.querySelectorAll('.photo-card');
+const fullscreenImg = document.getElementById('fullscreen-img');
+const fullscreenQuote = document.getElementById('fullscreen-quote');
+
+photoCards.forEach(card => {
+    card.addEventListener('mouseenter', () => {
+        const imgSrc = card.querySelector('img').src;
+        const quote = card.dataset.quote;
+
+        fullscreenImg.src = imgSrc;
+        fullscreenImg.classList.add('active');
+        fullscreenQuote.textContent = quote;
+        fullscreenQuote.classList.add('active');
+
+        photoCards.forEach(c => { if(c !== card) c.classList.add('blur'); });
+    });
+
+    card.addEventListener('mouseleave', () => {
+        fullscreenImg.classList.remove('active');
+        fullscreenQuote.classList.remove('active');
+        photoCards.forEach(c => c.classList.remove('blur'));
+    });
+});
+</script>
+
+</body>
+</html>
