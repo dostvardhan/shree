@@ -21,7 +21,7 @@ body {
 }
 
 /* Canvas covers entire body */
-#rainCanvas {
+#effectCanvas {
     position: fixed;
     top:0;
     left:0;
@@ -118,20 +118,6 @@ h1 {
     transition: filter 0.5s ease;
 }
 
-/* Floating hearts */
-.heart {
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    opacity: 0.8;
-    animation: floatUp linear infinite;
-}
-@keyframes floatUp {
-    0% { transform: translateY(0); opacity:0.8; }
-    100% { transform: translateY(-1000px); opacity:0; }
-}
-
 /* Responsive */
 @media (max-width: 600px) {
     h1 { font-size: 2.5rem; }
@@ -142,7 +128,7 @@ h1 {
 </head>
 <body>
 
-<canvas id="rainCanvas"></canvas>
+<canvas id="effectCanvas"></canvas>
 
 <h1>Unmatched Memories</h1>
 
@@ -168,20 +154,6 @@ h1 {
 <div class="fullscreen-quote" id="fullscreen-quote"></div>
 
 <script>
-// Floating hearts
-const heartColors = ['#ff4d6d','#b3003b','#ff1a1a'];
-for(let i=0;i<30;i++){
-    const heart = document.createElement('div');
-    heart.classList.add('heart');
-    heart.style.left = Math.random()*100+'%';
-    heart.style.bottom = '0px';
-    heart.style.backgroundColor = heartColors[Math.floor(Math.random()*heartColors.length)];
-    heart.style.width = 8 + Math.random()*12+'px';
-    heart.style.height = 8 + Math.random()*12+'px';
-    heart.style.animationDuration = 4 + Math.random()*4+'s';
-    document.body.appendChild(heart);
-}
-
 // Photo hover zoom
 const photoCards = document.querySelectorAll('.photo-card');
 const fullscreenImg = document.getElementById('fullscreen-img');
@@ -191,15 +163,12 @@ photoCards.forEach(card => {
     card.addEventListener('mouseenter', () => {
         const imgSrc = card.querySelector('img').src;
         const quote = card.dataset.quote;
-
         fullscreenImg.src = imgSrc;
         fullscreenImg.classList.add('active');
         fullscreenQuote.textContent = quote;
         fullscreenQuote.classList.add('active');
-
         photoCards.forEach(c => { if(c !== card) c.classList.add('blur'); });
     });
-
     card.addEventListener('mouseleave', () => {
         fullscreenImg.classList.remove('active');
         fullscreenQuote.classList.remove('active');
@@ -207,18 +176,47 @@ photoCards.forEach(card => {
     });
 });
 
-// Realistic Rain on Glass using Canvas
-const canvas = document.getElementById('rainCanvas');
+// Canvas for rain + hearts
+const canvas = document.getElementById('effectCanvas');
 const ctx = canvas.getContext('2d');
 let width = canvas.width = window.innerWidth;
 let height = canvas.height = window.innerHeight;
-
 window.addEventListener('resize', ()=>{
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
 });
 
-class Raindrop {
+// Heart particles
+class Heart {
+    constructor(){
+        this.reset();
+    }
+    reset(){
+        this.x = Math.random()*width;
+        this.y = height + Math.random()*100;
+        this.size = 8 + Math.random()*12;
+        this.speed = 0.5 + Math.random();
+        this.color = ['#ff4d6d','#b3003b','#ff1a1a'][Math.floor(Math.random()*3)];
+    }
+    update(){
+        this.y -= this.speed;
+        if(this.y + this.size < 0) this.reset();
+    }
+    draw(){
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        let topCurveHeight = this.size * 0.3;
+        ctx.moveTo(this.x, this.y);
+        ctx.bezierCurveTo(this.x, this.y - topCurveHeight, this.x - this.size/2, this.y - topCurveHeight, this.x - this.size/2, this.y);
+        ctx.bezierCurveTo(this.x - this.size/2, this.y + this.size/2, this.x, this.y + this.size*0.75, this.x, this.y + this.size);
+        ctx.bezierCurveTo(this.x, this.y + this.size*0.75, this.x + this.size/2, this.y + this.size/2, this.x + this.size/2, this.y);
+        ctx.bezierCurveTo(this.x + this.size/2, this.y - topCurveHeight, this.x, this.y - topCurveHeight, this.x, this.y);
+        ctx.fill();
+    }
+}
+
+// Rain drops with streaks
+class RainDrop {
     constructor(){
         this.reset();
     }
@@ -227,40 +225,43 @@ class Raindrop {
         this.y = Math.random()*-height;
         this.length = 10 + Math.random()*20;
         this.speed = 2 + Math.random()*2;
-        this.opacity = 0.2 + Math.random()*0.3;
-        this.width = 1 + Math.random()*1;
+        this.opacity = 0.2 + Math.random()*0.4;
+        this.width = 1 + Math.random();
+        this.streak = [];
+        for(let i=0;i<3;i++){
+            this.streak.push({offset: i*2, alpha: this.opacity - i*0.05});
+        }
     }
     fall(){
         this.y += this.speed;
-        this.x += Math.sin(this.y*0.01)*2; // slight horizontal slip
-        if(this.y > height){
-            this.reset();
-        }
+        this.x += Math.sin(this.y*0.01)*1.5;
+        if(this.y > height) this.reset();
     }
     draw(){
-        ctx.strokeStyle = 'rgba(255,255,255,'+this.opacity+')';
-        ctx.lineWidth = this.width;
-        ctx.beginPath();
-        ctx.moveTo(this.x,this.y);
-        ctx.lineTo(this.x, this.y + this.length);
-        ctx.stroke();
+        this.streak.forEach(s=>{
+            ctx.strokeStyle = 'rgba(255,255,255,'+s.alpha+')';
+            ctx.lineWidth = this.width;
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y - s.offset);
+            ctx.lineTo(this.x, this.y + this.length - s.offset);
+            ctx.stroke();
+        });
     }
 }
 
-let raindrops = [];
-for(let i=0;i<200;i++){
-    raindrops.push(new Raindrop());
-}
+let hearts = [];
+for(let i=0;i<30;i++) hearts.push(new Heart());
 
-function animateRain(){
+let raindrops = [];
+for(let i=0;i<200;i++) raindrops.push(new RainDrop());
+
+function animate(){
     ctx.clearRect(0,0,width,height);
-    raindrops.forEach(drop=>{
-        drop.fall();
-        drop.draw();
-    });
-    requestAnimationFrame(animateRain);
+    raindrops.forEach(r=>{ r.fall(); r.draw(); });
+    hearts.forEach(h=>{ h.update(); h.draw(); });
+    requestAnimationFrame(animate);
 }
-animateRain();
+animate();
 </script>
 
 </body>
