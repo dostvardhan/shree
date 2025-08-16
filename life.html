@@ -3,188 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Unmatched Memories</title>
+<title>Life Moments</title>
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script>
+if (window.netlifyIdentity) {
+    window.netlifyIdentity.on('init', user => {
+        if (!user) {
+            window.location.href = "/"; // redirect to login page if not logged in
+        }
+    });
+}
+</script>
 <style>
-body {
-    margin:0;
-    font-family: 'Segoe UI', sans-serif;
-    background: radial-gradient(circle at top, #0d0f14, #1c1f28);
-    color: #fff;
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-h1 {
-    text-align:center;
-    font-size:48px;
-    margin:20px 0;
-    background: linear-gradient(45deg, #ff6b6b, #ffd93d);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.photo-container {
-    display:flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    padding: 20px;
-}
-.photo-card {
-    position: relative;
-    margin: 0 15px;
-    flex: 0 0 auto;
-    transition: transform 0.4s ease;
-}
-.photo-card img {
-    display:block;
-    width: 250px;
-    height: auto;
-    border-radius: 15px;
-    cursor: pointer;
-    transition: transform 0.6s ease, box-shadow 0.6s ease;
-}
-.photo-card:hover img {
-    transform: scale(1.6);
-    box-shadow: 0 0 50px rgba(255,215,0,0.8);
-    z-index:10;
-}
-.quote-overlay {
-    position:absolute;
-    bottom:10px;
-    left:50%;
-    transform:translateX(-50%);
-    color: #ffd700;
-    font-size: 18px;
-    text-align:center;
-    opacity:0;
-    transition: opacity 0.4s ease;
-    width:90%;
-}
-.photo-card:hover .quote-overlay { opacity:1; }
-
-.heart-link {
-    display: block;
-    font-size: 40px;
-    color: #ff4d6d;
-    text-align: center;
-    margin-top: 10px;
-    transition: transform 0.3s ease, text-shadow 0.3s ease;
-    text-decoration: none;
-}
-.heart-link:hover {
-    transform: scale(1.2);
-    text-shadow: 0 0 15px #ff4d6d, 0 0 25px #ff1a1a;
-}
-
-/* Canvas for hearts & raindrops */
-#effectCanvas {
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    z-index:0;
-    pointer-events:none;
-}
+body {margin:0;font-family:'Segoe UI',sans-serif;background: linear-gradient(135deg, #a3c4f3, #f8e1a0);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;color:#4b3f2f;text-align:center;}
+.particle {position:absolute;width:6px;height:6px;background: rgba(255,215,100,0.5);border-radius:50%;animation: float 12s linear infinite;}
+@keyframes float {0% {transform: translateY(0) translateX(0);}50% {transform: translateY(-30px) translateX(20px);}100% {transform: translateY(0) translateX(0);}}
+img {max-width:30%;margin:15px;border-radius:15px;object-fit:cover;transition: transform 0.5s ease, box-shadow 0.5s ease;}
+img:hover {transform: scale(1.2); box-shadow:0 0 50px rgba(255,215,150,0.5);}
 </style>
 </head>
 <body>
+<div class="particle" style="top:10%; left:20%; animation-duration:12s;"></div>
+<div class="particle" style="top:30%; left:50%; animation-duration:15s;"></div>
+<div class="particle" style="top:60%; left:70%; animation-duration:10s;"></div>
+<div class="particle" style="top:80%; left:40%; animation-duration:18s;"></div>
+
 <h1>Unmatched Memories</h1>
-
-<canvas id="effectCanvas"></canvas>
-
-<div class="photo-container">
-    <div class="photo-card" data-quote="Every day is a new beginning.">
-        <img src="photo1.jpg" alt="Photo 1">
-        <div class="quote-overlay">Every day is a new beginning.</div>
-        <a href="photo1.html" class="heart-link">&#10084;&#65039;</a>
-    </div>
-    <div class="photo-card" data-quote="Cherish the little moments.">
-        <img src="photo2.jpg" alt="Photo 2">
-        <div class="quote-overlay">Cherish the little moments.</div>
-        <a href="photo2.html" class="heart-link">&#10084;&#65039;</a>
-    </div>
-    <div class="photo-card" data-quote="Smile, it's free therapy.">
-        <img src="photo3.jpg" alt="Photo 3">
-        <div class="quote-overlay">Smile, it's free therapy.</div>
-        <a href="photo3.html" class="heart-link">&#10084;&#65039;</a>
-    </div>
-    <div class="photo-card" data-quote="Peace comes from within.">
-        <img src="photo4.jpg" alt="Photo 4">
-        <div class="quote-overlay">Peace comes from within.</div>
-        <a href="photo4.html" class="heart-link">&#10084;&#65039;</a>
-    </div>
-    <div class="photo-card" data-quote="Love yourself first.">
-        <img src="photo5.jpg" alt="Photo 5">
-        <div class="quote-overlay">Love yourself first.</div>
-        <a href="photo5.html" class="heart-link">&#10084;&#65039;</a>
-    </div>
-    <div class="photo-card" data-quote="Moments that last forever.">
-        <img src="photo6.jpg" alt="Photo 6">
-        <div class="quote-overlay">Moments that last forever.</div>
-        <a href="photo6.html" class="heart-link">&#10084;&#65039;</a>
-    </div>
-    <div class="photo-card" data-quote="Memories are treasures of heart.">
-        <img src="photo7.jpg" alt="Photo 7">
-        <div class="quote-overlay">Memories are treasures of heart.</div>
-        <a href="photo7.html" class="heart-link">&#10084;&#65039;</a>
-    </div>
-    <div class="photo-card" data-quote="Happiness is homemade.">
-        <img src="photo8.jpg" alt="Photo 8">
-        <div class="quote-overlay">Happiness is homemade.</div>
-        <a href="photo8.html" class="heart-link">&#10084;&#65039;</a>
-    </div>
-    <div class="photo-card" data-quote="Life is a beautiful journey.">
-        <img src="photo9.jpg" alt="Photo 9">
-        <div class="quote-overlay">Life is a beautiful journey.</div>
-        <a href="photo9.html" class="heart-link">&#10084;&#65039;</a>
-    </div>
-</div>
-
-<script>
-// Canvas setup
-const canvas = document.getElementById('effectCanvas');
-const ctx = canvas.getContext('2d');
-let width = canvas.width = window.innerWidth;
-let height = canvas.height = window.innerHeight;
-
-window.addEventListener('resize', ()=>{
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-});
-
-// Heart particles
-class HeartParticle {
-    constructor(){
-        this.x = Math.random()*width;
-        this.y = height + Math.random()*200;
-        this.size = 5 + Math.random()*10;
-        this.speedY = 0.5 + Math.random()*1;
-        this.color = ['#ff4d6d','#ff1a1a','#ff66b2'][Math.floor(Math.random()*3)];
-    }
-    update(){ this.y -= this.speedY; if(this.y<-10)this.y=height+10; }
-    draw(){ ctx.fillStyle=this.color; ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fill();}
-}
-
-// Raindrop particles
-class RainDrop {
-    constructor(){ this.x=Math.random()*width; this.y=Math.random()*height; this.length=10+Math.random()*20; this.speedY=2+Math.random()*3; }
-    update(){ this.y+=this.speedY; if(this.y>height)this.y=0; }
-    draw(){ ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(this.x,this.y); ctx.lineTo(this.x,this.y+this.length); ctx.stroke();}
-}
-
-let hearts=[], raindrops=[];
-for(let i=0;i<50;i++) hearts.push(new HeartParticle());
-for(let i=0;i<200;i++) raindrops.push(new RainDrop());
-
-function animate(){
-    ctx.clearRect(0,0,width,height);
-    raindrops.forEach(r=>{r.update();r.draw();});
-    hearts.forEach(h=>{h.update();h.draw();});
-    requestAnimationFrame(animate);
-}
-animate();
-</script>
-
+<a href="photo1.html"><img src="photo1.jpg" alt="Photo 1"></a>
+<a href="photo2.html"><img src="photo2.jpg" alt="Photo 2"></a>
+<a href="photo3.html"><img src="photo3.jpg" alt="Photo 3"></a>
+<a href="photo4.html"><img src="photo4.jpg" alt="Photo 4"></a>
+<a href="photo5.html"><img src="photo5.jpg" alt="Photo 5"></a>
+<a href="photo6.html"><img src="photo6.jpg" alt="Photo 6"></a>
+<a href="photo7.html"><img src="photo7.jpg" alt="Photo 7"></a>
+<a href="photo8.html"><img src="photo8.jpg" alt="Photo 8"></a>
+<a href="photo9.html"><img src="photo9.jpg" alt="Photo 9"></a>
 </body>
 </html>
