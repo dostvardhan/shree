@@ -8,14 +8,14 @@
 body {
     margin:0;
     font-family:'Segoe UI',sans-serif;
-    background: linear-gradient(135deg, #1a1a2e, #162447);
+    background: linear-gradient(135deg, #fdf6e3, #a3b18a); /* cream → olive green */
     overflow:hidden;
     display:flex;
     flex-direction:column;
     align-items:center;
     justify-content:center;
     min-height:100vh;
-    color:#ffd700;
+    color:#4b3f2f;
     text-align:center;
 }
 
@@ -23,9 +23,9 @@ body {
 .particle {
     position:absolute;
     width:6px; height:6px;
-    background: rgba(255,215,0,0.5);
+    background: rgba(255,200,100,0.5);
     border-radius:50%;
-    animation: float 10s linear infinite;
+    animation: float 12s linear infinite;
 }
 @keyframes float {
     0% {transform: translateY(0) translateX(0);}
@@ -38,12 +38,12 @@ img {
     max-height:65vh;
     object-fit:contain;
     border-radius:15px;
-    box-shadow:0 0 60px rgba(255,215,0,0.5);
+    box-shadow:0 0 60px rgba(255,200,100,0.5);
     transition: transform 0.5s ease, box-shadow 0.5s ease;
 }
 img:hover {
     transform: scale(1.05);
-    box-shadow:0 0 90px rgba(255,215,0,0.7);
+    box-shadow:0 0 90px rgba(255,200,100,0.7);
 }
 
 .quote {
@@ -53,7 +53,7 @@ img:hover {
     opacity:0;
     transform: translateY(20px);
     animation: fadeInUp 1s forwards 0.5s;
-    text-shadow: 2px 2px 10px rgba(0,0,0,0.7);
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.4);
 }
 
 @keyframes fadeInUp {
@@ -65,14 +65,14 @@ img:hover {
     top:50%;
     font-size:40px;
     cursor:pointer;
-    color:#ff4d6d;
+    color:#c94c4c;
     transition: all 0.3s ease;
     user-select:none;
     animation: pulse 2s infinite;
 }
 .heart-nav:hover {
     transform: scale(1.2);
-    text-shadow:0 0 20px #ff4d6d,0 0 40px #ff1a1a;
+    text-shadow:0 0 20px #c94c4c,0 0 40px #ff6f61;
 }
 @keyframes pulse {
     0%,100%{transform:scale(1);}
@@ -89,4 +89,12 @@ img:hover {
 <div class="particle" style="top:10%; left:20%; animation-duration:12s;"></div>
 <div class="particle" style="top:30%; left:50%; animation-duration:15s;"></div>
 <div class="particle" style="top:60%; left:70%; animation-duration:10s;"></div>
-<div class="particle" style="top:80%; left:40%; animation-duration:18s
+<div class="particle" style="top:80%; left:40%; animation-duration:18s;"></div>
+
+<a id="prev" class="heart-nav" href="photo9.html">&#10084;&#65039;</a>
+<img src="photo1.jpg" alt="Photo 1">
+<a id="next" class="heart-nav" href="photo2.html">&#10084;&#65039;</a>
+<div class="quote">Every day is a new beginning. This photo reminds me of hope and fresh mornings.</div>
+
+</body>
+</html>
