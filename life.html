@@ -160,4 +160,13 @@ photoCards.forEach(card => {
         photoCards.forEach(c => { if(c !== card) c.classList.add('blur'); });
     });
 
-    card.addEventListener('mouseleave',
+    card.addEventListener('mouseleave', () => {
+        fullscreenImg.classList.remove('active');
+        fullscreenQuote.classList.remove('active');
+        photoCards.forEach(c => c.classList.remove('blur'));
+    });
+});
+</script>
+
+</body>
+</html>
