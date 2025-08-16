@@ -20,7 +20,6 @@ body {
     position: relative;
 }
 
-/* Canvas covers entire body */
 #effectCanvas {
     position: fixed;
     top:0;
@@ -30,7 +29,6 @@ body {
     z-index: 0;
 }
 
-/* Title */
 h1 {
     font-family: 'Great Vibes', cursive;
     color: #f5d76e;
@@ -41,7 +39,6 @@ h1 {
     z-index: 2;
 }
 
-/* Photo container */
 .photo-container {
     display: flex;
     flex-wrap: wrap;
@@ -51,7 +48,6 @@ h1 {
     z-index: 2;
 }
 
-/* Photo card */
 .photo-card {
     position: relative;
     cursor: pointer;
@@ -67,7 +63,6 @@ h1 {
     transition: transform 0.5s ease, box-shadow 0.5s ease;
 }
 
-/* Fullscreen zoom */
 .fullscreen-img {
     position: fixed;
     top:50%;
@@ -82,13 +77,11 @@ h1 {
     pointer-events: none;
 }
 
-/* Active full image */
 .fullscreen-img.active {
     transform: translate(-50%, -50%) scale(1);
     pointer-events: auto;
 }
 
-/* Quote overlay */
 .fullscreen-quote {
     position: fixed;
     top:75%;
@@ -112,13 +105,11 @@ h1 {
     opacity: 1;
 }
 
-/* Blur other photos */
 .photo-card.blur {
     filter: blur(5px);
     transition: filter 0.5s ease;
 }
 
-/* Responsive */
 @media (max-width: 600px) {
     h1 { font-size: 2.5rem; }
     .photo-card img { width: 80vw; }
@@ -176,7 +167,7 @@ photoCards.forEach(card => {
     });
 });
 
-// Canvas for rain + hearts
+// Canvas effects
 const canvas = document.getElementById('effectCanvas');
 const ctx = canvas.getContext('2d');
 let width = canvas.width = window.innerWidth;
@@ -198,10 +189,7 @@ class Heart {
         this.speed = 0.5 + Math.random();
         this.color = ['#ff4d6d','#b3003b','#ff1a1a'][Math.floor(Math.random()*3)];
     }
-    update(){
-        this.y -= this.speed;
-        if(this.y + this.size < 0) this.reset();
-    }
+    update(){ this.y -= this.speed; if(this.y + this.size < 0) this.reset(); }
     draw(){
         ctx.fillStyle = this.color;
         ctx.beginPath();
@@ -215,37 +203,38 @@ class Heart {
     }
 }
 
-// Rain drops with streaks
+// Rain drops with trail (glass effect)
 class RainDrop {
     constructor(){
         this.reset();
+        this.trail = [];
     }
     reset(){
         this.x = Math.random()*width;
         this.y = Math.random()*-height;
         this.length = 10 + Math.random()*20;
         this.speed = 2 + Math.random()*2;
-        this.opacity = 0.2 + Math.random()*0.4;
-        this.width = 1 + Math.random();
-        this.streak = [];
-        for(let i=0;i<3;i++){
-            this.streak.push({offset: i*2, alpha: this.opacity - i*0.05});
-        }
+        this.width = 1 + Math.random()*1;
+        this.opacity = 0.2 + Math.random()*0.3;
+        this.trail = [];
     }
     fall(){
         this.y += this.speed;
-        this.x += Math.sin(this.y*0.01)*1.5;
+        this.x += Math.sin(this.y*0.01)*2; // slight horizontal slip
+        this.trail.push({x:this.x, y:this.y});
+        if(this.trail.length>5) this.trail.shift();
         if(this.y > height) this.reset();
     }
     draw(){
-        this.streak.forEach(s=>{
-            ctx.strokeStyle = 'rgba(255,255,255,'+s.alpha+')';
+        for(let i=0;i<this.trail.length;i++){
+            let t = this.trail[i];
+            ctx.strokeStyle = `rgba(255,255,255,${this.opacity * i/this.trail.length})`;
             ctx.lineWidth = this.width;
             ctx.beginPath();
-            ctx.moveTo(this.x, this.y - s.offset);
-            ctx.lineTo(this.x, this.y + this.length - s.offset);
+            ctx.moveTo(t.x, t.y);
+            ctx.lineTo(t.x, t.y + this.length*0.5);
             ctx.stroke();
-        });
+        }
     }
 }
 
