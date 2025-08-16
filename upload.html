@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Memories</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #fdf6f0; margin: 0; padding: 0; }
+    .container { max-width: 900px; margin: 50px auto; padding: 20px; }
+    h1 { text-align: center; color: #333; }
+    #uploadForm { display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px; }
+    input[type="file"] { padding: 5px; }
+    input[type="text"] { padding: 8px; font-size: 16px; }
+    button { padding: 10px; background: #5c4b51; color: white; border: none; cursor: pointer; font-size: 16px; }
+    button:hover { background: #7a5a64; }
+    .feed { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+    .photo-card { background: #fff; padding: 10px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .photo-card img { width: 100%; border-radius: 10px; }
+    .caption { margin-top: 5px; font-size: 14px; color: #444; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Upload Your Memories</h1>
+    <div id="loginPrompt" style="text-align:center; display:none;">
+      <p>Please login to access this page.</p>
+      <button onclick="login()">Login</button>
+    </div>
+    <div id="uploadSection" style="display:none;">
+      <form id="uploadForm">
+        <input type="file" id="photoInput" accept="image/*" required>
+        <input type="text" id="captionInput" placeholder="Write your feeling..." required>
+        <button type="submit">Upload</button>
+      </form>
+      <div class="feed" id="feed"></div>
+    </div>
+  </div>
+
+  <script>
+    const identity = netlifyIdentity.init();
+    
+    function login() {
+      identity.open();
+    }
+
+    identity.on('login', user => {
+      document.getElementById('loginPrompt').style.display = 'none';
+      document.getElementById('uploadSection').style.display = 'block';
+    });
+
+    identity.on('logout', () => {
+      document.getElementById('loginPrompt').style.display = 'block';
+      document.getElementById('uploadSection').style.display = 'none';
+    });
+
+    // Protect page on load
+    identity.on('init', user => {
+      if(!user) {
+        document.getElementById('loginPrompt').style.display = 'block';
+        document.getElementById('uploadSection').style.display = 'none';
+      } else {
+        document.getElementById('loginPrompt').style.display = 'none';
+        document.getElementById('uploadSection').style.display = 'block';
+      }
+    });
+
+    const feed = document.getElementById('feed');
+    const form = document.getElementById('uploadForm');
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const fileInput = document.getElementById('photoInput');
+      const captionInput = document.getElementById('captionInput');
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(event) {
+        const imgSrc = event.target.result;
+        const card = document.createElement('div');
+        card.className = 'photo-card';
+        card.innerHTML = `<img src="${imgSrc}" alt="Photo"><div class="caption">${captionInput.value}</div>`;
+        feed.prepend(card);
+        form.reset();
+      }
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>
