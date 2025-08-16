@@ -27,7 +27,7 @@ button:hover { background:#7a5a64; }
 <h1>Upload Your Memories</h1>
 
 <div id="loginPrompt">
-  <p>Please login to access this page.</p>
+  <p>Please login to access this page</p>
   <button onclick="login()">Login</button>
 </div>
 
@@ -45,7 +45,6 @@ button:hover { background:#7a5a64; }
 document.addEventListener('DOMContentLoaded', function() {
     const identity = netlifyIdentity.init();
 
-    // Expose login function to button
     window.login = () => identity.open();
 
     function showUploadSection(show){
@@ -54,12 +53,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if(show) loadFeed();
     }
 
-    // Handle login/logout/init events
     identity.on('init', user => showUploadSection(!!user));
     identity.on('login', user => showUploadSection(true));
     identity.on('logout', () => showUploadSection(false));
 
-    // Feed handling
     const feed = document.getElementById('feed');
     const form = document.getElementById('uploadForm');
 
