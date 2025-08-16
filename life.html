@@ -15,26 +15,25 @@ body {
     align-items: center;
     padding: 40px 20px;
     min-height: 100vh;
-    background: radial-gradient(circle at 50% 30%, #1a1a40, #0b0b2b, #0d0d2f);
+    background: radial-gradient(circle at 50% 30%, #1b1b3a, #2c2c5c, #4d4d7c);
     position: relative;
     color: white;
+    overflow: hidden;
 }
 
-/* Stars */
-.star {
+/* Magical particles */
+.particle {
     position: absolute;
-    width: 2px;
-    height: 2px;
-    background: white;
+    width: 4px;
+    height: 4px;
+    background: rgba(255,255,255,0.7);
     border-radius: 50%;
-    opacity: 0.8;
-    animation: twinkle 2s infinite alternate;
+    animation: floatParticle linear infinite;
 }
-
-@keyframes twinkle {
-    0% { opacity: 0.3; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.2); }
-    100% { opacity: 0.3; transform: scale(1); }
+@keyframes floatParticle {
+    0% { transform: translateY(0) translateX(0); opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { transform: translateY(-800px) translateX(50px); opacity: 0; }
 }
 
 /* Floating hearts */
@@ -71,7 +70,7 @@ h1 {
     color: gold;
     margin-bottom: 30px;
     font-size: 3.5rem;
-    text-shadow: 2px 2px 20px rgba(0,0,0,0.7);
+    text-shadow: 2px 2px 25px rgba(0,0,0,0.8);
     z-index: 10;
     position: relative;
     text-align: center;
@@ -95,7 +94,6 @@ h1 {
     overflow: hidden;
     transition: transform 0.5s ease, filter 0.5s ease;
 }
-
 .photo-card img {
     width: 230px;
     height: auto;
@@ -134,12 +132,12 @@ h1 {
     font-family: 'Great Vibes', cursive;
     color: gold;
     font-size: 28px;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0,0,0,0.3);
     padding: 14px 28px;
     border-radius: 15px;
     text-align: center;
     max-width: 90%;
-    text-shadow: 2px 2px 15px rgba(0,0,0,0.8);
+    text-shadow: 2px 2px 20px rgba(0,0,0,0.9);
     opacity: 0;
     transition: opacity 0.5s ease;
     z-index: 1001;
@@ -201,17 +199,18 @@ h1 {
 <div class="fullscreen-quote" id="fullscreen-quote"></div>
 
 <script>
-// Stars creation
-for(let i=0;i<100;i++){
-    const star = document.createElement('div');
-    star.classList.add('star');
-    star.style.left = Math.random()*100 + 'vw';
-    star.style.top = Math.random()*100 + 'vh';
-    star.style.width = (1+Math.random()*2) + 'px';
-    star.style.height = star.style.width;
-    star.style.opacity = 0.3 + Math.random()*0.7;
-    star.style.animationDuration = (1+Math.random()*3) + 's';
-    document.body.appendChild(star);
+// Magical particles
+for(let i=0;i<80;i++){
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+    particle.style.left = Math.random()*100 + 'vw';
+    particle.style.top = Math.random()*100 + 'vh';
+    let size = 2+Math.random()*3;
+    particle.style.width = size + 'px';
+    particle.style.height = size + 'px';
+    particle.style.opacity = 0.3 + Math.random()*0.7;
+    particle.style.animationDuration = (5+Math.random()*5) + 's';
+    document.body.appendChild(particle);
 }
 
 // Floating hearts
@@ -243,16 +242,4 @@ photoCards.forEach(card => {
         fullscreenQuote.textContent = quote;
         fullscreenQuote.classList.add('active');
 
-        photoCards.forEach(c => { if(c !== card) c.classList.add('blur'); });
-    });
-
-    card.addEventListener('mouseleave', () => {
-        fullscreenImg.classList.remove('active');
-        fullscreenQuote.classList.remove('active');
-        photoCards.forEach(c => c.classList.remove('blur'));
-    });
-});
-</script>
-
-</body>
-</html>
+        photoCard
