@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Unmatched Memories - Subtle Hearts</title>
+<title>Unmatched Memories - 9 Photos</title>
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 <style>
 body {
@@ -44,6 +44,7 @@ h1 {
     flex-wrap: wrap;
     justify-content: center;
     gap: 20px;
+    max-width: 1200px;
     position: relative;
     z-index: 2;
 }
@@ -54,9 +55,11 @@ h1 {
     border-radius: 15px;
     overflow: hidden;
     transition: transform 0.5s ease, filter 0.5s ease, box-shadow 0.5s ease;
+    flex: 1 1 200px;
+    max-width: 230px;
 }
 .photo-card img {
-    width: 230px;
+    width: 100%;
     height: auto;
     border-radius: 15px;
     object-fit: cover;
@@ -112,7 +115,7 @@ h1 {
 
 @media (max-width: 600px) {
     h1 { font-size: 2.5rem; }
-    .photo-card img { width: 80vw; }
+    .photo-card { max-width: 80vw; }
     .fullscreen-quote { font-size: 22px; padding: 10px 20px; }
 }
 </style>
@@ -191,9 +194,7 @@ window.addEventListener('resize', ()=>{
 
 // Hearts subtle style
 class Heart {
-    constructor(){
-        this.reset();
-    }
+    constructor(){ this.reset(); }
     reset(){
         this.x = Math.random()*width;
         this.y = height + Math.random()*100;
@@ -217,10 +218,7 @@ class Heart {
 
 // Rain drops with subtle streak
 class RainDrop {
-    constructor(){
-        this.reset();
-        this.trail = [];
-    }
+    constructor(){ this.reset(); this.trail = []; }
     reset(){
         this.x = Math.random()*width;
         this.y = Math.random()*-height;
