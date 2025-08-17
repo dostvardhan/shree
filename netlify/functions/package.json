@@ -1,10 +1,12 @@
 {
-  "name": "photo-functions",
+  "name": "netlify-functions",
   "version": "1.0.0",
+  "description": "Netlify serverless functions for Shreshtha site",
+  "main": "upload.js",
   "type": "module",
   "dependencies": {
-    "cloudinary": "^1.41.3",
-    "firebase-admin": "^12.5.0",
-    "formidable": "^3.5.1"
+    "cloudinary": "^1.38.1",
+    "firebase-admin": "^11.11.0",
+    "formidable": "^2.2.1"
   }
 }
