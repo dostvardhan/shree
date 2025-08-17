@@ -1,94 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Upload a Photo — Shreshtha</title>
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  <style>
-    body {
-      margin:0; font-family: Arial, Helvetica, sans-serif; 
-      display:flex; justify-content:center; align-items:center;
-      height:100vh; background: linear-gradient(135deg,#f0f8ff,#fff0f5);
-    }
-    .card {
-      background: rgba(255,255,255,0.96); padding: 28px; border-radius: 12px; width: 96%; max-width: 480px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.08); text-align: center;
-    }
-    h1 { margin:0 0 12px; color:#0b3a53; }
-    input[type="file"], input[type="text"] {
-      width: 90%; padding: 10px; margin: 8px 0; border-radius: 6px; border:1px solid #ccc;
-    }
-    button {
-      padding: 10px 18px; border:none; border-radius: 8px; background:#8fbf9b; color:white; font-weight:600; cursor:pointer;
-    }
-    #message { margin-top: 12px; color:#b94a4a; }
-    a { display:block; margin-top:16px; color:#154a60; text-decoration:none; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Photo — Shreshtha</title>
+
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+<style>
+body {
+    margin:0;
+    font-family: Arial, sans-serif;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    background: linear-gradient(135deg,#f2f9ff,#fff7f3);
+}
+
+.card {
+    background: rgba(255,255,255,0.95);
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+h1 { margin-bottom: 15px; color: #184a5a; }
+input[type="file"], input[type="text"] {
+    width: 100%; padding: 8px; margin: 8px 0; border-radius:6px; border:1px solid #ccc;
+}
+button {
+    padding:10px 18px; border:none; border-radius:8px;
+    background:linear-gradient(90deg,#8fbf9b,#6b8f5a); color:white; font-weight:600;
+    cursor:pointer;
+}
+#status { margin-top:12px; color:#555; font-weight:500; }
+a { display:block; margin-top:12px; text-decoration:none; color:#184a5a; }
+</style>
 </head>
 <body>
-  <div class="card">
+
+<div class="card">
     <h1>Upload a Photo</h1>
-    <input type="file" id="fileInput" accept="image/*" />
-    <input type="text" id="captionInput" placeholder="Caption (optional)" />
-    <button id="uploadBtn">Upload</button>
-    <div id="message"></div>
+    <form id="uploadForm">
+        <input type="file" id="fileInput" name="file" required>
+        <input type="text" id="captionInput" name="caption" placeholder="Caption (optional)">
+        <button type="submit">Upload</button>
+    </form>
+    <div id="status"></div>
     <a href="/life.html">Back to Life Gallery</a>
-  </div>
+</div>
 
-  <script>
-    if (!window.netlifyIdentity) {
-      alert("Netlify Identity not loaded. Redirecting to home.");
-      location.href = "/";
-    } else {
-      netlifyIdentity.init();
-      const user = netlifyIdentity.currentUser();
-      if (!user) {
-        alert("Please login first.");
-        location.href = "/";
-      }
-    }
+<script>
+window.addEventListener('load', () => {
+    if (!window.netlifyIdentity) return location.href = '/';
+    netlifyIdentity.init();
+    const user = netlifyIdentity.currentUser();
+    if (!user) location.href = '/';
+});
 
-    const uploadBtn = document.getElementById("uploadBtn");
-    const fileInput = document.getElementById("fileInput");
-    const captionInput = document.getElementById("captionInput");
-    const message = document.getElementById("message");
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-    uploadBtn.addEventListener("click", async () => {
-      message.textContent = "";
-      const file = fileInput.files[0];
-      const caption = captionInput.value;
+    const fileInput = document.getElementById('fileInput');
+    const captionInput = document.getElementById('captionInput');
+    const status = document.getElementById('status');
 
-      if (!file) {
-        message.textContent = "Please select a file to upload.";
-        return;
-      }
+    if (!fileInput.files[0]) return alert('Please select a file');
 
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("caption", caption);
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('caption', captionInput.value);
 
-      try {
-        const res = await fetch("/.netlify/functions/upload", {
-          method: "POST",
-          body: formData
+    status.innerText = 'Uploading...';
+
+    try {
+        const res = await fetch('/.netlify/functions/upload', {
+            method: 'POST',
+            body: formData
         });
 
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(errText || "Upload failed");
-        }
+        if (!res.ok) throw new Error(await res.text());
 
         const data = await res.json();
-        message.style.color = "green";
-        message.textContent = "Upload successful! File URL: " + data.url;
-        fileInput.value = "";
-        captionInput.value = "";
-      } catch (err) {
-        message.style.color = "#b94a4a";
-        message.textContent = "Error: " + err.message;
-      }
-    });
-  </script>
+        status.innerText = 'Upload successful!';
+        console.log(data);
+    } catch (err) {
+        status.innerText = 'Error: ' + err.message;
+        console.error(err);
+    }
+});
+</script>
+
 </body>
 </html>
