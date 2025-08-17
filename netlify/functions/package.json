@@ -4,7 +4,7 @@
   "main": "upload.js",
   "dependencies": {
     "cloudinary": "^1.38.0",
-    "formidable": "^3.5.0",
-    "firebase-admin": "^11.0.0"
+    "firebase-admin": "^11.0.0",
+    "formidable": "^3.5.0"
   }
 }
