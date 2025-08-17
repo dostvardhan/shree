@@ -1,98 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Upload Photo — Shreshtha</title>
-
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-
-<style>
-body {
-    margin:0;
-    font-family: Arial, sans-serif;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
-    background: linear-gradient(135deg,#f2f9ff,#fff7f3);
-}
-
-.card {
-    background: rgba(255,255,255,0.95);
-    padding: 30px;
-    border-radius: 12px;
-    max-width: 400px;
-    width: 90%;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-    text-align: center;
-}
-
-h1 { margin-bottom: 15px; color: #184a5a; }
-input[type="file"], input[type="text"] {
-    width: 100%; padding: 8px; margin: 8px 0; border-radius:6px; border:1px solid #ccc;
-}
-button {
-    padding:10px 18px; border:none; border-radius:8px;
-    background:linear-gradient(90deg,#8fbf9b,#6b8f5a); color:white; font-weight:600;
-    cursor:pointer;
-}
-#status { margin-top:12px; color:#555; font-weight:500; }
-a { display:block; margin-top:12px; text-decoration:none; color:#184a5a; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Memories — Upload</title>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f6f7fb; margin:0; padding:0; text-align:center; }
+    .container { max-width: 600px; margin:50px auto; padding:20px; background: #fff; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+    input[type="file"] { margin: 15px 0; }
+    input[type="text"] { width: 80%; padding:8px; margin-bottom: 12px; }
+    button { padding: 10px 18px; background: linear-gradient(90deg,#b8860b,#ffd27f); border:none; border-radius:8px; color:#2b1b00; font-weight:600; cursor:pointer; }
+    .gallery { margin-top:30px; display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+    .gallery img { width:150px; border-radius:12px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
+    .error { color:red; margin-top:10px; }
+  </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>Upload a Photo</h1>
-    <form id="uploadForm">
-        <input type="file" id="fileInput" name="file" required>
-        <input type="text" id="captionInput" name="caption" placeholder="Caption (optional)">
-        <button type="submit">Upload</button>
-    </form>
-    <div id="status"></div>
-    <a href="/life.html">Back to Life Gallery</a>
+<div class="container">
+  <h1>Daily Memories</h1>
+  <p id="userInfo">Checking login...</p>
+  <input type="file" id="fileInput">
+  <br>
+  <input type="text" id="caption" placeholder="Caption (optional)">
+  <br>
+  <button id="uploadBtn">Upload</button>
+  <p class="error" id="errorMsg"></p>
+
+  <div class="gallery" id="gallery"></div>
 </div>
 
 <script>
-window.addEventListener('load', () => {
-    if (!window.netlifyIdentity) return location.href = '/';
+  if (!window.netlifyIdentity) {
+    alert("Netlify Identity not loaded.");
+  } else {
     netlifyIdentity.init();
     const user = netlifyIdentity.currentUser();
-    if (!user) location.href = '/';
-});
+    if (!user) {
+      netlifyIdentity.open();
+      netlifyIdentity.on('login', user => location.reload());
+      netlifyIdentity.on('logout', () => location.href='/');
+    } else {
+      document.getElementById('userInfo').innerText = 'Logged in as ' + user.email;
+    }
+  }
 
-document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+  const uploadBtn = document.getElementById('uploadBtn');
+  const fileInput = document.getElementById('fileInput');
+  const captionInput = document.getElementById('caption');
+  const errorMsg = document.getElementById('errorMsg');
+  const gallery = document.getElementById('gallery');
 
-    const fileInput = document.getElementById('fileInput');
-    const captionInput = document.getElementById('captionInput');
-    const status = document.getElementById('status');
-
-    if (!fileInput.files[0]) return alert('Please select a file');
+  uploadBtn.addEventListener('click', async () => {
+    errorMsg.innerText = '';
+    const file = fileInput.files[0];
+    if (!file) { errorMsg.innerText = 'Please select a file!'; return; }
 
     const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
+    formData.append('file', file);
     formData.append('caption', captionInput.value);
 
-    status.innerText = 'Uploading...';
+    const token = netlifyIdentity.currentUser().token.access_token;
 
     try {
-        const res = await fetch('/.netlify/functions/upload', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!res.ok) throw new Error(await res.text());
-
-        const data = await res.json();
-        status.innerText = 'Upload successful!';
-        console.log(data);
-    } catch (err) {
-        status.innerText = 'Error: ' + err.message;
-        console.error(err);
+      const res = await fetch('/.netlify/functions/upload', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: formData
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
+      }
+      const data = await res.json();
+      fileInput.value = '';
+      captionInput.value = '';
+      addPhotoToGallery(data.url);
+    } catch(err) {
+      console.error(err);
+      errorMsg.innerText = 'Error: ' + err.message;
     }
-});
+  });
+
+  function addPhotoToGallery(url) {
+    const img = document.createElement('img');
+    img.src = url;
+    gallery.prepend(img);
+  }
+
+  // Fetch existing feed
+  async function loadFeed() {
+    try {
+      const token = netlifyIdentity.currentUser().token.access_token;
+      const res = await fetch('/.netlify/functions/feed', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      data.forEach(item => addPhotoToGallery(item.url));
+    } catch(err) {
+      console.error(err);
+    }
+  }
+
+  if (netlifyIdentity.currentUser()) loadFeed();
 </script>
 
 </body>
