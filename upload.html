@@ -1,58 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Upload Photo + Quote</title>
-<link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Photo</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
-<header class="wrap">
-<h1>📸 Add Photo + Quote</h1>
-<nav>
-<a href="gallery.html" class="btn">Open Gallery →</a>
-</nav>
-</header>
+  <h1>Upload Your Photo & Quote</h1>
 
+  <form id="uploadForm">
+    <input type="file" id="photoInput" accept="image/*" required />
+    <textarea id="quoteInput" placeholder="Add your quote" required></textarea>
+    <button type="submit">Upload</button>
+  </form>
 
-<main class="wrap card">
-<form id="uploadForm">
-<label class="field">
-<span>Choose a photo</span>
-<input id="photo" type="file" accept="image/*" required />
-</label>
+  <div id="status"></div>
 
+  <script>
+    // Initialize Netlify Identity
+    const identity = netlifyIdentity;
+    identity.init();
 
-<label class="field">
-<span>Quote / Caption</span>
-<textarea id="quote" rows="3" placeholder="Write something beautiful…" required></textarea>
-</label>
+    const form = document.getElementById('uploadForm');
+    const status = document.getElementById('status');
 
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const file = document.getElementById('photoInput').files[0];
+      const quote = document.getElementById('quoteInput').value;
+      if (!file || !quote) return;
 
-<div id="preview" class="preview hidden">
-<img id="previewImg" alt="preview" />
-</div>
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('quote', quote);
+      formData.append('timestamp', new Date().toISOString());
 
+      status.innerText = 'Uploading...';
 
-<div class="row">
-<button type="submit" class="btn primary">Save to Gallery</button>
-<a href="gallery.html" class="btn">Go to Gallery</a>
-</div>
-<p class="hint">Images are compressed before saving (max 1280px). Data is stored in your browser’s storage.</p>
-</form>
-</main>
+      try {
+        const res = await fetch('/.netlify/functions/upload', {
+          method: 'POST',
+          body: formData
+        });
 
-
-<script>
-const LS_KEY = 'myGalleryItems';
-const fileInput = document.getElementById('photo');
-const quoteInput = document.getElementById('quote');
-const form = document.getElementById('uploadForm');
-const preview = document.getElementById('preview');
-const previewImg = document.getElementById('previewImg');
-
-
-fileInput.addEventListener('change', () => {
-const file = fileInput.files?.[0];
-if (!file) return;
+        const data = await res.json();
+        if (data.success) {
+          status.innerText = 'Upload successful!';
+          form.reset();
+        } else {
+          status.innerText = 'Upload failed: ' + data.error;
+        }
+      } catch (err) {
+        status.innerText = 'Error: ' + err.message;
+      }
+    });
+  </script>
+</body>
 </html>
