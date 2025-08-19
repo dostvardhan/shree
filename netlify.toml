@@ -1,12 +1,9 @@
+# netlify.toml
 [build]
-  functions = "netlify/functions"
-  publish = "."
+  command = ""         
+  publish = "."        
 
-[functions]
-  node_bundler = "esbuild"
-  external_node_modules = ["cloudinary", "formidable", "firebase-admin"]
-  included_files = []
-
-# Optional: increase function timeout if you want
-#[[functions]], name="upload"
-#  timeout = 20
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
