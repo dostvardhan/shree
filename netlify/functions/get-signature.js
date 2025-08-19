@@ -1,39 +1,39 @@
-// netlify/functions/get-signature.js
-import crypto from "crypto";
+// Netlify Function: returns Cloudinary signed params
+const crypto = require("crypto");
 
-export async function handler(event) {
-  try {
-    const { timestamp } = JSON.parse(event.body);
+exports.handler = async (event, context) => {
+  const user = context.clientContext && context.clientContext.user;
+  if (!user) return { statusCode: 401, body: "Not authorized" };
 
-    // Cloudinary credentials from Netlify environment variables
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  const timestamp = Math.floor(Date.now() / 1000);
 
-    // Upload preset ka naam
-    const uploadPreset = "daily_uploads";
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET;
+  const folder = process.env.CLOUDINARY_UPLOAD_FOLDER || "";
 
-    // Signature generate karna (preset + timestamp)
-    const stringToSign = `timestamp=${timestamp}&upload_preset=${uploadPreset}${apiSecret}`;
-    const signature = crypto
-      .createHash("sha1")
-      .update(stringToSign)
-      .digest("hex");
+  // params to sign (alphabetical join)
+  const params = [
+    `timestamp=${timestamp}`,
+    `upload_preset=${uploadPreset}`,
+    ...(folder ? [`folder=${folder}`] : []),
+  ].sort().join("&");
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({
-        signature,
-        timestamp,
-        cloudName,
-        apiKey,
-        uploadPreset,
-      }),
-    };
-  } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: err.message }),
-    };
-  }
-}
+  const signature = crypto
+    .createHash("sha1")
+    .update(params + apiSecret)
+    .digest("hex");
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify({
+      timestamp,
+      signature,
+      apiKey,
+      cloudName,
+      uploadPreset,
+      folder,
+    }),
+  };
+};
