@@ -3,58 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upload Photo</title>
-  <link rel="stylesheet" href="/style.css">
+  <title>Upload Memory</title>
+  <link rel="stylesheet" href="style.css">
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-</head>
-<body>
-  <h1>Upload Your Photo & Quote</h1>
-
-  <form id="uploadForm">
-    <input type="file" id="photoInput" accept="image/*" required />
-    <textarea id="quoteInput" placeholder="Add your quote" required></textarea>
-    <button type="submit">Upload</button>
-  </form>
-
-  <div id="status"></div>
-
-  <script>
-    const identity = netlifyIdentity;
-    identity.init();
-
-    const form = document.getElementById('uploadForm');
-    const status = document.getElementById('status');
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const file = document.getElementById('photoInput').files[0];
-      const quote = document.getElementById('quoteInput').value;
-      if (!file || !quote) return;
-
-      const formData = new FormData();
-      formData.append('image', file);
-      formData.append('quote', quote);
-      formData.append('timestamp', new Date().toISOString());
-
-      status.innerText = 'Uploading...';
-
-      try {
-        const res = await fetch('/.netlify/functions/upload', {
-          method: 'POST',
-          body: formData
-        });
-
-        const data = await res.json();
-        if (data.success) {
-          status.innerText = 'Upload successful!';
-          form.reset();
-        } else {
-          status.innerText = 'Upload failed: ' + data.error;
-        }
-      } catch (err) {
-        status.innerText = 'Error: ' + err.message;
-      }
-    });
-  </script>
-</body>
-</html>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #fdf6f0, #fce4ec);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .card {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      animation: fadeIn 0.6s ease;
+    }
+    h2 {
+      margin-bottom: 1rem;
+      color: #444;
+    }
+    input, textarea {
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      outline: none;
+      t
