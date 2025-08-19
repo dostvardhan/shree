@@ -1,26 +1,14 @@
-import { Blob } from "@netlify/blobs";
+const cloudinary = require('cloudinary').v2;
+const { getPosts } = require('./cloudPosts');
 
-export const handler = async () => {
+exports.handler = async () => {
   try {
-    const blobStore = new Blob({ namespace: "uploads" });
-    const keys = await blobStore.list();
-
-    const items = [];
-    for (const key of keys.blobs) {
-      if (key.key.endsWith(".json")) {
-        const quoteData = await blobStore.getJSON(key.key);
-        const fileKey = key.key.replace(".json", "");
-        const url = blobStore.getURL(fileKey);
-
-        items.push({ url, quote: quoteData.quote });
-      }
-    }
-
+    const posts = await getPosts(); // fetch from Cloudinary metadata or KV store
     return {
       statusCode: 200,
-      body: JSON.stringify(items),
+      body: JSON.stringify({ success: true, photos: posts })
     };
   } catch (err) {
-    return { statusCode: 500, body: "Server error: " + err.message };
+    return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
   }
 };
