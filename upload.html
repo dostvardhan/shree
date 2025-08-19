@@ -3,69 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upload Photo</title>
+  <title>Photo Upload</title>
+  <link rel="stylesheet" href="/style.css">
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
-  <h2>Upload Photo (Only for Logged-in Users)</h2>
+  <h2>Upload a Photo with Quote</h2>
 
   <!-- Upload form -->
   <form id="uploadForm">
-    <input type="file" id="fileInput" accept="image/*" required />
+    <input type="file" id="photo" accept="image/*" required>
+    <input type="text" id="quote" placeholder="Enter a quote..." required>
     <button type="submit">Upload</button>
   </form>
 
-  <p id="status"></p>
-  <div id="preview"></div>
+  <hr>
+
+  <h3>Uploaded Photos</h3>
+  <div id="gallery"></div>
 
   <script>
-    // ✅ Cloudinary details 
-    const cloudName = "db2qviypg";  //
-    const uploadPreset = "private_gallery"; // 
-
-    // ✅ Netlify Identity check (sirf logged-in users ke liye)
-    netlifyIdentity.on("init", user => {mitravardhan@gmail.com
-      if (!user) {
-        document.body.innerHTML = "<h3>Please login to upload photos.</h3>";
-      }
-    });
+    // Ensure user is logged in
+    if (!netlifyIdentity.currentUser()) {
+      window.location.href = "/index.html"; // redirect to login
+    }
 
     const form = document.getElementById("uploadForm");
-    const status = document.getElementById("status");
-    const preview = document.getElementById("preview");
+    const gallery = document.getElementById("gallery");
 
+    // Handle Upload
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const file = document.getElementById("fileInput").files[0];
-      if (!file) {
-        status.textContent = "⚠️ Please select a file first!";
+
+      const file = document.getElementById("photo").files[0];
+      const quote = document.getElementById("quote").value;
+
+      const user = netlifyIdentity.currentUser();
+      if (!user) {
+        alert("Please log in first!");
         return;
       }
 
-      status.textContent = "⏳ Uploading...";
-
-      // ✅ Upload to Cloudinary
+      const token = await user.jwt();
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("upload_preset", uploadPreset);
+      formData.append("quote", quote);
 
-      try {
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-          method: "POST",
-          body: formData
-        });
+      const res = await fetch("/.netlify/functions/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
 
-        const data = await response.json();
-        if (data.secure_url) {
-          status.textContent = "✅ Upload successful!";
-          preview.innerHTML = `<img src="${data.secure_url}" width="300" />`;
-        } else {
-          status.textContent = "❌ Upload failed: " + JSON.stringify(data);
-        }
-      } catch (error) {
-        status.textContent = "❌ Error: " + error.message;
+      if (res.ok) {
+        alert("Upload successful!");
+        loadGallery();
+        form.reset();
+      } else {
+        alert("Upload failed!");
       }
     });
+
+    // Load Gallery
+    async function loadGallery() {
+      const res = await fetch("/.netlify/functions/list");
+      const data = await res.json();
+
+      gallery.innerHTML = "";
+      data.forEach(item => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <img src="${item.url}" width="200" />
+          <p>${item.quote}</p>
+        `;
+        gallery.appendChild(div);
+      });
+    }
+
+    loadGallery();
   </script>
 </body>
 </html>
