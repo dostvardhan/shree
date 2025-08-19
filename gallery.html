@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>My Gallery</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="wrap">
+<h1>🖼️ My Photo Gallery</h1>
+<nav class="row">
+<a href="upload.html" class="btn">+ Add New</a>
+<button id="exportBtn" class="btn">Export JSON</button>
+<label class="btn filelike">
+Import JSON
+<input id="importInput" type="file" accept="application/json" hidden />
+</label>
+</nav>
+</header>
+
+
+<main class="wrap">
+<div class="tools row">
+<input id="search" class="input" placeholder="Search quote…" />
+<select id="sort" class="input">
+<option value="new">Newest first</option>
+<option value="old">Oldest first</option>
+</select>
+<button id="clearAll" class="btn danger">Clear All</button>
+</div>
+
+
+<div id="grid" class="grid"></div>
+<p id="emptyState" class="muted hidden">No items yet. Add some from the Upload page.</p>
+</main>
+
+
+<template id="cardTpl">
+<figure class="card card-photo">
+<img class="photo" alt="uploaded" />
+<figcaption class="caption"></figcaption>
+<div class="actions">
+<button class="btn small" data-act="download">Download</button>
+<button class="btn small" data-act="delete">Delete</button>
+</div>
+</figure>
+</html>
