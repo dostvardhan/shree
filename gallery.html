@@ -1,48 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>My Gallery</title>
-<link rel="stylesheet" href="style.css" />
-</head>
-<body>
-<header class="wrap">
-<h1>🖼️ My Photo Gallery</h1>
-<nav class="row">
-<a href="upload.html" class="btn">+ Add New</a>
-<button id="exportBtn" class="btn">Export JSON</button>
-<label class="btn filelike">
-Import JSON
-<input id="importInput" type="file" accept="application/json" hidden />
-</label>
-</nav>
-</header>
+if (filtered.length === 0) {
+emptyState.classList.remove('hidden');
+return;
+}
+emptyState.classList.add('hidden');
 
 
-<main class="wrap">
-<div class="tools row">
-<input id="search" class="input" placeholder="Search quote…" />
-<select id="sort" class="input">
-<option value="new">Newest first</option>
-<option value="old">Oldest first</option>
-</select>
-<button id="clearAll" class="btn danger">Clear All</button>
-</div>
+const tpl = document.getElementById('cardTpl');
+filtered.forEach(it => {
+const node = tpl.content.firstElementChild.cloneNode(true);
+const img = node.querySelector('img.photo');
+const cap = node.querySelector('.caption');
+img.src = it.img;
+cap.textContent = it.quote;
+node.querySelector('[data-act="download"]').addEventListener('click', () => downloadImage(it));
+node.querySelector('[data-act="delete"]').addEventListener('click', () => remove(it.id));
+grid.appendChild(node);
+});
+}
 
 
-<div id="grid" class="grid"></div>
-<p id="emptyState" class="muted hidden">No items yet. Add some from the Upload page.</p>
-</main>
+function remove(id) {
+if (!confirm('Delete this item?')) return;
+items = items.filter(it => it.id !== id);
+save();
+render();
+}
 
 
-<template id="cardTpl">
-<figure class="card card-photo">
-<img class="photo" alt="uploaded" />
-<figcaption class="caption"></figcaption>
-<div class="actions">
-<button class="btn small" data-act="download">Download</button>
-<button class="btn small" data-act="delete">Delete</button>
-</div>
-</figure>
+function downloadImage(it) {
+const a = document.createElement('a');
+a.href = it.img;
+const d = new Date(it.ts);
+const pad = (n) => String(n).padStart(2,'0');
+a.download = `photo_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.jpg`;
+a.click();
+}
+
+
+function toast(msg) {
+const t = document.createElement('div');
+t.className = 'toast';
+t.textContent = msg;
+document.body.appendChild(t);
+setTimeout(() => t.classList.add('show'));
+setTimeout(() => { t.classList.remove('show'); t.remove(); }, 2200);
+}
+</script>
+</body>
 </html>
