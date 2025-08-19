@@ -3,61 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Private Upload</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    .gallery img { width: 200px; margin: 10px; border-radius: 10px; }
-  </style>
+  <title>Upload Photo</title>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
-  <h2>Upload Photo</h2>
+  <h2>Upload Photo (Only for Logged-in Users)</h2>
+
+  <!-- Upload form -->
   <form id="uploadForm">
-    <input type="file" id="fileInput" required />
+    <input type="file" id="fileInput" accept="image/*" required />
     <button type="submit">Upload</button>
   </form>
 
-  <h2>Gallery</h2>
-  <div id="gallery" class="gallery"></div>
+  <p id="status"></p>
+  <div id="preview"></div>
 
   <script>
-    const cloudName = "shreshthapushkar"; // 👈 apna cloud name daal
-    const uploadPreset = "private_gallery_preset"; // 👈 apna preset daal
+    // ✅ Cloudinary details 
+    const cloudName = "db2qviypg";  //
+    const uploadPreset = "private_gallery"; // 
+
+    // ✅ Netlify Identity check (sirf logged-in users ke liye)
+    netlifyIdentity.on("init", user => {mitravardhan@gmail.com
+      if (!user) {
+        document.body.innerHTML = "<h3>Please login to upload photos.</h3>";
+      }
+    });
 
     const form = document.getElementById("uploadForm");
-    const fileInput = document.getElementById("fileInput");
-    const gallery = document.getElementById("gallery");
+    const status = document.getElementById("status");
+    const preview = document.getElementById("preview");
 
-    // Upload function
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const file = fileInput.files[0];
+      const file = document.getElementById("fileInput").files[0];
+      if (!file) {
+        status.textContent = "⚠️ Please select a file first!";
+        return;
+      }
+
+      status.textContent = "⏳ Uploading...";
+
+      // ✅ Upload to Cloudinary
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", uploadPreset);
 
       try {
-        const response = await fetch(
-          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-          { method: "POST", body: formData }
-        );
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: "POST",
+          body: formData
+        });
+
         const data = await response.json();
         if (data.secure_url) {
-          alert("Upload successful!");
-          addToGallery(data.secure_url);
+          status.textContent = "✅ Upload successful!";
+          preview.innerHTML = `<img src="${data.secure_url}" width="300" />`;
         } else {
-          alert("Upload failed.");
+          status.textContent = "❌ Upload failed: " + JSON.stringify(data);
         }
-      } catch (err) {
-        alert("Upload failed.");
+      } catch (error) {
+        status.textContent = "❌ Error: " + error.message;
       }
     });
-
-    // Add uploaded image to gallery
-    function addToGallery(url) {
-      const img = document.createElement("img");
-      img.src = url;
-      gallery.appendChild(img);
-    }
   </script>
 </body>
 </html>
