@@ -1,51 +1,51 @@
 <!DOCTYPE html>
-if (filtered.length === 0) {
-emptyState.classList.remove('hidden');
-return;
-}
-emptyState.classList.add('hidden');
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+  <h1>Photo Gallery</h1>
+  <div id="gallery" class="gallery-grid"></div>
 
+  <script>
+    // Initialize Netlify Identity
+    const identity = netlifyIdentity;
+    identity.init();
 
-const tpl = document.getElementById('cardTpl');
-filtered.forEach(it => {
-const node = tpl.content.firstElementChild.cloneNode(true);
-const img = node.querySelector('img.photo');
-const cap = node.querySelector('.caption');
-img.src = it.img;
-cap.textContent = it.quote;
-node.querySelector('[data-act="download"]').addEventListener('click', () => downloadImage(it));
-node.querySelector('[data-act="delete"]').addEventListener('click', () => remove(it.id));
-grid.appendChild(node);
-});
-}
+    const gallery = document.getElementById('gallery');
 
+    async function loadGallery() {
+      try {
+        const res = await fetch('/.netlify/functions/list');
+        const data = await res.json();
 
-function remove(id) {
-if (!confirm('Delete this item?')) return;
-items = items.filter(it => it.id !== id);
-save();
-render();
-}
+        if (data.success && data.photos) {
+          gallery.innerHTML = '';
+          // Sort latest first
+          data.photos.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+          data.photos.forEach(photo => {
+            const card = document.createElement('div');
+            card.className = 'photo-card';
+            card.innerHTML = `
+              <img src="${photo.url}" alt="Photo">
+              <p class="quote">${photo.quote}</p>
+              <p class="time">${new Date(photo.timestamp).toLocaleString()}</p>
+            `;
+            gallery.appendChild(card);
+          });
+        } else {
+          gallery.innerHTML = '<p>No photos uploaded yet.</p>';
+        }
+      } catch (err) {
+        gallery.innerHTML = '<p>Error loading gallery.</p>';
+      }
+    }
 
-
-function downloadImage(it) {
-const a = document.createElement('a');
-a.href = it.img;
-const d = new Date(it.ts);
-const pad = (n) => String(n).padStart(2,'0');
-a.download = `photo_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.jpg`;
-a.click();
-}
-
-
-function toast(msg) {
-const t = document.createElement('div');
-t.className = 'toast';
-t.textContent = msg;
-document.body.appendChild(t);
-setTimeout(() => t.classList.add('show'));
-setTimeout(() => { t.classList.remove('show'); t.remove(); }, 2200);
-}
-</script>
+    loadGallery();
+  </script>
 </body>
 </html>
