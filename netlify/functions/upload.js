@@ -1,61 +1,52 @@
-import { Blob } from "@netlify/blobs";
+const cloudinary = require('cloudinary').v2;
+const { savePost } = require('./cloudPosts');
 
-export const handler = async (event, context) => {
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const Busboy = require('busboy');
+
+exports.handler = async (event) => {
+  if (event.httpMethod !== 'POST') return { statusCode: 405, body: 'Method Not Allowed' };
+
   try {
-    if (event.httpMethod !== "POST") {
-      return { statusCode: 405, body: "Method Not Allowed" };
-    }
+    const bb = Busboy({ headers: event.headers });
+    let fileBuffer = null;
+    let quote = '';
+    let timestamp = '';
 
-    const user = context.clientContext && context.clientContext.user;
-    if (!user) {
-      return { statusCode: 401, body: "Unauthorized" };
-    }
+    bb.on('file', (name, file) => {
+      const chunks = [];
+      file.on('data', chunk => chunks.push(chunk));
+      file.on('end', () => fileBuffer = Buffer.concat(chunks));
+    });
 
-    const formData = await parseMultipartForm(event);
-    const file = formData.file;
-    const quote = formData.quote;
+    bb.on('field', (name, val) => {
+      if (name === 'quote') quote = val;
+      if (name === 'timestamp') timestamp = val;
+    });
 
-    if (!file || !quote) {
-      return { statusCode: 400, body: "Missing file or quote" };
-    }
+    await new Promise((resolve, reject) => {
+      bb.on('finish', resolve);
+      bb.on('error', reject);
+      bb.end(Buffer.from(event.body, 'base64'));
+    });
 
-    const blobStore = new Blob({ namespace: "uploads" });
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream({ resource_type: 'image' }, (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }).end(fileBuffer);
+    });
 
-    // Save image
-    const fileName = `${Date.now()}-${file.filename}`;
-    await blobStore.set(fileName, file.content);
+    await savePost({ url: result.secure_url, quote, timestamp });
 
-    // Save metadata (quote)
-    const metaName = `${fileName}.json`;
-    await blobStore.setJSON(metaName, { quote });
+    return { statusCode: 200, body: JSON.stringify({ success: true, url: result.secure_url }) };
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ message: "Uploaded successfully" }),
-    };
   } catch (err) {
-    return { statusCode: 500, body: "Server error: " + err.message };
+    return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
   }
 };
-
-// --- Helper to parse multipart form ---
-import multiparty from "multiparty";
-import { promisify } from "util";
-
-async function parseMultipartForm(event) {
-  return new Promise((resolve, reject) => {
-    const form = new multiparty.Form();
-    form.parse(event, (err, fields, files) => {
-      if (err) reject(err);
-      else {
-        resolve({
-          file: {
-            filename: files.file[0].originalFilename,
-            content: require("fs").readFileSync(files.file[0].path),
-          },
-          quote: fields.quote[0],
-        });
-      }
-    });
-  });
-}
