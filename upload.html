@@ -1,167 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Private Uploads</title>
-  <link rel="stylesheet" href="/style.css">
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Private Upload</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .gallery img { width: 200px; margin: 10px; border-radius: 10px; }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Private Photo Gallery</h1>
-    <div>
-      <button id="loginBtn">Login</button>
-      <button id="logoutBtn" style="display:none;">Logout</button>
-    </div>
-  </header>
+  <h2>Upload Photo</h2>
+  <form id="uploadForm">
+    <input type="file" id="fileInput" required />
+    <button type="submit">Upload</button>
+  </form>
 
-  <main>
-    <section id="gate">Please login to upload & see photos.</section>
-
-    <section id="uploadBox" style="display:none;">
-      <h2>Upload a Photo</h2>
-      <input type="file" id="fileInput" accept="image/*"/>
-      <button id="uploadBtn">Upload</button>
-      <p id="status"></p>
-    </section>
-
-    <section id="galleryBox" style="display:none;">
-      <h2>Gallery</h2>
-      <div id="gallery" class="grid"></div>
-    </section>
-  </main>
+  <h2>Gallery</h2>
+  <div id="gallery" class="gallery"></div>
 
   <script>
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const gate = document.getElementById("gate");
-    const uploadBox = document.getElementById("uploadBox");
-    const galleryBox = document.getElementById("galleryBox");
+    const cloudName = "shreshthapushkar"; // 👈 apna cloud name daal
+    const uploadPreset = "private_gallery_preset"; // 👈 apna preset daal
+
+    const form = document.getElementById("uploadForm");
     const fileInput = document.getElementById("fileInput");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const statusEl = document.getElementById("status");
     const gallery = document.getElementById("gallery");
 
-    // UI helpers
-    function showAuthedUI() {
-      loginBtn.style.display = "none";
-      logoutBtn.style.display = "inline-block";
-      gate.style.display = "none";
-      uploadBox.style.display = "block";
-      galleryBox.style.display = "block";
-    }
-    function showGuestUI() {
-      loginBtn.style.display = "inline-block";
-      logoutBtn.style.display = "none";
-      gate.style.display = "block";
-      uploadBox.style.display = "none";
-      galleryBox.style.display = "none";
-      gallery.innerHTML = "";
-    }
-
-    // Auth buttons
-    loginBtn.onclick = () => netlifyIdentity.open("login");
-    logoutBtn.onclick = () => netlifyIdentity.logout();
-
-    // On login/logout
-    netlifyIdentity.on("login", async () => {
-      showAuthedUI();
-      netlifyIdentity.close();
-      await loadGallery();
-    });
-    netlifyIdentity.on("logout", () => showGuestUI());
-
-    // On page load: if already logged-in
-    document.addEventListener("DOMContentLoaded", async () => {
-      if (netlifyIdentity.currentUser()) {
-        showAuthedUI();
-        await loadGallery();
-      } else {
-        showGuestUI();
-      }
-    });
-
-    async function getJWT() {
-      const user = netlifyIdentity.currentUser();
-      if (!user) return null;
-      // returns a fresh token
-      return await user.jwt();
-    }
-
-    // Upload flow (signed)
-    uploadBtn.addEventListener("click", async () => {
+    // Upload function
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
       const file = fileInput.files[0];
-      if (!file) {
-        alert("Select a file first");
-        return;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", uploadPreset);
+
+      try {
+        const response = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          { method: "POST", body: formData }
+        );
+        const data = await response.json();
+        if (data.secure_url) {
+          alert("Upload successful!");
+          addToGallery(data.secure_url);
+        } else {
+          alert("Upload failed.");
+        }
+      } catch (err) {
+        alert("Upload failed.");
       }
-      statusEl.textContent = "Getting signature...";
-      const jwt = await getJWT();
-      if (!jwt) return alert("Please login");
-
-      // 1) get signature from Netlify Function
-      const sigRes = await fetch("/.netlify/functions/get-signature", {
-        headers: { Authorization: `Bearer ${jwt}` },
-      });
-      if (!sigRes.ok) {
-        statusEl.textContent = "Auth/signature failed.";
-        return;
-      }
-      const { cloudName, apiKey, uploadPreset, timestamp, signature, folder } = await sigRes.json();
-
-      // 2) upload to Cloudinary
-      statusEl.textContent = "Uploading...";
-      const form = new FormData();
-      form.append("file", file);
-      form.append("api_key", apiKey);
-      form.append("timestamp", timestamp);
-      form.append("signature", signature);
-      form.append("upload_preset", uploadPreset);
-      if (folder) form.append("folder", folder);
-
-      const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: "POST",
-        body: form
-      });
-
-      if (!uploadRes.ok) {
-        const t = await uploadRes.text();
-        console.error(t);
-        statusEl.textContent = "Upload failed.";
-        return;
-      }
-      statusEl.textContent = "Uploaded ✅";
-      fileInput.value = "";
-      await loadGallery();
     });
 
-    // Load gallery for logged-in user
-    async function loadGallery() {
-      gallery.innerHTML = "<p>Loading...</p>";
-      const jwt = await getJWT();
-      const res = await fetch("/.netlify/functions/list-photos", {
-        headers: { Authorization: `Bearer ${jwt}` },
-      });
-      if (!res.ok) {
-        gallery.innerHTML = "<p>Failed to load photos.</p>";
-        return;
-      }
-      const { photos } = await res.json();
-      if (!photos || photos.length === 0) {
-        gallery.innerHTML = "<p>No photos yet.</p>";
-        return;
-      }
-      gallery.innerHTML = "";
-      photos.forEach(p => {
-        const img = document.createElement("img");
-        img.src = p.url;
-        img.loading = "lazy";
-        img.style.width = "220px";
-        img.style.borderRadius = "12px";
-        img.style.margin = "8px";
-        gallery.appendChild(img);
-      });
+    // Add uploaded image to gallery
+    function addToGallery(url) {
+      const img = document.createElement("img");
+      img.src = url;
+      gallery.appendChild(img);
     }
   </script>
 </body>
