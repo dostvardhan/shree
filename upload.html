@@ -1,345 +1,58 @@
-# Copy–paste files (simple, no-backend). Creates a permanent gallery on this browser using `localStorage`.
-
-> ✅ Works entirely client‑side. Uploaded photos + quotes are saved in the visitor’s browser (persists across reloads). If you want true server storage later (Netlify/GitHub), we can swap the storage layer—same UI.
-
----
-
-## 1) **upload.html** (Upload + Quote)
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Upload Photo + Quote</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Upload Photo + Quote</title>
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="wrap">
-    <h1>📸 Add Photo + Quote</h1>
-    <nav>
-      <a href="gallery.html" class="btn">Open Gallery →</a>
-    </nav>
-  </header>
+<header class="wrap">
+<h1>📸 Add Photo + Quote</h1>
+<nav>
+<a href="gallery.html" class="btn">Open Gallery →</a>
+</nav>
+</header>
 
-  <main class="wrap card">
-    <form id="uploadForm">
-      <label class="field">
-        <span>Choose a photo</span>
-        <input id="photo" type="file" accept="image/*" required />
-      </label>
 
-      <label class="field">
-        <span>Quote / Caption</span>
-        <textarea id="quote" rows="3" placeholder="Write something beautiful…" required></textarea>
-      </label>
+<main class="wrap card">
+<form id="uploadForm">
+<label class="field">
+<span>Choose a photo</span>
+<input id="photo" type="file" accept="image/*" required />
+</label>
 
-      <div id="preview" class="preview hidden">
-        <img id="previewImg" alt="preview" />
-      </div>
 
-      <div class="row">
-        <button type="submit" class="btn primary">Save to Gallery</button>
-        <a href="gallery.html" class="btn">Go to Gallery</a>
-      </div>
-      <p class="hint">Images are compressed before saving (max 1280px). Data is stored in your browser’s storage.</p>
-    </form>
-  </main>
+<label class="field">
+<span>Quote / Caption</span>
+<textarea id="quote" rows="3" placeholder="Write something beautiful…" required></textarea>
+</label>
 
-  <script>
-    const LS_KEY = 'myGalleryItems';
-    const fileInput = document.getElementById('photo');
-    const quoteInput = document.getElementById('quote');
-    const form = document.getElementById('uploadForm');
-    const preview = document.getElementById('preview');
-    const previewImg = document.getElementById('previewImg');
 
-    fileInput.addEventListener('change', () => {
-      const file = fileInput.files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        previewImg.src = e.target.result;
-        preview.classList.remove('hidden');
-      };
-      reader.readAsDataURL(file);
-    });
+<div id="preview" class="preview hidden">
+<img id="previewImg" alt="preview" />
+</div>
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const file = fileInput.files?.[0];
-      const quote = (quoteInput.value || '').trim();
-      if (!file || !quote) return alert('Photo and quote are required.');
 
-      try {
-        const dataUrl = await compressImage(file, 1280, 0.85);
-        const item = {
-          id: crypto.randomUUID(),
-          ts: Date.now(),
-          quote,
-          img: dataUrl
-        };
-        const arr = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
-        arr.push(item);
-        localStorage.setItem(LS_KEY, JSON.stringify(arr));
-        // Redirect to gallery after save
-        window.location.href = 'gallery.html#added';
-      } catch (err) {
-        console.error(err);
-        alert('Could not save image. Try a different file.');
-      }
-    });
+<div class="row">
+<button type="submit" class="btn primary">Save to Gallery</button>
+<a href="gallery.html" class="btn">Go to Gallery</a>
+</div>
+<p class="hint">Images are compressed before saving (max 1280px). Data is stored in your browser’s storage.</p>
+</form>
+</main>
 
-    function compressImage(file, maxSize, quality) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        const rdr = new FileReader();
-        rdr.onload = (e) => {
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let { width, height } = img;
-            const scale = Math.min(1, maxSize / Math.max(width, height));
-            width = Math.round(width * scale);
-            height = Math.round(height * scale);
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            const out = canvas.toDataURL('image/jpeg', quality);
-            resolve(out);
-          };
-          img.onerror = reject;
-          img.src = e.target.result;
-        };
-        rdr.onerror = reject;
-        rdr.readAsDataURL(file);
-      });
-    }
-  </script>
-</body>
+
+<script>
+const LS_KEY = 'myGalleryItems';
+const fileInput = document.getElementById('photo');
+const quoteInput = document.getElementById('quote');
+const form = document.getElementById('uploadForm');
+const preview = document.getElementById('preview');
+const previewImg = document.getElementById('previewImg');
+
+
+fileInput.addEventListener('change', () => {
+const file = fileInput.files?.[0];
+if (!file) return;
 </html>
-```
-
----
-
-## 2) **gallery.html** (Permanent Gallery list on this browser)
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>My Gallery</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <header class="wrap">
-    <h1>🖼️ My Photo Gallery</h1>
-    <nav class="row">
-      <a href="upload.html" class="btn">+ Add New</a>
-      <button id="exportBtn" class="btn">Export JSON</button>
-      <label class="btn filelike">
-        Import JSON
-        <input id="importInput" type="file" accept="application/json" hidden />
-      </label>
-    </nav>
-  </header>
-
-  <main class="wrap">
-    <div class="tools row">
-      <input id="search" class="input" placeholder="Search quote…" />
-      <select id="sort" class="input">
-        <option value="new">Newest first</option>
-        <option value="old">Oldest first</option>
-      </select>
-      <button id="clearAll" class="btn danger">Clear All</button>
-    </div>
-
-    <div id="grid" class="grid"></div>
-    <p id="emptyState" class="muted hidden">No items yet. Add some from the Upload page.</p>
-  </main>
-
-  <template id="cardTpl">
-    <figure class="card card-photo">
-      <img class="photo" alt="uploaded" />
-      <figcaption class="caption"></figcaption>
-      <div class="actions">
-        <button class="btn small" data-act="download">Download</button>
-        <button class="btn small" data-act="delete">Delete</button>
-      </div>
-    </figure>
-  </template>
-
-  <script>
-    const LS_KEY = 'myGalleryItems';
-    const grid = document.getElementById('grid');
-    const emptyState = document.getElementById('emptyState');
-    const search = document.getElementById('search');
-    const sortSel = document.getElementById('sort');
-    const exportBtn = document.getElementById('exportBtn');
-    const importInput = document.getElementById('importInput');
-    const clearAll = document.getElementById('clearAll');
-
-    let items = load();
-    render();
-
-    if (location.hash === '#added') {
-      toast('Added to gallery ✅');
-      history.replaceState(null, '', 'gallery.html');
-    }
-
-    search.addEventListener('input', render);
-    sortSel.addEventListener('change', render);
-
-    exportBtn.addEventListener('click', () => {
-      const blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'gallery_backup.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    importInput.addEventListener('change', async () => {
-      const f = importInput.files?.[0];
-      if (!f) return;
-      const text = await f.text();
-      try {
-        const arr = JSON.parse(text);
-        if (!Array.isArray(arr)) throw new Error('Invalid file');
-        localStorage.setItem(LS_KEY, JSON.stringify(arr));
-        items = arr;
-        render();
-        toast('Imported ✅');
-      } catch (e) {
-        alert('Not a valid gallery JSON');
-      }
-      importInput.value = '';
-    });
-
-    clearAll.addEventListener('click', () => {
-      if (!confirm('Delete ALL items from this browser?')) return;
-      localStorage.removeItem(LS_KEY);
-      items = [];
-      render();
-    });
-
-    function load() {
-      try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; }
-    }
-
-    function save() {
-      localStorage.setItem(LS_KEY, JSON.stringify(items));
-    }
-
-    function render() {
-      const q = (search.value || '').toLowerCase();
-      const filtered = items
-        .filter(it => it.quote.toLowerCase().includes(q))
-        .sort((a, b) => sortSel.value === 'new' ? b.ts - a.ts : a.ts - b.ts);
-
-      grid.innerHTML = '';
-      if (filtered.length === 0) {
-        emptyState.classList.remove('hidden');
-        return;
-      }
-      emptyState.classList.add('hidden');
-
-      const tpl = document.getElementById('cardTpl');
-      filtered.forEach(it => {
-        const node = tpl.content.firstElementChild.cloneNode(true);
-        const img = node.querySelector('img.photo');
-        const cap = node.querySelector('.caption');
-        img.src = it.img;
-        cap.textContent = it.quote;
-        node.querySelector('[data-act="download"]').addEventListener('click', () => downloadImage(it));
-        node.querySelector('[data-act="delete"]').addEventListener('click', () => remove(it.id));
-        grid.appendChild(node);
-      });
-    }
-
-    function remove(id) {
-      if (!confirm('Delete this item?')) return;
-      items = items.filter(it => it.id !== id);
-      save();
-      render();
-    }
-
-    function downloadImage(it) {
-      const a = document.createElement('a');
-      a.href = it.img;
-      const d = new Date(it.ts);
-      const pad = (n) => String(n).padStart(2,'0');
-      a.download = `photo_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.jpg`;
-      a.click();
-    }
-
-    function toast(msg) {
-      const t = document.createElement('div');
-      t.className = 'toast';
-      t.textContent = msg;
-      document.body.appendChild(t);
-      setTimeout(() => t.classList.add('show'));
-      setTimeout(() => { t.classList.remove('show'); t.remove(); }, 2200);
-    }
-  </script>
-</body>
-</html>
-```
-
----
-
-## 3) **style.css** (shared styles)
-
-```css
-:root{ --bg:#faf6fb; --fg:#222; --muted:#666; --brand:#7c3aed; --danger:#ef4444; --card:#fff; }
-*{ box-sizing:border-box; }
-html,body{ margin:0; padding:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji","Segoe UI Emoji"; background:var(--bg); color:var(--fg); }
-.wrap{ max-width:1000px; margin:0 auto; padding:16px; }
-header.wrap{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
-
-h1{ font-size:clamp(20px, 3vw, 32px); margin:8px 0; }
-.muted{ color:var(--muted); }
-.hidden{ display:none !important; }
-.row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-
-.card{ background:var(--card); border-radius:16px; padding:16px; box-shadow: 0 6px 24px rgba(0,0,0,.06); }
-.card-photo{ position:relative; overflow:hidden; }
-
-.field{ display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
-.input, textarea, input[type="file"]{ width:100%; padding:10px 12px; border-radius:12px; border:1px solid #ddd; background:#fff; }
-
-.btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 14px; border-radius:999px; border:1px solid #ddd; background:#fff; cursor:pointer; text-decoration:none; }
-.btn.primary{ background:var(--brand); color:#fff; border-color:transparent; }
-.btn.danger{ background:var(--danger); color:#fff; border-color:transparent; }
-.btn.small{ padding:6px 10px; font-size:12px; }
-.btn.filelike{ position:relative; overflow:hidden; }
-.btn.filelike input{ position:absolute; inset:0; opacity:0; cursor:pointer; }
-
-.preview{ margin:10px 0; }
-.preview img{ max-width:100%; border-radius:12px; box-shadow: 0 6px 24px rgba(0,0,0,.08); }
-.hint{ color:var(--muted); font-size:12px; }
-
-.tools{ margin:8px 0 16px; }
-.grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:14px; }
-.card-photo img.photo{ width:100%; height:260px; object-fit:cover; display:block; transition: transform .3s ease; }
-.card-photo:hover img.photo{ transform: scale(1.02); }
-.caption{ position:absolute; inset:auto 0 0 0; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.55) 60%); color:#fff; padding:10px 12px; font-size:14px; line-height:1.35; min-height:58px; }
-.actions{ position:absolute; top:8px; right:8px; display:flex; gap:8px; }
-
-.toast{ position:fixed; left:50%; top:16px; transform:translateX(-50%) translateY(-10px); background:#111; color:#fff; padding:10px 14px; border-radius:999px; opacity:0; transition: all .25s ease; }
-.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
-```
-
----
-
-### How to use
-
-1. Create three files in your project: `upload.html`, `gallery.html`, `style.css`.
-2. Open `upload.html` → add photo + quote → **Save to Gallery** → you’ll land on `gallery.html`.
-3. Gallery keeps items on this browser. Use **Export JSON** to back up, **Import JSON** to restore.
-
-> 🔄 Later we can upgrade storage to **Netlify (Identity + Functions + GitHub JSON / Storage)** for true cloud persistence with the same UI.
