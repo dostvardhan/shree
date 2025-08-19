@@ -19,7 +19,6 @@
   <div id="status"></div>
 
   <script>
-    // Initialize Netlify Identity
     const identity = netlifyIdentity;
     identity.init();
 
@@ -35,27 +34,4 @@
       const formData = new FormData();
       formData.append('image', file);
       formData.append('quote', quote);
-      formData.append('timestamp', new Date().toISOString());
-
-      status.innerText = 'Uploading...';
-
-      try {
-        const res = await fetch('/.netlify/functions/upload', {
-          method: 'POST',
-          body: formData
-        });
-
-        const data = await res.json();
-        if (data.success) {
-          status.innerText = 'Upload successful!';
-          form.reset();
-        } else {
-          status.innerText = 'Upload failed: ' + data.error;
-        }
-      } catch (err) {
-        status.innerText = 'Error: ' + err.message;
-      }
-    });
-  </script>
-</body>
-</html>
+      formData.append('timestamp', new Date().toISOString(
