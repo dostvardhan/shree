@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nadaniya - Daily Memories</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #fdf6f0; margin:0; padding:0; }
+    .container { max-width: 1000px; margin: auto; padding: 2rem; }
+    h1 { text-align: center; color: #5a2d82; margin-bottom: 2rem; }
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 1.5rem; }
+    .card { background: #fff; padding: 1rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align:center; }
+    img { border-radius: 10px; max-width: 100%; cursor: pointer; }
+    .quote { margin-top: 0.5rem; font-size: 0.9rem; color: #555; }
+    #upload-section { background: #fff; padding: 1.5rem; border-radius: 15px; box-shadow:0 6px 20px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+    #result img { max-height: 200px; margin-top: 0.5rem; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <h1>✨ Nadaniya - Daily Memories ✨</h1>
+
+    <!-- Upload Section -->
+    <div id="upload-section" class="hidden">
+      <h2 class="text-xl font-semibold mb-4">Upload Your Daily Memory</h2>
+      <form id="upload-form" class="space-y-3">
+        <input type="file" id="file" name="file" accept="image/*" required>
+        <textarea id="quote" name="quote" rows="2" placeholder="Write a quote..." class="w-full border rounded p-2"></textarea>
+        <input type="hidden" id="timestamp" name="timestamp">
+        <button type="submit" class="bg-rose-500 text-white px-4 py-2 rounded hover:bg-rose-600">Upload 💖</button>
+      </form>
+      <div id="result" class="mt-4 text-center hidden">
+        <p class="text-green-600 font-semibold">Uploaded successfully!</p>
+        <img id="preview" src="" alt="Uploaded Image">
+      </div>
+    </div>
+
+    <!-- Login Section -->
+    <div id="login-section" class="text-center">
+      <p class="text-gray-700">Please log in to upload memories 💌</p>
+      <button id="login-btn" class="bg-rose-500 text-white px-4 py-2 rounded hover:bg-rose-600 mt-2">Login</button>
+    </div>
+
+    <!-- Gallery -->
+    <div id="gallery" class="gallery mt-6"></div>
+
+  </div>
+
+  <script>
+    // Initialize Netlify Identity
+    netlifyIdentity.init();
+
+    const uploadSection = document.getElementById("upload-section");
+    const loginSection = document.getElementById("login-section");
+    const loginBtn = document.getElementById("login-btn");
+
+    function showUpload() { uploadSection.classList.remove("hidden"); loginSection.classList.add("hidden"); }
+    function showLogin() { uploadSection.classList.add("hidden"); loginSection.classList.remove("hidden"); }
+
+    const user = netlifyIdentity.currentUser();
+    if(user) showUpload(); else showLogin();
+
+    netlifyIdentity.on('login', user => showUpload());
+    netlifyIdentity.on('logout', () => showLogin());
+
+    loginBtn.addEventListener('click', () => netlifyIdentity.open());
+
+    // Upload Form
+    const uploadForm = document.getElementById("upload-form");
+    uploadForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      const file = document.getElementById("file").files[0];
+      const quote = document.getElementById("quote").value;
+      const timestamp = new Date().toISOString();
+      document.getElementById("timestamp").value = timestamp;
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("quote", quote);
+      formData.append("timestamp", timestamp);
+
+      try {
+        const res = await fetch("/.netlify/functions/upload", { method:"POST", body: formData });
+        const data = await res.json();
+        if(data.success) {
+          document.getElementById("result").classList.remove("hidden");
+          document.getElementById("preview").src = data.url;
+          loadGallery(); // refresh gallery
+        } else { alert("Upload failed: " + data.error); }
+      } catch(err) { alert("Error uploading: " + err.message); }
+    });
+
+    // Load Gallery
+    async function loadGallery() {
+      try {
+        const res = await fetch("/.netlify/functions/getPosts");
+        const posts = await res.json(); // [{url, quote, timestamp}, ...]
+        const gallery = document.getElementById("gallery");
+        gallery.innerHTML = "";
+        posts.sort((a,b)=> new Date(b.timestamp)-new Date(a.timestamp));
+        posts.forEach(p => {
+          const div = document.createElement("div");
+          div.classList.add("card");
+          div.innerHTML = `<img src="${p.url}" alt="Memory"><div class="quote">${p.quote}</div>`;
+          gallery.appendChild(div);
+        });
+      } catch(err) { console.error("Error loading gallery:", err); }
+    }
+
+    loadGallery(); // initial load
+  </script>
+
+</body>
+</html>
