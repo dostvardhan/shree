@@ -1,60 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shreshtha — Welcome</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nadaniya Memories</title>
+  <link rel="stylesheet" href="style.css" />
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  <style>
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;height:100vh;
-      display:flex;align-items:center;justify-content:center;
-      background:linear-gradient(135deg,#cce7ff,#ffeef4);}
-    .card{background:rgba(255,255,255,0.92);padding:28px;border-radius:12px;
-      width:96%;max-width:480px;box-shadow:0 8px 30px rgba(0,0,0,0.08);text-align:center;}
-    h1{margin:0 0 8px;color:#0b3a53}
-    p{margin:0 0 18px;color:#154a60}
-    .btn{display:inline-block;padding:10px 18px;border-radius:8px;border:none;
-      background:linear-gradient(90deg,#b8860b,#ffd27f);color:#2b1b00;font-weight:600;cursor:pointer;text-decoration:none}
-    .btn.secondary{background:transparent;border:2px solid rgba(43,27,0,0.12);color:#154a60;margin-left:10px}
-    #enter-life{display:none;margin-top:12px}
-    footer{font-size:0.85rem;color:#6b7982;margin-top:12px}
-  </style>
 </head>
 <body>
-  <div class="card">
-    <h1>💙 Welcome to Shreshtha's World</h1>
-    <p>Let's celebrate Shreshtha's smile together.</p>
+  <h1>📸 Nadaniya's Private Memories</h1>
 
-    <button class="btn" id="loginBtn">Login / Signup</button>
-    <div id="enter-life"><a class="btn" id="enterBtn" href="/welcome.html">Enter Life</a></div>
+  <!-- Upload Form -->
+  <form id="upload-form">
+    <input type="file" id="file-input" accept="image/*" required />
+    <input type="text" id="caption" placeholder="Write a caption..." />
+    <button type="submit">Upload</button>
+  </form>
 
-    <footer>Private • Invite-only</footer>
-  </div>
+  <p id="status"></p>
 
-  <script>
-    // Netlify Identity UI handlers
-    if (window.netlifyIdentity) {
-      const loginBtn = document.getElementById('loginBtn');
-      const enterArea = document.getElementById('enter-life');
+  <!-- Posts -->
+  <div id="posts-container"></div>
 
-      netlifyIdentity.on('init', user => {
-        if (user) enterArea.style.display = 'block';
-      });
-
-      netlifyIdentity.on('login', () => {
-        enterArea.style.display = 'block';
-        netlifyIdentity.close();
-      });
-
-      netlifyIdentity.on('logout', () => {
-        enterArea.style.display = 'none';
-        // optional: redirect home or reload
-        // location.href = '/';
-      });
-
-      loginBtn.addEventListener('click', () => netlifyIdentity.open());
-      netlifyIdentity.init();
-    }
-  </script>
+  <!-- Script -->
+  <script src="script.js"></script>
 </body>
 </html>
