@@ -1,117 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nadaniya - Daily Memories</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  <style>
-    body { font-family: 'Poppins', sans-serif; background: #fdf6f0; margin:0; padding:0; }
-    .container { max-width: 1000px; margin: auto; padding: 2rem; }
-    h1 { text-align: center; color: #5a2d82; margin-bottom: 2rem; }
-    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 1.5rem; }
-    .card { background: #fff; padding: 1rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align:center; }
-    img { border-radius: 10px; max-width: 100%; cursor: pointer; }
-    .quote { margin-top: 0.5rem; font-size: 0.9rem; color: #555; }
-    #upload-section { background: #fff; padding: 1.5rem; border-radius: 15px; box-shadow:0 6px 20px rgba(0,0,0,0.1); margin-bottom: 2rem; }
-    #result img { max-height: 200px; margin-top: 0.5rem; border-radius: 10px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nadaniya Gallery</title>
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script>
+if (window.netlifyIdentity) {
+    window.netlifyIdentity.on('init', user => {
+        if (!user) {
+            window.location.href = "/";
+        }
+    });
+}
+</script>
+<style>
+body {
+    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    background: linear-gradient(135deg, #f8e1a0, #a3c4f3);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    color:#4b3f2f;
+    text-align:center;
+}
+.particle {
+    position:absolute;
+    width:6px;
+    height:6px;
+    background: rgba(255,215,100,0.5);
+    border-radius:50%;
+    animation: float 12s linear infinite;
+}
+@keyframes float {
+    0% {transform: translateY(0) translateX(0);}
+    50% {transform: translateY(-30px) translateX(20px);}
+    100% {transform: translateY(0) translateX(0);}
+}
+.gallery-img {
+    max-width:70%;
+    max-height:50vh;
+    margin:15px 0;
+    object-fit:contain;
+    border-radius:15px;
+    box-shadow:0 0 60px rgba(255,215,150,0.5);
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
+}
+.gallery-img:hover {
+    transform: scale(1.05);
+    box-shadow:0 0 90px rgba(255,215,150,0.7);
+}
+.quote {
+    font-size:22px;
+    margin-top:15px;
+    max-width:80%;
+    opacity:0;
+    transform: translateY(20px);
+    animation: fadeInUp 1s forwards 0.5s;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+}
+@keyframes fadeInUp { to {opacity:1; transform: translateY(0);} }
+.heart-nav {
+    position:absolute;
+    top:50%;
+    font-size:36px;
+    cursor:pointer;
+    color:#ff6f61;
+    transition: all 0.3s ease;
+    user-select:none;
+    animation: pulse 2s infinite;
+    z-index:10;
+}
+.heart-nav:hover {
+    transform: scale(1.2);
+    text-shadow:0 0 20px #ff6f61,0 0 40px #ff9a80;
+}
+@keyframes pulse {0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+#back { left:20px; top:20px; font-size:28px; text-decoration:none; }
+</style>
 </head>
 <body>
-  <div class="container">
+<div class="particle" style="top:10%; left:20%; animation-duration:12s;"></div>
+<div class="particle" style="top:30%; left:50%; animation-duration:15s;"></div>
+<div class="particle" style="top:60%; left:70%; animation-duration:10s;"></div>
+<div class="particle" style="top:80%; left:40%; animation-duration:18s;"></div>
 
-    <h1>✨ Nadaniya - Daily Memories ✨</h1>
+<!-- Back button to Photo9 -->
+<a id="back" class="heart-nav" href="photo9.html">&#10084;&#65039; Back</a>
 
-    <!-- Upload Section -->
-    <div id="upload-section" class="hidden">
-      <h2 class="text-xl font-semibold mb-4">Upload Your Daily Memory</h2>
-      <form id="upload-form" class="space-y-3">
-        <input type="file" id="file" name="file" accept="image/*" required>
-        <textarea id="quote" name="quote" rows="2" placeholder="Write a quote..." class="w-full border rounded p-2"></textarea>
-        <input type="hidden" id="timestamp" name="timestamp">
-        <button type="submit" class="bg-rose-500 text-white px-4 py-2 rounded hover:bg-rose-600">Upload 💖</button>
-      </form>
-      <div id="result" class="mt-4 text-center hidden">
-        <p class="text-green-600 font-semibold">Uploaded successfully!</p>
-        <img id="preview" src="" alt="Uploaded Image">
-      </div>
-    </div>
+<!-- Gallery images + quotes -->
+<img class="gallery-img" src="daily1.jpg" alt="Daily Photo 1">
+<div class="quote">Every day is a new memory to cherish.</div>
 
-    <!-- Login Section -->
-    <div id="login-section" class="text-center">
-      <p class="text-gray-700">Please log in to upload memories 💌</p>
-      <button id="login-btn" class="bg-rose-500 text-white px-4 py-2 rounded hover:bg-rose-600 mt-2">Login</button>
-    </div>
+<img class="gallery-img" src="daily2.jpg" alt="Daily Photo 2">
+<div class="quote">Little moments, big joy.</div>
 
-    <!-- Gallery -->
-    <div id="gallery" class="gallery mt-6"></div>
+<img class="gallery-img" src="daily3.jpg" alt="Daily Photo 3">
+<div class="quote">Smile, it’s the best accessory.</div>
 
-  </div>
-
-  <script>
-    // Initialize Netlify Identity
-    netlifyIdentity.init();
-
-    const uploadSection = document.getElementById("upload-section");
-    const loginSection = document.getElementById("login-section");
-    const loginBtn = document.getElementById("login-btn");
-
-    function showUpload() { uploadSection.classList.remove("hidden"); loginSection.classList.add("hidden"); }
-    function showLogin() { uploadSection.classList.add("hidden"); loginSection.classList.remove("hidden"); }
-
-    const user = netlifyIdentity.currentUser();
-    if(user) showUpload(); else showLogin();
-
-    netlifyIdentity.on('login', user => showUpload());
-    netlifyIdentity.on('logout', () => showLogin());
-
-    loginBtn.addEventListener('click', () => netlifyIdentity.open());
-
-    // Upload Form
-    const uploadForm = document.getElementById("upload-form");
-    uploadForm.addEventListener("submit", async e => {
-      e.preventDefault();
-      const file = document.getElementById("file").files[0];
-      const quote = document.getElementById("quote").value;
-      const timestamp = new Date().toISOString();
-      document.getElementById("timestamp").value = timestamp;
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("quote", quote);
-      formData.append("timestamp", timestamp);
-
-      try {
-        const res = await fetch("/.netlify/functions/upload", { method:"POST", body: formData });
-        const data = await res.json();
-        if(data.success) {
-          document.getElementById("result").classList.remove("hidden");
-          document.getElementById("preview").src = data.url;
-          loadGallery(); // refresh gallery
-        } else { alert("Upload failed: " + data.error); }
-      } catch(err) { alert("Error uploading: " + err.message); }
-    });
-
-    // Load Gallery
-    async function loadGallery() {
-      try {
-        const res = await fetch("/.netlify/functions/getPosts");
-        const posts = await res.json(); // [{url, quote, timestamp}, ...]
-        const gallery = document.getElementById("gallery");
-        gallery.innerHTML = "";
-        posts.sort((a,b)=> new Date(b.timestamp)-new Date(a.timestamp));
-        posts.forEach(p => {
-          const div = document.createElement("div");
-          div.classList.add("card");
-          div.innerHTML = `<img src="${p.url}" alt="Memory"><div class="quote">${p.quote}</div>`;
-          gallery.appendChild(div);
-        });
-      } catch(err) { console.error("Error loading gallery:", err); }
-    }
-
-    loadGallery(); // initial load
-  </script>
-
+<!-- Add more daily photos as needed -->
 </body>
 </html>
