@@ -1,8 +1,9 @@
 {
+  "name": "shree",
+  "version": "1.0.0",
   "dependencies": {
     "busboy": "^1.6.0",
-    "cloudinary": "^2.7.0",
-    "firebase-admin": "^13.4.0",
-    "formidable": "^3.5.4"
+    "cloudinary": "^1.41.0",
+    "@netlify/blobs": "^6.5.0"
   }
 }
