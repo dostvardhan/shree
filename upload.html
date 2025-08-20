@@ -68,4 +68,40 @@
 
     // Login / Logout events
     netlifyIdentity.on('login', user => showUpload());
-    netlifyIdentity.on(
+    netlifyIdentity.on('logout', () => showLogin());
+
+    loginBtn.addEventListener('click', () => netlifyIdentity.open());
+
+    // Form submit
+    document.getElementById("upload-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const file = document.getElementById("file").files[0];
+      const quote = document.getElementById("quote").value;
+      const timestamp = new Date().toISOString();
+      document.getElementById("timestamp").value = timestamp;
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("quote", quote);
+      formData.append("timestamp", timestamp);
+
+      try {
+        const res = await fetch("/.netlify/functions/upload", {
+          method: "POST",
+          body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById("result").classList.remove("hidden");
+          document.getElementById("preview").src = data.url;
+        } else {
+          alert("Upload failed: " + data.error);
+        }
+      } catch(err) {
+        alert("Error uploading: " + err.message);
+      }
+    });
+  </script>
+
+</body>
+</html>
