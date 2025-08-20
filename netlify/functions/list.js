@@ -1,14 +1,22 @@
-const cloudinary = require('cloudinary').v2;
-const { getPosts } = require('./cloudPosts');
+// netlify/functions/list.js
 
-exports.handler = async () => {
+// Import cloudPosts data
+const cloudPosts = require('./cloudPosts');
+
+exports.handler = async function(event, context) {
   try {
-    const posts = await getPosts(); // fetch from Cloudinary metadata or KV store
     return {
       statusCode: 200,
-      body: JSON.stringify({ success: true, photos: posts })
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(cloudPosts),
     };
-  } catch (err) {
-    return { statusCode: 500, body: JSON.stringify({ success: false, error: err.message }) };
+  } catch (error) {
+    console.error("Error fetching cloudPosts:", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Failed to fetch posts" }),
+    };
   }
 };
