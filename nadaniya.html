@@ -4,47 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nadaniya Gallery</title>
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <style>
-body {margin:0;font-family:'Segoe UI',sans-serif;background: linear-gradient(135deg,#a3c4f3,#f8e1a0);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100vh;color:#4b3f2f;text-align:center;padding:20px;}
-.gallery-img {max-width:80%;margin:20px 0;border-radius:15px;box-shadow:0 0 60px rgba(255,215,150,0.5);transition: transform 0.5s ease, box-shadow 0.5s ease;}
-.gallery-img:hover {transform: scale(1.05); box-shadow:0 0 90px rgba(255,215,150,0.7);}
-.quote {font-size:22px;margin-bottom:25px;text-shadow:2px 2px 8px rgba(0,0,0,0.3);}
-.back-btn {margin-top:20px;font-size:20px;padding:10px 20px;background:#ff6f61;color:white;border:none;border-radius:10px;cursor:pointer;text-decoration:none;}
+  body {font-family: 'Segoe UI', sans-serif; text-align:center; background: #fdf0e1;}
+  img {max-width: 80%; margin: 20px 0; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.2);}
+  p {font-size: 20px; color: #333; margin-bottom: 40px;}
+  a.back {position: fixed; top: 20px; left: 20px; font-size: 20px; color: #ff6f61; text-decoration: none;}
 </style>
 </head>
 <body>
 
-<h1>Nadaniya Daily Gallery</h1>
+<a class="back" href="photo9.html">&#8592; Back</a>
+<h1>Nadaniya Gallery</h1>
 <div id="gallery"></div>
-<a href="photo9.html" class="back-btn">Back to Photo 9</a>
 
 <script>
-if (window.netlifyIdentity) {
-    window.netlifyIdentity.on('init', user => {
-        if (!user) {
-            window.location.href = "/";
-        }
-    });
+async function loadGallery() {
+  const res = await fetch('/.netlify/functions/cloudPosts');
+  const posts = await res.json();
+  const container = document.getElementById('gallery');
+  container.innerHTML = '';
+  posts.forEach(p => {
+    const div = document.createElement('div');
+    div.innerHTML = `<img src="${p.photo}" alt="Daily Photo"><p>${p.quote}</p>`;
+    container.appendChild(div);
+  });
 }
 
-// Fetch photos + quotes dynamically
-fetch('/.netlify/functions/cloudPosts')
-.then(res => res.json())
-.then(data => {
-    const gallery = document.getElementById('gallery');
-    data.forEach(item => {
-        const img = document.createElement('img');
-        img.src = item.url;
-        img.className = 'gallery-img';
-        const quote = document.createElement('div');
-        quote.className = 'quote';
-        quote.textContent = item.quote;
-        gallery.appendChild(img);
-        gallery.appendChild(quote);
-    });
-})
-.catch(err => console.error("Failed to load gallery:", err));
+loadGallery();
 </script>
 
 </body>
