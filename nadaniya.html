@@ -3,115 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nadaniya Gallery</title>
-  <link rel="stylesheet" href="/style.css">
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  <style>
-    body { font-family: sans-serif; background: #fdf6e3; color: #333; padding: 20px; }
-    .buttons { margin-bottom: 20px; }
-    button { margin-right: 10px; padding: 8px 12px; cursor: pointer; }
-    #uploadForm { margin-bottom: 20px; }
-    #gallery { display: flex; flex-wrap: wrap; gap: 15px; }
-    .photo-card { background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); width: 200px; }
-    .photo-card img { width: 100%; border-radius: 5px; }
-    .quote { margin-top: 5px; font-style: italic; font-size: 0.9em; }
-    #loginMessage { margin-bottom: 20px; color: red; }
-  </style>
+  <title>Nadaniya Posts</title>
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <h1>Nadaniya Gallery</h1>
-  <div class="buttons">
-    <button onclick="window.location.href='photo9.html'">← Back to Photo9</button>
-    <button onclick="window.location.href='life.html'">← Back to Life</button>
-    <button id="loginBtn">Login</button>
-    <button id="logoutBtn" style="display:none;">Logout</button>
-  </div>
+  <header>
+    <h1>Nadaniya ❤️</h1>
+  </header>
 
-  <div id="loginMessage"></div>
+  <!-- Upload Section -->
+  <section id="upload">
+    <h2>Nayi Nadaniya Post Karo</h2>
+    <form id="upload-form">
+      <input type="file" id="file-input" accept="image/*" required />
+      <input type="text" id="caption" placeholder="Kuch likho..." required />
+      <button type="submit">Upload</button>
+    </form>
+    <p id="status"></p>
+  </section>
 
-  <form id="uploadForm" style="display:none;">
-    <input type="file" name="photo" required />
-    <input type="text" name="quote" placeholder="Add a quote (optional)" />
-    <button type="submit">Upload</button>
-  </form>
+  <!-- Display Posts -->
+  <section id="posts">
+    <h2>Sabse Pyari Nadaniya Posts</h2>
+    <div id="posts-container"></div>
+  </section>
 
-  <div id="gallery"></div>
-
-  <script>
-    const identity = netlifyIdentity.init();
-
-    const loginBtn = document.getElementById('loginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const uploadForm = document.getElementById('uploadForm');
-    const loginMessage = document.getElementById('loginMessage');
-    const galleryDiv = document.getElementById('gallery');
-
-    // Login/logout buttons
-    loginBtn.addEventListener('click', () => identity.open());
-    logoutBtn.addEventListener('click', () => identity.logout());
-
-    identity.on('login', user => {
-      loginBtn.style.display = 'none';
-      logoutBtn.style.display = 'inline-block';
-      uploadForm.style.display = 'block';
-      loginMessage.textContent = '';
-      loadGallery();
-    });
-
-    identity.on('logout', () => {
-      loginBtn.style.display = 'inline-block';
-      logoutBtn.style.display = 'none';
-      uploadForm.style.display = 'none';
-      galleryDiv.innerHTML = '';
-      loginMessage.textContent = 'Login to view and upload photos.';
-    });
-
-    // Check initial login state
-    const user = identity.currentUser();
-    if (user) {
-      loginBtn.style.display = 'none';
-      logoutBtn.style.display = 'inline-block';
-      uploadForm.style.display = 'block';
-      loadGallery();
-    } else {
-      loginMessage.textContent = 'Login to view and upload photos.';
-    }
-
-    // Upload photo
-    uploadForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(uploadForm);
-      const res = await fetch('/.netlify/functions/upload', {
-        method: 'POST',
-        body: formData
-      });
-      const text = await res.text();
-      alert(text);
-      if(res.status === 200) loadGallery();
-    });
-
-    // Load gallery dynamically
-    async function loadGallery() {
-      try {
-        const res = await fetch('/.netlify/functions/cloudPosts');
-        const posts = await res.json();
-        galleryDiv.innerHTML = '';
-        posts.forEach(post => {
-          const card = document.createElement('div');
-          card.className = 'photo-card';
-          const img = document.createElement('img');
-          img.src = post.photo;
-          const quote = document.createElement('div');
-          quote.className = 'quote';
-          quote.textContent = post.quote;
-          card.appendChild(img);
-          card.appendChild(quote);
-          galleryDiv.appendChild(card);
-        });
-      } catch (err) {
-        galleryDiv.textContent = 'Failed to load gallery.';
-      }
-    }
-  </script>
+  <script src="/upload.js"></script>
 </body>
 </html>
