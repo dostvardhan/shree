@@ -2,11 +2,17 @@ const fs = require('fs');
 const path = require('path');
 
 exports.handler = async () => {
-    const jsonPath = path.join(__dirname, "gallery.json");
-    let data = [];
-    if(fs.existsSync(jsonPath)) data = JSON.parse(fs.readFileSync(jsonPath));
-    return {
-        statusCode: 200,
-        body: JSON.stringify(data)
-    };
+  const filePath = path.join(__dirname, 'gallery.json');
+  let posts = [];
+  try {
+    posts = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch (err) {
+    console.log('No gallery.json yet, returning empty array');
+  }
+
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(posts)
+  };
 };
