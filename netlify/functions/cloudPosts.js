@@ -1,15 +1,12 @@
-// netlify/functions/cloudPosts.js
-// Placeholder posts for Nadaniya gallery
+const fs = require('fs');
+const path = require('path');
 
-module.exports = [
-  {
-    id: 1,
-    title: "Welcome Post",
-    content: "This is a placeholder post for Nadaniya gallery."
-  },
-  {
-    id: 2,
-    title: "Daily Photo Example",
-    content: "Add more posts here as you upload new photos."
-  }
-];
+exports.handler = async () => {
+    const jsonPath = path.join(__dirname, "gallery.json");
+    let data = [];
+    if(fs.existsSync(jsonPath)) data = JSON.parse(fs.readFileSync(jsonPath));
+    return {
+        statusCode: 200,
+        body: JSON.stringify(data)
+    };
+};
