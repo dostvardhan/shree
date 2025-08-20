@@ -1,34 +1,67 @@
+const { v2: cloudinary } = require('cloudinary');
+const formidable = require('formidable');
 const fs = require('fs');
 const path = require('path');
-const formidable = require('formidable');
 
-exports.handler = async (event) => {
+// Cloudinary config from environment variables
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+exports.handler = async (event, context) => {
+  // Only allow POST method
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  const form = formidable({ multiples: false, uploadDir: path.join(__dirname, 'uploads'), keepExtensions: true });
+  // Check Netlify Identity user
+  const user = context.clientContext && context.clientContext.user;
+  if (!user) {
+    return { statusCode: 401, body: 'Unauthorized: Login required' };
+  }
 
-  return new Promise((resolve, reject) => {
-    form.parse(event, (err, fields, files) => {
+  const form = formidable({ multiples: false });
+
+  return new Promise((resolve) => {
+    form.parse(event, async (err, fields, files) => {
       if (err) {
-        reject({ statusCode: 500, body: err.toString() });
+        resolve({ statusCode: 500, body: 'Form parse error: ' + err.toString() });
         return;
       }
 
-      const photoPath = `/uploads/${path.basename(files.photo.path)}`;
+      const file = files.photo;
       const quote = fields.quote || '';
 
-      const galleryPath = path.join(__dirname, 'gallery.json');
-      let posts = [];
+      if (!file) {
+        resolve({ statusCode: 400, body: 'No photo uploaded' });
+        return;
+      }
+
       try {
-        posts = JSON.parse(fs.readFileSync(galleryPath, 'utf-8'));
-      } catch (e) {}
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(file.filepath, {
+          folder: 'private_nadaniya_uploads',
+          use_filename: true,
+          unique_filename: true,
+          overwrite: false,
+        });
 
-      posts.unshift({ photo: photoPath, quote });
-      fs.writeFileSync(galleryPath, JSON.stringify(posts, null, 2));
+        // Save post to cloudPosts.json (or your existing cloudPosts logic)
+        const galleryPath = path.join(__dirname, 'cloudPosts.json');
+        let posts = [];
+        try {
+          posts = JSON.parse(fs.readFileSync(galleryPath, 'utf-8'));
+        } catch (e) {}
 
-      resolve({ statusCode: 200, body: 'Uploaded successfully' });
+        posts.unshift({ photo: result.secure_url, quote });
+        fs.writeFileSync(galleryPath, JSON.stringify(posts, null, 2));
+
+        resolve({ statusCode: 200, body: 'Uploaded successfully' });
+      } catch (e) {
+        resolve({ statusCode: 500, body: 'Upload failed: ' + e.message });
+      }
     });
   });
 };
