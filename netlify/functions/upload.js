@@ -1,67 +1,77 @@
+// netlify/functions/upload.js
+const Busboy = require('busboy');
 const { v2: cloudinary } = require('cloudinary');
-const formidable = require('formidable');
-const fs = require('fs');
-const path = require('path');
+const { addPost } = require('./cloudPosts');
 
-// Cloudinary config from environment variables
+// Cloudinary config from env (Netlify Environment Variables)
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 exports.handler = async (event, context) => {
-  // Only allow POST method
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
-  // Check Netlify Identity user
+  // Netlify Identity check (private upload)
   const user = context.clientContext && context.clientContext.user;
   if (!user) {
     return { statusCode: 401, body: 'Unauthorized: Login required' };
   }
 
-  const form = formidable({ multiples: false });
-
   return new Promise((resolve) => {
-    form.parse(event, async (err, fields, files) => {
-      if (err) {
-        resolve({ statusCode: 500, body: 'Form parse error: ' + err.toString() });
-        return;
-      }
+    try {
+      const bb = Busboy({ headers: event.headers });
+      const fields = {};
+      let gotFile = false;
 
-      const file = files.photo;
-      const quote = fields.quote || '';
+      bb.on('field', (name, val) => { fields[name] = val; });
 
-      if (!file) {
-        resolve({ statusCode: 400, body: 'No photo uploaded' });
-        return;
-      }
+      bb.on('file', (name, file, info) => {
+        gotFile = true;
+        const { filename, mimeType } = info;
 
-      try {
-        // Upload to Cloudinary
-        const result = await cloudinary.uploader.upload(file.filepath, {
-          folder: 'private_nadaniya_uploads',
+        const uploadOpts = {
+          folder: process.env.CLOUDINARY_UPLOAD_FOLDER || 'private_nadaniya_uploads',
+          resource_type: 'image',
           use_filename: true,
           unique_filename: true,
-          overwrite: false,
+          overwrite: false
+        };
+
+        const stream = cloudinary.uploader.upload_stream(uploadOpts, async (err, result) => {
+          if (err) {
+            resolve({ statusCode: 500, body: 'Cloudinary error: ' + err.message });
+            return;
+          }
+          try {
+            await addPost(result.secure_url, fields.quote || '');
+            resolve({ statusCode: 200, body: 'Uploaded successfully' });
+          } catch (e) {
+            resolve({ statusCode: 500, body: 'Save failed: ' + e.message });
+          }
         });
 
-        // Save post to cloudPosts.json (or your existing cloudPosts logic)
-        const galleryPath = path.join(__dirname, 'cloudPosts.json');
-        let posts = [];
-        try {
-          posts = JSON.parse(fs.readFileSync(galleryPath, 'utf-8'));
-        } catch (e) {}
+        file.on('data', (data) => stream.write(data));
+        file.on('end', () => stream.end());
+      });
 
-        posts.unshift({ photo: result.secure_url, quote });
-        fs.writeFileSync(galleryPath, JSON.stringify(posts, null, 2));
+      bb.on('finish', () => {
+        if (!gotFile) {
+          resolve({ statusCode: 400, body: 'No photo uploaded' });
+        }
+      });
 
-        resolve({ statusCode: 200, body: 'Uploaded successfully' });
-      } catch (e) {
-        resolve({ statusCode: 500, body: 'Upload failed: ' + e.message });
-      }
-    });
+      // Body ko proper Buffer me pass karo
+      const body = event.isBase64Encoded
+        ? Buffer.from(event.body || '', 'base64')
+        : Buffer.from(event.body || '', 'utf8');
+
+      bb.end(body);
+    } catch (e) {
+      resolve({ statusCode: 500, body: 'Upload parse failed: ' + e.message });
+    }
   });
 };
