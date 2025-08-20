@@ -15,17 +15,72 @@ if (window.netlifyIdentity) {
 }
 </script>
 <style>
-body {margin:0;font-family:'Segoe UI',sans-serif;background: linear-gradient(135deg, #a3c4f3, #f8e1a0);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;color:#4b3f2f;text-align:center;}
-.particle {position:absolute;width:6px;height:6px;background: rgba(255,215,100,0.5);border-radius:50%;animation: float 12s linear infinite;}
-@keyframes float {0% {transform: translateY(0) translateX(0);}50% {transform: translateY(-30px) translateX(20px);}100% {transform: translateY(0) translateX(0);} }
-img {max-width:80%;max-height:65vh;object-fit:contain;border-radius:15px;box-shadow:0 0 60px rgba(255,215,150,0.5);transition: transform 0.5s ease, box-shadow 0.5s ease;}
-img:hover {transform: scale(1.05); box-shadow:0 0 90px rgba(255,215,150,0.7);}
-.quote {font-size:26px;margin-top:25px;max-width:80%;opacity:0;transform: translateY(20px);animation: fadeInUp 1s forwards 0.5s;text-shadow: 2px 2px 8px rgba(0,0,0,0.3);}
-@keyframes fadeInUp {to {opacity:1; transform: translateY(0);} }
-.heart-nav {position:absolute;top:50%;font-size:40px;cursor:pointer;color:#ff6f61;transition: all 0.3s ease;user-select:none;animation: pulse 2s infinite;}
-.heart-nav:hover {transform: scale(1.2); text-shadow:0 0 20px #ff6f61,0 0 40px #ff9a80;}
-@keyframes pulse {0%,100%{transform:scale(1);}50%{transform:scale(1.1);} }
-#prev { left:20px; } #next { right:20px; }
+body {
+    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    background: linear-gradient(135deg, #a3c4f3, #f8e1a0);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    color:#4b3f2f;
+    text-align:center;
+}
+.particle {
+    position:absolute;
+    width:6px;
+    height:6px;
+    background: rgba(255,215,100,0.5);
+    border-radius:50%;
+    animation: float 12s linear infinite;
+}
+@keyframes float {
+    0% {transform: translateY(0) translateX(0);}
+    50% {transform: translateY(-30px) translateX(20px);}
+    100% {transform: translateY(0) translateX(0);}
+}
+img {
+    max-width:80%;
+    max-height:65vh;
+    object-fit:contain;
+    border-radius:15px;
+    box-shadow:0 0 60px rgba(255,215,150,0.5);
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
+}
+img:hover {
+    transform: scale(1.05);
+    box-shadow:0 0 90px rgba(255,215,150,0.7);
+}
+.quote {
+    font-size:26px;
+    margin-top:25px;
+    max-width:80%;
+    opacity:0;
+    transform: translateY(20px);
+    animation: fadeInUp 1s forwards 0.5s;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+}
+@keyframes fadeInUp { to {opacity:1; transform: translateY(0);} }
+.heart-nav {
+    position:absolute;
+    top:50%;
+    font-size:40px;
+    cursor:pointer;
+    color:#ff6f61;
+    transition: all 0.3s ease;
+    user-select:none;
+    animation: pulse 2s infinite;
+    z-index:10; /* ensures visible above particles */
+}
+.heart-nav:hover {
+    transform: scale(1.2);
+    text-shadow:0 0 20px #ff6f61,0 0 40px #ff9a80;
+}
+@keyframes pulse {0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+#prev { left:20px; } 
+#next { right:20px; }
 </style>
 </head>
 <body>
@@ -36,4 +91,7 @@ img:hover {transform: scale(1.05); box-shadow:0 0 90px rgba(255,215,150,0.7);}
 
 <a id="prev" class="heart-nav" href="photo8.html">&#10084;&#65039;</a>
 <img src="photo9.jpg" alt="Photo 9">
-<a id="n
+<a id="next" class="heart-nav" href="nadaniya.html">&#10084;&#65039;</a>
+<div class="quote">Memories last forever, and this photo is a treasure of such timeless joy.</div>
+</body>
+</html>
