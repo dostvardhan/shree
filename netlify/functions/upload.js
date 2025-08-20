@@ -1,77 +1,70 @@
-// netlify/functions/upload.js
-const Busboy = require('busboy');
-const { v2: cloudinary } = require('cloudinary');
-const { addPost } = require('./cloudPosts');
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("upload-form");
+  const fileInput = document.getElementById("file-input");
+  const captionInput = document.getElementById("caption");
+  const statusEl = document.getElementById("status");
+  const postsContainer = document.getElementById("posts-container");
 
-// Cloudinary config from env (Netlify Environment Variables)
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-exports.handler = async (event, context) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
-  }
-
-  // Netlify Identity check (private upload)
-  const user = context.clientContext && context.clientContext.user;
-  if (!user) {
-    return { statusCode: 401, body: 'Unauthorized: Login required' };
-  }
-
-  return new Promise((resolve) => {
+  // 🔹 Load saved posts from Netlify Blob
+  async function loadPosts() {
+    postsContainer.innerHTML = "Loading posts...";
     try {
-      const bb = Busboy({ headers: event.headers });
-      const fields = {};
-      let gotFile = false;
+      const res = await fetch("/.netlify/functions/getPosts");
+      const posts = await res.json();
 
-      bb.on('field', (name, val) => { fields[name] = val; });
+      postsContainer.innerHTML = "";
+      posts.reverse().forEach((post) => {
+        const div = document.createElement("div");
+        div.className = "post";
+        div.innerHTML = `
+          <img src="${post.imageUrl}" alt="Nadaniya post" />
+          <p>${post.caption}</p>
+        `;
+        postsContainer.appendChild(div);
+      });
+    } catch (err) {
+      postsContainer.innerHTML = "Error loading posts.";
+      console.error(err);
+    }
+  }
 
-      bb.on('file', (name, file, info) => {
-        gotFile = true;
-        const { filename, mimeType } = info;
+  loadPosts();
 
-        const uploadOpts = {
-          folder: process.env.CLOUDINARY_UPLOAD_FOLDER || 'private_nadaniya_uploads',
-          resource_type: 'image',
-          use_filename: true,
-          unique_filename: true,
-          overwrite: false
-        };
+  // 🔹 Handle upload
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!fileInput.files.length) {
+      alert("Pehle photo select karo!");
+      return;
+    }
 
-        const stream = cloudinary.uploader.upload_stream(uploadOpts, async (err, result) => {
-          if (err) {
-            resolve({ statusCode: 500, body: 'Cloudinary error: ' + err.message });
-            return;
-          }
-          try {
-            await addPost(result.secure_url, fields.quote || '');
-            resolve({ statusCode: 200, body: 'Uploaded successfully' });
-          } catch (e) {
-            resolve({ statusCode: 500, body: 'Save failed: ' + e.message });
-          }
-        });
+    const file = fileInput.files[0];
+    const caption = captionInput.value.trim();
 
-        file.on('data', (data) => stream.write(data));
-        file.on('end', () => stream.end());
+    statusEl.textContent = "Uploading...";
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("caption", caption);
+
+    try {
+      const res = await fetch("/.netlify/functions/upload", {
+        method: "POST",
+        body: formData,
       });
 
-      bb.on('finish', () => {
-        if (!gotFile) {
-          resolve({ statusCode: 400, body: 'No photo uploaded' });
-        }
-      });
+      if (!res.ok) throw new Error("Upload failed");
+      statusEl.textContent = "Upload successful! 🎉";
 
-      // Body ko proper Buffer me pass karo
-      const body = event.isBase64Encoded
-        ? Buffer.from(event.body || '', 'base64')
-        : Buffer.from(event.body || '', 'utf8');
+      // reload posts
+      loadPosts();
 
-      bb.end(body);
-    } catch (e) {
-      resolve({ statusCode: 500, body: 'Upload parse failed: ' + e.message });
+      // clear form
+      fileInput.value = "";
+      captionInput.value = "";
+    } catch (err) {
+      statusEl.textContent = "Error uploading post.";
+      console.error(err);
     }
   });
-};
+});
