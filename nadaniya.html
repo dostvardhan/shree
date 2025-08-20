@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nadaniya Gallery</title>
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<style>
+body {margin:0;font-family:'Segoe UI',sans-serif;background: linear-gradient(135deg,#a3c4f3,#f8e1a0);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100vh;color:#4b3f2f;text-align:center;padding:20px;}
+.gallery-img {max-width:80%;margin:20px 0;border-radius:15px;box-shadow:0 0 60px rgba(255,215,150,0.5);transition: transform 0.5s ease, box-shadow 0.5s ease;}
+.gallery-img:hover {transform: scale(1.05); box-shadow:0 0 90px rgba(255,215,150,0.7);}
+.quote {font-size:22px;margin-bottom:25px;text-shadow:2px 2px 8px rgba(0,0,0,0.3);}
+.back-btn {margin-top:20px;font-size:20px;padding:10px 20px;background:#ff6f61;color:white;border:none;border-radius:10px;cursor:pointer;text-decoration:none;}
+</style>
+</head>
+<body>
+
+<h1>Nadaniya Daily Gallery</h1>
+<div id="gallery"></div>
+<a href="photo9.html" class="back-btn">Back to Photo 9</a>
+
 <script>
 if (window.netlifyIdentity) {
     window.netlifyIdentity.on('init', user => {
@@ -13,95 +27,25 @@ if (window.netlifyIdentity) {
         }
     });
 }
+
+// Fetch photos + quotes dynamically
+fetch('/.netlify/functions/cloudPosts')
+.then(res => res.json())
+.then(data => {
+    const gallery = document.getElementById('gallery');
+    data.forEach(item => {
+        const img = document.createElement('img');
+        img.src = item.url;
+        img.className = 'gallery-img';
+        const quote = document.createElement('div');
+        quote.className = 'quote';
+        quote.textContent = item.quote;
+        gallery.appendChild(img);
+        gallery.appendChild(quote);
+    });
+})
+.catch(err => console.error("Failed to load gallery:", err));
 </script>
-<style>
-body {
-    margin:0;
-    font-family:'Segoe UI',sans-serif;
-    background: linear-gradient(135deg, #f8e1a0, #a3c4f3);
-    overflow:hidden;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    min-height:100vh;
-    color:#4b3f2f;
-    text-align:center;
-}
-.particle {
-    position:absolute;
-    width:6px;
-    height:6px;
-    background: rgba(255,215,100,0.5);
-    border-radius:50%;
-    animation: float 12s linear infinite;
-}
-@keyframes float {
-    0% {transform: translateY(0) translateX(0);}
-    50% {transform: translateY(-30px) translateX(20px);}
-    100% {transform: translateY(0) translateX(0);}
-}
-.gallery-img {
-    max-width:70%;
-    max-height:50vh;
-    margin:15px 0;
-    object-fit:contain;
-    border-radius:15px;
-    box-shadow:0 0 60px rgba(255,215,150,0.5);
-    transition: transform 0.5s ease, box-shadow 0.5s ease;
-}
-.gallery-img:hover {
-    transform: scale(1.05);
-    box-shadow:0 0 90px rgba(255,215,150,0.7);
-}
-.quote {
-    font-size:22px;
-    margin-top:15px;
-    max-width:80%;
-    opacity:0;
-    transform: translateY(20px);
-    animation: fadeInUp 1s forwards 0.5s;
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-}
-@keyframes fadeInUp { to {opacity:1; transform: translateY(0);} }
-.heart-nav {
-    position:absolute;
-    top:50%;
-    font-size:36px;
-    cursor:pointer;
-    color:#ff6f61;
-    transition: all 0.3s ease;
-    user-select:none;
-    animation: pulse 2s infinite;
-    z-index:10;
-}
-.heart-nav:hover {
-    transform: scale(1.2);
-    text-shadow:0 0 20px #ff6f61,0 0 40px #ff9a80;
-}
-@keyframes pulse {0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
-#back { left:20px; top:20px; font-size:28px; text-decoration:none; }
-</style>
-</head>
-<body>
-<div class="particle" style="top:10%; left:20%; animation-duration:12s;"></div>
-<div class="particle" style="top:30%; left:50%; animation-duration:15s;"></div>
-<div class="particle" style="top:60%; left:70%; animation-duration:10s;"></div>
-<div class="particle" style="top:80%; left:40%; animation-duration:18s;"></div>
 
-<!-- Back button to Photo9 -->
-<a id="back" class="heart-nav" href="photo9.html">&#10084;&#65039; Back</a>
-
-<!-- Gallery images + quotes -->
-<img class="gallery-img" src="daily1.jpg" alt="Daily Photo 1">
-<div class="quote">Every day is a new memory to cherish.</div>
-
-<img class="gallery-img" src="daily2.jpg" alt="Daily Photo 2">
-<div class="quote">Little moments, big joy.</div>
-
-<img class="gallery-img" src="daily3.jpg" alt="Daily Photo 3">
-<div class="quote">Smile, it’s the best accessory.</div>
-
-<!-- Add more daily photos as needed -->
 </body>
 </html>
