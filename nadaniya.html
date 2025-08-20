@@ -1,33 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nadaniya Posts</title>
-  <link rel="stylesheet" href="/style.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff5f7;
+      color: #333;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      color: #d6336c;
+    }
+    .upload-box {
+      margin: 20px auto;
+      padding: 15px;
+      border: 2px dashed #d6336c;
+      border-radius: 12px;
+      max-width: 400px;
+      background: #fff;
+    }
+    input, button {
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 90%;
+    }
+    button {
+      background: #d6336c;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #a61e4d;
+    }
+    .posts {
+      margin-top: 30px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .post {
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .post img {
+      max-width: 100%;
+      border-radius: 8px;
+    }
+    .caption {
+      margin-top: 8px;
+      font-style: italic;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>Nadaniya ❤️</h1>
-  </header>
+  <h1>💖 Nadaniya Memories</h1>
 
-  <!-- Upload Section -->
-  <section id="upload">
-    <h2>Nayi Nadaniya Post Karo</h2>
-    <form id="upload-form">
-      <input type="file" id="file-input" accept="image/*" required />
-      <input type="text" id="caption" placeholder="Kuch likho..." required />
-      <button type="submit">Upload</button>
-    </form>
-    <p id="status"></p>
-  </section>
+  <div class="upload-box">
+    <input type="file" id="fileInput" accept="image/*"><br>
+    <input type="text" id="caption" placeholder="Write a caption..."><br>
+    <button onclick="uploadPost()">Upload</button>
+  </div>
 
-  <!-- Display Posts -->
-  <section id="posts">
-    <h2>Sabse Pyari Nadaniya Posts</h2>
-    <div id="posts-container"></div>
-  </section>
+  <div class="posts" id="posts"></div>
 
-  <script src="/upload.js"></script>
+  <script>
+    async function uploadPost() {
+      const fileInput = document.getElementById("fileInput");
+      const captionInput = document.getElementById("caption");
+
+      if (!fileInput.files.length) return alert("Select a photo!");
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+
+      reader.onloadend = async () => {
+        const base64 = reader.result.split(",")[1];
+
+        const res = await fetch("/.netlify/functions/upload", {
+          method: "POST",
+          body: JSON.stringify({
+            imageBase64: base64,
+            caption: captionInput.value,
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          alert("Uploaded!");
+          captionInput.value = "";
+          fileInput.value = "";
+          loadPosts();
+        } else {
+          alert("Error: " + data);
+        }
+      };
+    }
+
+    async function loadPosts() {
+      const postsDiv = document.getElementById("posts");
+      postsDiv.innerHTML = "Loading...";
+
+      const res = await fetch("/.netlify/functions/getPosts");
+      const posts = await res.json();
+
+      if (!Array.isArray(posts)) {
+        postsDiv.innerHTML = "No posts yet!";
+        return;
+      }
+
+      postsDiv.innerHTML = posts.map(
+        post => `
+          <div class="post">
+            <img src="${post.imageUrl}" alt="post image">
+            <div class="caption">${post.caption}</div>
+          </div>
+        `
+      ).join("");
+    }
+
+    loadPosts();
+  </script>
 </body>
 </html>
