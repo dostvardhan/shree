@@ -3,32 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome | Shree</title>
-  <link rel="stylesheet" href="style.css" />
-  <!-- Netlify Identity Widget -->
+  <title>Login - Shreshtha</title>
+  <link rel="stylesheet" href="style.css">
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>Welcome to Shree</h1>
-    <p>Private memories, notes and soft images — visible only to invited friends.</p>
+    <h1>Welcome</h1>
+    <p>Let's celebrate Shreshtha's smile together.</p>
 
-    <!-- Buttons -->
-    <button onclick="netlifyIdentity.open('login')">Login with Email</button>
-    <button onclick="netlifyIdentity.open('login')">Login with Google</button>
-    <button onclick="netlifyIdentity.logout()">Logout</button>
+    <!-- Netlify Login Widget -->
+    <button onclick="netlifyIdentity.open()">Login / Signup</button>
   </div>
 
   <script>
-    if (window.netlifyIdentity) {
-      window.netlifyIdentity.on("init", user => {
-        if (!user) {
-          window.netlifyIdentity.on("login", () => {
-            document.location.href = "/secret.html";
-          });
-        }
-      });
-    }
+    // Netlify Identity setup
+    netlifyIdentity.on("init", user => {
+      if (user) {
+        window.location.href = "secret.html"; // Agar already logged in hai to secret pe bhej do
+      }
+    });
+
+    netlifyIdentity.on("login", () => {
+      window.location.href = "secret.html"; // Login ke baad secret.html
+    });
+
+    netlifyIdentity.on("logout", () => {
+      window.location.href = "index.html"; // Logout ke baad login page
+    });
   </script>
 </body>
 </html>
