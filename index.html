@@ -1,28 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nadaniya Memories</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shree Home</title>
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
-  <h1>📸 Nadaniya's Private Memories</h1>
 
-  <!-- Upload Form -->
-  <form id="upload-form">
-    <input type="file" id="file-input" accept="image/*" required />
-    <input type="text" id="caption" placeholder="Write a caption..." />
-    <button type="submit">Upload</button>
-  </form>
+  <h1>Welcome to Shree</h1>
+  <p>Login to access your secret page.</p>
 
-  <p id="status"></p>
+  <!-- Login buttons -->
+  <div id="login-buttons">
+    <button onclick="loginEmail()">Login with Email</button>
+    <button onclick="loginGoogle()">Login with Google</button>
+    <button onclick="logout()">Logout</button>
+  </div>
 
-  <!-- Posts -->
-  <div id="posts-container"></div>
+  <script>
+    // Initialize Netlify Identity
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.on('init', user => {
+        if (!user) console.log('No user logged in');
+        else console.log('User logged in:', user.email);
+      });
 
-  <!-- Script -->
-  <script src="script.js"></script>
+      window.netlifyIdentity.on('login', user => {
+        console.log('User logged in via widget:', user.email);
+        window.location.href = '/secret.html'; // redirect after login
+      });
+
+      window.netlifyIdentity.on('logout', () => {
+        console.log('User logged out');
+        window.location.href = '/';
+      });
+    }
+
+    function loginEmail() {
+      window.netlifyIdentity.open(); // email/password login
+    }
+
+    function loginGoogle() {
+      window.netlifyIdentity.open('login'); // Google login
+    }
+
+    function logout() {
+      window.netlifyIdentity.logout();
+    }
+  </script>
 </body>
 </html>
