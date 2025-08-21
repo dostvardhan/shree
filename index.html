@@ -1,52 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Shree Home</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome | Shree</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Netlify Identity Widget -->
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
+  <div class="container">
+    <h1>Welcome to Shree</h1>
+    <p>Private memories, notes and soft images — visible only to invited friends.</p>
 
-  <h1>Welcome to Shree</h1>
-  <p>Login to access your secret page.</p>
-
-  <!-- Login buttons -->
-  <div id="login-buttons">
-    <button onclick="loginEmail()">Login with Email</button>
-    <button onclick="loginGoogle()">Login with Google</button>
-    <button onclick="logout()">Logout</button>
+    <!-- Buttons -->
+    <button onclick="netlifyIdentity.open('login')">Login with Email</button>
+    <button onclick="netlifyIdentity.open('login')">Login with Google</button>
+    <button onclick="netlifyIdentity.logout()">Logout</button>
   </div>
 
   <script>
-    // Initialize Netlify Identity
     if (window.netlifyIdentity) {
-      window.netlifyIdentity.on('init', user => {
-        if (!user) console.log('No user logged in');
-        else console.log('User logged in:', user.email);
+      window.netlifyIdentity.on("init", user => {
+        if (!user) {
+          window.netlifyIdentity.on("login", () => {
+            document.location.href = "/secret.html";
+          });
+        }
       });
-
-      window.netlifyIdentity.on('login', user => {
-        console.log('User logged in via widget:', user.email);
-        window.location.href = '/secret.html'; // redirect after login
-      });
-
-      window.netlifyIdentity.on('logout', () => {
-        console.log('User logged out');
-        window.location.href = '/';
-      });
-    }
-
-    function loginEmail() {
-      window.netlifyIdentity.open(); // email/password login
-    }
-
-    function loginGoogle() {
-      window.netlifyIdentity.open('login'); // Google login
-    }
-
-    function logout() {
-      window.netlifyIdentity.logout();
     }
   </script>
 </body>
