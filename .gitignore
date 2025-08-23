@@ -1,5 +1,14 @@
+# Environment files
 .env
+*.env
+server/.env
 
-# Local Netlify folder
-.netlify
-node_modules/ 
+# Credentials / keys
+*.pem
+*.json
+credentials*.json
+
+# OS / IDE junk
+.DS_Store
+node_modules
+dist
