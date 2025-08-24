@@ -5,6 +5,7 @@ const express = require("express");
 const fileUpload = require("express-fileupload");
 const cors = require("cors");
 const { google } = require("googleapis");
+const { Readable } = require("stream");
 
 const {
   CLIENT_ID,
@@ -30,7 +31,7 @@ app.use(
   fileUpload({
     limits: { fileSize: 25 * 1024 * 1024 }, // max 25MB
     abortOnLimit: true,
-    useTempFiles: false,
+    useTempFiles: false, // using Buffer -> Stream via Readable.from
   })
 );
 
@@ -86,6 +87,7 @@ app.post("/upload", async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
 
     const f = req.files.file;
+
     const allowed = [
       "image/jpeg",
       "image/png",
@@ -108,19 +110,21 @@ app.post("/upload", async (req, res) => {
 
     const { data: file } = await drive().files.create({
       requestBody,
-      media: { mimeType: f.mimetype, body: f.data },
+      // 🔧 Buffer -> Stream to avoid "part.body.pipe is not a function"
+      media: { mimeType: f.mimetype, body: Readable.from(f.data) },
       fields:
         "id, name, createdTime, webViewLink, webContentLink, thumbnailLink",
       supportsAllDrives: true,
     });
 
-    // public toggle
+    // public toggle (defaults to private)
     if (MAKE_PUBLIC === "true") {
       await drive().permissions.create({
         fileId: file.id,
         requestBody: { role: "reader", type: "anyone" },
         supportsAllDrives: true,
       });
+      // re-fetch links after permission change (optional)
       const { data: full } = await drive().files.get({
         fileId: file.id,
         fields: "id, webViewLink, webContentLink",
@@ -138,7 +142,7 @@ app.post("/upload", async (req, res) => {
   }
 });
 
-// list photos
+// list photos (newest first)
 app.get("/photos", async (_req, res) => {
   try {
     if (!REFRESH_TOKEN)
