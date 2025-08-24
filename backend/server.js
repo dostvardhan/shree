@@ -1,10 +1,9 @@
-// server.js — Shree Drive Uploader (diagnostic-safe, private by default)
+// server.js — Shree Drive Uploader (diagnostic + root fallback, private by default)
 const express = require("express");
 const fileUpload = require("express-fileupload");
 const cors = require("cors");
 const { google } = require("googleapis");
 const fs = require("fs");
-const path = require("path");
 
 const {
   CLIENT_ID,
@@ -31,7 +30,7 @@ app.use(
     limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
     abortOnLimit: true,
     useTempFiles: true,
-    tempFileDir: "/tmp", // Render's tmp
+    tempFileDir: "/tmp", // Render's tmp dir
   })
 );
 
@@ -53,18 +52,16 @@ function timestampedName(original) {
   return `${stamp}_${original}`.replace(/[^\w.\-@()+\s]/g, "_");
 }
 function safeErr(e) {
-  // Extract useful message WITHOUT leaking secrets
-  const g = e?.response?.data?.error?.message || e?.message || String(e);
-  const code = e?.response?.status || e?.code || undefined;
-  return { code, message: g };
-}
-function fileStat(p) {
-  try {
-    const st = fs.statSync(p);
-    return { exists: true, size: st.size };
-  } catch {
-    return { exists: false, size: 0 };
-  }
+  // Extract useful diagnostics without secrets
+  return {
+    code: e?.response?.status || e?.code || 500,
+    statusText: e?.response?.statusText,
+    message:
+      e?.response?.data?.error?.message ||
+      e?.message ||
+      "Unknown Error.",
+    raw: e?.response?.data || undefined, // ok for diagnostics; no tokens here
+  };
 }
 
 // ---------- Routes ----------
@@ -82,9 +79,10 @@ app.get("/oauth2callback", async (req, res) => {
   }
 });
 
-// upload (private by default) with diagnostics & root fallback
+// upload (private by default) with unconditional root fallback
 app.post("/upload", async (req, res) => {
   try {
+    // optional API key
     if (UPLOAD_API_KEY && req.headers["x-api-key"] !== UPLOAD_API_KEY) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -98,29 +96,32 @@ app.post("/upload", async (req, res) => {
     }
 
     // temp file must exist
-    const tmp = f.tempFilePath;
-    const stat = fileStat(tmp);
-    if (!stat.exists || stat.size === 0) {
-      return res.status(500).json({
-        error: "Temp file not found",
-        details: { tempFilePath: tmp, size: stat.size }
-      });
+    if (!f.tempFilePath) {
+      return res.status(500).json({ error: "Temp path missing" });
+    }
+    try {
+      const st = fs.statSync(f.tempFilePath);
+      if (!st.size) return res.status(500).json({ error: "Temp file empty" });
+    } catch {
+      return res.status(500).json({ error: "Temp file not found", details: { path: f.tempFilePath } });
     }
 
     const name = timestampedName(f.name);
     const parents = DRIVE_FOLDER_ID && DRIVE_FOLDER_ID !== "root" ? [DRIVE_FOLDER_ID] : undefined;
-    const requestBody = { name, parents };
 
-    // Try upload to target folder (if provided)
-    try {
+    const doUpload = async (useParents) => {
+      const requestBody = useParents ? { name, parents } : { name };
       const { data: file } = await drive().files.create({
         requestBody,
-        media: { mimeType: f.mimetype, body: fs.createReadStream(tmp) },
+        media: {
+          mimeType: f.mimetype,
+          body: fs.createReadStream(f.tempFilePath),
+        },
+        uploadType: "multipart", // explicit, though googleapis infers this
         fields: "id, name, createdTime, webViewLink, webContentLink, thumbnailLink",
         supportsAllDrives: true,
       });
 
-      // public toggle
       if (MAKE_PUBLIC === "true") {
         await drive().permissions.create({
           fileId: file.id,
@@ -128,42 +129,40 @@ app.post("/upload", async (req, res) => {
           supportsAllDrives: true,
         });
       }
-      return res.json({ ok: true, file });
-    } catch (e) {
-      const err = safeErr(e);
+      return file;
+    };
 
-      // If folder issue (403/404), fallback to root to help diagnose
-      if (parents && (err.code === 403 || err.code === 404)) {
-        try {
-          const { data: file } = await drive().files.create({
-            requestBody: { name }, // no parents → root
-            media: { mimeType: f.mimetype, body: fs.createReadStream(tmp) },
-            fields: "id, name, createdTime, webViewLink, webContentLink, thumbnailLink",
-            supportsAllDrives: true,
-          });
-          return res.status(207).json({
-            ok: true,
-            note: "Uploaded to My Drive root (folder not accessible). Check DRIVE_FOLDER_ID permissions.",
-            file,
-          });
-        } catch (e2) {
-          const err2 = safeErr(e2);
-          return res.status(500).json({
-            error: "Upload failed (root fallback failed too)",
-            details: { first: err, second: err2 }
-          });
-        }
+    // 1) Try target folder (if set)
+    try {
+      const file = await doUpload(Boolean(parents));
+      return res.json({ ok: true, where: parents ? "folder" : "root", file });
+    } catch (e1) {
+      const firstErr = safeErr(e1);
+
+      // 2) Fallback to root (always), to unblock you
+      try {
+        const file = await doUpload(false);
+        return res.status(207).json({
+          ok: true,
+          where: "root-fallback",
+          note: "Uploaded to My Drive root. Check DRIVE_FOLDER_ID or folder permissions.",
+          firstError: firstErr,
+          file,
+        });
+      } catch (e2) {
+        const secondErr = safeErr(e2);
+        return res.status(500).json({
+          error: "Upload failed (folder & root both failed)",
+          details: { first: firstErr, second: secondErr },
+        });
       }
-
-      return res.status(500).json({ error: "Upload failed", details: err });
     }
   } catch (e) {
-    const err = safeErr(e);
-    return res.status(500).json({ error: "Upload failed", details: err });
+    return res.status(500).json({ error: "Upload failed", details: safeErr(e) });
   }
 });
 
-// list photos
+// list photos (newest first)
 app.get("/photos", async (_req, res) => {
   try {
     if (!REFRESH_TOKEN) return res.status(400).json({ error: "Missing REFRESH_TOKEN" });
@@ -183,8 +182,7 @@ app.get("/photos", async (_req, res) => {
 
     return res.json({ ok: true, items: data.files || [] });
   } catch (e) {
-    const err = safeErr(e);
-    return res.status(500).json({ error: "List failed", details: err });
+    return res.status(500).json({ error: "List failed", details: safeErr(e) });
   }
 });
 
