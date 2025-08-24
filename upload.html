@@ -125,3 +125,29 @@
   </script>
 </body>
 </html>
+<!-- Netlify Identity -->
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script>
+  // Force login before viewing the page
+  async function enforceAuth() {
+    netlifyIdentity.init();
+    const u = netlifyIdentity.currentUser();
+    if (u) return;
+    netlifyIdentity.open();
+    await new Promise((r)=> {
+      let done=false;
+      const finish=()=>{ if(!done){ done=true; r(); } };
+      netlifyIdentity.on('login', finish);
+      netlifyIdentity.on('close', finish);
+    });
+    if (!netlifyIdentity.currentUser()) location.replace('/401.html');
+  }
+
+  function logoutAndExit() {
+    netlifyIdentity.logout();
+    // small delay so token clears
+    setTimeout(()=> location.replace('/index.html'), 300);
+  }
+
+  function go(p){ location.href = p; }
+</script>
