@@ -1,3 +1,96 @@
+// server.js — Shree Drive Uploader (stable + diagnostics, private by default)
+// Dependencies: express, cors, express-fileupload, googleapis
+
+const express = require("express");
+const fileUpload = require("express-fileupload");
+const cors = require("cors");
+const { google } = require("googleapis");
+const fs = require("fs");
+
+const {
+  CLIENT_ID,
+  CLIENT_SECRET,
+  REDIRECT_URI,
+  REFRESH_TOKEN,
+  DRIVE_FOLDER_ID,
+  MAKE_PUBLIC,
+  ALLOWED_ORIGIN,
+  UPLOAD_API_KEY, // optional
+} = process.env;
+
+const app = express();
+
+// ---------- Middleware ----------
+app.use(express.json());
+app.use(
+  cors({
+    origin: ALLOWED_ORIGIN ? ALLOWED_ORIGIN.split(",") : "*",
+  })
+);
+app.use(
+  fileUpload({
+    limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+    abortOnLimit: true,
+    useTempFiles: true,
+    tempFileDir: "/tmp", // Render's tmp dir
+  })
+);
+
+// ---------- Helpers ----------
+function oauthClient() {
+  const o = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+  if (REFRESH_TOKEN) o.setCredentials({ refresh_token: REFRESH_TOKEN });
+  return o;
+}
+function drive() {
+  return google.drive({ version: "v3", auth: oauthClient() });
+}
+const pad = (n) => String(n).padStart(2, "0");
+function timestampedName(original) {
+  const now = new Date();
+  const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+    now.getDate()
+  )}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+  return `${stamp}_${original}`.replace(/[^\w.\-@()+\s]/g, "_");
+}
+function safeErr(e) {
+  return {
+    code: e?.response?.status || e?.code || 500,
+    statusText: e?.response?.statusText,
+    message:
+      e?.response?.data?.error?.message ||
+      e?.message ||
+      "Unknown Error.",
+  };
+}
+
+// ---------- Routes ----------
+app.get("/health", (_req, res) => res.json({ ok: true }));
+
+// quick API diagnostics (confirm token/scopes)
+app.get("/diag", async (_req, res) => {
+  try {
+    const d = drive();
+    const about = await d.about.get({ fields: "user,emailAddress,storageQuota" });
+    res.json({ ok: true, user: about.data.user, storageQuota: about.data.storageQuota });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: safeErr(e) });
+  }
+});
+
+// safe oauth2callback (no token leak)
+app.get("/oauth2callback", async (req, res) => {
+  try {
+    const { code } = req.query;
+    if (!code) return res.status(400).send("Missing code");
+    const o = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+    await o.getToken(code); // no logging
+    return res.status(200).send("Auth complete ✅");
+  } catch {
+    return res.status(500).send("Auth failed");
+  }
+});
+
 // upload (private by default) with folder-first + root fallback
 app.post("/upload", async (req, res) => {
   try {
@@ -29,6 +122,13 @@ app.post("/upload", async (req, res) => {
     // express-fileupload must be in tempFile mode
     if (!f.tempFilePath) {
       return res.status(500).json({ error: "Temp file path missing" });
+    }
+
+    // preflight: verify Drive token/scopes are valid
+    try {
+      await drive().about.get({ fields: "user" });
+    } catch (e) {
+      return res.status(500).json({ error: "Drive preflight failed", details: safeErr(e) });
     }
 
     // timestamped filename
@@ -75,19 +175,51 @@ app.post("/upload", async (req, res) => {
           ok: true,
           where: "root-fallback",
           note: "Uploaded to My Drive root. Check DRIVE_FOLDER_ID or permissions.",
-          firstError: e1?.message || "folder upload failed",
+          firstError: safeErr(e1),
           file,
         });
       } catch (e2) {
         return res.status(500).json({
           error: "Upload failed (folder & root both failed)",
-          details: { first: e1?.message, second: e2?.message },
+          details: { first: safeErr(e1), second: safeErr(e2) },
         });
       }
     }
   } catch (e) {
     return res
       .status(500)
-      .json({ error: "Upload failed", details: e?.message || String(e) });
+      .json({ error: "Upload failed", details: safeErr(e) });
   }
 });
+
+// list photos (newest first)
+app.get("/photos", async (_req, res) => {
+  try {
+    if (!REFRESH_TOKEN) return res.status(400).json({ error: "Missing REFRESH_TOKEN" });
+
+    const q =
+      DRIVE_FOLDER_ID && DRIVE_FOLDER_ID !== "root"
+        ? `'${DRIVE_FOLDER_ID}' in parents and trashed=false`
+        : `'root' in parents and trashed=false`;
+
+    const { data } = await drive().files.list({
+      q,
+      fields:
+        "files(id,name,createdTime,webViewLink,webContentLink,thumbnailLink,appProperties),nextPageToken",
+      orderBy: "createdTime desc",
+      pageSize: 200,
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
+    });
+
+    return res.json({ ok: true, items: data.files || [] });
+  } catch (e) {
+    return res
+      .status(500)
+      .json({ error: "List failed", details: safeErr(e) });
+  }
+});
+
+// ---------- Start ----------
+const PORT = process.env.PORT || 3000; // Render assigns its own port
+app.listen(PORT, () => console.log("Server running on", PORT));
