@@ -40,30 +40,80 @@
   <!-- Netlify Identity -->
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script>
-    // ---------- Identity + token helper ----------
+    // ---------- Identity + token helpers ----------
     window.IDTOKEN = null;
-    function setToken(u){ if(!u){window.IDTOKEN=null;return;} u.jwt().then(t=>window.IDTOKEN=t); }
 
-    document.addEventListener('DOMContentLoaded', ()=>{
+    function setToken(u){
+      if(!u){ window.IDTOKEN = null; return; }
+      u.jwt().then(t => { window.IDTOKEN = t; });
+    }
+
+    async function waitForIdentityReady(timeoutMs=8000){
+      const t0 = Date.now();
+      while(Date.now()-t0 < timeoutMs){
+        const u = netlifyIdentity.currentUser?.();
+        if(u){
+          // ensure we have a fresh token
+          window.IDTOKEN = await u.jwt();
+          return true;
+        }
+        await new Promise(r => setTimeout(r, 200));
+      }
+      return false;
+    }
+
+    async function ensureLoggedIn(){
+      const u = netlifyIdentity.currentUser?.();
+      if(u) return true;
+      netlifyIdentity.open(); // ask user to log in
+      const ok = await waitForIdentityReady(20000);
+      return ok;
+    }
+
+    async function getToken(){
+      const u = netlifyIdentity.currentUser?.();
+      if(!u) return null;
+      // always fetch a fresh token to avoid expiry
+      window.IDTOKEN = await u.jwt();
+      return window.IDTOKEN;
+    }
+
+    async function authFetch(url, opts = {}, retryOnce=true){
+      // make sure token exists
+      if(!window.IDTOKEN){
+        const ok = await ensureLoggedIn();
+        if(!ok) throw new Error('Not logged in');
+      }
+      const h = new Headers(opts.headers || {});
+      h.set('Authorization','Bearer '+ (window.IDTOKEN || ''));
+      let res = await fetch(url, { ...opts, headers: h, credentials: 'omit', mode: 'cors' });
+      if(res.status === 401 && retryOnce){
+        // refresh token and retry once
+        const t = await getToken();
+        const h2 = new Headers(opts.headers || {});
+        h2.set('Authorization','Bearer '+ (t || ''));
+        res = await fetch(url, { ...opts, headers: h2, credentials: 'omit', mode: 'cors' });
+      }
+      return res;
+    }
+
+    document.addEventListener('DOMContentLoaded', async ()=>{
       netlifyIdentity.init();
       netlifyIdentity.on('init', setToken);
       netlifyIdentity.on('login', setToken);
       netlifyIdentity.on('tokenExpired', setToken);
-      netlifyIdentity.on('logout', ()=>window.IDTOKEN=null);
+      netlifyIdentity.on('logout', ()=>{ window.IDTOKEN=null; });
 
-      document.getElementById('loginBtn').onclick = () => {
+      document.getElementById('loginBtn').onclick = async () => {
         const u = netlifyIdentity.currentUser();
         if(u){ netlifyIdentity.open('user'); } else { netlifyIdentity.open(); }
       };
 
+      // ensure user/token ready before any API calls
+      await ensureLoggedIn();
+      await getToken();
       loadGallery();
     });
-
-    async function authFetch(url, opts = {}){
-      const h = new Headers(opts.headers || {});
-      if(window.IDTOKEN) h.set('Authorization', 'Bearer ' + window.IDTOKEN);
-      return fetch(url, { ...opts, headers: h, credentials: 'omit' });
-    }
 
     // ---------- Time formatter (IST) ----------
     const fmtIST = new Intl.DateTimeFormat('en-IN', {
@@ -112,28 +162,31 @@
 
         // Then fetch each image with token and set blob URL
         const cards = Array.from(G.querySelectorAll('.card'));
-        // Limit parallelism a bit
         const concurrency = 4;
         let i = 0;
+
+        async function fetchImage(card){
+          const id = card.getAttribute('data-id');
+          const img = card.querySelector('img');
+          const ph = card.querySelector('.ph');
+          try{
+            const res = await authFetch(`https://shree-drive.onrender.com/photo/${id}`);
+            if(!res.ok) throw new Error('HTTP '+res.status);
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            img.src = url;
+            img.style.display = 'block';
+            ph?.remove();
+          }catch(e){
+            if(ph) ph.textContent = 'Failed to load image';
+            console.error('Image load failed for', id, e);
+          }
+        }
+
         async function worker(){
           while(i < cards.length){
             const idx = i++;
-            const card = cards[idx];
-            const id = card.getAttribute('data-id');
-            const img = card.querySelector('img');
-            const ph = card.querySelector('.ph');
-            try{
-              const res = await authFetch(`https://shree-drive.onrender.com/photo/${id}`);
-              if(!res.ok) throw new Error('HTTP '+res.status);
-              const blob = await res.blob();
-              const url = URL.createObjectURL(blob);
-              img.src = url;
-              img.style.display = 'block';
-              ph?.remove();
-            }catch(e){
-              if(ph) ph.textContent = 'Failed to load image';
-              console.error('Image load failed for', id, e);
-            }
+            await fetchImage(cards[idx]);
           }
         }
         await Promise.all(Array.from({length: Math.min(concurrency, cards.length)}, worker));
