@@ -1,35 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - Shreshtha</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Shreshtha • Private</title>
+  <style>
+    html,body{height:100%;margin:0;font:16px/1.4 system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#fafafa}
+    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.08);padding:24px;max-width:420px;width:100%;text-align:center}
+    h1{margin:0 0 6px;font-size:22px}
+    p{margin:0 0 16px;color:#6b7280}
+    .btn{display:inline-block;padding:10px 14px;background:#111827;color:#fff;border-radius:10px;text-decoration:none}
+    .tiny{font-size:12px;color:#9ca3af;margin-top:10px}
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Welcome</h1>
-    <p>Let's celebrate Shreshtha's smile together.</p>
-
-    <!-- Netlify Login Widget -->
-    <button onclick="netlifyIdentity.open()">Login / Signup</button>
+  <div class="wrap">
+    <div class="card">
+      <h1>Welcome</h1>
+      <p>Invite-only space. Please sign in.</p>
+      <button id="loginBtn" class="btn">Sign in</button>
+      <div class="tiny">Only invited users can login.</div>
+    </div>
   </div>
 
+  <!-- Netlify Identity -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script>
-    // Netlify Identity setup
-    netlifyIdentity.on("init", user => {
-      if (user) {
-        window.location.href = "secret.html"; // Agar already logged in hai to secret pe bhej do
-      }
-    });
+    document.addEventListener('DOMContentLoaded', () => {
+      netlifyIdentity.init();
+      const goIn = () => location.replace('/welcome.html');
 
-    netlifyIdentity.on("login", () => {
-      window.location.href = "secret.html"; // Login ke baad secret.html
-    });
+      if (netlifyIdentity.currentUser()) { goIn(); return; }
 
-    netlifyIdentity.on("logout", () => {
-      window.location.href = "index.html"; // Logout ke baad login page
+      const openNow = () => netlifyIdentity.open();
+      setTimeout(openNow, 200);
+      document.getElementById('loginBtn').addEventListener('click', openNow);
+      netlifyIdentity.on('login', goIn);
     });
   </script>
 </body>
