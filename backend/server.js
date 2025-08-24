@@ -5,7 +5,7 @@ const express = require("express");
 const fileUpload = require("express-fileupload");
 const cors = require("cors");
 const { google } = require("googleapis");
-const { Readable } = require("stream");
+const fs = require("fs");
 
 const {
   CLIENT_ID,
@@ -31,7 +31,8 @@ app.use(
   fileUpload({
     limits: { fileSize: 25 * 1024 * 1024 }, // max 25MB
     abortOnLimit: true,
-    useTempFiles: false, // using Buffer -> Stream via Readable.from
+    useTempFiles: true,          // use temp files instead of buffer
+    tempFileDir: "/tmp",         // Render supports /tmp for temporary files
   })
 );
 
@@ -110,8 +111,8 @@ app.post("/upload", async (req, res) => {
 
     const { data: file } = await drive().files.create({
       requestBody,
-      // 🔧 Buffer -> Stream to avoid "part.body.pipe is not a function"
-      media: { mimeType: f.mimetype, body: Readable.from(f.data) },
+      // ✅ use temp file stream (most reliable)
+      media: { mimeType: f.mimetype, body: fs.createReadStream(f.tempFilePath) },
       fields:
         "id, name, createdTime, webViewLink, webContentLink, thumbnailLink",
       supportsAllDrives: true,
