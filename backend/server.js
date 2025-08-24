@@ -1,6 +1,4 @@
-// server.js — Shree Drive Uploader (stable + diagnostics, private by default)
-// Dependencies: express, cors, express-fileupload, googleapis
-
+// server.js — Shree Drive Uploader (robust stream + fixed diag)
 const express = require("express");
 const fileUpload = require("express-fileupload");
 const cors = require("cors");
@@ -32,7 +30,7 @@ app.use(
     limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
     abortOnLimit: true,
     useTempFiles: true,
-    tempFileDir: "/tmp", // Render's tmp dir
+    tempFileDir: "/tmp",
   })
 );
 
@@ -63,15 +61,24 @@ function safeErr(e) {
       "Unknown Error.",
   };
 }
+function ensureStreamOpen(stream) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    stream.once("open", () => { if (!settled) { settled = true; resolve(); } });
+    stream.once("readable", () => { if (!settled) { settled = true; resolve(); } });
+    stream.once("error", (err) => { if (!settled) { settled = true; reject(err); } });
+  });
+}
 
 // ---------- Routes ----------
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
-// quick API diagnostics (confirm token/scopes)
+// Fixed diag: only fields that Drive returns reliably
 app.get("/diag", async (_req, res) => {
   try {
     const d = drive();
-    const about = await d.about.get({ fields: "user,emailAddress,storageQuota" });
+    // emailAddress can be blocked in some orgs; request minimal fields
+    const about = await d.about.get({ fields: "user(displayName,permissionId),storageQuota" });
     res.json({ ok: true, user: about.data.user, storageQuota: about.data.storageQuota });
   } catch (e) {
     res.status(500).json({ ok: false, error: safeErr(e) });
@@ -94,64 +101,51 @@ app.get("/oauth2callback", async (req, res) => {
 // upload (private by default) with folder-first + root fallback
 app.post("/upload", async (req, res) => {
   try {
-    // optional API key protection
     if (UPLOAD_API_KEY && req.headers["x-api-key"] !== UPLOAD_API_KEY) {
       return res.status(401).json({ error: "Unauthorized" });
     }
+    if (!REFRESH_TOKEN) return res.status(400).json({ error: "Missing REFRESH_TOKEN" });
+    if (!req.files || !req.files.file) return res.status(400).json({ error: "No file uploaded" });
 
-    if (!REFRESH_TOKEN)
-      return res.status(400).json({ error: "Missing REFRESH_TOKEN" });
-    if (!req.files || !req.files.file)
-      return res.status(400).json({ error: "No file uploaded" });
+    // Preflight Drive
+    try { await drive().about.get({ fields: "user" }); }
+    catch (e) { return res.status(500).json({ error: "Drive preflight failed", details: safeErr(e) }); }
 
     const f = req.files.file;
-
-    // allow only images
-    const allowed = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/gif",
-      "image/heic",
-      "image/heif",
-    ];
+    const allowed = ["image/jpeg","image/png","image/webp","image/gif","image/heic","image/heif"];
     if (!allowed.includes(f.mimetype)) {
       return res.status(400).json({ error: "Only image uploads are allowed" });
     }
-
-    // express-fileupload must be in tempFile mode
     if (!f.tempFilePath) {
       return res.status(500).json({ error: "Temp file path missing" });
     }
 
-    // preflight: verify Drive token/scopes are valid
-    try {
-      await drive().about.get({ fields: "user" });
-    } catch (e) {
-      return res.status(500).json({ error: "Drive preflight failed", details: safeErr(e) });
+    // Ensure the stream is open before sending to Google
+    const stream = fs.createReadStream(f.tempFilePath);
+    try { await ensureStreamOpen(stream); }
+    catch (err) {
+      return res.status(500).json({ error: "Temp file unreadable", details: String(err) });
     }
 
-    // timestamped filename
     const name = timestampedName(f.name);
+    const parents = DRIVE_FOLDER_ID && DRIVE_FOLDER_ID !== "root" ? [DRIVE_FOLDER_ID] : undefined;
 
-    // prefer folder if provided
-    const parents =
-      DRIVE_FOLDER_ID && DRIVE_FOLDER_ID !== "root" ? [DRIVE_FOLDER_ID] : undefined;
-
-    // helper: one upload attempt
     const createOnce = async (useParents) => {
       const requestBody = useParents
-        ? { name, parents, mimeType: f.mimetype }  // set mimeType in requestBody
+        ? { name, parents, mimeType: f.mimetype }
         : { name, mimeType: f.mimetype };
+
+      // create a fresh stream each attempt
+      const bodyStream = fs.createReadStream(f.tempFilePath);
+      await ensureStreamOpen(bodyStream);
 
       const { data: file } = await drive().files.create({
         requestBody,
-        media: { mimeType: f.mimetype, body: fs.createReadStream(f.tempFilePath) },
-        fields: "id, name, createdTime, webViewLink, webContentLink, thumbnailLink",
+        media: { mimeType: f.mimetype, body: bodyStream },
+        fields: "id,name,createdTime,webViewLink,webContentLink",
         supportsAllDrives: true,
       });
 
-      // public toggle (defaults to private)
       if (MAKE_PUBLIC === "true") {
         await drive().permissions.create({
           fileId: file.id,
@@ -159,16 +153,13 @@ app.post("/upload", async (req, res) => {
           supportsAllDrives: true,
         });
       }
-
       return file;
     };
 
-    // 1) Try folder (if parents set)
     try {
       const file = await createOnce(Boolean(parents));
       return res.json({ ok: true, where: parents ? "folder" : "root", file });
     } catch (e1) {
-      // 2) Fallback to root to unblock
       try {
         const file = await createOnce(false);
         return res.status(207).json({
@@ -186,9 +177,7 @@ app.post("/upload", async (req, res) => {
       }
     }
   } catch (e) {
-    return res
-      .status(500)
-      .json({ error: "Upload failed", details: safeErr(e) });
+    return res.status(500).json({ error: "Upload failed", details: safeErr(e) });
   }
 });
 
@@ -197,15 +186,13 @@ app.get("/photos", async (_req, res) => {
   try {
     if (!REFRESH_TOKEN) return res.status(400).json({ error: "Missing REFRESH_TOKEN" });
 
-    const q =
-      DRIVE_FOLDER_ID && DRIVE_FOLDER_ID !== "root"
-        ? `'${DRIVE_FOLDER_ID}' in parents and trashed=false`
-        : `'root' in parents and trashed=false`;
+    const q = DRIVE_FOLDER_ID && DRIVE_FOLDER_ID !== "root"
+      ? `'${DRIVE_FOLDER_ID}' in parents and trashed=false`
+      : `'root' in parents and trashed=false`;
 
     const { data } = await drive().files.list({
       q,
-      fields:
-        "files(id,name,createdTime,webViewLink,webContentLink,thumbnailLink,appProperties),nextPageToken",
+      fields: "files(id,name,createdTime,webViewLink,webContentLink,thumbnailLink,appProperties),nextPageToken",
       orderBy: "createdTime desc",
       pageSize: 200,
       supportsAllDrives: true,
@@ -214,12 +201,10 @@ app.get("/photos", async (_req, res) => {
 
     return res.json({ ok: true, items: data.files || [] });
   } catch (e) {
-    return res
-      .status(500)
-      .json({ error: "List failed", details: safeErr(e) });
+    return res.status(500).json({ error: "List failed", details: safeErr(e) });
   }
 });
 
 // ---------- Start ----------
-const PORT = process.env.PORT || 3000; // Render assigns its own port
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log("Server running on", PORT));
