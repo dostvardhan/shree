@@ -1,49 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Upload Photo</title>
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<style>
-body{font-family:'Segoe UI',sans-serif;padding:20px;text-align:center;}
-input, textarea, button{margin:10px 0;padding:10px;font-size:16px;width:300px;}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Upload New Photo & Quote</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;max-width:720px;margin:24px auto;padding:16px}
+    h1{font-size:22px;margin-bottom:12px}
+    form{border:1px solid #eee;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    label{display:block;margin:8px 0 6px}
+    input[type="text"]{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px}
+    input[type="file"]{padding:6px 0}
+    button{padding:10px 16px;border:0;border-radius:10px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+    button[disabled]{opacity:.6;cursor:not-allowed}
+    #status{white-space:pre-wrap;background:#fafafa;border:1px dashed #ddd;margin-top:12px;padding:10px;border-radius:8px;font:13px ui-monospace,Consolas,monospace}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .pill{font-size:12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;padding:6px 10px}
+    .ok{color:#065f46;background:#ecfdf5;border-color:#a7f3d0}
+    .err{color:#7f1d1d;background:#fef2f2;border-color:#fecaca}
+  </style>
 </head>
 <body>
+  <div class="topbar">
+    <h1>Upload New Photo &amp; Quote</h1>
+    <button id="loginBtn" class="pill" type="button">Login</button>
+  </div>
 
-<h1>Upload New Photo & Quote</h1>
+  <form id="uform" enctype="multipart/form-data">
+    <label>Choose photo</label>
+    <input type="file" name="file" accept="image/*" required />
 
-<input type="file" id="photo" accept="image/*"><br>
-<textarea id="quote" placeholder="Enter quote..." rows="3"></textarea><br>
-<button id="uploadBtn">Upload</button>
+    <label>Quote (optional)</label>
+    <input type="text" name="quote" placeholder="Add a quote..." />
 
-<script>
-if (window.netlifyIdentity) {
-    window.netlifyIdentity.on('init', user => {
-        if (!user) window.location.href = "/";
+    <div style="margin-top:12px">
+      <button id="uploadBtn" type="submit">Upload</button>
+      <a href="/gallery.html" class="pill" style="text-decoration:none;margin-left:8px">Open Gallery →</a>
+    </div>
+  </form>
+
+  <div id="status"></div>
+
+  <!-- Netlify Identity -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script>
+    // ---- Identity + token helper ----
+    window.IDTOKEN = null;
+    function setToken(user){
+      if(!user){ window.IDTOKEN = null; return; }
+      user.jwt().then(t => { window.IDTOKEN = t; });
+    }
+    document.addEventListener('DOMContentLoaded', ()=>{
+      netlifyIdentity.init();
+      netlifyIdentity.on('init', setToken);
+      netlifyIdentity.on('login', setToken);
+      netlifyIdentity.on('tokenExpired', setToken);
+      netlifyIdentity.on('logout', ()=>{ window.IDTOKEN = null; });
+
+      document.getElementById('loginBtn').onclick = () => {
+        const u = netlifyIdentity.currentUser();
+        if(u){ netlifyIdentity.open('user'); } else { netlifyIdentity.open(); }
+      };
     });
-}
 
-document.getElementById('uploadBtn').addEventListener('click', async () => {
-    const file = document.getElementById('photo').files[0];
-    const quote = document.getElementById('quote').value.trim();
-    if(!file || !quote){ alert("Select photo & enter quote"); return; }
+    async function authFetch(url, opts={}){
+      const h = new Headers(opts.headers || {});
+      if(window.IDTOKEN) h.set('Authorization','Bearer '+window.IDTOKEN);
+      return fetch(url, { ...opts, headers: h });
+    }
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("quote", quote);
+    // ---- Upload handler ----
+    const FORM = document.getElementById('uform');
+    const STATUS = document.getElementById('status');
+    const BTN = document.getElementById('uploadBtn');
 
-    const res = await fetch('/.netlify/functions/uploadPhoto', {
-        method: 'POST',
-        body: formData
+    FORM.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+
+      // Ensure logged in
+      const user = netlifyIdentity.currentUser();
+      if(!user){
+        STATUS.innerText = 'Please login first.';
+        document.getElementById('loginBtn').classList.add('ok');
+        netlifyIdentity.open();
+        return;
+      }
+
+      // Build formdata
+      const fd = new FormData(FORM);
+      if(!fd.get('file') || !fd.get('file').name){
+        STATUS.innerText = 'Please select a file.'; return;
+      }
+
+      try{
+        BTN.disabled = true; BTN.textContent = 'Uploading…';
+        STATUS.innerText = 'Starting upload…';
+
+        const r = await authFetch('https://shree-drive.onrender.com/upload', {
+          method: 'POST',
+          body: fd
+        });
+
+        const text = await r.text();
+        try {
+          const js = JSON.parse(text);
+          if(r.ok && js && js.ok){
+            STATUS.className = 'pill ok';
+            STATUS.innerText = 'Uploaded ✅\n'+ JSON.stringify(js, null, 2);
+          } else {
+            STATUS.className = 'pill err';
+            STATUS.innerText = 'Upload failed ❌\nHTTP '+r.status+'\n'+text;
+          }
+        } catch {
+          STATUS.className = 'pill err';
+          STATUS.innerText = 'Upload failed ❌\nHTTP '+r.status+'\n'+text;
+        }
+      } catch(err){
+        STATUS.className = 'pill err';
+        STATUS.innerText = 'Network error ❌\n'+ err?.message;
+      } finally {
+        BTN.disabled = false; BTN.textContent = 'Upload';
+      }
     });
-
-    const result = await res.json();
-    if(result.success) alert("Uploaded successfully!"); 
-    else alert("Upload failed: " + result.error);
-});
-</script>
-
+  </script>
 </body>
 </html>
