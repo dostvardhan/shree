@@ -14,12 +14,15 @@
     .pill+a{margin-left:8px}
     #g{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:12px}
     .card{border:1px solid var(--bd);border-radius:12px;overflow:hidden;box-shadow:var(--cardshadow);background:#fff}
+    .imgbox{position:relative;background:#f8fafc;min-height:160px;display:flex;align-items:center;justify-content:center}
+    .imgbox .ph{font-size:12px;opacity:.6}
     .card img{width:100%;display:block}
     .meta{padding:8px 10px;font:14px system-ui;line-height:1.35}
     .dt{font-weight:600}
     .name{opacity:.8;margin-top:4px;font-size:13px;word-break:break-word}
     .quote{margin-top:6px;opacity:.85;font-style:italic}
     .err{margin:12px;padding:10px;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;color:#7f1d1d}
+    .badge{position:absolute;right:8px;top:8px;font-size:11px;background:#eef;border:1px solid #cbd5e1;border-radius:999px;padding:2px 8px}
   </style>
 </head>
 <body>
@@ -59,7 +62,7 @@
     async function authFetch(url, opts = {}){
       const h = new Headers(opts.headers || {});
       if(window.IDTOKEN) h.set('Authorization', 'Bearer ' + window.IDTOKEN);
-      return fetch(url, { ...opts, headers: h });
+      return fetch(url, { ...opts, headers: h, credentials: 'omit' });
     }
 
     // ---------- Time formatter (IST) ----------
@@ -86,15 +89,19 @@
         items.sort((a,b)=> new Date(b.createdTime) - new Date(a.createdTime)); // newest first
         if(!items.length){ G.textContent='No photos yet.'; return; }
 
+        // First render placeholders
         G.innerHTML = items.map(f=>{
           const t = new Date(f.createdTime);
           const ap = f.appProperties || {};
           const quote = ap.quote ? `<div class="quote">“${ap.quote}”</div>` : '';
-          const src = `https://shree-drive.onrender.com/photo/${f.id}`; // private stream
           const pretty = f.name.replace(/^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_/, '');
           return `
-            <div class="card">
-              <img loading="lazy" src="${src}" alt="${f.name}">
+            <div class="card" data-id="${f.id}">
+              <div class="imgbox">
+                <span class="ph">Loading image…</span>
+                <span class="badge">Private</span>
+                <img alt="${f.name}" style="display:none" />
+              </div>
               <div class="meta">
                 <div class="dt">${fmtIST.format(t)} IST</div>
                 <div class="name">${pretty}</div>
@@ -102,6 +109,34 @@
               </div>
             </div>`;
         }).join('');
+
+        // Then fetch each image with token and set blob URL
+        const cards = Array.from(G.querySelectorAll('.card'));
+        // Limit parallelism a bit
+        const concurrency = 4;
+        let i = 0;
+        async function worker(){
+          while(i < cards.length){
+            const idx = i++;
+            const card = cards[idx];
+            const id = card.getAttribute('data-id');
+            const img = card.querySelector('img');
+            const ph = card.querySelector('.ph');
+            try{
+              const res = await authFetch(`https://shree-drive.onrender.com/photo/${id}`);
+              if(!res.ok) throw new Error('HTTP '+res.status);
+              const blob = await res.blob();
+              const url = URL.createObjectURL(blob);
+              img.src = url;
+              img.style.display = 'block';
+              ph?.remove();
+            }catch(e){
+              if(ph) ph.textContent = 'Failed to load image';
+              console.error('Image load failed for', id, e);
+            }
+          }
+        }
+        await Promise.all(Array.from({length: Math.min(concurrency, cards.length)}, worker));
       }catch(err){
         G.textContent='';
         MSG.innerHTML = `<div class="err">Network error: ${err?.message || err}</div>`;
