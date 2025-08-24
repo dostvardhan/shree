@@ -31,8 +31,8 @@ app.use(
   fileUpload({
     limits: { fileSize: 25 * 1024 * 1024 }, // max 25MB
     abortOnLimit: true,
-    useTempFiles: true,          // use temp files instead of buffer
-    tempFileDir: "/tmp",         // Render supports /tmp for temporary files
+    useTempFiles: true,      // ✅ use temp files (fixes pipe error)
+    tempFileDir: "/tmp",     // ✅ Render's tmp dir
   })
 );
 
@@ -111,7 +111,7 @@ app.post("/upload", async (req, res) => {
 
     const { data: file } = await drive().files.create({
       requestBody,
-      // ✅ use temp file stream (most reliable)
+      // ✅ Use temp file stream instead of buffer
       media: { mimeType: f.mimetype, body: fs.createReadStream(f.tempFilePath) },
       fields:
         "id, name, createdTime, webViewLink, webContentLink, thumbnailLink",
