@@ -1,0 +1,11 @@
+{
+  "name": "shree",
+  "version": "1.0.0",
+  "dependencies": {
+    "@netlify/blobs": "^6.5.0",
+    "busboy": "^1.6.0",
+    "cloudinary": "^1.41.0",
+    "cors": "^2.8.5",
+    "jose": "^6.0.13"
+  }
+}
