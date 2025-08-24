@@ -1,51 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gallery</title>
-  <link rel="stylesheet" href="/style.css">
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Private Gallery</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0}
+    header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff}
+    .pill{font-size:12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;padding:6px 10px;cursor:pointer}
+    #g{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:12px}
+    .card{border:1px solid #eee;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    .card img{width:100%;display:block}
+    .meta{padding:8px 10px;font:14px system-ui}
+    .quote{margin-top:6px;opacity:.85;font-style:italic}
+    .err{margin:12px;padding:10px;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;color:#7f1d1d}
+  </style>
 </head>
 <body>
-  <h1>Photo Gallery</h1>
-  <div id="gallery" class="gallery-grid"></div>
+  <header>
+    <h3 style="margin:0">Private Gallery</h3>
+    <div>
+      <a class="pill" href="/upload.html" style="text-decoration:none;margin-right:8px">Upload ↗</a>
+      <button id="loginBtn" class="pill" type="button">Login</button>
+    </div>
+  </header>
 
+  <div id="g">Loading…</div>
+  <div id="msg"></div>
+
+  <!-- Netlify Identity -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script>
-    // Initialize Netlify Identity
-    const identity = netlifyIdentity;
-    identity.init();
+    // ---- Identity + token helper ----
+    window.IDTOKEN=null;
+    function setToken(u){ if(!u){window.IDTOKEN=null;return;} u.jwt().then(t=>window.IDTOKEN=t); }
+    document.addEventListener('DOMContentLoaded', ()=>{
+      netlifyIdentity.init();
+      netlifyIdentity.on('init', setToken);
+      netlifyIdentity.on('login', setToken);
+      netlifyIdentity.on('tokenExpired', setToken);
+      netlifyIdentity.on('logout', ()=>window.IDTOKEN=null);
+      document.getElementById('loginBtn').onclick = () => {
+        const u = netlifyIdentity.currentUser();
+        if(u){ netlifyIdentity.open('user'); } else { netlifyIdentity.open(); }
+      };
+      loadGallery();
+    });
 
-    const gallery = document.getElementById('gallery');
-
-    async function loadGallery() {
-      try {
-        const res = await fetch('/.netlify/functions/list');
-        const data = await res.json();
-
-        if (data.success && data.photos) {
-          gallery.innerHTML = '';
-          // Sort latest first
-          data.photos.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-          data.photos.forEach(photo => {
-            const card = document.createElement('div');
-            card.className = 'photo-card';
-            card.innerHTML = `
-              <img src="${photo.url}" alt="Photo">
-              <p class="quote">${photo.quote}</p>
-              <p class="time">${new Date(photo.timestamp).toLocaleString()}</p>
-            `;
-            gallery.appendChild(card);
-          });
-        } else {
-          gallery.innerHTML = '<p>No photos uploaded yet.</p>';
-        }
-      } catch (err) {
-        gallery.innerHTML = '<p>Error loading gallery.</p>';
-      }
+    async function authFetch(url, opts={}){
+      const h=new Headers(opts.headers||{});
+      if(window.IDTOKEN) h.set('Authorization','Bearer '+window.IDTOKEN);
+      return fetch(url,{...opts, headers:h});
     }
 
-    loadGallery();
+    async function loadGallery(){
+      const G=document.getElementById('g'), MSG=document.getElementById('msg');
+      try{
+        // 🔁 Call Render backend (NOT Netlify Function)
+        const r = await authFetch('https://shree-drive.onrender.com/photos');
+        if(!r.ok){
+          const t = await r.text();
+          G.textContent=''; 
+          MSG.innerHTML = `<div class="err">Failed to load (HTTP ${r.status}). ${t}</div>`;
+          if(r.status===401) netlifyIdentity.open(); // prompt login
+          return;
+        }
+        const { items=[] } = await r.json();
+        items.sort((a,b)=> new Date(b.createdTime)-new Date(a.createdTime)); // newest first
+        if(!items.length){ G.textContent='No photos yet.'; return; }
+
+        G.innerHTML = items.map(f=>{
+          const t = new Date(f.createdTime);
+          const ap = f.appProperties || {};
+          const quote = ap.quote ? `<div class="quote">“${ap.quote}”</div>` : '';
+          const src = `https://shree-drive.onrender.com/photo/${f.id}`; // private stream
+          return `
+            <div class="card">
+              <img loading="lazy" src="${src}" alt="${f.name}">
+              <div class="meta">
+                <div class="dt">${t.toLocaleString()}</div>
+                ${quote}
+              </div>
+            </div>`;
+        }).join('');
+      }catch(err){
+        G.textContent='';
+        MSG.innerHTML = `<div class="err">Network error: ${err?.message||err}</div>`;
+      }
+    }
   </script>
 </body>
 </html>
