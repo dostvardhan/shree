@@ -1,4 +1,4 @@
-// upload (private by default) with folder + root fallback
+// upload (private by default) with folder-first + root fallback
 app.post("/upload", async (req, res) => {
   try {
     // optional API key protection
@@ -13,6 +13,7 @@ app.post("/upload", async (req, res) => {
 
     const f = req.files.file;
 
+    // allow only images
     const allowed = [
       "image/jpeg",
       "image/png",
@@ -22,24 +23,26 @@ app.post("/upload", async (req, res) => {
       "image/heif",
     ];
     if (!allowed.includes(f.mimetype)) {
-      return res
-        .status(400)
-        .json({ error: "Only image uploads are allowed" });
+      return res.status(400).json({ error: "Only image uploads are allowed" });
     }
 
+    // express-fileupload must be in tempFile mode
     if (!f.tempFilePath) {
       return res.status(500).json({ error: "Temp file path missing" });
     }
 
+    // timestamped filename
     const name = timestampedName(f.name);
+
+    // prefer folder if provided
     const parents =
       DRIVE_FOLDER_ID && DRIVE_FOLDER_ID !== "root" ? [DRIVE_FOLDER_ID] : undefined;
 
-    // helper to upload once
+    // helper: one upload attempt
     const createOnce = async (useParents) => {
       const requestBody = useParents
-        ? { name, parents, mimeType: f.mimetype }   // ✅ mimeType added
-        : { name, mimeType: f.mimetype };          // ✅ mimeType even in root fallback
+        ? { name, parents, mimeType: f.mimetype }  // set mimeType in requestBody
+        : { name, mimeType: f.mimetype };
 
       const { data: file } = await drive().files.create({
         requestBody,
@@ -48,6 +51,7 @@ app.post("/upload", async (req, res) => {
         supportsAllDrives: true,
       });
 
+      // public toggle (defaults to private)
       if (MAKE_PUBLIC === "true") {
         await drive().permissions.create({
           fileId: file.id,
@@ -55,15 +59,16 @@ app.post("/upload", async (req, res) => {
           supportsAllDrives: true,
         });
       }
+
       return file;
     };
 
-    // 1) try folder first (if DRIVE_FOLDER_ID set)
+    // 1) Try folder (if parents set)
     try {
       const file = await createOnce(Boolean(parents));
       return res.json({ ok: true, where: parents ? "folder" : "root", file });
     } catch (e1) {
-      // 2) fallback to root if folder fails
+      // 2) Fallback to root to unblock
       try {
         const file = await createOnce(false);
         return res.status(207).json({
@@ -81,6 +86,8 @@ app.post("/upload", async (req, res) => {
       }
     }
   } catch (e) {
-    return res.status(500).json({ error: "Upload failed", details: e?.message || String(e) });
+    return res
+      .status(500)
+      .json({ error: "Upload failed", details: e?.message || String(e) });
   }
 });
