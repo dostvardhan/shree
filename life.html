@@ -8,111 +8,128 @@
 <!-- Google Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Dancing+Script&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 
-<!-- Netlify Identity -->
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script>
-window.addEventListener('load', () => {
-    if (window.netlifyIdentity) {
-        window.netlifyIdentity.init();
-        const user = window.netlifyIdentity.currentUser();
-        if (!user) {
-            window.location.href = "/"; // redirect if not logged in
-        }
-    } else {
-        window.location.href = "/";
-    }
-});
-</script>
-
+<!-- Styles (kept your original look) -->
 <style>
+/* Top toolbar */
+.toolbar {
+  position: sticky; top: 0; z-index: 1000;
+  background: #ffffffcc; backdrop-filter: saturate(120%) blur(6px);
+  border-bottom: 1px solid #eee;
+  display: flex; gap: 8px; justify-content: flex-end; align-items: center;
+  padding: 8px 12px;
+}
+.pill {
+  font: 13px/1 'Roboto', sans-serif;
+  background:#f8fafc; border:1px solid #e5e7eb; color:#0f172a;
+  border-radius: 999px; padding: 6px 12px; cursor:pointer;
+}
+.pill.logout { background:#fee2e2; }
+
 body {
-    margin:0;
-    font-family:'Roboto', sans-serif;
-    background: linear-gradient(135deg, #fff8f2, #ffe6eb); /* light cream + pink */
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    min-height:100vh;
-    text-align:center;
-    overflow-x:hidden;
-    overflow-y:auto;
-    position:relative;
+  margin:0;
+  font-family:'Roboto', sans-serif;
+  background: linear-gradient(135deg, #fff8f2, #ffe6eb); /* light cream + pink */
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-height:100vh;
+  text-align:center;
+  overflow-x:hidden;
+  overflow-y:auto;
+  position:relative;
 }
 
 h1 {
-    margin-top:30px;
-    font-size:46px;
-    font-family: 'Great Vibes', cursive;
-    color:#800000; /* maroon */
-    text-shadow:1px 1px 6px rgba(0,0,0,0.2);
+  margin-top:30px;
+  font-size:46px;
+  font-family: 'Great Vibes', cursive;
+  color:#800000; /* maroon */
+  text-shadow:1px 1px 6px rgba(0,0,0,0.2);
 }
 
 .gallery {
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    margin:40px 0;
-    gap:20px;
-    z-index:1;
-    position:relative;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin:20px 0 40px;
+  gap:20px;
+  z-index:1;
+  position:relative;
+  padding: 0 12px;
 }
 
 .gallery img {
-    width:250px;
-    height:auto;
-    max-height:200px;
-    object-fit: contain;
-    border-radius:15px;
-    box-shadow:0 0 40px rgba(0,0,0,0.2);
-    transition: transform 0.5s ease, box-shadow 0.5s ease;
-    cursor:pointer;
+  width:250px;
+  height:auto;
+  max-height:200px;
+  object-fit: contain;
+  border-radius:15px;
+  box-shadow:0 0 40px rgba(0,0,0,0.2);
+  transition: transform 0.5s ease, box-shadow 0.5s ease;
+  cursor:pointer;
 }
 
 .gallery img:hover {
-    transform: scale(1.2);
-    z-index:10;
-    box-shadow:0 0 90px rgba(255,215,150,0.7);
+  transform: scale(1.2);
+  z-index:10;
+  box-shadow:0 0 90px rgba(255,215,150,0.7);
 }
 
 .quote {
-    font-size:24px;
-    margin-bottom:50px;
-    max-width:80%;
-    text-shadow: 1px 1px 6px rgba(0,0,0,0.15);
-    position:relative;
-    z-index:1;
-    font-family: 'Dancing Script', cursive;
-    color:#556b2f; /* olive green */
+  font-size:24px;
+  margin-bottom:70px;
+  max-width:80%;
+  text-shadow: 1px 1px 6px rgba(0,0,0,0.15);
+  position:relative;
+  z-index:1;
+  font-family: 'Dancing Script', cursive;
+  color:#556b2f; /* olive green */
 }
 
 /* Hearts container */
 #heartsContainer {
-    position:fixed;
-    bottom:0;
-    left:0;
-    width:100%;
-    height:100%;
-    pointer-events:none;
-    overflow:hidden;
-    z-index:0;
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  overflow:hidden;
+  z-index:0;
 }
-
 .heart-svg {
-    position:absolute;
-    width:20px;
-    height:20px;
-    fill:pink;
-    animation: floatUp linear infinite;
+  position:absolute;
+  width:20px;
+  height:20px;
+  fill:pink;
+  animation: floatUp linear infinite;
+}
+@keyframes floatUp {
+  0% { transform: translateY(100vh) scale(0.5); opacity:0.8; }
+  50% { opacity:1; }
+  100% { transform: translateY(-50px) scale(1); opacity:0; }
 }
 
-@keyframes floatUp {
-    0% { transform: translateY(100vh) scale(0.5); opacity:0.8; }
-    50% { opacity:1; }
-    100% { transform: translateY(-50px) scale(1); opacity:0; }
+/* Bottom CTA */
+.cta {
+  position: fixed; right: 16px; bottom: 16px; z-index: 1000;
+}
+.cta .btn {
+  padding: 12px 16px; border-radius: 12px; border: 0;
+  background:#111827; color:#fff; box-shadow:0 6px 20px rgba(0,0,0,.18);
+  cursor: pointer;
 }
 </style>
 </head>
 <body>
+
+<!-- Auth toolbar -->
+<div class="toolbar">
+  <button class="pill" onclick="go('/welcome.html')">Home</button>
+  <button class="pill" onclick="go('/gallery.html')">Gallery</button>
+  <button class="pill" onclick="go('/upload.html')">Upload</button>
+  <button class="pill logout" onclick="logoutAndExit()">Logout</button>
+</div>
 
 <h1>Life is Beautiful</h1>
 
@@ -132,22 +149,54 @@ h1 {
 
 <div id="heartsContainer"></div>
 
-<script>
-const colors = ['#ff7f7f','#ff4d6d','#ff99aa','#ff4d4d','#c71585'];
-const heartsContainer = document.getElementById('heartsContainer');
+<!-- Bottom Next CTA -->
+<div class="cta">
+  <button class="btn" onclick="go('/upload.html')">Next: Upload →</button>
+</div>
 
-for(let i=0;i<30;i++){
-    const heart = document.createElementNS("http://www.w3.org/2000/svg","svg");
-    heart.setAttribute("viewBox","0 0 32 29.6");
-    heart.classList.add('heart-svg');
-    heart.style.left = Math.random()*100 + "vw";
-    // Slower animation duration: 8-13s
-    heart.style.animationDuration = (8 + Math.random()*5) + "s";
-    const color = colors[Math.floor(Math.random()*colors.length)];
-    heart.innerHTML = `<path d="M23.6,0c-2.8,0-5.4,1.6-6.6,4C15.8,1.6,13.2,0,10.4,0C4.6,0,0,4.6,0,10.4
-    c0,11.5,16,19.2,16,19.2s16-7.7,16-19.2C32,4.6,27.4,0,23.6,0z" fill="${color}"/>`;
-    heartsContainer.appendChild(heart);
-}
+<!-- Netlify Identity (guard + helpers) -->
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script>
+  // Enforce login on this page
+  async function enforceAuth(redirectIfClosed='/index.html'){
+    netlifyIdentity.init();
+    const u = netlifyIdentity.currentUser();
+    if (u) return true;
+    netlifyIdentity.open();
+    await new Promise((r)=>{
+      let done=false;
+      const finish=()=>{ if(!done){ done=true; r(); } };
+      netlifyIdentity.on('login', finish);
+      netlifyIdentity.on('close', finish);
+    });
+    if (!netlifyIdentity.currentUser()) { location.replace(redirectIfClosed); return false; }
+    return true;
+  }
+  function logoutAndExit(){ netlifyIdentity.logout(); setTimeout(()=>location.replace('/index.html'),300); }
+  function go(p){ location.href=p; }
+
+  // Hearts animation (your original)
+  const colors = ['#ff7f7f','#ff4d6d','#ff99aa','#ff4d4d','#c71585'];
+  const heartsContainer = document.getElementById('heartsContainer');
+  function spawnHearts(){
+    for(let i=0;i<30;i++){
+      const heart = document.createElementNS("http://www.w3.org/2000/svg","svg");
+      heart.setAttribute("viewBox","0 0 32 29.6");
+      heart.classList.add('heart-svg');
+      heart.style.left = Math.random()*100 + "vw";
+      heart.style.animationDuration = (8 + Math.random()*5) + "s"; // slower 8-13s
+      const color = colors[Math.floor(Math.random()*colors.length)];
+      heart.innerHTML = `<path d="M23.6,0c-2.8,0-5.4,1.6-6.6,4C15.8,1.6,13.2,0,10.4,0C4.6,0,0,4.6,0,10.4
+      c0,11.5,16,19.2,16,19.2s16-7.7,16-19.2C32,4.6,27.4,0,23.6,0z" fill="${color}"/>`;
+      heartsContainer.appendChild(heart);
+    }
+  }
+
+  // Run: first enforce login, then render hearts (so popup overlays cleanly)
+  (async ()=>{
+    const ok = await enforceAuth();
+    if(ok) spawnHearts();
+  })();
 </script>
 
 </body>
