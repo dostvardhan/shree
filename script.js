@@ -1,3 +1,5 @@
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="/script.js"></script>
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("upload-form");
   const fileInput = document.getElementById("file-input");
