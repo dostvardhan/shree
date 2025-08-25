@@ -2,217 +2,102 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Private Gallery</title>
+  <title>Gallery</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./style.css" />
   <style>
-    :root{--bd:#eee;--cardshadow:0 2px 8px rgba(0,0,0,.06)}
-    *{box-sizing:border-box}
-    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#fff}
-
-    /* Sticky header + right-aligned action pills */
-    header{
-      position:sticky;top:0;z-index:50;background:#fff;
-      border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;
-      padding:10px 12px
-    }
-    .brand{font-weight:600}
-    .actions{display:flex;gap:8px;align-items:center}
-    .pill{
-      font-size:13px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:999px;
-      padding:6px 12px;cursor:pointer;text-decoration:none;color:#0f172a
-    }
-    .pill.logout{background:#fee2e2}
-    .pill.primary{background:#111827;color:#fff;border-color:#111827}
-
-    /* Grid */
-    main{padding:12px}
-    #g{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-    .card{border:1px solid var(--bd);border-radius:12px;overflow:hidden;box-shadow:var(--cardshadow);background:#fff}
-    .imgbox{position:relative;background:#f8fafc;min-height:160px;display:flex;align-items:center;justify-content:center}
-    .imgbox .ph{font-size:12px;opacity:.6}
-    .badge{position:absolute;right:8px;top:8px;font-size:11px;background:#eef;border:1px solid #cbd5e1;border-radius:999px;padding:2px 8px}
-    .card img{width:100%;display:block}
-    .meta{padding:8px 10px;font:14px system-ui;line-height:1.35}
-    .dt{font-weight:600}
-    .name{opacity:.8;margin-top:4px;font-size:13px;word-break:break-word}
-    .quote{margin-top:6px;opacity:.85;font-style:italic}
-
-    .err{margin:12px;padding:10px;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;color:#7f1d1d}
+    body{font-family:system-ui,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;background:#f7f7f8;margin:0}
+    .wrap{max-width:1100px;margin:32px auto;padding:0 16px}
+    h1{margin:0 0 16px}
+    .actions{display:flex;gap:8px;align-items:center;margin-bottom:16px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .card{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.06);overflow:hidden;display:flex;flex-direction:column}
+    .media{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:#fafafa;overflow:hidden}
+    .media img{width:100%;height:100%;object-fit:cover;display:block}
+    .meta{padding:10px 12px}
+    .name{font-size:14px;font-weight:600;line-height:1.3}
+    .caption{font-size:13px;opacity:.85;margin-top:6px}
+    .row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+    .btn{font-size:13px;border:1px solid #ddd;border-radius:10px;background:#fff;padding:6px 10px;text-decoration:none}
+    .muted{opacity:.7}
   </style>
 </head>
 <body>
-  <header>
-    <div class="brand">Private Gallery</div>
+  <div class="wrap">
+    <h1>Gallery</h1>
     <div class="actions">
-      <a class="pill" href="/life.html">← Back to Life</a>
-      <a class="pill" href="/upload.html">Upload ↗</a>
-      <button id="logoutBtn" class="pill logout" type="button">Logout</button>
+      <a class="btn" href="/upload.html">+ Upload more</a>
+      <span id="status" class="muted"></span>
     </div>
-  </header>
 
-  <main>
-    <div id="g">Loading…</div>
-    <div id="msg"></div>
-  </main>
+    <div id="gallery" class="grid"></div>
+  </div>
 
-  <!-- Netlify Identity -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script>
-    // ---------- Identity + token helpers ----------
-    window.IDTOKEN = null;
+    const API = "https://shree-drive.onrender.com";
 
-    function setToken(u){
-      if(!u){ window.IDTOKEN = null; return; }
-      u.jwt().then(t => { window.IDTOKEN = t; });
+    // Optional: custom captions
+    const captionById = {
+      // "1AbCdEF...": "“Yeh hamari yaadon ka rang hai.”",
+    };
+    const captionByName = {
+      // "photo2.jpg": "“Jahan dil lage, wahi ghar hai.”"
+    };
+    // Default caption for the 2nd photo (index 1)
+    const defaultSecondCaption = "“Jahan dil lage, wahi ghar hai.”";
+
+    function getCaption(file, index) {
+      if (captionById[file.id]) return captionById[file.id];
+      if (captionByName[file.name]) return captionByName[file.name];
+      if (index === 1) return defaultSecondCaption; // 2nd card
+      return "";
     }
 
-    async function waitForIdentityReady(timeoutMs=8000){
-      const t0 = Date.now();
-      while(Date.now()-t0 < timeoutMs){
-        const u = netlifyIdentity.currentUser?.();
-        if(u){ window.IDTOKEN = await u.jwt(); return true; }
-        await new Promise(r => setTimeout(r, 200));
-      }
-      return false;
-    }
+    async function loadGallery() {
+      const status = document.getElementById("status");
+      const wrap = document.getElementById("gallery");
+      status.textContent = "Loading…";
 
-    async function ensureLoggedIn(){
-      const u = netlifyIdentity.currentUser?.();
-      if(u) return true;
-      netlifyIdentity.open();
-      return await waitForIdentityReady(20000);
-    }
+      try {
+        const res = await fetch(`${API}/list?limit=100`);
+        const data = await res.json();
 
-    async function getToken(){
-      const u = netlifyIdentity.currentUser?.();
-      if(!u) return null;
-      window.IDTOKEN = await u.jwt();
-      return window.IDTOKEN;
-    }
-
-    async function authFetch(url, opts = {}, retryOnce=true){
-      if(!window.IDTOKEN){
-        const ok = await ensureLoggedIn();
-        if(!ok) throw new Error('Not logged in');
-      }
-      const h = new Headers(opts.headers || {});
-      h.set('Authorization','Bearer '+ (window.IDTOKEN || ''));
-      let res = await fetch(url, { ...opts, headers: h, credentials: 'omit', mode: 'cors' });
-      if(res.status === 401 && retryOnce){
-        const t = await getToken();
-        const h2 = new Headers(opts.headers || {});
-        h2.set('Authorization','Bearer '+ (t || ''));
-        res = await fetch(url, { ...opts, headers: h2, credentials: 'omit', mode: 'cors' });
-      }
-      return res;
-    }
-
-    document.addEventListener('DOMContentLoaded', async ()=>{
-      netlifyIdentity.init();
-      netlifyIdentity.on('init', setToken);
-      netlifyIdentity.on('login', setToken);
-      netlifyIdentity.on('tokenExpired', setToken);
-      netlifyIdentity.on('logout', ()=>{ window.IDTOKEN=null; });
-
-      // Header buttons
-      document.getElementById('logoutBtn').onclick = () => {
-        netlifyIdentity.logout();
-        setTimeout(()=> location.replace('/'), 300);
-      };
-
-      // Ensure user/token, then load
-      const ok = await ensureLoggedIn();
-      if(!ok){ location.replace('/'); return; }
-      await getToken();
-      loadGallery();
-    });
-
-    // ---------- Time formatter (IST) ----------
-    const fmtIST = new Intl.DateTimeFormat('en-IN', {
-      year:'numeric', month:'short', day:'2-digit',
-      hour:'2-digit', minute:'2-digit', hour12:true,
-      timeZone: 'Asia/Kolkata'
-    });
-
-    // ---------- Load & render gallery ----------
-    async function loadGallery(){
-      const G = document.getElementById('g'), MSG = document.getElementById('msg');
-      try{
-        const r = await authFetch('https://shree-drive.onrender.com/photos');
-        if(!r.ok){
-          const t = await r.text();
-          G.textContent=''; 
-          MSG.innerHTML = `<div class="err">Failed to load (HTTP ${r.status}). ${t}</div>`;
-          if(r.status===401) netlifyIdentity.open();
+        if (!res.ok || !data.ok) {
+          status.textContent = "Failed to load.";
           return;
         }
 
-        const { items = [] } = await r.json();
-        items.sort((a,b)=> new Date(b.createdTime) - new Date(a.createdTime)); // newest first
-        if(!items.length){ G.textContent='No photos yet.'; return; }
+        wrap.innerHTML = data.files.map((f, i) => {
+          const cap = getCaption(f, i);
+          const view = f.webViewLink || f.viewSrc;
+          const dl = f.webContentLink;
+          const img = f.thumb || f.viewSrc;
 
-        // placeholders first
-        G.innerHTML = items.map(f=>{
-          const t = new Date(f.createdTime);
-          const ap = f.appProperties || {};
-          const quote = ap.quote ? `<div class="quote">“${ap.quote}”</div>` : '';
-          const pretty = f.name.replace(/^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_/, '');
           return `
-            <div class="card" data-id="${f.id}">
-              <div class="imgbox">
-                <span class="ph">Loading image…</span>
-                <span class="badge">Private</span>
-                <img alt="${f.name}" style="display:none" />
-              </div>
+            <div class="card">
+              <a class="media" href="${view}" target="_blank" rel="noopener">
+                <img src="${img}" alt="${f.name}" loading="lazy" />
+              </a>
               <div class="meta">
-                <div class="dt">${fmtIST.format(t)} IST</div>
-                <div class="name">${pretty}</div>
-                ${quote}
+                <div class="name" title="${f.name}">${f.name}</div>
+                ${cap ? `<div class="caption">${cap}</div>` : ""}
+                <div class="row">
+                  <a class="btn" href="${view}" target="_blank" rel="noopener">View</a>
+                  <a class="btn" href="${dl}" target="_blank" rel="noopener">Download</a>
+                </div>
               </div>
-            </div>`;
-        }).join('');
+            </div>
+          `;
+        }).join("");
 
-        // fetch each image with token → blob
-        const cards = Array.from(G.querySelectorAll('.card'));
-        const concurrency = 4;
-        let i = 0;
-
-        async function fetchImage(card){
-          const id = card.getAttribute('data-id');
-          const img = card.querySelector('img');
-          const ph = card.querySelector('.ph');
-          try{
-            const res = await authFetch(`https://shree-drive.onrender.com/photo/${id}`);
-            if(!res.ok){
-              const txt = await res.text().catch(()=> '');
-              const msg = `HTTP ${res.status}${txt ? ' • ' + (txt.slice(0,120)) : ''}`;
-              if(ph) ph.textContent = 'Failed to load image — ' + msg;
-              console.error('Image load failed', id, msg);
-              return;
-            }
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            img.src = url;
-            img.style.display = 'block';
-            ph?.remove();
-          }catch(e){
-            if(ph) ph.textContent = 'Failed to load image — ' + (e?.message || e);
-            console.error('Image load error', id, e);
-          }
-        }
-
-        async function worker(){
-          while(i < cards.length){
-            const idx = i++;
-            await fetchImage(cards[idx]);
-          }
-        }
-        await Promise.all(Array.from({length: Math.min(concurrency, cards.length)}, worker));
-      }catch(err){
-        G.textContent='';
-        MSG.innerHTML = `<div class="err">Network error: ${err?.message || err}</div>`;
+        status.textContent = `${data.files.length} photos`;
+      } catch (e) {
+        console.error(e);
+        status.textContent = "Error loading gallery.";
       }
     }
+
+    loadGallery();
   </script>
 </body>
 </html>
