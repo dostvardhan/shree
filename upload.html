@@ -1,153 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Upload New Photo & Quote</title>
+  <title>Upload Photo</title>
+  <link rel="stylesheet" href="./style.css" />
   <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;max-width:720px;margin:24px auto;padding:16px}
-    h1{font-size:22px;margin-bottom:12px}
-    form{border:1px solid #eee;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-    label{display:block;margin:8px 0 6px}
-    input[type="text"]{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px}
-    input[type="file"]{padding:6px 0}
-    button{padding:10px 16px;border:0;border-radius:10px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.15)}
-    button[disabled]{opacity:.6;cursor:not-allowed}
-    #status{white-space:pre-wrap;background:#fafafa;border:1px dashed #ddd;margin-top:12px;padding:10px;border-radius:8px;font:13px ui-monospace,Consolas,monospace}
-    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    .pill{font-size:12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;padding:6px 10px}
-    .ok{color:#065f46;background:#ecfdf5;border-color:#a7f3d0}
-    .err{color:#7f1d1d;background:#fef2f2;border-color:#fecaca}
+    .card{max-width:520px;margin:40px auto;padding:24px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.08);background:#fff}
+    .row{margin:12px 0}
+    .btn{padding:10px 16px;border:none;border-radius:10px;cursor:pointer}
+    .btn-primary{background:#111;color:#fff}
+    .muted{opacity:.75;font-size:.9rem}
+    pre{background:#f6f6f6;padding:12px;border-radius:10px;overflow:auto}
+    #link a{word-break:break-all}
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <h1>Upload New Photo &amp; Quote</h1>
-    <button id="loginBtn" class="pill" type="button">Login</button>
+  <div class="card">
+    <h2>Upload a Photo</h2>
+    <p class="muted">Choose an image and click Upload. File goes to Google Drive.</p>
+
+    <form id="uploadForm" class="row" enctype="multipart/form-data">
+      <input type="file" id="fileInput" name="file" accept="image/*" required />
+      <button class="btn btn-primary" type="submit" id="btnUpload">Upload</button>
+    </form>
+
+    <div id="status" class="row muted"></div>
+    <div id="link" class="row"></div>
+    <pre id="json" class="row" hidden></pre>
   </div>
 
-  <form id="uform" enctype="multipart/form-data">
-    <label>Choose photo</label>
-    <input type="file" name="file" accept="image/*" required />
-
-    <label>Quote (optional)</label>
-    <input type="text" name="quote" placeholder="Add a quote..." />
-
-    <div style="margin-top:12px">
-      <button id="uploadBtn" type="submit">Upload</button>
-      <a href="/gallery.html" class="pill" style="text-decoration:none;margin-left:8px">Open Gallery →</a>
-    </div>
-  </form>
-
-  <div id="status"></div>
-
-  <!-- Netlify Identity -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script>
-    // ---- Identity + token helper ----
-    window.IDTOKEN = null;
-    function setToken(user){
-      if(!user){ window.IDTOKEN = null; return; }
-      user.jwt().then(t => { window.IDTOKEN = t; });
-    }
-    document.addEventListener('DOMContentLoaded', ()=>{
-      netlifyIdentity.init();
-      netlifyIdentity.on('init', setToken);
-      netlifyIdentity.on('login', setToken);
-      netlifyIdentity.on('tokenExpired', setToken);
-      netlifyIdentity.on('logout', ()=>{ window.IDTOKEN = null; });
+    const ENDPOINT = "https://shree-drive.onrender.com/upload";
 
-      document.getElementById('loginBtn').onclick = () => {
-        const u = netlifyIdentity.currentUser();
-        if(u){ netlifyIdentity.open('user'); } else { netlifyIdentity.open(); }
-      };
-    });
+    const form = document.getElementById("uploadForm");
+    const fileInput = document.getElementById("fileInput");
+    const statusEl = document.getElementById("status");
+    const jsonEl = document.getElementById("json");
+    const linkEl = document.getElementById("link");
+    const btn = document.getElementById("btnUpload");
 
-    async function authFetch(url, opts={}){
-      const h = new Headers(opts.headers || {});
-      if(window.IDTOKEN) h.set('Authorization','Bearer '+window.IDTOKEN);
-      return fetch(url, { ...opts, headers: h });
-    }
-
-    // ---- Upload handler ----
-    const FORM = document.getElementById('uform');
-    const STATUS = document.getElementById('status');
-    const BTN = document.getElementById('uploadBtn');
-
-    FORM.addEventListener('submit', async (e)=>{
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      linkEl.innerHTML = "";
+      jsonEl.hidden = true;
 
-      // Ensure logged in
-      const user = netlifyIdentity.currentUser();
-      if(!user){
-        STATUS.innerText = 'Please login first.';
-        document.getElementById('loginBtn').classList.add('ok');
-        netlifyIdentity.open();
+      if (!fileInput.files.length) {
+        statusEl.textContent = "Please select a file.";
         return;
       }
 
-      // Build formdata
-      const fd = new FormData(FORM);
-      if(!fd.get('file') || !fd.get('file').name){
-        STATUS.innerText = 'Please select a file.'; return;
-      }
+      const fd = new FormData();
+      fd.append("file", fileInput.files[0]);
 
-      try{
-        BTN.disabled = true; BTN.textContent = 'Uploading…';
-        STATUS.innerText = 'Starting upload…';
+      btn.disabled = true;
+      statusEl.textContent = "Uploading…";
 
-        const r = await authFetch('https://shree-drive.onrender.com/upload', {
-          method: 'POST',
+      try {
+        const res = await fetch(ENDPOINT, {
+          method: "POST",
           body: fd
         });
 
-        const text = await r.text();
-        try {
-          const js = JSON.parse(text);
-          if(r.ok && js && js.ok){
-            STATUS.className = 'pill ok';
-            STATUS.innerText = 'Uploaded ✅\n'+ JSON.stringify(js, null, 2);
-          } else {
-            STATUS.className = 'pill err';
-            STATUS.innerText = 'Upload failed ❌\nHTTP '+r.status+'\n'+text;
+        const data = await res.json().catch(() => ({}));
+
+        jsonEl.textContent = JSON.stringify(data, null, 2);
+        jsonEl.hidden = false;
+
+        if (res.ok && data?.ok) {
+          statusEl.textContent = "Upload successful ✅";
+          const v = data.file || {};
+          if (v.webViewLink || v.webContentLink) {
+            linkEl.innerHTML = `
+              <div>View: <a href="${v.webViewLink || '#'}" target="_blank" rel="noopener">${v.webViewLink || '(no link)'}</a></div>
+              <div>Download: <a href="${v.webContentLink || '#'}" target="_blank" rel="noopener">${v.webContentLink || '(no link)'}</a></div>
+            `;
           }
-        } catch {
-          STATUS.className = 'pill err';
-          STATUS.innerText = 'Upload failed ❌\nHTTP '+r.status+'\n'+text;
+        } else {
+          statusEl.textContent = "Upload failed ❌";
         }
-      } catch(err){
-        STATUS.className = 'pill err';
-        STATUS.innerText = 'Network error ❌\n'+ err?.message;
+      } catch (err) {
+        statusEl.textContent = "Network error ❌";
       } finally {
-        BTN.disabled = false; BTN.textContent = 'Upload';
+        btn.disabled = false;
       }
     });
   </script>
 </body>
 </html>
-<!-- Netlify Identity -->
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script>
-  // Force login before viewing the page
-  async function enforceAuth() {
-    netlifyIdentity.init();
-    const u = netlifyIdentity.currentUser();
-    if (u) return;
-    netlifyIdentity.open();
-    await new Promise((r)=> {
-      let done=false;
-      const finish=()=>{ if(!done){ done=true; r(); } };
-      netlifyIdentity.on('login', finish);
-      netlifyIdentity.on('close', finish);
-    });
-    if (!netlifyIdentity.currentUser()) location.replace('/401.html');
-  }
-
-  function logoutAndExit() {
-    netlifyIdentity.logout();
-    // small delay so token clears
-    setTimeout(()=> location.replace('/index.html'), 300);
-  }
-
-  function go(p){ location.href = p; }
-</script>
