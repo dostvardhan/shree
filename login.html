@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Sign in · Private Area</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0}
+    .card{max-width:420px;padding:28px;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
+    h1{font-size:1.25rem;margin:0 0 12px}
+    p{color:#555;margin:0 0 18px}
+    button{padding:10px 14px;border-radius:10px;border:1px solid #ddd;background:#fff;cursor:pointer}
+    .hint{font-size:.9rem;color:#666;margin-top:12px}
+  </style>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+  <div class="card">
+    <h1>Private access</h1>
+    <p>Only invited users can sign in.</p>
+    <button id="btn">Sign in with Netlify Identity</button>
+    <div class="hint">If you don't have an invite, ask the site owner.</div>
+  </div>
+
+  <script>
+    netlifyIdentity.on('init', function(user){});
+    netlifyIdentity.on('login', function(user){
+      const next = sessionStorage.getItem('next') || '/';
+      sessionStorage.removeItem('next');
+      window.location.replace(next);
+    });
+    netlifyIdentity.on('error', function(e){ console.error(e); });
+    netlifyIdentity.init();
+    document.getElementById('btn').addEventListener('click', function(){
+      netlifyIdentity.open('login');
+    });
+  </script>
+</body>
+</html>
