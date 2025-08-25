@@ -1,18 +1,19 @@
 // backend/server.js
+// ESM imports (warning hataane ke liye optional: backend/package.json me { "type": "module" } add kar sakte ho)
 import express from "express";
 import cors from "cors";
 import fileUpload from "express-fileupload";
 import fs from "fs";
 import { google } from "googleapis";
 
-// ==== Google OAuth Config (Render env vars) ====
+/* ========= Google OAuth2 / Drive Config (Render env vars) ========= */
 const {
   CLIENT_ID,
   CLIENT_SECRET,
   REDIRECT_URI,
   REFRESH_TOKEN,
-  DRIVE_FOLDER_ID,       // optional
-  MAKE_PUBLIC = "true",  // "true" => anyone with link can view
+  DRIVE_FOLDER_ID,        // optional: jis Drive folder me files daalni hain
+  MAKE_PUBLIC = "true",   // "true" => upload ke baad public permission (anyone with link)
 } = process.env;
 
 const oauth2Client = new google.auth.OAuth2(
@@ -23,9 +24,10 @@ const oauth2Client = new google.auth.OAuth2(
 oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 const drive = google.drive({ version: "v3", auth: oauth2Client });
 
+/* ============================ App Init ============================ */
 const app = express();
 
-// ==== CORS (allow your site) ====
+/* ----------------------------- CORS ------------------------------ */
 const allowed = [
   "https://shreshthapushkar.com",
   "https://www.shreshthapushkar.com",
@@ -34,7 +36,7 @@ const allowed = [
 ];
 app.use(
   cors({
-    origin: function (origin, cb) {
+    origin(origin, cb) {
       if (!origin) return cb(null, true);
       if (allowed.includes(origin)) return cb(null, true);
       return cb(new Error("Not allowed by CORS: " + origin));
@@ -43,8 +45,8 @@ app.use(
 );
 app.options("*", cors());
 
-// ==== Body & File Parser ====
-// IMPORTANT: useTempFiles=true => provides tempFilePath we can stream
+/* --------------------- Body / File Parsers ----------------------- */
+// IMPORTANT: useTempFiles = true => tempFilePath milta hai (Drive stream ke liye)
 app.use(
   fileUpload({
     useTempFiles: true,
@@ -56,7 +58,7 @@ app.use(
 );
 app.use(express.json());
 
-// ==== Helpers ====
+/* ============================ Helpers ============================ */
 async function makeFilePublic(fileId) {
   try {
     await drive.permissions.create({
@@ -64,6 +66,7 @@ async function makeFilePublic(fileId) {
       requestBody: { role: "reader", type: "anyone" },
     });
   } catch (e) {
+    // already public / quota / etc — ignore
     console.warn("makeFilePublic warn:", e?.message || e);
   }
 }
@@ -78,15 +81,17 @@ async function getLinks(fileId) {
   return { ...data, webContentLink };
 }
 
-// ==== Routes ====
+/* ============================= Routes ============================ */
+
+// Health
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
+// Upload a file to Drive
 app.post("/upload", async (req, res) => {
-  // Clean-up helper (deletes temp file if exists)
   const cleanup = (p) => {
-    if (p && fs.existsSync(p)) {
-      fs.unlink(p, () => {});
-    }
+    try {
+      if (p && fs.existsSync(p)) fs.unlinkSync(p);
+    } catch {}
   };
 
   try {
@@ -95,7 +100,7 @@ app.post("/upload", async (req, res) => {
     }
 
     const theFile = req.files.file;
-    const tempPath = theFile.tempFilePath; // comes from useTempFiles:true
+    const tempPath = theFile.tempFilePath; // provided by express-fileupload
 
     if (!tempPath || !fs.existsSync(tempPath)) {
       return res
@@ -103,7 +108,6 @@ app.post("/upload", async (req, res) => {
         .json({ ok: false, error: "Temp file not found. Try again." });
     }
 
-    // Create metadata + stream
     const requestBody = {
       name: theFile.name,
       mimeType: theFile.mimetype || "application/octet-stream",
@@ -112,10 +116,9 @@ app.post("/upload", async (req, res) => {
 
     const media = {
       mimeType: theFile.mimetype || "application/octet-stream",
-      body: fs.createReadStream(tempPath), // << stream fixes .pipe error
+      body: fs.createReadStream(tempPath), // stream => fixes .pipe error
     };
 
-    // Upload to Drive
     const createResp = await drive.files.create({
       requestBody,
       media,
@@ -130,7 +133,6 @@ app.post("/upload", async (req, res) => {
 
     const meta = await getLinks(fileId);
 
-    // cleanup temp
     cleanup(tempPath);
 
     return res.json({
@@ -146,16 +148,55 @@ app.post("/upload", async (req, res) => {
     });
   } catch (e) {
     console.error("UPLOAD ERROR:", e?.response?.data || e?.message || e);
-    // try cleanup if something went wrong
     try {
-      if (req?.files?.file?.tempFilePath) fs.unlink(req.files.file.tempFilePath, () => {});
+      if (req?.files?.file?.tempFilePath) cleanup(req.files.file.tempFilePath);
     } catch {}
-    return res.status(500).json({ ok: false, error: e?.message || "Upload failed" });
+    return res
+      .status(500)
+      .json({ ok: false, error: e?.message || "Upload failed" });
   }
 });
 
-// ==== Start server ====
-const PORT = process.env.PORT || 3000; // Render passes PORT
+// List latest files (for Gallery)
+app.get("/list", async (req, res) => {
+  try {
+    const pageSize = Number(req.query.limit || 100);
+    const q = DRIVE_FOLDER_ID
+      ? `'${DRIVE_FOLDER_ID}' in parents and trashed = false`
+      : "trashed = false";
+
+    const { data } = await drive.files.list({
+      q,
+      orderBy: "createdTime desc",
+      pageSize,
+      fields:
+        "files(id,name,mimeType,size,createdTime,thumbnailLink,webViewLink,webContentLink)",
+    });
+
+    const files = (data.files || []).map((f) => ({
+      id: f.id,
+      name: f.name,
+      mimeType: f.mimeType,
+      size: f.size,
+      createdTime: f.createdTime,
+      webViewLink: f.webViewLink,
+      webContentLink:
+        f.webContentLink || `https://drive.google.com/uc?id=${f.id}&export=download`,
+      thumb: f.thumbnailLink || `https://drive.google.com/thumbnail?id=${f.id}`,
+      viewSrc: `https://drive.google.com/uc?id=${f.id}&export=view`,
+    }));
+
+    return res.json({ ok: true, files });
+  } catch (e) {
+    console.error("LIST ERROR:", e?.response?.data || e?.message || e);
+    return res
+      .status(500)
+      .json({ ok: false, error: e?.message || "List failed" });
+  }
+});
+
+/* ============================ Start ============================== */
+const PORT = process.env.PORT || 3000; // Render sets PORT
 app.listen(PORT, () => {
   console.log(`✅ Server listening on port ${PORT}`);
 });
