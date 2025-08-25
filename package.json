@@ -1,11 +1,14 @@
 {
   "name": "shree",
   "version": "1.0.0",
+  "scripts": {
+    "start": "node backend/server.js"
+  },
   "dependencies": {
-    "@netlify/blobs": "^6.5.0",
-    "busboy": "^1.6.0",
-    "cloudinary": "^1.41.0",
+    "express": "^4.19.2",
+    "googleapis": "^131.0.0",
+    "multer": "^1.4.5-lts.1",
     "cors": "^2.8.5",
-    "jose": "^6.0.13"
+    "jose": "^5.9.3"
   }
 }
