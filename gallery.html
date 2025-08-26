@@ -33,6 +33,9 @@
     <div id="gallery" class="grid"></div>
   </div>
 
+  <!-- Netlify Identity (needed for JWT) -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
   <script>
     const API = "https://shree-drive.onrender.com";
 
@@ -43,7 +46,6 @@
     const captionByName = {
       // "photo2.jpg": "“Jahan dil lage, wahi ghar hai.”"
     };
-    // Default caption for the 2nd photo (index 1)
     const defaultSecondCaption = "“Jahan dil lage, wahi ghar hai.”";
 
     function getCaption(file, index) {
@@ -53,51 +55,95 @@
       return "";
     }
 
+    async function getToken() {
+      if (!window.netlifyIdentity) return null;
+      try { window.netlifyIdentity.init(); } catch (_) {}
+      const u = window.netlifyIdentity.currentUser();
+      if (!u) return null;
+      try { return await u.jwt(); } catch { return null; }
+    }
+
+    function cardHTML(name, cap, imgURL, viewHref) {
+      return `
+        <div class="card">
+          <a class="media" href="${viewHref}" target="_blank" rel="noopener">
+            <img src="${imgURL}" alt="${name}" loading="lazy" />
+          </a>
+          <div class="meta">
+            <div class="name" title="${name}">${name}</div>
+            ${cap ? `<div class="caption">${cap}</div>` : ""}
+            <div class="row">
+              <a class="btn" href="${viewHref}" target="_blank" rel="noopener">View</a>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     async function loadGallery() {
       const status = document.getElementById("status");
       const wrap = document.getElementById("gallery");
       status.textContent = "Loading…";
 
-      try {
-        const res = await fetch(`${API}/list?limit=100`);
-        const data = await res.json();
+      // Require login to view private images
+      const token = await getToken();
+      if (!token) {
+        status.textContent = "Please log in to view the private gallery.";
+        return;
+      }
 
-        if (!res.ok || !data.ok) {
-          status.textContent = "Failed to load.";
+      try {
+        // Use pageSize (backend ignores 'limit')
+        const res = await fetch(`${API}/list?pageSize=200`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error("List failed");
+
+        const files = (data.files || []).filter(f => (f.mimeType || "").startsWith("image/"));
+        if (!files.length) {
+          status.textContent = "No photos yet.";
+          wrap.innerHTML = "";
           return;
         }
 
-        wrap.innerHTML = data.files.map((f, i) => {
-          const cap = getCaption(f, i);
-          const view = f.webViewLink || f.viewSrc;
-          const dl = f.webContentLink;
-          const img = f.thumb || f.viewSrc;
+        const items = [];
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          try {
+            // Private image via backend proxy (Authorization header)
+            const imgRes = await fetch(`${API}/file/${encodeURIComponent(f.id)}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!imgRes.ok) throw new Error(`Image HTTP ${imgRes.status}`);
+            const blob = await imgRes.blob();
+            const url = URL.createObjectURL(blob);
 
-          return `
-            <div class="card">
-              <a class="media" href="${view}" target="_blank" rel="noopener">
-                <img src="${img}" alt="${f.name}" loading="lazy" />
-              </a>
-              <div class="meta">
-                <div class="name" title="${f.name}">${f.name}</div>
-                ${cap ? `<div class="caption">${cap}</div>` : ""}
-                <div class="row">
-                  <a class="btn" href="${view}" target="_blank" rel="noopener">View</a>
-                  <a class="btn" href="${dl}" target="_blank" rel="noopener">Download</a>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join("");
+            const cap = getCaption(f, i);
+            const viewHref = `https://drive.google.com/file/d/${f.id}/view`; // open in Drive viewer
 
-        status.textContent = `${data.files.length} photos`;
+            items.push(cardHTML(f.name, cap, url, viewHref));
+          } catch (e) {
+            console.error("Image fetch failed:", f.id, e);
+          }
+        }
+
+        wrap.innerHTML = items.join("");
+        status.textContent = `${items.length} photos`;
       } catch (e) {
         console.error(e);
         status.textContent = "Error loading gallery.";
       }
     }
 
-    loadGallery();
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.on("init", loadGallery);
+        window.netlifyIdentity.on("login", loadGallery);
+        window.netlifyIdentity.on("logout", loadGallery);
+      }
+      loadGallery();
+    });
   </script>
 </body>
 </html>
