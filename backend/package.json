@@ -2,10 +2,12 @@
   "name": "shree-drive-backend",
   "private": true,
   "dependencies": {
-    "express": "^4.19.2",
-    "express-fileupload": "^1.4.0",
     "cors": "^2.8.5",
-    "googleapis": "^131.0.0"
+    "express": "^4.21.2",
+    "express-fileupload": "^1.5.2",
+    "googleapis": "^131.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.2.0"
   },
   "scripts": {
     "start": "node server.js"
