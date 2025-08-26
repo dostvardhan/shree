@@ -38,20 +38,18 @@
 
   <script>
     const API = "https://shree-drive.onrender.com";
+    const MAX_PAGE = 50;          // load at most 50 files initially (raise later if needed)
+    const CONCURRENCY = 4;        // limit parallel image fetches to avoid browser crashes
 
-    // Optional: custom captions
-    const captionById = {
-      // "1AbCdEF...": "“Yeh hamari yaadon ka rang hai.”",
-    };
-    const captionByName = {
-      // "photo2.jpg": "“Jahan dil lage, wahi ghar hai.”"
-    };
+    // Optional captions
+    const captionById = {};
+    const captionByName = {};
     const defaultSecondCaption = "“Jahan dil lage, wahi ghar hai.”";
 
     function getCaption(file, index) {
       if (captionById[file.id]) return captionById[file.id];
       if (captionByName[file.name]) return captionByName[file.name];
-      if (index === 1) return defaultSecondCaption; // 2nd card
+      if (index === 1) return defaultSecondCaption;
       return "";
     }
 
@@ -63,77 +61,138 @@
       try { return await u.jwt(); } catch { return null; }
     }
 
-    function cardHTML(name, cap, imgURL, viewHref) {
-      return `
-        <div class="card">
-          <a class="media" href="${viewHref}" target="_blank" rel="noopener">
-            <img src="${imgURL}" alt="${name}" loading="lazy" />
-          </a>
-          <div class="meta">
-            <div class="name" title="${name}">${name}</div>
-            ${cap ? `<div class="caption">${cap}</div>` : ""}
-            <div class="row">
-              <a class="btn" href="${viewHref}" target="_blank" rel="noopener">View</a>
-            </div>
-          </div>
+    function makeCardSkeleton() {
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <div class="media"><div style="width:100%;height:100%;background:#eee"></div></div>
+        <div class="meta">
+          <div class="name">Loading…</div>
         </div>
       `;
+      return div;
+    }
+
+    function fillCard(card, name, url, caption, viewHref) {
+      const mediaHolder = card.querySelector('.media');
+      const a = document.createElement('a');
+      a.className = 'media';
+      a.href = viewHref;
+      a.target = '_blank';
+      a.rel = 'noopener';
+
+      const img = document.createElement('img');
+      img.loading = 'lazy';
+      img.alt = name;
+      img.src = url;
+
+      // free memory shortly after load
+      img.addEventListener('load', () => {
+        setTimeout(() => URL.revokeObjectURL(url), 3000);
+      });
+
+      a.appendChild(img);
+      mediaHolder.replaceWith(a);
+
+      const nameEl = card.querySelector('.name');
+      nameEl.textContent = name;
+
+      const meta = card.querySelector('.meta');
+      if (caption) {
+        const cap = document.createElement('div');
+        cap.className = 'caption';
+        cap.textContent = caption;
+        meta.appendChild(cap);
+      }
+      const row = document.createElement('div');
+      row.className = 'row';
+      const viewBtn = document.createElement('a');
+      viewBtn.className = 'btn';
+      viewBtn.href = viewHref;
+      viewBtn.target = '_blank';
+      viewBtn.rel = 'noopener';
+      viewBtn.textContent = 'View';
+      row.appendChild(viewBtn);
+      meta.appendChild(row);
+    }
+
+    async function fetchImageBlobURL(id, token) {
+      const res = await fetch(`${API}/file/${encodeURIComponent(id)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error(`Image HTTP ${res.status}`);
+      const blob = await res.blob();
+      return URL.createObjectURL(blob);
     }
 
     async function loadGallery() {
       const status = document.getElementById("status");
-      const wrap = document.getElementById("gallery");
+      const grid = document.getElementById("gallery");
       status.textContent = "Loading…";
 
-      // Require login to view private images
       const token = await getToken();
       if (!token) {
         status.textContent = "Please log in to view the private gallery.";
         return;
       }
 
+      // 1) Get list (limit to MAX_PAGE first)
+      let files = [];
       try {
-        // Use pageSize (backend ignores 'limit')
-        const res = await fetch(`${API}/list?pageSize=200`, {
+        const res = await fetch(`${API}/list?pageSize=${MAX_PAGE}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
-        if (!res.ok || !data.ok) throw new Error("List failed");
-
-        const files = (data.files || []).filter(f => (f.mimeType || "").startsWith("image/"));
-        if (!files.length) {
-          status.textContent = "No photos yet.";
-          wrap.innerHTML = "";
-          return;
-        }
-
-        const items = [];
-        for (let i = 0; i < files.length; i++) {
-          const f = files[i];
-          try {
-            // Private image via backend proxy (Authorization header)
-            const imgRes = await fetch(`${API}/file/${encodeURIComponent(f.id)}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            if (!imgRes.ok) throw new Error(`Image HTTP ${imgRes.status}`);
-            const blob = await imgRes.blob();
-            const url = URL.createObjectURL(blob);
-
-            const cap = getCaption(f, i);
-            const viewHref = `https://drive.google.com/file/d/${f.id}/view`; // open in Drive viewer
-
-            items.push(cardHTML(f.name, cap, url, viewHref));
-          } catch (e) {
-            console.error("Image fetch failed:", f.id, e);
-          }
-        }
-
-        wrap.innerHTML = items.join("");
-        status.textContent = `${items.length} photos`;
+        if (!res.ok || !data.ok) throw new Error('List failed');
+        files = (data.files || []).filter(f => (f.mimeType || '').startsWith('image/'));
       } catch (e) {
         console.error(e);
         status.textContent = "Error loading gallery.";
+        return;
       }
+
+      if (!files.length) {
+        status.textContent = "No photos yet.";
+        grid.innerHTML = "";
+        return;
+      }
+
+      // 2) Add skeletons
+      grid.innerHTML = '';
+      const cards = files.map(() => {
+        const c = makeCardSkeleton();
+        grid.appendChild(c);
+        return c;
+      });
+
+      // 3) Fetch images with limited concurrency
+      let completed = 0;
+      status.textContent = `Loading images… 0/${files.length}`;
+
+      const queue = files.map((file, index) => async () => {
+        try {
+          const url = await fetchImageBlobURL(file.id, token);
+          const caption = getCaption(file, index);
+          const viewHref = `https://drive.google.com/file/d/${file.id}/view`;
+          fillCard(cards[index], file.name, url, caption, viewHref);
+        } catch (err) {
+          console.error('Image fetch failed:', file.id, err);
+          cards[index].querySelector('.name').textContent = file.name + ' (failed)';
+        } finally {
+          completed++;
+          status.textContent = `Loading images… ${completed}/${files.length}`;
+        }
+      });
+
+      const runners = new Array(CONCURRENCY).fill(0).map(async () => {
+        while (queue.length) {
+          const job = queue.shift();
+          if (job) await job();
+        }
+      });
+      await Promise.all(runners);
+
+      status.textContent = `${files.length} photos`;
     }
 
     document.addEventListener("DOMContentLoaded", () => {
