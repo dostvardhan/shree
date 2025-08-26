@@ -6,12 +6,13 @@
   <meta name="robots" content="noindex,nofollow" />
   <title>Sign in · Private Area</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0}
-    .card{max-width:420px;padding:28px;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;background:#fafafa}
+    .card{max-width:440px;padding:28px;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.06);background:#fff}
     h1{font-size:1.25rem;margin:0 0 12px}
     p{color:#555;margin:0 0 18px}
     button{padding:10px 14px;border-radius:10px;border:1px solid #ddd;background:#fff;cursor:pointer}
     .hint{font-size:.9rem;color:#666;margin-top:12px}
+    .log{margin-top:14px;font:12px/1.4 ui-monospace,Consolas,monospace;color:#333;white-space:pre-wrap;background:#f5f5f5;border:1px solid #eee;border-radius:8px;padding:10px;max-height:180px;overflow:auto}
   </style>
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
@@ -21,18 +22,47 @@
     <p>Only invited users can sign in.</p>
     <button id="btn">Sign in with Netlify Identity</button>
     <div class="hint">If you don't have an invite, ask the site owner.</div>
+    <div id="log" class="log" hidden></div>
   </div>
 
   <script>
-    netlifyIdentity.on('init', function(user){});
-    netlifyIdentity.on('login', function(user){
-      const next = sessionStorage.getItem('next') || '/';
-      sessionStorage.removeItem('next');
-      window.location.replace(next);
-    });
-    netlifyIdentity.on('error', function(e){ console.error(e); });
-    netlifyIdentity.init();
+    // Small logger box for quick debug
+    const logBox = document.getElementById('log');
+    function log(...a){ try{ logBox.hidden=false; logBox.textContent += a.map(x => typeof x==='string'?x:JSON.stringify(x)).join(' ') + '\n'; }catch(e){} }
+
+    // Explicitly point to Identity API (sometimes helps)
+    const APIUrl = 'https://shreshthapushkar.com/.netlify/identity';
+
+    // Basic connectivity checks
+    fetch(APIUrl).then(r => { log('identity root:', r.status); }).catch(e => log('identity error:', e?.message||e));
+    fetch(APIUrl + '/settings').then(r => { log('settings:', r.status); return r.json(); })
+      .then(j => log('inviteOnly:', j?.invite_only)).catch(e => log('settings error:', e?.message||e));
+
+    if (!window.netlifyIdentity) {
+      alert('Identity widget failed to load. Check network/ad-blockers.');
+    } else {
+      netlifyIdentity.on('init', function(user){
+        log('init user:', !!user);
+        if (user) {
+          const next = sessionStorage.getItem('next') || '/';
+          sessionStorage.removeItem('next');
+          window.location.replace(next);
+        }
+      });
+      netlifyIdentity.on('login', function(user){
+        log('login:', user && user.email);
+        const next = sessionStorage.getItem('next') || '/';
+        sessionStorage.removeItem('next');
+        window.location.replace(next);
+      });
+      netlifyIdentity.on('error', function(e){ log('identity error:', e && (e.message || e)); });
+
+      // Important: explicit init with APIUrl
+      netlifyIdentity.init({ APIUrl });
+    }
+
     document.getElementById('btn').addEventListener('click', function(){
+      if (!window.netlifyIdentity){ alert('Identity not available'); return; }
       netlifyIdentity.open('login');
     });
   </script>
