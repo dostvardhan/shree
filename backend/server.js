@@ -1,5 +1,5 @@
 // server.js
-// Secure Google Drive uploader with Netlify Identity (JWT), CORS and file streaming.
+// Secure Google Drive uploader + viewer with Netlify Identity auth (JWT), CORS & streaming.
 
 const express = require('express');
 const cors = require('cors');
@@ -7,6 +7,7 @@ const fileUpload = require('express-fileupload');
 const { google } = require('googleapis');
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
+const fs = require('fs');
 
 const PORT = process.env.PORT || 3000;
 
@@ -14,20 +15,15 @@ const PORT = process.env.PORT || 3000;
 const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://shreshthapushkar.com';
 const IDENTITY_ISSUER = `${SITE_ORIGIN}/.netlify/identity`;
 
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const REDIRECT_URI = process.env.REDIRECT_URI;
-const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
+const CLIENT_ID = process.env.CLIENT_ID || '';
+const CLIENT_SECRET = process.env.CLIENT_SECRET || '';
+const REDIRECT_URI = process.env.REDIRECT_URI || '';
+const REFRESH_TOKEN = process.env.REFRESH_TOKEN || '';
 
 const DRIVE_FOLDER_ID = process.env.DRIVE_FOLDER_ID || null;
 const MAKE_PUBLIC = String(process.env.MAKE_PUBLIC || 'false').toLowerCase() === 'true';
 
-// ======== BASIC CHECKS ========
-if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI || !REFRESH_TOKEN) {
-  // Don’t crash; show clear error on /diag
-  console.warn('[WARN] Missing Google OAuth env vars. Check CLIENT_ID/CLIENT_SECRET/REDIRECT_URI/REFRESH_TOKEN.');
-}
-
+// ======== APP ========
 const app = express();
 
 // CORS — only allow your site
@@ -38,11 +34,11 @@ app.use(
   })
 );
 
-// Body/file parsing
+// JSON + file uploads
 app.use(express.json({ limit: '20mb' }));
 app.use(
   fileUpload({
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
     useTempFiles: true,
     tempFileDir: '/tmp',
     abortOnLimit: true,
@@ -50,19 +46,19 @@ app.use(
   })
 );
 
-// ======== GOOGLE DRIVE CLIENT ========
+// ======== GOOGLE DRIVE ========
 function makeDrive() {
-  const oauth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
-  oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
-  return google.drive({ version: 'v3', auth: oauth2Client });
+  const oauth2 = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+  oauth2.setCredentials({ refresh_token: REFRESH_TOKEN });
+  return google.drive({ version: 'v3', auth: oauth2 });
 }
 
-// ======== NETLIFY IDENTITY JWT VERIFY (RS256 via JWKS) ========
+// ======== NETLIFY IDENTITY JWT VERIFY (RS256) ========
 const jwks = jwksClient({
   jwksUri: `${IDENTITY_ISSUER}/.well-known/jwks.json`,
   cache: true,
   cacheMaxEntries: 5,
-  cacheMaxAge: 10 * 60 * 1000,
+  cacheMaxAge: 10 * 60 * 1000, // 10 min
 });
 
 function getKey(header, callback) {
@@ -77,12 +73,6 @@ function getKey(header, callback) {
   });
 }
 
-/**
- * requireIdentity middleware:
- * - Reads Bearer token
- * - Verifies signature against Netlify Identity JWKS
- * - Checks issuer and role = member/admin
- */
 function requireIdentity(req, res, next) {
   const auth = req.headers.authorization || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
@@ -99,36 +89,33 @@ function requireIdentity(req, res, next) {
       if (err) return res.status(401).json({ error: 'Invalid token' });
 
       const roles =
-        (payload &&
-          payload.app_metadata &&
-          payload.app_metadata.authorization &&
-          payload.app_metadata.authorization.roles) ||
-        [];
+        payload?.app_metadata?.authorization?.roles || [];
 
       if (!roles.includes('member') && !roles.includes('admin')) {
         return res.status(403).json({ error: 'Forbidden' });
       }
 
-      req.user = payload; // attach for downstream
+      req.user = payload;
       next();
     }
   );
 }
 
-// ======== OPEN ROUTES (optional to keep open) ========
+// ======== OPEN ROUTES (keep simple) ========
 app.get('/health', (req, res) => res.json({ ok: true }));
+
 app.get('/diag', async (req, res) => {
   const diag = {
     ok: true,
     site_origin: SITE_ORIGIN,
     identity_issuer: IDENTITY_ISSUER,
-    google_oauth_env: {
+    env: {
       has_client_id: !!CLIENT_ID,
       has_client_secret: !!CLIENT_SECRET,
       has_redirect_uri: !!REDIRECT_URI,
       has_refresh_token: !!REFRESH_TOKEN,
     },
-    folder: DRIVE_FOLDER_ID || '(root or user My Drive)',
+    folder: DRIVE_FOLDER_ID || '(My Drive root)',
     make_public: MAKE_PUBLIC,
     now: new Date().toISOString(),
   };
@@ -149,69 +136,61 @@ app.get('/diag', async (req, res) => {
 
 // ======== PROTECTED ROUTES ========
 
-// POST /upload  — multipart file -> Drive
+// Upload a file to Drive
 app.post('/upload', requireIdentity, async (req, res) => {
   try {
     if (!req.files || !req.files.file) {
-      return res.status(400).json({ error: 'No file uploaded (field name should be "file")' });
+      return res.status(400).json({ error: 'No file uploaded (use field name "file")' });
     }
 
     const file = req.files.file;
     const drive = makeDrive();
 
-    const resource = {
+    const meta = {
       name: file.name,
       parents: DRIVE_FOLDER_ID ? [DRIVE_FOLDER_ID] : undefined,
     };
 
-    // Upload
-    const driveRes = await drive.files.create({
-      requestBody: resource,
+    const created = await drive.files.create({
+      requestBody: meta,
       media: {
         mimeType: file.mimetype || 'application/octet-stream',
-        body: require('fs').createReadStream(file.tempFilePath),
+        body: fs.createReadStream(file.tempFilePath),
       },
       fields: 'id,name,mimeType,size,webViewLink,webContentLink',
     });
 
-    const created = driveRes.data;
+    const data = created.data;
 
-    // Set sharing if MAKE_PUBLIC=true
     if (MAKE_PUBLIC) {
       try {
         await drive.permissions.create({
-          fileId: created.id,
+          fileId: data.id,
           requestBody: { type: 'anyone', role: 'reader' },
         });
-        // refresh links after permission
-        const meta = await drive.files.get({
-          fileId: created.id,
+        const refreshed = await drive.files.get({
+          fileId: data.id,
           fields: 'id,name,mimeType,size,webViewLink,webContentLink',
         });
-        return res.json({ ok: true, file: meta.data, public: true });
+        return res.json({ ok: true, file: refreshed.data, public: true });
       } catch (e) {
-        // even if sharing fails, return created meta
-        return res.json({ ok: true, file: created, public: false, warn: e.message });
+        return res.json({ ok: true, file: data, public: false, warn: e.message });
       }
     }
 
-    // Private by default
-    return res.json({ ok: true, file: created, public: false });
+    res.json({ ok: true, file: data, public: false });
   } catch (e) {
     console.error('UPLOAD_ERROR', e);
-    return res.status(500).json({ error: 'Upload failed', details: e?.message || String(e) });
+    res.status(500).json({ error: 'Upload failed', details: e?.message || String(e) });
   }
 });
 
-// GET /list — list files in folder (or My Drive)
+// List files
 app.get('/list', requireIdentity, async (req, res) => {
   try {
     const drive = makeDrive();
-
-    let q = `'me' in owners and trashed=false`;
-    if (DRIVE_FOLDER_ID) {
-      q = `'${DRIVE_FOLDER_ID}' in parents and trashed=false`;
-    }
+    let q = `trashed=false and 'me' in owners`;
+    if (DRIVE_FOLDER_ID) q = `'${DRIVE_FOLDER_ID}' in parents and trashed=false`;
 
     const r = await drive.files.list({
       q,
@@ -227,13 +206,12 @@ app.get('/list', requireIdentity, async (req, res) => {
   }
 });
 
-// GET /file/:id — stream file (private, requires auth)
+// Stream a file
 app.get('/file/:id', requireIdentity, async (req, res) => {
   try {
     const fileId = req.params.id;
     const drive = makeDrive();
 
-    // Get metadata to set headers
     const meta = await drive.files.get({
       fileId,
       fields: 'id,name,mimeType,size',
@@ -242,30 +220,29 @@ app.get('/file/:id', requireIdentity, async (req, res) => {
     res.setHeader('Content-Type', meta.data.mimeType || 'application/octet-stream');
     res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(meta.data.name)}"`);
 
-    const driveStream = await drive.files.get(
+    const streamRes = await drive.files.get(
       { fileId, alt: 'media' },
       { responseType: 'stream' }
     );
 
-    driveStream.data
+    streamRes.data
       .on('error', (err) => {
         console.error('STREAM_ERROR', err);
         res.end();
       })
       .pipe(res);
   } catch (e) {
-    console.error('FILE_STREAM_ERROR', e);
+    console.error('FILE_ERROR', e);
     res.status(500).json({ error: 'File stream failed', details: e?.message || String(e) });
   }
 });
 
-// (Optional) DELETE /file/:id — delete a file
+// Delete a file
 app.delete('/file/:id', requireIdentity, async (req, res) => {
   try {
-    const fileId = req.params.id;
     const drive = makeDrive();
-    await drive.files.delete({ fileId });
-    res.json({ ok: true, deleted: fileId });
+    await drive.files.delete({ fileId: req.params.id });
+    res.json({ ok: true, deleted: req.params.id });
   } catch (e) {
     console.error('DELETE_ERROR', e);
     res.status(500).json({ error: 'Delete failed', details: e?.message || String(e) });
