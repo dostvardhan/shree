@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 // ======== CONFIG ========
 const SITE_ORIGIN =
   process.env.SITE_ORIGIN ||
-  process.env.ALLOWED_ORIGIN || // fallback if you used ALLOWED_ORIGIN earlier
+  process.env.ALLOWED_ORIGIN ||
   'https://shreshthapushkar.com';
 
 const IDENTITY_ISSUER = `${SITE_ORIGIN}/.netlify/identity`;
@@ -28,11 +28,19 @@ const MAKE_PUBLIC = String(process.env.MAKE_PUBLIC || 'false').toLowerCase() ===
 // ======== APP ========
 const app = express();
 
-// CORS — only allow your site
+// CORS — allow both shreshthapushkar.com and www
+const allowedOrigins = [
+  'https://shreshthapushkar.com',
+  'https://www.shreshthapushkar.com'
+];
 app.use(
   cors({
-    origin: SITE_ORIGIN,
-    credentials: false,
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return cb(null, true);
+      }
+      return cb(new Error('CORS not allowed'), false);
+    }
   })
 );
 
@@ -56,14 +64,12 @@ function makeDrive() {
 }
 
 // ======== NETLIFY IDENTITY (TOKEN INTROSPECTION) ========
-// Works for HS256 or RS256; relies on Netlify Identity to validate token.
 async function requireIdentity(req, res, next) {
   try {
     const auth = req.headers.authorization || '';
     const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
     if (!token) return res.status(401).json({ error: 'Missing token' });
 
-    // Validate token with Identity
     const r = await fetch(`${IDENTITY_ISSUER}/user`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -73,8 +79,6 @@ async function requireIdentity(req, res, next) {
     }
 
     const user = await r.json();
-
-    // Roles are usually in app_metadata.authorization.roles OR app_metadata.roles
     const roles =
       user?.app_metadata?.authorization?.roles ||
       user?.app_metadata?.roles ||
@@ -84,7 +88,7 @@ async function requireIdentity(req, res, next) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    req.user = user; // attach for downstream use
+    req.user = user;
     next();
   } catch (e) {
     console.error('IDENTITY_INTROSPECT_ERROR', e);
@@ -127,7 +131,7 @@ app.get('/diag', async (req, res) => {
 
 // ======== PROTECTED ROUTES ========
 
-// Upload a file to Drive
+// Upload a file
 app.post('/upload', requireIdentity, async (req, res) => {
   try {
     if (!req.files || !req.files.file) {
@@ -180,7 +184,8 @@ app.post('/upload', requireIdentity, async (req, res) => {
 app.get('/list', requireIdentity, async (req, res) => {
   try {
     const drive = makeDrive();
-    let q = `trashed=false and 'me' in owners`;
+    // relaxed query: show all (not just 'me' in owners)
+    let q = `trashed=false`;
     if (DRIVE_FOLDER_ID) q = `'${DRIVE_FOLDER_ID}' in parents and trashed=false`;
 
     const r = await drive.files.list({
