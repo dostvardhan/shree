@@ -1,18 +1,20 @@
 // server.js
-// Secure Google Drive uploader + viewer with Netlify Identity auth (JWT), CORS & streaming.
+// Google Drive uploader + viewer with Netlify Identity auth (token introspection), CORS & streaming.
 
 const express = require('express');
 const cors = require('cors');
 const fileUpload = require('express-fileupload');
 const { google } = require('googleapis');
-const jwt = require('jsonwebtoken');
-const jwksClient = require('jwks-rsa');
 const fs = require('fs');
 
 const PORT = process.env.PORT || 3000;
 
 // ======== CONFIG ========
-const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://shreshthapushkar.com';
+const SITE_ORIGIN =
+  process.env.SITE_ORIGIN ||
+  process.env.ALLOWED_ORIGIN || // fallback if you used ALLOWED_ORIGIN earlier
+  'https://shreshthapushkar.com';
+
 const IDENTITY_ISSUER = `${SITE_ORIGIN}/.netlify/identity`;
 
 const CLIENT_ID = process.env.CLIENT_ID || '';
@@ -53,55 +55,44 @@ function makeDrive() {
   return google.drive({ version: 'v3', auth: oauth2 });
 }
 
-// ======== NETLIFY IDENTITY JWT VERIFY (RS256) ========
-const jwks = jwksClient({
-  jwksUri: `${IDENTITY_ISSUER}/.well-known/jwks.json`,
-  cache: true,
-  cacheMaxEntries: 5,
-  cacheMaxAge: 10 * 60 * 1000, // 10 min
-});
+// ======== NETLIFY IDENTITY (TOKEN INTROSPECTION) ========
+// Works for HS256 or RS256; relies on Netlify Identity to validate token.
+async function requireIdentity(req, res, next) {
+  try {
+    const auth = req.headers.authorization || '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+    if (!token) return res.status(401).json({ error: 'Missing token' });
 
-function getKey(header, callback) {
-  jwks.getSigningKey(header.kid, (err, key) => {
-    if (err) return callback(err);
-    try {
-      const signingKey = key.getPublicKey();
-      callback(null, signingKey);
-    } catch (e) {
-      callback(e);
+    // Validate token with Identity
+    const r = await fetch(`${IDENTITY_ISSUER}/user`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!r.ok) {
+      return res.status(401).json({ error: 'Invalid token' });
     }
-  });
+
+    const user = await r.json();
+
+    // Roles are usually in app_metadata.authorization.roles OR app_metadata.roles
+    const roles =
+      user?.app_metadata?.authorization?.roles ||
+      user?.app_metadata?.roles ||
+      [];
+
+    if (!roles.includes('member') && !roles.includes('admin')) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    req.user = user; // attach for downstream use
+    next();
+  } catch (e) {
+    console.error('IDENTITY_INTROSPECT_ERROR', e);
+    return res.status(401).json({ error: 'Auth failed' });
+  }
 }
 
-function requireIdentity(req, res, next) {
-  const auth = req.headers.authorization || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-  if (!token) return res.status(401).json({ error: 'Missing token' });
-
-  jwt.verify(
-    token,
-    getKey,
-    {
-      algorithms: ['RS256'],
-      issuer: IDENTITY_ISSUER,
-    },
-    (err, payload) => {
-      if (err) return res.status(401).json({ error: 'Invalid token' });
-
-      const roles =
-        payload?.app_metadata?.authorization?.roles || [];
-
-      if (!roles.includes('member') && !roles.includes('admin')) {
-        return res.status(403).json({ error: 'Forbidden' });
-      }
-
-      req.user = payload;
-      next();
-    }
-  );
-}
-
-// ======== OPEN ROUTES (keep simple) ========
+// ======== OPEN ROUTES ========
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 app.get('/diag', async (req, res) => {
