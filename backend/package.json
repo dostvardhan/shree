@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "description": "Node/Express backend for Google Drive uploads + Netlify Identity auth + image proxy",
-  "main": "backend/server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "node backend/server.js"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
