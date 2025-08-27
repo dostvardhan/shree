@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Mini Test</title>
+<style>
+  body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#f7f7f8;margin:0;padding:24px}
+  button{border:1px solid #ddd;border-radius:10px;background:#fff;padding:8px 12px;cursor:pointer}
+  #stage{margin-top:16px;display:flex;justify-content:center;align-items:center;min-height:280px;background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.06);overflow:hidden}
+  #stage img{max-width:100%;max-height:70vh;display:block}
+  #status{opacity:.7;margin-left:10px}
+</style>
+
+<button id="go">Load One Image</button>
+<span id="status">Idle</span>
+<div id="stage"><span>—</span></div>
+
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script>
+const API = "https://shree-drive.onrender.com";
+
+async function getToken(){
+  try{ netlifyIdentity.init(); }catch(e){}
+  const u = netlifyIdentity.currentUser();
+  return u ? u.jwt() : null;
+}
+
+async function listOne(tok){
+  const r = await fetch(`${API}/list?pageSize=1`, {
+    headers:{ Authorization:`Bearer ${tok}` }
+  });
+  const j = await r.json();
+  if(!r.ok || !j.ok || !j.files?.length) throw new Error("List failed or empty");
+  return j.files[0].id;
+}
+
+async function loadOne(){
+  const s = document.getElementById('status');
+  const stage = document.getElementById('stage');
+  s.textContent = 'Getting token…';
+  const t = await getToken();
+  if(!t){ s.textContent = 'Please login first'; return; }
+
+  s.textContent = 'Listing…';
+  let id;
+  try { id = await listOne(t); }
+  catch(e){ s.textContent = 'List failed'; console.error(e); return; }
+
+  s.textContent = 'Fetching image…';
+  try{
+    const r = await fetch(`${API}/file/${encodeURIComponent(id)}`, {
+      headers:{ Authorization:`Bearer ${t}` }
+    });
+    if(!r.ok) throw new Error('Image HTTP '+r.status);
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => setTimeout(()=>URL.revokeObjectURL(url), 2000);
+    img.src = url;
+    stage.innerHTML = '';
+    stage.appendChild(img);
+    s.textContent = 'Done ✅';
+  }catch(e){
+    console.error(e);
+    stage.innerHTML = '<span>Failed.</span>';
+    s.textContent = 'Error';
+  }
+}
+
+document.getElementById('go').onclick = loadOne;
+if(window.netlifyIdentity){
+  netlifyIdentity.on('login', ()=>location.reload());
+  netlifyIdentity.on('logout', ()=>location.reload());
+}
+</script>
