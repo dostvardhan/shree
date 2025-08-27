@@ -1,54 +1,82 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<title>Mini Test</title>
+<title>Mini Test (Debug)</title>
 <style>
   body{font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#f7f7f8;margin:0;padding:24px}
-  button{border:1px solid #ddd;border-radius:10px;background:#fff;padding:8px 12px;cursor:pointer}
+  button{border:1px solid #ddd;border-radius:10px;background:#fff;padding:8px 12px;cursor:pointer;margin-right:8px}
   #stage{margin-top:16px;display:flex;justify-content:center;align-items:center;min-height:280px;background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.06);overflow:hidden}
   #stage img{max-width:100%;max-height:70vh;display:block}
-  #status{opacity:.7;margin-left:10px}
+  #status{opacity:.85;margin-left:10px}
+  pre{background:#fff;border:1px solid #eee;padding:10px;border-radius:8px;max-width:100%;overflow:auto}
 </style>
 
-<button id="go">Load One Image</button>
-<span id="status">Idle</span>
+<div>
+  <button id="loginBtn">Open Login</button>
+  <button id="go">Load One Image</button>
+  <span id="status">Idle</span>
+</div>
 <div id="stage"><span>—</span></div>
+<h3>Debug log</h3>
+<pre id="log"></pre>
 
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script>
 const API = "https://shree-drive.onrender.com";
+const statusEl = document.getElementById('status');
+const logEl = document.getElementById('log');
+
+function log(...args){
+  console.log('[mini1]', ...args);
+  try { logEl.textContent += args.map(a => 
+    typeof a==='string'? a : JSON.stringify(a, null, 2)
+  ).join(' ') + '\n'; } catch(e){}
+}
+function setStatus(s){ statusEl.textContent = s; log(s); }
 
 async function getToken(){
-  try{ netlifyIdentity.init(); }catch(e){}
-  const u = netlifyIdentity.currentUser();
-  return u ? u.jwt() : null;
+  try { window.netlifyIdentity.init(); } catch(e){ log('identity.init error', e); }
+  const u = window.netlifyIdentity.currentUser();
+  log('currentUser =', u ? {email: u.email, id: u.id} : null);
+  if (!u) return null;
+  try {
+    const t = await u.jwt();
+    log('jwt length', t.length);
+    return t;
+  } catch(e){
+    log('u.jwt() error', e);
+    return null;
+  }
 }
 
 async function listOne(tok){
+  log('list start');
   const r = await fetch(`${API}/list?pageSize=1`, {
     headers:{ Authorization:`Bearer ${tok}` }
   });
-  const j = await r.json();
-  if(!r.ok || !j.ok || !j.files?.length) throw new Error("List failed or empty");
+  log('list status', r.status);
+  const j = await r.json().catch(e => (log('list json error', e), {}));
+  log('list body', j);
+  if(!r.ok || !j.ok || !j.files?.length) throw new Error('List failed or empty');
   return j.files[0].id;
 }
 
 async function loadOne(){
-  const s = document.getElementById('status');
   const stage = document.getElementById('stage');
-  s.textContent = 'Getting token…';
-  const t = await getToken();
-  if(!t){ s.textContent = 'Please login first'; return; }
+  setStatus('Getting token…');
+  const tok = await getToken();
+  if(!tok){ setStatus('No token — please login'); return; }
 
-  s.textContent = 'Listing…';
+  setStatus('Listing…');
   let id;
-  try { id = await listOne(t); }
-  catch(e){ s.textContent = 'List failed'; console.error(e); return; }
+  try { id = await listOne(tok); }
+  catch(e){ setStatus('List failed'); log(e); return; }
 
-  s.textContent = 'Fetching image…';
-  try{
+  setStatus('Fetching image…');
+  try {
     const r = await fetch(`${API}/file/${encodeURIComponent(id)}`, {
-      headers:{ Authorization:`Bearer ${t}` }
+      headers:{ Authorization:`Bearer ${tok}` }
     });
+    log('file status', r.status, 'type', r.headers.get('content-type'));
     if(!r.ok) throw new Error('Image HTTP '+r.status);
     const blob = await r.blob();
     const url = URL.createObjectURL(blob);
@@ -57,17 +85,24 @@ async function loadOne(){
     img.src = url;
     stage.innerHTML = '';
     stage.appendChild(img);
-    s.textContent = 'Done ✅';
-  }catch(e){
-    console.error(e);
+    setStatus('Done ✅');
+  } catch(e){
+    log('image fetch error', e);
     stage.innerHTML = '<span>Failed.</span>';
-    s.textContent = 'Error';
+    setStatus('Error');
   }
 }
 
 document.getElementById('go').onclick = loadOne;
-if(window.netlifyIdentity){
-  netlifyIdentity.on('login', ()=>location.reload());
-  netlifyIdentity.on('logout', ()=>location.reload());
+document.getElementById('loginBtn').onclick = () => {
+  try { window.netlifyIdentity.open('login'); } catch(e) { log('open login error', e); }
+};
+
+// Helpful: reflect identity lifecycle in logs
+if (window.netlifyIdentity){
+  window.netlifyIdentity.on('init', user => log('identity init', !!user));
+  window.netlifyIdentity.on('login', user => { log('identity login', user && user.email); setStatus('Logged in'); });
+  window.netlifyIdentity.on('logout', () => { log('identity logout'); setStatus('Logged out'); });
+  window.netlifyIdentity.on('error', e => log('identity error', e));
 }
 </script>
