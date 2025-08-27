@@ -1,203 +1,229 @@
-// gallery.js
-const API = "https://shree-drive.onrender.com";
+// === gallery.js (safe version) ===
 
-// batching + concurrency (safe defaults for STATUS_BREAKPOINT issues)
-const BATCH_SIZE = 12;
-const CONCURRENCY = 2;
+// ---- CONFIG ----
+const API_BASE = 'https://shree-drive.onrender.com'; // जरुरत पड़े तो बदल लेना
+const PAGE_SIZE = 6; // "Load 6 more" से match
 
-// Optional captions
-const captionById = {};
-const captionByName = {};
-const defaultSecondCaption = "“Jahan dil lage, wahi ghar hai.”";
+// ---- STATE ----
+let state = {
+  jwt: null,
+  files: [],
+  page: 0,
+  loading: false,
+  destroyed: false,
+  io: null, // IntersectionObserver
+};
 
-function getCaption(file, index) {
-  if (captionById[file.id]) return captionById[file.id];
-  if (captionByName[file.name]) return captionByName[file.name];
-  if (index === 1) return defaultSecondCaption;
-  return "";
+// ---- DOM ----
+const $status = document.getElementById('status');
+const $grid = document.getElementById('gallery');
+const $loadMore = document.getElementById('loadMore');
+
+// Utility: safe set text
+function setStatus(msg) {
+  if ($status) $status.textContent = msg || '';
 }
 
-async function getToken() {
-  if (!window.netlifyIdentity) return null;
-  try { window.netlifyIdentity.init(); } catch (_) {}
-  const u = window.netlifyIdentity.currentUser();
-  if (!u) return null;
-  try { return await u.jwt(); } catch { return null; }
+// Utility: delay
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// Abortable fetch with timeout
+async function fetchWithTimeout(url, opts = {}, timeoutMs = 15000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...opts, signal: controller.signal });
+    clearTimeout(id);
+    return res;
+  } catch (e) {
+    clearTimeout(id);
+    throw e;
+  }
 }
 
-function makeCardSkeleton(name='Loading…') {
-  const div = document.createElement('div');
-  div.className = 'card';
-  div.innerHTML = `
-    <div class="media"><div class="skeleton"></div></div>
-    <div class="meta"><div class="name">${name}</div></div>
+// Build Drive preview URL
+function drivePreviewUrl(fileId) {
+  return `https://drive.google.com/uc?id=${encodeURIComponent(fileId)}&export=view`;
+}
+
+// Create a card skeleton
+function createCardSkeleton() {
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const media = document.createElement('div');
+  media.className = 'media';
+  const sk = document.createElement('div');
+  sk.className = 'skeleton';
+  media.appendChild(sk);
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  meta.innerHTML = `
+    <div class="name muted">Loading…</div>
+    <div class="caption muted">Please wait</div>
   `;
-  return div;
+
+  card.appendChild(media);
+  card.appendChild(meta);
+  return card;
 }
 
-function fillCard(card, file, blobUrl, caption) {
-  const viewHref = `https://drive.google.com/file/d/${file.id}/view`;
+// Render a single file card
+function createFileCard(file) {
+  const card = document.createElement('div');
+  card.className = 'card';
 
-  // Replace skeleton with image inside a link
-  const mediaHolder = card.querySelector('.media');
-  const a = document.createElement('a');
-  a.className = 'media';
-  a.href = viewHref;
-  a.target = '_blank';
-  a.rel = 'noopener';
+  const media = document.createElement('div');
+  media.className = 'media';
 
   const img = document.createElement('img');
-  img.loading = 'lazy';
-  img.alt = file.name;
-  img.src = blobUrl;
+  img.alt = file.name || 'image';
 
-  img.addEventListener('load', () => {
-    // release memory shortly after load
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 2500);
+  // Lazy loading via IntersectionObserver
+  img.dataset.src = drivePreviewUrl(file.id);
+
+  // Fallback on error
+  img.addEventListener('error', () => {
+    img.replaceWith(Object.assign(document.createElement('div'), {
+      textContent: 'Preview not available',
+      className: 'muted',
+      style: 'padding:16px; font-size:12px;'
+    }));
   });
 
-  a.appendChild(img);
-  mediaHolder.replaceWith(a);
+  media.appendChild(img);
 
-  const meta = card.querySelector('.meta');
-  const nameEl = card.querySelector('.name');
-  nameEl.textContent = file.name;
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  const sizeKB = file.size ? Math.round(Number(file.size) / 1024) : null;
 
-  if (caption) {
-    const cap = document.createElement('div');
-    cap.className = 'caption';
-    cap.textContent = caption;
-    meta.appendChild(cap);
-  }
+  meta.innerHTML = `
+    <div class="name" title="${file.name || ''}">${file.name || '(no name)'}</div>
+    <div class="caption">
+      ${file.mimeType || 'file'}${sizeKB ? ` · ${sizeKB} KB` : ''}
+    </div>
+    <div class="row">
+      <a class="btn" target="_blank" rel="noopener" href="https://drive.google.com/file/d/${file.id}/view">Open</a>
+      <span class="muted">${file.id.slice(0, 8)}…</span>
+    </div>
+  `;
 
-  const row = document.createElement('div');
-  row.className = 'row';
-  const viewBtn = document.createElement('a');
-  viewBtn.className = 'btn';
-  viewBtn.href = viewHref;
-  viewBtn.target = '_blank';
-  viewBtn.rel = 'noopener';
-  viewBtn.textContent = 'View';
-  row.appendChild(viewBtn);
-  meta.appendChild(row);
+  card.appendChild(media);
+  card.appendChild(meta);
+  return card;
 }
 
-async function fetchImageBlobURL(id, token) {
-  const res = await fetch(`${API}/file/${encodeURIComponent(id)}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  if (!res.ok) throw new Error(`Image HTTP ${res.status}`);
-  const blob = await res.blob();
-  return URL.createObjectURL(blob);
-}
-
-// State
-let FILES = [];
-let NEXT_INDEX = 0;
-let TOKEN = null;
-
-function updateButtons() {
-  const btn = document.getElementById('loadMore');
-  if (!btn) return;
-  if (NEXT_INDEX >= FILES.length) btn.classList.add('hide');
-  else btn.classList.remove('hide');
-}
-
-async function renderNextBatch() {
-  const status = document.getElementById("status");
-  const grid = document.getElementById("gallery");
-  const start = NEXT_INDEX;
-  const end = Math.min(FILES.length, NEXT_INDEX + BATCH_SIZE);
-  if (start >= end) { updateButtons(); return; }
-
-  // skeletons
-  const cards = [];
-  for (let i = start; i < end; i++) {
-    const c = makeCardSkeleton('Loading…');
-    grid.appendChild(c);
-    cards.push(c);
-  }
-
-  // tasks with limited concurrency
-  let completed = 0;
-  const total = end - start;
-
-  const tasks = FILES.slice(start, end).map((file, idx) => async () => {
-    try {
-      const url = await fetchImageBlobURL(file.id, TOKEN);
-      const caption = getCaption(file, start + idx);
-      fillCard(cards[idx], file, url, caption);
-    } catch (e) {
-      console.error('img fail', file.id, e);
-      cards[idx].querySelector('.name').textContent = file.name + ' (failed)';
-    } finally {
-      completed++;
-      status.textContent = `Loading ${completed}/${total}… (${end}/${FILES.length})`;
-    }
-  });
-
-  const runners = new Array(CONCURRENCY).fill(0).map(async () => {
-    while (tasks.length) {
-      const job = tasks.shift();
-      if (job) await job();
-    }
-  });
-  await Promise.all(runners);
-
-  NEXT_INDEX = end;
-  status.textContent = `Showing ${NEXT_INDEX}/${FILES.length} photos`;
-  updateButtons();
-}
-
-async function initGallery() {
-  const status = document.getElementById("status");
-  const grid = document.getElementById("gallery");
-  const loadMoreBtn = document.getElementById("loadMore");
-
-  status.textContent = "Loading…";
-
-  TOKEN = await getToken();
-  if (!TOKEN) {
-    status.textContent = "Please log in to view the private gallery.";
-    return;
-  }
-
-  // fetch list (first 200 metadata)
-  try {
-    const res = await fetch(`${API}/list?pageSize=200`, {
-      headers: { Authorization: `Bearer ${TOKEN}` }
+// Setup IntersectionObserver for lazy images
+function ensureObserver() {
+  if (state.io) return state.io;
+  state.io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        const src = img.dataset.src;
+        if (src && !img.src) {
+          img.src = src;
+        }
+        state.io.unobserve(img);
+      }
     });
-    const data = await res.json();
-    if (!res.ok || !data.ok) throw new Error('List failed');
-    FILES = (data.files || []).filter(f => (f.mimeType || '').startsWith('image/'));
-  } catch (e) {
-    console.error(e);
-    status.textContent = "Error loading gallery.";
-    return;
-  }
-
-  if (!FILES.length) {
-    status.textContent = "No photos yet.";
-    grid.innerHTML = "";
-    return;
-  }
-
-  status.textContent = `Found ${FILES.length} photos`;
-
-  // initial batch
-  NEXT_INDEX = 0;
-  updateButtons();
-  await renderNextBatch();
-
-  // button handler
-  if (loadMoreBtn) loadMoreBtn.onclick = () => renderNextBatch();
+  }, { rootMargin: '200px' });
+  return state.io;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (window.netlifyIdentity) {
-    window.netlifyIdentity.on("init", initGallery);
-    window.netlifyIdentity.on("login", initGallery);
-    window.netlifyIdentity.on("logout", () => location.href='/login.html');
+// Attach observer to all imgs without src
+function observeNewImages(rootEl) {
+  const io = ensureObserver();
+  const imgs = rootEl.querySelectorAll('img[data-src]:not([src])');
+  imgs.forEach(img => io.observe(img));
+}
+
+// Render next page chunk
+function renderNextPage() {
+  const start = state.page * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, state.files.length);
+  if (start >= end) {
+    $loadMore.classList.add('hide');
+    return;
   }
-  initGallery();
-});
+
+  const frag = document.createDocumentFragment();
+
+  for (let i = start; i < end; i++) {
+    const file = state.files[i];
+    frag.appendChild(createFileCard(file));
+  }
+
+  $grid.appendChild(frag);
+  observeNewImages($grid);
+
+  state.page += 1;
+
+  if (state.page * PAGE_SIZE < state.files.length) {
+    $loadMore.classList.remove('hide');
+  } else {
+    $loadMore.classList.add('hide');
+  }
+}
+
+// Fetch list once
+async function loadList() {
+  if (state.loading || state.destroyed) return;
+  state.loading = true;
+  setStatus('Listing…');
+
+  // show some skeletons quickly so UI feels responsive
+  const skCount = Math.min(PAGE_SIZE, 6);
+  const skels = [];
+  for (let i = 0; i < skCount; i++) {
+    const sk = createCardSkeleton();
+    skels.push(sk);
+    $grid.appendChild(sk);
+  }
+
+  try {
+    // get JWT
+    if (!state.jwt) {
+      const u = netlifyIdentity.currentUser();
+      if (!u) throw new Error('Not logged in');
+      state.jwt = await u.jwt();
+      if (!state.jwt) throw new Error('JWT not available');
+    }
+
+    const res = await fetchWithTimeout(`${API_BASE}/list`, {
+      headers: { Authorization: `Bearer ${state.jwt}` },
+      credentials: 'omit',
+    }, 20000);
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`List failed ${res.status}: ${text}`);
+    }
+
+    const data = await res.json();
+    if (!data || !Array.isArray(data.files)) {
+      throw new Error('Invalid response format');
+    }
+
+    // clear skeletons
+    skels.forEach(el => el.remove());
+
+    state.files = data.files;
+    setStatus(`Loaded ${state.files.length} file(s).`);
+    state.page = 0;
+    $grid.innerHTML = ''; // clear before render
+    renderNextPage();
+  } catch (err) {
+    console.error('loadList error', err);
+    setStatus(`Error: ${err.message || err}`);
+    // skeletons हटाओ अगर बचे हों
+    skels.forEach(el => el.remove());
+  } finally {
+    state.loading = false;
+  }
+}
+
+// Identity init (single-shot, no recursion)
+function initIdentity() {
+  // Important: first register handlers,
