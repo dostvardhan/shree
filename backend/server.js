@@ -1,5 +1,9 @@
-// backend/server.js
-// Express + Google Drive + Netlify Identity (private gallery) — robust issuer handling
+// server.js
+// Shree Drive Backend — Netlify Identity + Google Drive
+// Packages: express, cors, multer, googleapis, jsonwebtoken, jwks-rsa
+
+// ---------- Boot & Env ----------
+require('dotenv').config(); // harmless on Render if .env absent
 
 const express = require('express');
 const cors = require('cors');
@@ -7,353 +11,246 @@ const multer = require('multer');
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
 const { google } = require('googleapis');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
-/* ------------------------- CORS ------------------------- */
-const ALLOW_ORIGINS = [
-  'https://shreshthapushkar.com',
-  'https://www.shreshthapushkar.com',
-  'http://localhost:8888',
-  'http://localhost:5173',
-];
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
-      cb(null, ALLOW_ORIGINS.includes(origin));
-    },
-    allowedHeaders: ['Authorization', 'Content-Type', 'X-NI-Issuer'],
-    credentials: false,
-  })
-);
+// ---------- CORS ----------
+const parseOrigins = (val) => {
+  if (!val) return true; // reflect request origin
+  const arr = val.split(',').map(s => s.trim()).filter(Boolean);
+  return function(origin, cb) {
+    if (!origin) return cb(null, true);
+    if (arr.includes(origin)) return cb(null, true);
+    return cb(null, false);
+  };
+};
 
-/* ------------------------- ENV ------------------------- */
-const {
-  CLIENT_ID,
-  CLIENT_SECRET,
-  REDIRECT_URI,
-  REFRESH_TOKEN,
-  DRIVE_FOLDER_ID,
-  NETLIFY_IDENTITY_ISSUER, // optional fallback
-} = process.env;
+app.use(cors({
+  origin: parseOrigins(process.env.ALLOWED_ORIGIN),
+  methods: ['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Authorization','Content-Type','X-NI-Issuer'],
+  exposedHeaders: ['Content-Length','Last-Modified','Content-Type','Content-Disposition'],
+  credentials: false,
+  maxAge: 86400,
+  optionsSuccessStatus: 204,
+}));
+app.options('*', cors());
 
-/* ------------------------- Google Drive ------------------------- */
-const oAuth2Client = new google.auth.OAuth2(
-  CLIENT_ID,
-  CLIENT_SECRET,
-  REDIRECT_URI
-);
-oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
-const drive = google.drive({ version: 'v3', auth: oAuth2Client });
+// ---------- Helpful boot logs ----------
+console.log('🚀 Server booting…');
+console.log('NETLIFY_IDENTITY_ISSUER =', process.env.NETLIFY_IDENTITY_ISSUER || '(not set)');
+console.log('ALLOWED_ORIGIN =', process.env.ALLOWED_ORIGIN || '(reflect)');
+console.log('DRIVE_FOLDER_ID =', process.env.DRIVE_FOLDER_ID || '(root)');
+console.log('MAKE_PUBLIC =', process.env.MAKE_PUBLIC || 'false');
 
-/* ------------------------- Identity verify (robust) ------------------------- */
-// Helpers
-function urlSafeDecodeJwtNoVerify(token) {
+// ---------- Health/Diag ----------
+app.get('/health', (req, res) => res.status(200).send('ok'));
+
+app.get('/diag', async (req, res) => {
   try {
-    const part = token.split('.')[1];
-    const s = Buffer.from(
-      part.replace(/-/g, '+').replace(/_/g, '/'),
-      'base64'
-    ).toString('utf8');
-    return JSON.parse(s);
-  } catch {
-    return null;
-  }
-}
-
-function normIssuer(base) {
-  if (!base) return null;
-  let b = String(base).trim();
-  if (!/^https?:\/\//i.test(b)) b = 'https://' + b;
-  b = b.replace(/\/+$/, '');
-  return b + '/.netlify/identity';
-}
-
-function jwksUriFor(issuer) {
-  const base = issuer.replace(/\/+$/, '');
-  return `${base}/.well-known/jwks.json`;
-}
-
-const jwksCache = new Map();
-function makeJwksClient(jwksUri) {
-  if (!jwksCache.has(jwksUri)) {
-    jwksCache.set(
-      jwksUri,
-      jwksClient({
-        jwksUri,
-        cache: true,
-        cacheMaxEntries: 10,
-        cacheMaxAge: 60 * 60 * 1000,
-      })
-    );
-  }
-  return jwksCache.get(jwksUri);
-}
-
-async function pickIssuerBase(req, tokenDec) {
-  const headerIssuer = req.headers['x-ni-issuer']
-    ? String(req.headers['x-ni-issuer'])
-    : null;
-  const envIssuer = NETLIFY_IDENTITY_ISSUER || null;
-  const tokenIssuer = tokenDec?.iss || null;
-
-  const candidates = [headerIssuer, envIssuer, tokenIssuer].filter(Boolean);
-
-  for (const cand of candidates) {
-    const iss = cand.includes('/.netlify/identity') ? cand : normIssuer(cand);
-    if (!iss) continue;
-    try {
-      const jwksUrl = jwksUriFor(iss);
-      const res = await fetch(jwksUrl, { method: 'GET', redirect: 'follow' });
-      if (res.ok) return iss;
-    } catch {
-      // ignore and try next
-    }
-  }
-  return null;
-}
-
-async function netlifyUserCheck(issuer, token) {
-  try {
-    const url = issuer.replace(/\/+$/, '') + '/user';
-    const r = await fetch(url, {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}` },
-      redirect: 'follow',
-    });
-    if (!r.ok) return null;
-    const data = await r.json().catch(() => null);
-    return data && data.email ? data : null;
-  } catch {
-    return null;
-  }
-}
-
-async function ensureAuth(req, res, next) {
-  try {
-    const auth = req.headers.authorization || '';
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-    if (!token) {
-      return res.status(401).json({ ok: false, error: 'NO_TOKEN' });
-    }
-
-    const decoded = urlSafeDecodeJwtNoVerify(token);
-
-    // 1) Find a working issuer (header/env/token), following redirects
-    let issuer = await pickIssuerBase(req, decoded);
-    if (!issuer) {
-      const hdr = req.headers['x-ni-issuer']
-        ? String(req.headers['x-ni-issuer'])
-        : null;
-      if (hdr) {
-        const u = new URL(hdr);
-        const bases = [
-          `${u.protocol}//${u.hostname}`,
-          `${u.protocol}//www.${u.hostname.replace(/^www\./, '')}`,
-        ];
-        for (const b of bases) {
-          const iss = normIssuer(b);
-          try {
-            const res2 = await fetch(jwksUriFor(iss), { redirect: 'follow' });
-            if (res2.ok) {
-              issuer = iss;
-              break;
-            }
-          } catch {
-            // try next
-          }
-        }
-      }
-    }
-
-    // 2) Primary: verify via JWKS if issuer found
-    if (issuer) {
-      const client = makeJwksClient(jwksUriFor(issuer));
-      function getKey(header, cb) {
-        client.getSigningKey(header.kid, (err, key) => {
-          if (err) return cb(err);
-          cb(null, key.getPublicKey());
-        });
-      }
-      const verifyOpts = { algorithms: ['RS256'] };
-      if (decoded?.iss) verifyOpts.issuer = decoded.iss; // enforce only if present
-
-      try {
-        jwt.verify(token, getKey, verifyOpts, (err, verified) => {
-          if (err) throw err;
-          req.user = verified;
-          return next();
-        });
-        return; // handled in callback
-      } catch {
-        // fall through to /user check
-      }
-    }
-
-    // 3) Fallback: use Identity /user endpoint to validate token
-    const tryIssuers = [];
-    if (req.headers['x-ni-issuer'])
-      tryIssuers.push(String(req.headers['x-ni-issuer']));
-    if (NETLIFY_IDENTITY_ISSUER) tryIssuers.push(NETLIFY_IDENTITY_ISSUER);
-    if (decoded?.iss) tryIssuers.push(decoded.iss);
-
-    for (const cand of tryIssuers) {
-      const iss = cand.includes('/.netlify/identity') ? cand : normIssuer(cand);
-      const userInfo = await netlifyUserCheck(iss, token);
-      if (userInfo) {
-        req.user = {
-          sub: userInfo.id || userInfo.sub || userInfo.email,
-          email: userInfo.email,
-          iss,
-        };
-        return next();
-      }
-    }
-
-    return res
-      .status(401)
-      .json({ ok: false, error: 'invalid token', hint: 'JWKS & /user validation failed' });
-  } catch (e) {
-    console.error('AUTH_MIDDLEWARE_ERR', e?.message);
-    return res.status(401).json({ ok: false, error: 'AUTH_ERR' });
-  }
-}
-
-/* ------------------------- Health & Diag ------------------------- */
-app.get('/health', (_req, res) => {
-  res.json({ ok: true, time: new Date().toISOString() });
-});
-
-app.get('/diag', async (_req, res) => {
-  try {
-    let driveOk = false,
-      quota = null,
-      user = null;
-    try {
-      const about = await drive.about.get({
-        fields:
-          'user(displayName,emailAddress,permissionId),storageQuota(limit,usage)',
-      });
-      driveOk = true;
-      quota = about.data?.storageQuota || null;
-      user = about.data?.user || null;
-    } catch {
-      // ignore
-    }
+    const auth = getOAuth2Client();
+    const drive = google.drive({ version: 'v3', auth });
+    const about = await drive.about.get({ fields: 'user(displayName,permissionId)' });
     res.json({
       ok: true,
-      user,
-      folder: DRIVE_FOLDER_ID || null,
-      driveOk,
-      quota,
+      issuerEnv: process.env.NETLIFY_IDENTITY_ISSUER || null,
+      user: about.data.user,
+      folder: process.env.DRIVE_FOLDER_ID || null,
       time: new Date().toISOString(),
     });
-  } catch {
-    res.status(500).json({ ok: false, error: 'DIAG_ERR' });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e.message || e) });
   }
 });
 
-/* ------------------------- Multer (memory) ------------------------- */
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
-});
+// ---------- Netlify Identity JWT Verify ----------
+const getIssuer = (req) => {
+  const fromEnv = (process.env.NETLIFY_IDENTITY_ISSUER || '').trim();
+  const fromHeader = (req.headers['x-ni-issuer'] || '').trim();
+  // env wins; header is fallback if env absent
+  return fromEnv || fromHeader;
+};
 
-/* ------------------------- LIST (private) ------------------------- */
-app.get('/list', ensureAuth, async (_req, res) => {
+const clientsCache = new Map();
+const getJWKSClient = (issuer) => {
+  if (clientsCache.has(issuer)) return clientsCache.get(issuer);
+  const client = jwksClient({
+    jwksUri: `${issuer}/.well-known/jwks.json`,
+    cache: true,
+    cacheMaxEntries: 5,
+    cacheMaxAge: 10 * 60 * 1000,
+    timeout: 8000,
+  });
+  clientsCache.set(issuer, client);
+  return client;
+};
+
+function authMiddleware(req, res, next) {
+  const authz = req.headers.authorization || '';
+  const token = authz.startsWith('Bearer ') ? authz.slice(7) : null;
+  if (!token) return res.status(401).json({ ok: false, error: 'Missing Bearer token' });
+
+  const ISSUER = getIssuer(req);
+  if (!ISSUER) return res.status(500).json({ ok: false, error: 'Issuer not configured' });
+
+  const client = getJWKSClient(ISSUER);
+
+  const getKey = (header, callback) => {
+    client.getSigningKey(header.kid, (err, key) => {
+      if (err) return callback(err);
+      const signingKey = key.getPublicKey();
+      callback(null, signingKey);
+    });
+  };
+
+  jwt.verify(
+    token,
+    getKey,
+    {
+      algorithms: ['RS256'],
+      issuer: ISSUER,
+      // Netlify Identity tokens often have no audience we control; skip audience check.
+      ignoreExpiration: false,
+    },
+    (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ ok: false, error: 'JWT verify failed', detail: String(err.message || err) });
+      }
+      req.user = decoded;
+      next();
+    }
+  );
+}
+
+// ---------- Google OAuth2 (Refresh Token flow) ----------
+function getOAuth2Client() {
+  const {
+    CLIENT_ID,
+    CLIENT_SECRET,
+    REDIRECT_URI,
+    REFRESH_TOKEN
+  } = process.env;
+
+  if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI || !REFRESH_TOKEN) {
+    throw new Error('Google OAuth env missing: CLIENT_ID/CLIENT_SECRET/REDIRECT_URI/REFRESH_TOKEN');
+  }
+
+  const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+  oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+  return oAuth2Client;
+}
+
+function getDrive() {
+  const auth = getOAuth2Client();
+  return google.drive({ version: 'v3', auth });
+}
+
+// ---------- Multer (in-memory) ----------
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB
+
+// ---------- Helpers ----------
+async function ensurePublic(drive, fileId) {
   try {
-    const qParts = ['trashed = false'];
-    if (DRIVE_FOLDER_ID) qParts.push(`'${DRIVE_FOLDER_ID}' in parents`);
-    const q = qParts.join(' and ');
+    await drive.permissions.create({
+      fileId,
+      requestBody: {
+        role: 'reader',
+        type: 'anyone',
+      },
+    });
+  } catch (e) {
+    // ignore if already public or insufficient permission error
+    console.warn('ensurePublic warn:', e.message || e);
+  }
+}
 
-    const r = await drive.files.list({
+function driveFields(fields) {
+  return fields || 'id,name,mimeType,size,createdTime,modifiedTime,webViewLink,webContentLink,thumbnailLink,iconLink';
+}
+
+// ---------- Routes (protected) ----------
+
+// List files in DRIVE_FOLDER_ID (or root)
+app.get('/list', authMiddleware, async (req, res) => {
+  try {
+    const drive = getDrive();
+    const folderId = process.env.DRIVE_FOLDER_ID || null;
+
+    let q = "trashed = false";
+    if (folderId) q = `'${folderId}' in parents and ${q}`;
+
+    const resp = await drive.files.list({
       q,
-      pageSize: 200,
-      fields: 'files(id,name,mimeType,size,modifiedTime)',
-      orderBy: 'modifiedTime desc',
+      fields: `files(${driveFields()}),nextPageToken`,
+      orderBy: 'createdTime desc',
+      pageSize: 100,
+      supportsAllDrives: false,
     });
 
-    res.json({ ok: true, files: r.data.files || [] });
+    res.json({ ok: true, files: resp.data.files || [] });
   } catch (e) {
-    console.error('LIST_ERR', e?.message);
-    res.status(500).json({ ok: false, error: 'LIST_ERR' });
+    res.status(500).json({ ok: false, error: String(e.message || e) });
   }
 });
 
-/* ------------------------- UPLOAD (private) ------------------------- */
-app.post('/upload', ensureAuth, upload.single('file'), async (req, res) => {
+// Upload file to Drive
+app.post('/upload', authMiddleware, upload.single('file'), async (req, res) => {
   try {
-    if (!req.file)
-      return res.status(400).json({ ok: false, error: 'NO_FILE' });
+    if (!req.file) return res.status(400).json({ ok: false, error: 'file is required (multipart/form-data)' });
 
-    const fileMetadata = {
+    const drive = getDrive();
+    const folderId = process.env.DRIVE_FOLDER_ID || null;
+
+    const fileMeta = {
       name: req.file.originalname,
-      ...(DRIVE_FOLDER_ID ? { parents: [DRIVE_FOLDER_ID] } : {}),
+      mimeType: req.file.mimetype || 'application/octet-stream',
+      ...(folderId ? { parents: [folderId] } : {}),
     };
+
     const media = {
-      mimeType: req.file.mimetype,
-      body: require('stream').Readable.from(req.file.buffer),
+      mimeType: req.file.mimetype || 'application/octet-stream',
+      body: BufferToStream(req.file.buffer),
     };
 
     const created = await drive.files.create({
-      requestBody: fileMetadata,
+      requestBody: fileMeta,
       media,
-      fields: 'id,name,mimeType,size,modifiedTime',
+      fields: driveFields(),
+      supportsAllDrives: false,
     });
+
+    const makePublic = String(process.env.MAKE_PUBLIC || '').toLowerCase() === 'true';
+    if (makePublic) {
+      await ensurePublic(drive, created.data.id);
+      // re-fetch links to ensure webViewLink/webContentLink present
+      const fetched = await drive.files.get({
+        fileId: created.data.id,
+        fields: driveFields(),
+      });
+      return res.json({ ok: true, file: fetched.data });
+    }
 
     res.json({ ok: true, file: created.data });
   } catch (e) {
-    console.error('UPLOAD_ERR', e?.message);
-    const msg = String(e?.message || '');
-    if (msg.includes('insufficientFilePermissions')) {
-      return res
-        .status(403)
-        .json({ ok: false, error: 'INSUFFICIENT_PERMS' });
-    }
-    res.status(500).json({ ok: false, error: 'UPLOAD_ERR' });
+    res.status(500).json({ ok: false, error: String(e.message || e) });
   }
 });
 
-/* ------------------------- FILE STREAM (private) ------------------------- */
-app.get('/file/:id', ensureAuth, async (req, res) => {
-  try {
-    const { id } = req.params;
+// ---------- Utils ----------
+function BufferToStream(buffer) {
+  const { Readable } = require('stream');
+  const stream = new Readable();
+  stream.push(buffer);
+  stream.push(null);
+  return stream;
+}
 
-    const meta = await drive.files.get({
-      fileId: id,
-      fields: 'name,mimeType,modifiedTime,size',
-    });
-    const { name, mimeType, modifiedTime, size } = meta.data || {};
-
-    const driveRes = await drive.files.get(
-      { fileId: id, alt: 'media' },
-      { responseType: 'stream' }
-    );
-
-    if (mimeType) res.setHeader('Content-Type', mimeType);
-    if (name) res.setHeader('Content-Disposition', `inline; filename="${name}"`);
-    if (size) res.setHeader('Content-Length', size);
-    if (modifiedTime)
-      res.setHeader('Last-Modified', new Date(modifiedTime).toUTCString());
-    res.setHeader('Cache-Control', 'public, max-age=86400');
-
-    driveRes.data.on('error', (e) => {
-      console.error('Drive stream error:', e?.message);
-      if (!res.headersSent)
-        res.status(502).json({ ok: false, error: 'STREAM_ERROR' });
-    });
-
-    driveRes.data.pipe(res);
-  } catch (err) {
-    console.error('FILE_STREAM_ERROR', err?.message);
-    if (!res.headersSent)
-      res.status(500).json({ ok: false, error: 'FILE_STREAM_ERROR' });
-  }
-});
-
-/* ------------------------- Start ------------------------- */
+// ---------- Start ----------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log('🚀 Server listening on', PORT);
+  console.log(`✅ Shree Drive listening on :${PORT}`);
 });
