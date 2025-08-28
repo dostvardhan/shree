@@ -1,5 +1,6 @@
 // server.js
 // Express + Google Drive + Netlify Identity (private gallery)
+// Paste-ready for Render
 
 const express = require('express');
 const cors = require('cors');
@@ -10,7 +11,7 @@ const { google } = require('googleapis');
 
 const app = express();
 
-// ---------- CORS ----------
+/* ------------------------- CORS ------------------------- */
 const ALLOW_ORIGINS = [
   'https://shreshthapushkar.com',
   'https://www.shreshthapushkar.com',
@@ -20,28 +21,28 @@ const ALLOW_ORIGINS = [
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin) return cb(null, true);
-    return cb(null, ALLOW_ORIGINS.includes(origin));
+    cb(null, ALLOW_ORIGINS.includes(origin));
   },
   allowedHeaders: ['Authorization', 'Content-Type', 'X-NI-Issuer'],
   credentials: false,
 }));
 
-// ---------- ENV ----------
+/* ------------------------- ENV ------------------------- */
 const {
   CLIENT_ID,
   CLIENT_SECRET,
   REDIRECT_URI,
   REFRESH_TOKEN,
   DRIVE_FOLDER_ID,
-  NETLIFY_IDENTITY_ISSUER, // optional
+  NETLIFY_IDENTITY_ISSUER, // optional fallback
 } = process.env;
 
-// ---------- Google Drive client ----------
+/* ------------------------- Google Drive ------------------------- */
 const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 const drive = google.drive({ version: 'v3', auth: oAuth2Client });
 
-// ---------- Robust Netlify Identity verify ----------
+/* ------------------------- Identity verify (robust) ------------------------- */
 const jwksCache = new Map();
 function makeJwksClientFor(issuerBase) {
   const base = issuerBase.replace(/\/+$/, '');
@@ -71,16 +72,16 @@ async function ensureAuth(req, res, next) {
     const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
     if (!token) return res.status(401).json({ ok: false, error: 'NO_TOKEN' });
 
-    // 1) Preferred: take issuer from frontend header
+    // 1) Prefer issuer sent by frontend
     let issuer =
       (req.headers['x-ni-issuer'] && String(req.headers['x-ni-issuer'])) ||
       NETLIFY_IDENTITY_ISSUER ||
       null;
 
-    // 2) If still missing, try to read from token
+    // 2) Fallback: read from token payload (may be absent)
     if (!issuer) {
-      const decoded = urlSafeDecodeJwtNoVerify(token);
-      if (decoded?.iss) issuer = decoded.iss;
+      const d = urlSafeDecodeJwtNoVerify(token);
+      if (d?.iss) issuer = d.iss;
     }
     if (!issuer) {
       return res.status(401).json({ ok: false, error: 'NO_ISSUER', hint: 'Send X-NI-Issuer header or set NETLIFY_IDENTITY_ISSUER' });
@@ -95,9 +96,9 @@ async function ensureAuth(req, res, next) {
       });
     }
 
-    const decoded = urlSafeDecodeJwtNoVerify(token);
+    const d = urlSafeDecodeJwtNoVerify(token);
     const verifyOpts = { algorithms: ['RS256'] };
-    if (decoded?.iss) verifyOpts.issuer = decoded.iss;
+    if (d?.iss) verifyOpts.issuer = d.iss; // only enforce if present
 
     jwt.verify(token, getKey, verifyOpts, (err, verified) => {
       if (err) {
@@ -113,12 +114,11 @@ async function ensureAuth(req, res, next) {
   }
 }
 
-// ---------- Health ----------
+/* ------------------------- Health & Diag ------------------------- */
 app.get('/health', (_req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
 });
 
-// ---------- Diag ----------
 app.get('/diag', async (_req, res) => {
   try {
     let driveOk = false, quota = null, user = null;
@@ -136,20 +136,22 @@ app.get('/diag', async (_req, res) => {
       quota,
       time: new Date().toISOString(),
     });
-  } catch (e) {
+  } catch {
     res.status(500).json({ ok: false, error: 'DIAG_ERR' });
   }
 });
 
-// ---------- Multer ----------
-const upload = multer({ limits: { fileSize: 25 * 1024 * 1024 } });
+/* ------------------------- Multer (memory) ------------------------- */
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+});
 
-// ---------- LIST ----------
-app.get('/list', ensureAuth, async (req, res) => {
+/* ------------------------- LIST (private) ------------------------- */
+app.get('/list', ensureAuth, async (_req, res) => {
   try {
-    const qParts = [];
+    const qParts = ['trashed = false'];
     if (DRIVE_FOLDER_ID) qParts.push(`'${DRIVE_FOLDER_ID}' in parents`);
-    qParts.push('trashed = false');
     const q = qParts.join(' and ');
 
     const r = await drive.files.list({
@@ -161,11 +163,12 @@ app.get('/list', ensureAuth, async (req, res) => {
 
     res.json({ ok: true, files: r.data.files || [] });
   } catch (e) {
+    console.error('LIST_ERR', e?.message);
     res.status(500).json({ ok: false, error: 'LIST_ERR' });
   }
 });
 
-// ---------- UPLOAD ----------
+/* ------------------------- UPLOAD (private) ------------------------- */
 app.post('/upload', ensureAuth, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ ok: false, error: 'NO_FILE' });
@@ -176,9 +179,7 @@ app.post('/upload', ensureAuth, upload.single('file'), async (req, res) => {
     };
     const media = {
       mimeType: req.file.mimetype,
-      body: Buffer.isBuffer(req.file.buffer)
-        ? require('stream').Readable.from(req.file.buffer)
-        : req.file.stream || req.file.buffer,
+      body: require('stream').Readable.from(req.file.buffer),
     };
 
     const created = await drive.files.create({
@@ -189,11 +190,16 @@ app.post('/upload', ensureAuth, upload.single('file'), async (req, res) => {
 
     res.json({ ok: true, file: created.data });
   } catch (e) {
+    console.error('UPLOAD_ERR', e?.message);
+    const msg = String(e?.message || '');
+    if (msg.includes('insufficientFilePermissions')) {
+      return res.status(403).json({ ok: false, error: 'INSUFFICIENT_PERMS' });
+    }
     res.status(500).json({ ok: false, error: 'UPLOAD_ERR' });
   }
 });
 
-// ---------- FILE STREAM ----------
+/* ------------------------- FILE STREAM (private) ------------------------- */
 app.get('/file/:id', ensureAuth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -220,4 +226,15 @@ app.get('/file/:id', ensureAuth, async (req, res) => {
       if (!res.headersSent) res.status(502).json({ ok: false, error: 'STREAM_ERROR' });
     });
 
-    driveRes.data.pipe(res)
+    driveRes.data.pipe(res);
+  } catch (err) {
+    console.error('FILE_STREAM_ERROR', err?.message);
+    if (!res.headersSent) res.status(500).json({ ok: false, error: 'FILE_STREAM_ERROR' });
+  }
+});
+
+/* ------------------------- Start ------------------------- */
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log('🚀 Server listening on', PORT);
+});
