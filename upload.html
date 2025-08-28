@@ -2,97 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Upload • Shree</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shree • Upload</title>
 
-  <!-- Netlify Identity -->
+  <!-- Netlify Identity (point to .com) -->
   <script
     src="https://identity.netlify.com/v1/netlify-identity-widget.js"
-    data-netlify-identity-site="https://shreshthapushkar.netlify.app">
+    data-netlify-identity-site="https://shreshthapushkar.com">
   </script>
 
   <style>
-    :root { color-scheme: dark; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-           margin: 0; padding: 16px; background:#0b0b0c; color:#fff; }
-    header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
-    .logo { font-weight:700; }
-    .bar { display:flex; gap:8px; align-items:center; }
-    input[type=file] { display:none; }
-    button, label { background:#1b1b1d; color:#fff; border:1px solid #2b2b2e;
-                    padding:8px 12px; border-radius:10px; cursor:pointer; }
-    button:hover, label:hover { background:#222328; }
-    #status { margin-top:16px; font-size:14px; color:#aaa; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; }
+    h1 { margin: 0 0 12px; }
+    #output { margin-top: 10px; }
   </style>
 </head>
 <body>
-  <header>
-    <div class="logo">Shree • Upload</div>
-    <div class="bar">
-      <input id="file" type="file" accept="image/*">
-      <label for="file">Choose image</label>
-      <button id="uploadBtn">Upload</button>
-      <button id="logoutBtn">Logout</button>
-    </div>
-  </header>
+  <h1>Shree • Upload</h1>
 
-  <div id="status">Waiting…</div>
+  <input id="file" type="file" />
+  <button id="uploadBtn">Upload</button>
+  <div id="output"></div>
 
-  <script>
-    async function getJWT() {
-      const u = netlifyIdentity.currentUser();
-      if (!u) throw new Error('NO_USER');
-      return await u.jwt();
-    }
-
-    async function api(path, opts = {}) {
-      const t = await getJWT();
-      const headers = Object.assign(
-        { Authorization: `Bearer ${t}` },
-        opts.headers || {}
-      );
-      return fetch(`https://shree-drive.onrender.com${path}`, { ...opts, headers });
-    }
-
-    const statusEl = document.getElementById('status');
-
-    async function uploadOne(file){
-      const fd = new FormData();
-      fd.append('file', file);
-      const r = await api('/upload', { method:'POST', body: fd });
-      const data = await r.json();
-      if (!data.ok) throw new Error('UPLOAD_FAIL: ' + (data.error || 'unknown'));
-      return data.file;
-    }
-
-    document.getElementById('uploadBtn').addEventListener('click', async () => {
-      const f = document.getElementById('file').files[0];
-      if (!f) return alert('Pick a file first');
-      try {
-        statusEl.textContent = 'Uploading…';
-        const up = await uploadOne(f);
-        statusEl.textContent = `Uploaded ✅ ${up.name || up.id}`;
-      } catch (e) {
-        console.error(e);
-        statusEl.textContent = 'Upload failed';
-        alert('Upload failed: ' + e.message);
-      }
-    });
-
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      netlifyIdentity.logout();
-    });
-
-    // Identity lifecycle
-    netlifyIdentity.on('init', (user) => {
-      if (!user) {
-        netlifyIdentity.open('login');
-      }
-    });
-    netlifyIdentity.on('login', () => location.reload());
-    netlifyIdentity.on('logout', () => location.reload());
-
-    netlifyIdentity.init();
-  </script>
+  <script src="upload.js" defer></script>
 </body>
 </html>
