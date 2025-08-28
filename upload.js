@@ -1,108 +1,41 @@
 // upload.js
-// Netlify Identity + Google Drive uploader (Render backend)
-// Author: you 🫶
+document.addEventListener("DOMContentLoaded", async () => {
+  const fileInput = document.getElementById("file");
+  const btn = document.getElementById("uploadBtn");
+  const out = document.getElementById("output");
 
-const API_BASE = "https://shree-drive.onrender.com"; // backend base URL
-
-function qs(sel) { return document.querySelector(sel); }
-
-function setStatus(msg) {
-  const box = qs("#uploadStatus");
-  if (box) box.textContent = msg;
-}
-
-async function ensureIdentityReady() {
-  if (!window.netlifyIdentity) {
-    throw new Error("Netlify Identity widget not loaded. Add its script tag.");
+  if (typeof netlifyIdentity === "undefined") {
+    alert("Identity widget missing. Fix the <script> tag.");
+    return;
   }
-  try { window.netlifyIdentity.init(); } catch (_) {}
-}
 
-async function getTokenOrLogin() {
-  await ensureIdentityReady();
-  let user = window.netlifyIdentity.currentUser();
-  if (user) return user.jwt();
+  await new Promise((res) => { netlifyIdentity.on("init", res); netlifyIdentity.init(); });
+  let user = netlifyIdentity.currentUser();
+  if (!user) { netlifyIdentity.open("login"); await new Promise((res) => netlifyIdentity.on("login", res)); user = netlifyIdentity.currentUser(); }
+  if (!user) { alert("Login failed."); return; }
 
-  // Not logged in → open login modal and wait for login
-  return new Promise((resolve, reject) => {
-    const onLogin = async (u) => {
-      try {
-        const t = await u.jwt();
-        window.netlifyIdentity.off("login", onLogin);
-        resolve(t);
-      } catch (e) { reject(e); }
-    };
-    window.netlifyIdentity.on("login", onLogin);
-    window.netlifyIdentity.open("login");
-  });
-}
+  const token = await user.jwt();
 
-function validateFile(file, { maxMB = 25, accept = ["image/"] } = {}) {
-  if (!file) return "Please choose a file.";
-  const okType = accept.some(a => file.type.startsWith(a));
-  if (!okType) return `Unsupported type (${file.type}). Please upload an image.`;
-  const maxBytes = maxMB * 1024 * 1024;
-  if (file.size > maxBytes) return `File too large. Max ${maxMB} MB allowed.`;
-  return null;
-}
+  btn.addEventListener("click", async () => {
+    if (!fileInput.files?.length) { out.textContent = "Choose a file first."; return; }
+    const fd = new FormData();
+    fd.append("file", fileInput.files[0]);
 
-async function uploadWithProgress({ file, token, onProgress }) {
-  const form = new FormData();
-  form.append("file", file);
-
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${API_BASE}/upload`, true);
-    xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-
-    if (xhr.upload && typeof onProgress === "function") {
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          const pct = Math.round((e.loaded / e.total) * 100);
-          onProgress(pct);
-        }
-      };
+    btn.disabled = true; out.textContent = "Uploading…";
+    try {
+      const r = await fetch("https://shree-drive.onrender.com/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd
+      });
+      const data = await r.json();
+      console.log("UPLOAD:", data);
+      if (!data.ok) throw new Error(data.error || "Upload failed");
+      out.textContent = "Uploaded: " + (data.file?.name || data.file?.id);
+    } catch (e) {
+      out.textContent = "Error: " + e.message;
+    } finally {
+      btn.disabled = false;
     }
-
-    xhr.onload = () => {
-      let data = {};
-      try { data = JSON.parse(xhr.responseText || "{}"); } catch (_e) {}
-      if (xhr.status >= 200 && xhr.status < 300 && !data.error) {
-        resolve(data);
-      } else {
-        reject(new Error(data.error || `Upload failed (${xhr.status})`));
-      }
-    };
-    xhr.onerror = () => reject(new Error("Network error"));
-    xhr.send(form);
   });
-}
-
-async function handleUploadClick() {
-  const fileInput = qs("#fileInput");
-  const file = fileInput?.files?.[0];
-  const validation = validateFile(file);
-  if (validation) return setStatus(validation);
-
-  try {
-    const token = await getTokenOrLogin();
-    setStatus("Uploading… 0%");
-    const data = await uploadWithProgress({
-      file,
-      token,
-      onProgress: (pct) => setStatus(`Uploading… ${pct}%`)
-    });
-    setStatus(`✅ Upload success\n${JSON.stringify(data, null, 2)}`);
-  } catch (e) {
-    setStatus(`❌ Upload failed\n${e.message}`);
-  }
-}
-
-// Auto-wire the button if present
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = qs("#uploadBtn");
-  if (btn) btn.addEventListener("click", handleUploadClick);
 });
-
-// Expose for inline onclick fallback (optional)
-window.uploadFile = handleUploadClick;
