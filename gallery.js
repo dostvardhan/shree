@@ -1,43 +1,24 @@
-// gallery.js — Private gallery logic
+// Fixed Netlify Identity issuer (absolute URL)
+const CURRENT_ISSUER = 'https://www.shreshthapushkar.com/.netlify/identity';
 
-async function pickIssuer() {
-  const variants = [
-    window.location.origin,
-    window.location.origin.replace('https://', 'https://www.'),
-    window.location.origin.replace('https://www.', 'https://'),
-    // 'https://<yoursite>.netlify.app'
-  ];
-  for (const o of variants) {
-    try {
-      const url = o.replace(/\/+$/, '') + '/.netlify/identity/.well-known/jwks.json';
-      const r = await fetch(url, { method: 'GET', mode: 'cors' });
-      if (r.status === 200) return o.replace(/\/+$/, '') + '/.netlify/identity';
-    } catch (_) {}
-  }
-  return window.location.origin.replace(/\/+$/, '') + '/.netlify/identity';
-}
-
-let CURRENT_ISSUER = null;
-
-async function getJWT(){
+// Get fresh JWT
+async function getJWT() {
   const u = netlifyIdentity.currentUser();
   if (!u) throw new Error('NO_USER');
   return await u.jwt();
 }
 
+// API wrapper
 async function api(path, opts = {}) {
-  if (!CURRENT_ISSUER) CURRENT_ISSUER = await pickIssuer();
   const t = await getJWT();
   const headers = Object.assign(
-    {
-      Authorization: `Bearer ${t}`,
-      'X-NI-Issuer': CURRENT_ISSUER
-    },
+    { Authorization: `Bearer ${t}`, 'X-NI-Issuer': CURRENT_ISSUER },
     opts.headers || {}
   );
   return fetch(`https://shree-drive.onrender.com${path}`, { ...opts, headers });
 }
 
+// UI elements
 const statusEl = document.getElementById('status');
 const grid = document.getElementById('grid');
 
@@ -70,6 +51,7 @@ async function uploadOne(file){
   return data.file;
 }
 
+// Events
 document.getElementById('uploadBtn').addEventListener('click', async () => {
   const f = document.getElementById('file').files[0];
   if (!f) return alert('Pick a file first');
@@ -88,12 +70,12 @@ document.getElementById('logoutBtn').addEventListener('click', () => {
   netlifyIdentity.logout();
 });
 
+// Identity lifecycle
 netlifyIdentity.on('init', async (user) => {
   if (!user) {
     netlifyIdentity.open('login');
   } else {
     try {
-      CURRENT_ISSUER = await pickIssuer();
       await loadGallery();
     } catch (e) {
       console.error(e);
@@ -103,4 +85,5 @@ netlifyIdentity.on('init', async (user) => {
 });
 netlifyIdentity.on('login', () => location.reload());
 netlifyIdentity.on('logout', () => location.reload());
+
 netlifyIdentity.init();
