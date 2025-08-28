@@ -1,18 +1,15 @@
-// Fixed Netlify Identity issuer (absolute URL)
-const CURRENT_ISSUER = 'https://www.shreshthapushkar.com/.netlify/identity';
+// No need for CURRENT_ISSUER anymore since backend knows the right issuer
 
-// Get fresh JWT
 async function getJWT() {
   const u = netlifyIdentity.currentUser();
   if (!u) throw new Error('NO_USER');
   return await u.jwt();
 }
 
-// API wrapper
 async function api(path, opts = {}) {
   const t = await getJWT();
   const headers = Object.assign(
-    { Authorization: `Bearer ${t}`, 'X-NI-Issuer': CURRENT_ISSUER },
+    { Authorization: `Bearer ${t}` },
     opts.headers || {}
   );
   return fetch(`https://shree-drive.onrender.com${path}`, { ...opts, headers });
