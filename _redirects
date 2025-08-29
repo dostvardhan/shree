@@ -1,7 +1,5 @@
-/.netlify/*      /.netlify/:splat 200
 /                /index.html 200
 
-# ---- Private pages (require Identity "member") ----
 /life.html       / 401!  Role=guest
 /life.html       /life.html 200 Role=member
 
@@ -11,17 +9,5 @@
 /gallery.html    / 401!  Role=guest
 /gallery.html    /gallery.html 200 Role=member
 
-# All single-photo pages private
 /photo*.html     / 401!  Role=guest
 /photo*.html     /:splat 200 Role=member
-
-# (Optional) If you serve any raw images from Netlify, lock them too.
-# Since we stream images from the backend now, these are usually not needed.
-/*.jpg           / 401!  Role=guest
-/*.jpg           200     Role=member
-/*.jpeg          / 401!  Role=guest
-/*.jpeg          200     Role=member
-/*.png           / 401!  Role=guest
-/*.png           200     Role=member
-/*.webp          / 401!  Role=guest
-/*.webp          200     Role=member
