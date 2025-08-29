@@ -1,42 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Photo 1 Memories</title>
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script>
-if (window.netlifyIdentity) {
-    window.netlifyIdentity.on('init', user => {
-        if (!user) {
-            window.location.href = "/"; // redirect if not logged in
-        }
-    });
-}
-</script>
-<style>
-body {margin:0;font-family:'Segoe UI',sans-serif;background: linear-gradient(135deg, #a3c4f3, #f8e1a0);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;color:#4b3f2f;text-align:center;}
-.particle {position:absolute;width:6px;height:6px;background: rgba(255,215,100,0.5);border-radius:50%;animation: float 12s linear infinite;}
-@keyframes float {0% {transform: translateY(0) translateX(0);}50% {transform: translateY(-30px) translateX(20px);}100% {transform: translateY(0) translateX(0);}}
-img {max-width:80%;max-height:65vh;object-fit:contain;border-radius:15px;box-shadow:0 0 60px rgba(255,215,150,0.5);transition: transform 0.5s ease, box-shadow 0.5s ease;}
-img:hover {transform: scale(1.05); box-shadow:0 0 90px rgba(255,215,150,0.7);}
-.quote {font-size:26px;margin-top:25px;max-width:80%;opacity:0;transform: translateY(20px);animation: fadeInUp 1s forwards 0.5s;text-shadow: 2px 2px 8px rgba(0,0,0,0.3);}
-@keyframes fadeInUp {to {opacity:1; transform: translateY(0);}}
-.heart-nav {position:absolute;top:50%;font-size:40px;cursor:pointer;color:#ff6f61;transition: all 0.3s ease;user-select:none;animation: pulse 2s infinite;}
-.heart-nav:hover {transform: scale(1.2); text-shadow:0 0 20px #ff6f61,0 0 40px #ff9a80;}
-@keyframes pulse {0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
-#prev { left:20px; } #next { right:20px; }
-</style>
-</head>
-<body>
-<div class="particle" style="top:10%; left:20%; animation-duration:12s;"></div>
-<div class="particle" style="top:30%; left:50%; animation-duration:15s;"></div>
-<div class="particle" style="top:60%; left:70%; animation-duration:10s;"></div>
-<div class="particle" style="top:80%; left:40%; animation-duration:18s;"></div>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo 1 Memories</title>
 
-<a id="prev" class="heart-nav" href="photo9.html">&#10084;&#65039;</a>
-<img src="photo1.jpg" alt="Photo 1">
-<a id="next" class="heart-nav" href="photo2.html">&#10084;&#65039;</a>
-<div class="quote">Every day is a new beginning. This photo reminds me of hope and fresh mornings.</div>
-</body>
-</html>
+  <!-- Auth guard scripts (order important) -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script src="/auth/guard-auth.js"></script>
+
+  <style>
+    body {margin:0;font-family:'Segoe UI',sans-serif;background: linear-gradient(135deg, #a3c4f3, #f8e1a0);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;color:#4b3f2f;text-align:center;}
+    .particle {position:absolute;width:6px;height:6px;background: rgba(255,215,100,0.5);border-radius:50%;animation: float 12s linear infinite;}
+    @keyframes float {0% {transform: translateY(0) translateX(0);}50% {transform: translateY(-30px) translateX(20px);}100% {transform: translateY(0) translateX(0);}}
+    img {max-width:80%;max-height:65vh;object-fit:contain;border-radius:15px;box-shadow:0 0 60px rgba(255,215,150,0.5);transition: transform 0.5s ease, box-shadow 0.5s ease;}
+    img:hover {transform: scale(1.05); box-shadow:0 0 90px rgba(255,215,150,0.7);}
+    .quote {font-size:26px;margin-top:25px;max-width:80%;opacity:0;transform: translateY(20px);animation: fadeInUp 1s forwards 0.5s;text-shadow: 2px 2px 8px rgba(0,0,0,0.3);}
+    @keyframes fadeInUp {to {opacity:1; transform: translateY(0);}}
+    .heart-nav {position:absolute;top:50%;font-size:40px;cursor:pointer;color:#ff6f61;transition: all 0.3s ease;user-select:none;animation: pulse 2s infinite;}
+    .heart-nav:hover {transform: scale(1.2); text-shadow:0 0 20px #ff6f61,0 0 40px #ff9a80;}
+    @keyframes pulse {0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+    #prev { left:20px; } #next { right:20px; }
+  </style>
+</head>
