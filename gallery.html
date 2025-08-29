@@ -5,55 +5,108 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Shree • Private Gallery</title>
 
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"
-          data-netlify-identity-site="https://shreshthapushkar.com"></script>
-
-  <!-- optional: if using guard site-wide -->
-  <!-- <script src="/js/guard-auth.js"></script> -->
+  <!-- Netlify Identity + Guard (must be first) -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script src="/auth/guard-auth.js"></script>
 
   <style>
     :root { --gap: 12px; }
-    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background:#f7f7f8; }
-    header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px; }
-    h1 { margin: 0; font-size: 22px; }
-    .actions { display:flex; gap:8px; }
-    button { border:0; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600; }
-    .ghost { background:#e9eaee; }
-    #status { font-size:13px; opacity:.75; margin-bottom:10px; min-height:18px; }
-    #gallery { display:grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: var(--gap); }
-    .gallery-item { background:#fff; border-radius: 12px; padding: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.06); }
-    .gallery-item img { width: 100%; height: 160px; object-fit: cover; display:block; border-radius: 8px; }
-    .name { font-size:12px; margin-top:6px; opacity:.9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    body { margin:0; font-family: system-ui, sans-serif; background: #fafafa; color:#0f172a; }
+    header { position: sticky; top:0; background:#fff; border-bottom:1px solid #eee; padding:10px 14px; display:flex; gap:8px; align-items:center; justify-content:space-between; }
+    .btn { padding:8px 12px; border-radius:10px; border:1px solid #e5e7eb; background:#f8fafc; cursor:pointer; }
+    .btn.primary { background:#111827; color:#fff; border-color:#111827; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 16px; }
+    h1 { font-size: 20px; margin: 8px 0 16px; }
+
+    /* Masonry-like grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--gap); }
+    .card { background:#fff; border:1px solid #eee; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; }
+    .thumb { width:100%; aspect-ratio: 4/3; object-fit: cover; display:block; }
+    .meta { padding:10px 12px; font-size:12px; color:#475569; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 70%; }
+
+    #status { margin: 10px 0 16px; font-size: 13px; color:#334155; }
   </style>
 </head>
 <body>
   <header>
-    <h1>Shree • Private Gallery</h1>
-    <div class="actions">
-      <button class="ghost" id="refreshBtn">Refresh</button>
-      <button id="logoutBtn">Logout</button>
+    <div>
+      <button class="btn" onclick="go('/life.html')">⟵ Life</button>
+    </div>
+    <div>
+      <button class="btn" onclick="go('/upload.html')">Upload</button>
+      <button class="btn" onclick="logout()">Logout</button>
     </div>
   </header>
 
-  <div id="status">Loading…</div>
-  <div id="gallery">Loading…</div>
+  <div class="wrap">
+    <h1>Private Gallery</h1>
+    <div id="status">Loading…</div>
+    <div id="grid" class="grid"></div>
+  </div>
 
-  <script src="/js/gallery.js" defer></script>
   <script>
-    const $status = document.getElementById('status');
-    const $refresh = document.getElementById('refreshBtn');
-    const $logout = document.getElementById('logoutBtn');
+    function go(p){ location.href=p; }
+    function logout(){ netlifyIdentity.logout(); }
 
-    if (window.refreshGallery) {
-      $refresh.addEventListener('click', async () => {
-        try { $status.textContent = 'Refreshing…'; await window.refreshGallery(); }
-        catch(e){ console.error(e); $status.textContent = 'Error refreshing.'; }
-        finally { setTimeout(()=>($status.textContent=''), 700); }
-      });
+    async function loadGallery(){
+      const status = document.getElementById('status');
+      const grid = document.getElementById('grid');
+      try {
+        const u = netlifyIdentity.currentUser();
+        if (!u) { status.textContent = 'Please login again.'; return; }
+        const token = await u.jwt();
+
+        const res = await fetch('https://shree-drive.onrender.com/list', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const j = await res.json();
+        if (!j.ok) { status.textContent = 'Error: ' + (j.error || 'Failed to list'); return; }
+
+        const files = Array.isArray(j.files) ? j.files : [];
+        const imgs = files.filter(f => String(f.mimeType||'').startsWith('image/'));
+        if (imgs.length === 0) { status.textContent = 'No images yet. Upload one!'; return; }
+
+        status.textContent = `${imgs.length} image(s)`;
+        grid.innerHTML = '';
+        for (const f of imgs) {
+          const card = document.createElement('div');
+          card.className = 'card';
+
+          // NOTE: backend should expose a file stream route like /file/:id
+          const img = document.createElement('img');
+          img.className = 'thumb';
+          img.loading = 'lazy';
+          img.alt = f.name || 'image';
+          img.src = `https://shree-drive.onrender.com/file/${encodeURIComponent(f.id)}`;
+          img.onerror = () => { img.remove(); card.innerHTML = '<div class=meta>Preview not available</div>'; };
+
+          const meta = document.createElement('div');
+          meta.className = 'meta';
+          const nm = document.createElement('div');
+          nm.className = 'name';
+          nm.title = f.name || '';
+          nm.textContent = f.name || '';
+
+          const dl = document.createElement('a');
+          dl.className = 'btn';
+          dl.textContent = 'Open';
+          dl.href = `https://shree-drive.onrender.com/file/${encodeURIComponent(f.id)}`;
+          dl.target = '_blank';
+          dl.rel = 'noopener';
+
+          meta.appendChild(nm);
+          meta.appendChild(dl);
+          card.appendChild(img);
+          card.appendChild(meta);
+          grid.appendChild(card);
+        }
+      } catch (e) {
+        status.textContent = 'Exception: ' + e.message;
+      }
     }
-    $logout.addEventListener('click', () => {
-      if (window.netlifyIdentity) netlifyIdentity.logout();
-    });
+
+    document.addEventListener('DOMContentLoaded', loadGallery);
   </script>
 </body>
 </html>
