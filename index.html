@@ -4,7 +4,10 @@
   <meta charset="utf-8" />
   <title>Shree • Welcome</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Netlify Identity widget -->
   <script src="/.netlify/identity/widget.js"></script>
+
   <style>
     body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; display:grid; place-items:center; min-height:100dvh; background:#fafafa; }
     .card { width:min(520px,90%); background:white; padding:24px; border:1px solid #eee; border-radius:16px; box-shadow: 0 10px 30px rgba(0,0,0,.05); }
@@ -12,16 +15,50 @@
     button{padding:12px 16px; border-radius:12px; border:1px solid #ddd; background:#fff; cursor:pointer;}
     h1{font-size:22px; margin:0 0 6px;}
     p{margin:4px 0 0; color:#666}
+    #debug{ margin-top:10px; font-size:12px; color:#888; }
   </style>
+
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    // Robust init + open
+    function initIdentity() {
       const ni = window.netlifyIdentity;
-      ni.on('init', user => { if (user) window.location.replace('/life.html'); });
-      ni.on('login', () => window.location.replace('/life.html'));
-      ni.on('signup', () => window.location.replace('/life.html'));
+      const debug = (msg) => { const el = document.getElementById('debug'); if (el) el.textContent = msg; };
+
+      if (!ni) {
+        debug('Identity widget not loaded. (Check that Identity is enabled in Netlify site settings.)');
+        return;
+      }
+
+      // When widget is initialized
+      ni.on('init', (user) => {
+        debug(user ? 'Already logged in' : 'Ready to login');
+        if (user) {
+          // already logged in → go to life
+          window.location.replace('/life.html');
+        }
+      });
+
+      // On auth events
+      ni.on('login', () => { debug('Logged in'); window.location.replace('/life.html'); });
+      ni.on('signup', () => { debug('Signed up'); window.location.replace('/life.html'); });
+      ni.on('logout', () => { debug('Logged out'); });
+
+      // Important: call init once and only once
       ni.init();
-    });
-    function openModal(){ window.netlifyIdentity && window.netlifyIdentity.open('login'); }
+    }
+
+    function openLogin() {
+      const ni = window.netlifyIdentity;
+      if (!ni) return alert("Identity not loaded. Make sure Netlify Identity is enabled.");
+      // ensure initialized before open
+      try { ni.open('login'); } catch (_) {
+        // if races, try ensuring init first then open
+        ni.init();
+        setTimeout(() => ni.open('login'), 200);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initIdentity);
   </script>
 </head>
 <body>
@@ -29,8 +66,9 @@
     <h1>Welcome ✨</h1>
     <p>Private access only. Please log in.</p>
     <div class="row">
-      <button onclick="openModal()">Log in / Sign up</button>
+      <button onclick="openLogin()">Log in / Sign up</button>
     </div>
+    <div id="debug"></div>
   </div>
 </body>
 </html>
