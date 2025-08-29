@@ -1,9 +1,19 @@
-/.netlify/*    /.netlify/:splat    200
+/  /index.html 200
 
-/gallery.html  /gallery.html   200!  Role=member
-/upload.html   /upload.html    200!  Role=member
-/secret.html   /secret.html    200!  Role=member
+/life.html     / 401!  Role=guest
+/life.html     /life.html 200 Role=member
 
-/gallery.html  /login.html     401
-/upload.html   /login.html     401
-/secret.html   /login.html     401
+/upload.html   / 401!  Role=guest
+/upload.html   /upload.html 200 Role=member
+
+/gallery.html  / 401!  Role=guest
+/gallery.html  /gallery.html 200 Role=member
+
+/photo.html    / 401!  Role=guest
+/photo.html    /photo.html 200 Role=member
+
+# lock images by extension (optional, since we proxy via backend)
+/*.jpg   / 401!  Role=guest
+/*.png   / 401!  Role=guest
+/*.jpeg  / 401!  Role=guest
+/*.webp  / 401!  Role=guest
