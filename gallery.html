@@ -2,111 +2,71 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Shree • Private Gallery</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Netlify Identity + Guard (must be first) -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  <script src="/auth/guard-auth.js"></script>
+  <script src="/.netlify/identity/widget.js"></script>
+  <script>
+    const BACKEND = "https://shree-drive.onrender.com";
+    function requireLogin(){
+      if(!window.netlifyIdentity) return alert("Identity not loaded");
+      window.netlifyIdentity.on('init', u => { if(!u) window.location.replace('/'); else loadGallery(); });
+      window.netlifyIdentity.init();
+    }
+    async function token(){ const u=window.netlifyIdentity.currentUser(); if(!u) throw new Error('Not logged in'); return await u.jwt(); }
+    async function fetchBlobURL(id){
+      const t = await token();
+      const r = await fetch(`${BACKEND}/file/${id}`, { headers:{ Authorization:`Bearer ${t}` }});
+      if(!r.ok) throw new Error('Fetch image failed');
+      const b = await r.blob(); return URL.createObjectURL(b);
+    }
+    async function loadGallery(){
+      const grid = document.getElementById('grid');
+      const status = document.getElementById('status');
+      grid.innerHTML=''; status.textContent='Loading...';
+      try{
+        const t = await token();
+        const r = await fetch(`${BACKEND}/list`, { headers:{ Authorization:`Bearer ${t}` }});
+        const files = await r.json();
+        if(!r.ok) throw new Error(files.error || 'List failed');
+        if(!Array.isArray(files)) throw new Error('Invalid list format');
+        if(!files.length){ status.textContent='No images yet.'; return; }
+        status.textContent = `Loaded ${files.length} images`;
 
+        for(const f of files){
+          const url = await fetchBlobURL(f.id);
+          const wrap = document.createElement('div'); wrap.className='item';
+          const a = document.createElement('a'); a.href=`/photo.html?id=${encodeURIComponent(f.id)}&name=${encodeURIComponent(f.name)}`;
+          const img = document.createElement('img'); img.src=url; img.alt=f.name; img.loading='lazy';
+          const cap = document.createElement('div'); cap.className='cap'; cap.textContent=f.name;
+          a.appendChild(img); wrap.appendChild(a); wrap.appendChild(cap); grid.appendChild(wrap);
+        }
+      }catch(e){ status.textContent='❌ '+e.message; }
+    }
+    function logout(){ window.netlifyIdentity.logout(); window.location.replace('/'); }
+    document.addEventListener('DOMContentLoaded', requireLogin);
+  </script>
   <style>
-    :root { --gap: 12px; }
-    body { margin:0; font-family: system-ui, sans-serif; background: #fafafa; color:#0f172a; }
-    header { position: sticky; top:0; background:#fff; border-bottom:1px solid #eee; padding:10px 14px; display:flex; gap:8px; align-items:center; justify-content:space-between; }
-    .btn { padding:8px 12px; border-radius:10px; border:1px solid #e5e7eb; background:#f8fafc; cursor:pointer; }
-    .btn.primary { background:#111827; color:#fff; border-color:#111827; }
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 16px; }
-    h1 { font-size: 20px; margin: 8px 0 16px; }
-
-    /* Masonry-like grid */
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--gap); }
-    .card { background:#fff; border:1px solid #eee; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; }
-    .thumb { width:100%; aspect-ratio: 4/3; object-fit: cover; display:block; }
-    .meta { padding:10px 12px; font-size:12px; color:#475569; display:flex; align-items:center; justify-content:space-between; gap:8px; }
-    .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width: 70%; }
-
-    #status { margin: 10px 0 16px; font-size: 13px; color:#334155; }
+    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#f8f8f8; }
+    header{ display:flex; align-items:center; gap:10px; padding:16px; background:#fff; position:sticky; top:0; border-bottom:1px solid #eee; }
+    header a, header button{ padding:8px 12px; border:1px solid #ddd; border-radius:12px; background:#fff; cursor:pointer; text-decoration:none; color:#111 }
+    h2{ margin:0; font-size:18px; }
+    #status{ padding:10px 16px; color:#666 }
+    #grid{ padding:16px; display:grid; gap:12px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .item{ display:flex; flex-direction:column; gap:6px; }
+    .item img{ width:100%; height:180px; object-fit:cover; border-radius:12px; border:1px solid #eee; background:#fff; }
+    .cap{ color:#555; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   </style>
 </head>
 <body>
   <header>
-    <div>
-      <button class="btn" onclick="go('/life.html')">⟵ Life</button>
-    </div>
-    <div>
-      <button class="btn" onclick="go('/upload.html')">Upload</button>
-      <button class="btn" onclick="logout()">Logout</button>
-    </div>
+    <h2>Shree • Gallery</h2>
+    <a href="/life.html">Life</a>
+    <a href="/upload.html">Upload</a>
+    <button onclick="loadGallery()">Refresh</button>
+    <button onclick="logout()">Logout</button>
   </header>
-
-  <div class="wrap">
-    <h1>Private Gallery</h1>
-    <div id="status">Loading…</div>
-    <div id="grid" class="grid"></div>
-  </div>
-
-  <script>
-    function go(p){ location.href=p; }
-    function logout(){ netlifyIdentity.logout(); }
-
-    async function loadGallery(){
-      const status = document.getElementById('status');
-      const grid = document.getElementById('grid');
-      try {
-        const u = netlifyIdentity.currentUser();
-        if (!u) { status.textContent = 'Please login again.'; return; }
-        const token = await u.jwt();
-
-        const res = await fetch('https://shree-drive.onrender.com/list', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const j = await res.json();
-        if (!j.ok) { status.textContent = 'Error: ' + (j.error || 'Failed to list'); return; }
-
-        const files = Array.isArray(j.files) ? j.files : [];
-        const imgs = files.filter(f => String(f.mimeType||'').startsWith('image/'));
-        if (imgs.length === 0) { status.textContent = 'No images yet. Upload one!'; return; }
-
-        status.textContent = `${imgs.length} image(s)`;
-        grid.innerHTML = '';
-        for (const f of imgs) {
-          const card = document.createElement('div');
-          card.className = 'card';
-
-          // NOTE: backend should expose a file stream route like /file/:id
-          const img = document.createElement('img');
-          img.className = 'thumb';
-          img.loading = 'lazy';
-          img.alt = f.name || 'image';
-          img.src = `https://shree-drive.onrender.com/file/${encodeURIComponent(f.id)}`;
-          img.onerror = () => { img.remove(); card.innerHTML = '<div class=meta>Preview not available</div>'; };
-
-          const meta = document.createElement('div');
-          meta.className = 'meta';
-          const nm = document.createElement('div');
-          nm.className = 'name';
-          nm.title = f.name || '';
-          nm.textContent = f.name || '';
-
-          const dl = document.createElement('a');
-          dl.className = 'btn';
-          dl.textContent = 'Open';
-          dl.href = `https://shree-drive.onrender.com/file/${encodeURIComponent(f.id)}`;
-          dl.target = '_blank';
-          dl.rel = 'noopener';
-
-          meta.appendChild(nm);
-          meta.appendChild(dl);
-          card.appendChild(img);
-          card.appendChild(meta);
-          grid.appendChild(card);
-        }
-      } catch (e) {
-        status.textContent = 'Exception: ' + e.message;
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', loadGallery);
-  </script>
+  <div id="status"></div>
+  <div id="grid"></div>
 </body>
 </html>
