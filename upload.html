@@ -2,26 +2,59 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Shree • Upload</title>
-
-  <!-- Netlify Identity + Guard -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  <script src="/auth/guard-auth.js"></script>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="/.netlify/identity/widget.js"></script>
+  <script>
+    const BACKEND = "https://shree-drive.onrender.com";
+    function requireLogin(){
+      if(!window.netlifyIdentity) return alert("Identity not loaded");
+      window.netlifyIdentity.on('init', u => { if(!u) window.location.replace('/'); });
+      window.netlifyIdentity.init();
+    }
+    async function token(){ const u=window.netlifyIdentity.currentUser(); if(!u) throw new Error('Not logged in'); return await u.jwt(); }
+    async function uploadFile(){
+      const out = document.getElementById('out'); out.textContent='Uploading...';
+      try{
+        const file = document.getElementById('file').files[0];
+        if(!file) throw new Error('Select a file');
+        const t = await token();
+        const fd = new FormData(); fd.append('file', file);
+        const r = await fetch(`${BACKEND}/upload`, { method:'POST', headers:{ Authorization:`Bearer ${t}` }, body: fd });
+        const j = await r.json();
+        if(!r.ok || !j.ok) throw new Error(j.error || 'Upload failed');
+        out.innerHTML = `✅ Uploaded: <b>${j.name}</b> • <a href="/gallery.html">Open Gallery</a>`;
+        document.getElementById('file').value='';
+      }catch(e){ out.textContent='❌ '+e.message; }
+    }
+    function logout(){ window.netlifyIdentity.logout(); window.location.replace('/'); }
+    document.addEventListener('DOMContentLoaded', requireLogin);
+  </script>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; }
-    h1 { margin: 0 0 12px; }
-    #output { margin-top: 10px; }
+    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#f8f8f8; }
+    .card{ max-width:560px; margin:40px auto; background:#fff; border:1px solid #eee; border-radius:16px; padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.05); }
+    h2{ margin:0 0 10px; }
+    .row{ display:flex; gap:10px; align-items:center; }
+    input[type=file]{ padding:8px; border:1px solid #ddd; border-radius:12px; background:#fff; }
+    button{ padding:10px 16px; border:1px solid #ddd; border-radius:12px; background:#fff; cursor:pointer; }
+    #out{ margin-top:10px; color:#444; }
+    .nav{ display:flex; gap:10px; margin-top:12px; }
+    .nav a{ padding:8px 12px; border:1px solid #ddd; border-radius:12px; text-decoration:none; color:#111; background:#fff; }
   </style>
 </head>
 <body>
-  <h1>Shree • Upload</h1>
-
-  <input id="file" type="file" />
-  <button id="uploadBtn">Upload</button>
-  <div id="output"></div>
-
-  <script src="upload.js" defer></script>
+  <div class="card">
+    <h2>Upload to Private Drive</h2>
+    <div class="row">
+      <input id="file" type="file" accept="image/*" />
+      <button onclick="uploadFile()">Upload</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+    <div id="out"></div>
+    <div class="nav">
+      <a href="/gallery.html">Go to Gallery</a>
+      <a href="/life.html">Go to Life</a>
+    </div>
+  </div>
 </body>
 </html>
