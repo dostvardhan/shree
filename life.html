@@ -1,137 +1,78 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Life is Beautiful</title>
+  <meta charset="utf-8" />
+  <title>Shree • Life</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Netlify Identity must load BEFORE guard logic -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script src="/.netlify/identity/widget.js"></script>
   <script>
-    // Guard: require login, default redirect to /life.html after login
-    document.addEventListener('DOMContentLoaded', () => {
-      // Hide UI until auth is confirmed (prevents content flash)
-      document.documentElement.classList.add('auth-check');
+    const BACKEND = "https://shree-drive.onrender.com";
 
-      function reveal() {
-        document.documentElement.classList.remove('auth-check');
-      }
+    function requireLogin() {
+      if (!window.netlifyIdentity) return alert("Identity not loaded");
+      window.netlifyIdentity.on('init', u => { if (!u) window.location.replace('/'); else loadTop9(); });
+      window.netlifyIdentity.init();
+    }
+    async function token(){
+      const u = window.netlifyIdentity.currentUser(); if(!u) throw new Error('Not logged in'); return await u.jwt();
+    }
+    async function loadTop9(){
+      const status = document.getElementById('status');
+      const grid = document.getElementById('grid');
+      status.textContent = 'Loading...';
+      grid.innerHTML='';
 
-      netlifyIdentity.on('init', (user) => {
-        if (!user) {
-          // Not logged in → go to login page
-          window.location.replace('/index.html');
-          return;
+      try {
+        const t = await token();
+        const r = await fetch(`${BACKEND}/list?pageSize=9`, { headers:{ Authorization:`Bearer ${t}` }});
+        const files = await r.json();
+        if(!r.ok) throw new Error(files.error || 'List failed');
+        if(!files.length){ status.textContent='No images yet.'; return; }
+        status.textContent='';
+
+        for (const f of files) {
+          const url = await fetchBlobURL(f.id);
+          const a = document.createElement('a');
+          a.href = `/photo.html?id=${encodeURIComponent(f.id)}&name=${encodeURIComponent(f.name)}`;
+          a.title = f.name;
+          const img = document.createElement('img');
+          img.src = url; img.alt = f.name; img.loading='lazy';
+          a.appendChild(img);
+          grid.appendChild(a);
         }
-        // Logged in → show page
-        reveal();
-        // Hearts will spawn after auth later in the body script
-      });
-
-      netlifyIdentity.on('login', () => {
-        window.location.replace('/life.html');
-      });
-
-      netlifyIdentity.on('logout', () => {
-        window.location.replace('/index.html');
-      });
-
-      netlifyIdentity.init();
-    });
+      } catch(e){ status.textContent = '❌ ' + e.message; }
+    }
+    async function fetchBlobURL(id){
+      const t = await token();
+      const r = await fetch(`${BACKEND}/file/${id}`, { headers:{ Authorization:`Bearer ${t}` }});
+      if(!r.ok) throw new Error('Fetch image failed');
+      const blob = await r.blob();
+      return URL.createObjectURL(blob);
+    }
+    function logout(){ window.netlifyIdentity.logout(); window.location.replace('/'); }
+    document.addEventListener('DOMContentLoaded', requireLogin);
   </script>
-
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Dancing+Script&family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
-
-  <!-- Styles (kept your original look) -->
   <style>
-    /* Prevent content flash while checking auth */
-    .auth-check body { visibility: hidden; }
-
-    /* Top toolbar */
-    .toolbar { position: sticky; top: 0; z-index: 1000; background: #ffffffcc; backdrop-filter: saturate(120%) blur(6px); border-bottom: 1px solid #eee; display: flex; gap: 8px; justify-content: flex-end; align-items: center; padding: 8px 12px; }
-    .pill { font: 13px/1 'Roboto', sans-serif; background:#f8fafc; border:1px solid #e5e7eb; color:#0f172a; border-radius: 999px; padding: 6px 12px; cursor:pointer; }
-    .pill.logout { background:#fee2e2; }
-
-    body { margin:0; font-family:'Roboto', sans-serif; background: linear-gradient(135deg, #fff8f2, #ffe6eb); display:flex; flex-direction:column; align-items:center; min-height:100vh; text-align:center; overflow-x:hidden; overflow-y:auto; position:relative; }
-
-    h1 { margin-top:30px; font-size:46px; font-family: 'Great Vibes', cursive; color:#800000; text-shadow:1px 1px 6px rgba(0,0,0,0.2); }
-
-    .gallery { display:flex; flex-wrap:wrap; justify-content:center; margin:20px 0 40px; gap:20px; z-index:1; position:relative; padding: 0 12px; }
-
-    .gallery img { width:250px; height:auto; max-height:200px; object-fit: contain; border-radius:15px; box-shadow:0 0 40px rgba(0,0,0,0.2); transition: transform 0.5s ease, box-shadow 0.5s ease; cursor:pointer; }
-    .gallery img:hover { transform: scale(1.2); z-index:10; box-shadow:0 0 90px rgba(255,215,150,0.7); }
-
-    .quote { font-size:24px; margin-bottom:70px; max-width:80%; text-shadow: 1px 1px 6px rgba(0,0,0,0.15); position:relative; z-index:1; font-family: 'Dancing Script', cursive; color:#556b2f; }
-
-    /* Hearts container */
-    #heartsContainer { position:fixed; bottom:0; left:0; width:100%; height:100%; pointer-events:none; overflow:hidden; z-index:0; }
-    .heart-svg { position:absolute; width:20px; height:20px; fill:pink; animation: floatUp linear infinite; }
-    @keyframes floatUp { 0% { transform: translateY(100vh) scale(0.5); opacity:0.8; } 50% { opacity:1; } 100% { transform: translateY(-50px) scale(1); opacity:0; } }
-
-    /* Bottom CTA */
-    .cta { position: fixed; right: 16px; bottom: 16px; z-index: 1000; }
-    .cta .btn { padding: 12px 16px; border-radius: 12px; border: 0; background:#111827; color:#fff; box-shadow:0 6px 20px rgba(0,0,0,.18); cursor: pointer; }
+    :root{ --gap:14px; }
+    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#f8f8f8; }
+    header{ display:flex; align-items:center; gap:10px; padding:16px; background:#fff; position:sticky; top:0; border-bottom:1px solid #eee; }
+    header a, header button{ padding:8px 12px; border:1px solid #ddd; border-radius:12px; background:#fff; cursor:pointer; text-decoration:none; color:#111 }
+    h2{ margin:0; font-size:18px; }
+    #status{ padding:10px 16px; color:#666 }
+    #grid{ padding:16px; display:grid; gap:var(--gap); grid-template-columns: repeat(3, 1fr); }
+    #grid img{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:12px; border:1px solid #eee; background:#fff; }
+    @media (max-width:780px){ #grid{ grid-template-columns: repeat(2,1fr);} }
   </style>
 </head>
 <body>
-  <!-- Auth toolbar -->
-  <div class="toolbar">
-    <button class="pill" onclick="go('/welcome.html')">Home</button>
-    <button class="pill" onclick="go('/gallery.html')">Gallery</button>
-    <button class="pill" onclick="go('/upload.html')">Upload</button>
-    <button class="pill logout" onclick="logoutAndExit()">Logout</button>
-  </div>
-
-  <h1>Life is Beautiful</h1>
-
-  <div class="gallery">
-    <a href="photo1.html"><img src="photo1.jpg" alt="Photo 1" /></a>
-    <a href="photo2.html"><img src="photo2.jpg" alt="Photo 2" /></a>
-    <a href="photo3.html"><img src="photo3.jpg" alt="Photo 3" /></a>
-    <a href="photo4.html"><img src="photo4.jpg" alt="Photo 4" /></a>
-    <a href="photo5.html"><img src="photo5.jpg" alt="Photo 5" /></a>
-    <a href="photo6.html"><img src="photo6.jpg" alt="Photo 6" /></a>
-    <a href="photo7.html"><img src="photo7.jpg" alt="Photo 7" /></a>
-    <a href="photo8.html"><img src="photo8.jpg" alt="Photo 8" /></a>
-    <a href="photo9.html"><img src="photo9.jpg" alt="Photo 9" /></a>
-  </div>
-
-  <div class="quote">Life is a collection of moments, each memory a heartbeat in our story.</div>
-
-  <div id="heartsContainer"></div>
-
-  <!-- Bottom Next CTA -->
-  <div class="cta">
-    <button class="btn" onclick="go('/upload.html')">Next: Upload →</button>
-  </div>
-
-  <script>
-    function go(p) { location.href = p; }
-    function logoutAndExit() { netlifyIdentity.logout(); }
-
-    // Hearts animation (original)
-    const colors = ['#ff7f7f','#ff4d6d','#ff99aa','#ff4d4d','#c71585'];
-    const heartsContainer = document.getElementById('heartsContainer');
-    function spawnHearts(){
-      for(let i=0;i<30;i++){
-        const heart = document.createElementNS('http://www.w3.org/2000/svg','svg');
-        heart.setAttribute('viewBox','0 0 32 29.6');
-        heart.classList.add('heart-svg');
-        heart.style.left = Math.random()*100 + 'vw';
-        heart.style.animationDuration = (8 + Math.random()*5) + 's';
-        const color = colors[Math.floor(Math.random()*colors.length)];
-        heart.innerHTML = `<path d="M23.6,0c-2.8,0-5.4,1.6-6.6,4C15.8,1.6,13.2,0,10.4,0C4.6,0,0,4.6,0,10.4 c0,11.5,16,19.2,16,19.2s16-7.7,16-19.2C32,4.6,27.4,0,23.6,0z" fill="${color}"/>`;
-        heartsContainer.appendChild(heart);
-      }
-    }
-
-    // After Identity is ready and user exists (handled in head), spawn hearts when DOM is ready
-    document.addEventListener('DOMContentLoaded', () => {
-      // If user is already present by the time this runs, spawn hearts
-      const u = netlifyIdentity && netlifyIdentity.currentUser && netlifyIdentity.currentUser();
-      if (u) spawnHearts();
-    });
-  </script>
+  <header>
+    <h2>Shree • Life</h2>
+    <a href="/gallery.html">Gallery</a>
+    <a href="/upload.html">Upload</a>
+    <button onclick="logout()">Logout</button>
+  </header>
+  <div id="status"></div>
+  <div id="grid"></div>
 </body>
 </html>
