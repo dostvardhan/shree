@@ -1,26 +1,19 @@
 // upload.js (final)
-
 document.addEventListener("DOMContentLoaded", initUpload);
-
-const BACKEND = "https://shree-drive.onrender.com"; // change only if needed
+const BACKEND = "https://shree-drive.onrender.com";
 
 async function initUpload() {
   const fileInput = document.getElementById("file");
   const btn = document.getElementById("uploadBtn");
   const out = document.getElementById("output");
 
-  if (!fileInput || !btn || !out) {
-    console.warn("Upload UI elements missing (#file, #uploadBtn, #output).");
-    return;
-  }
+  if (!fileInput || !btn || !out) return;
 
-  // Netlify Identity must be loaded
   if (typeof netlifyIdentity === "undefined") {
-    alert("Identity widget missing. Add <script src='https://identity.netlify.com/v1/netlify-identity-widget.js'></script>");
+    alert("Identity widget missing.");
     return;
   }
 
-  // Init Identity and ensure login
   await new Promise((res) => { netlifyIdentity.on("init", res); netlifyIdentity.init(); });
 
   async function ensureLoggedIn() {
@@ -33,61 +26,48 @@ async function initUpload() {
       });
       u = netlifyIdentity.currentUser();
     }
-    if (!u) throw new Error("Login failed. Refresh and try again.");
+    if (!u) throw new Error("Login failed.");
     return u;
   }
 
   async function getFreshToken() {
     const u = await ensureLoggedIn();
-    const t = await u.jwt();               // MUST be jwt(), not access_token
-    if (!t || t.length < 100) throw new Error("Invalid token from Netlify Identity");
+    const t = await u.jwt();
+    if (!t || t.length < 100) throw new Error("Invalid Identity token");
     return t;
   }
 
   async function uploadFile(file) {
-    const token = await getFreshToken();   // get fresh token at click time
+    const token = await getFreshToken();
     const fd = new FormData();
     fd.append("file", file);
-
     const r = await fetch(`${BACKEND}/upload`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: fd
     });
-
-    // Try to parse JSON; if fails, read text for better error
     let data;
-    try { data = await r.json(); } catch {
-      const txt = await r.text().catch(() => "");
-      throw new Error(`Upload failed: ${r.status} ${txt || r.statusText}`);
-    }
+    try { data = await r.json(); } catch { throw new Error(`Upload failed: ${r.status}`); }
     if (!r.ok || !data.ok) throw new Error(data?.error || `Upload failed: ${r.status}`);
     return data;
   }
 
   btn.addEventListener("click", async () => {
-    if (!fileInput.files?.length) {
-      out.textContent = "Choose a file first.";
-      return;
-    }
-
-    btn.disabled = true;
-    out.textContent = "Uploading…";
-
+    if (!fileInput.files?.length) { out.textContent = "Choose a file first."; return; }
+    btn.disabled = true; out.textContent = "Uploading…";
     try {
       const res = await uploadFile(fileInput.files[0]);
       out.textContent = "Uploaded ✅ " + (res.file?.name || res.file?.id || "");
       console.log("UPLOAD:", res);
     } catch (e) {
       console.error(e);
-      out.textContent = "Error: " + e.message +
-        (e.message.includes("issuer") ? " (Token mismatch? Re-login once.)" : "");
+      out.textContent = "Error: " + e.message;
     } finally {
       btn.disabled = false;
     }
   });
 
-  // Optional: debug helper (run from console)
+  // Optional debug
   window.whoami = async () => {
     const t = await getFreshToken();
     const r = await fetch(`${BACKEND}/whoami`, { headers: { Authorization: `Bearer ${t}` } });
