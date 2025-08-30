@@ -2,70 +2,81 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Shree • Private Gallery</title>
+  <title>Shree • Gallery</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <script src="/.netlify/identity/widget.js"></script>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script>
     const BACKEND = "https://shree-drive.onrender.com";
-    function requireLogin(){
-      if(!window.netlifyIdentity) return alert("Identity not loaded");
-      window.netlifyIdentity.on('init', u => { if(!u) window.location.replace('/'); else loadGallery(); });
-      window.netlifyIdentity.init();
-    }
-    async function token(){ const u=window.netlifyIdentity.currentUser(); if(!u) throw new Error('Not logged in'); return await u.jwt(); }
-    async function fetchBlobURL(id){
-      const t = await token();
-      const r = await fetch(`${BACKEND}/file/${id}`, { headers:{ Authorization:`Bearer ${t}` }});
-      if(!r.ok) throw new Error('Fetch image failed');
-      const b = await r.blob(); return URL.createObjectURL(b);
-    }
-    async function loadGallery(){
-      const grid = document.getElementById('grid');
-      const status = document.getElementById('status');
-      grid.innerHTML=''; status.textContent='Loading...';
-      try{
-        const t = await token();
-        const r = await fetch(`${BACKEND}/list`, { headers:{ Authorization:`Bearer ${t}` }});
-        const files = await r.json();
-        if(!r.ok) throw new Error(files.error || 'List failed');
-        if(!Array.isArray(files)) throw new Error('Invalid list format');
-        if(!files.length){ status.textContent='No images yet.'; return; }
-        status.textContent = `Loaded ${files.length} images`;
+    const API_URL = "https://shreshthapushkar.com/.netlify/identity";
 
+    function requireLogin() {
+      if (!window.netlifyIdentity) {
+        alert("Identity widget not loaded");
+        return;
+      }
+      window.netlifyIdentity.init({ APIUrl: API_URL });
+      window.netlifyIdentity.on("init", u => { if (!u) window.location.replace("/"); else loadAll(); });
+    }
+
+    async function token() {
+      const u = window.netlifyIdentity.currentUser();
+      if (!u) throw new Error("Not logged in");
+      return await u.jwt();
+    }
+
+    async function loadAll() {
+      const grid = document.getElementById("grid");
+      const status = document.getElementById("status");
+      status.textContent = "Loading…";
+      grid.innerHTML = "";
+      try {
+        const t = await token();
+        const r = await fetch(`${BACKEND}/list`, { headers:{ Authorization:`Bearer ${t}` } });
+        const files = await r.json();
+        if (!r.ok) throw new Error(files.error || "List failed");
+        if (!files.length){ status.textContent="No images yet."; return; }
+        status.textContent="";
         for(const f of files){
           const url = await fetchBlobURL(f.id);
-          const wrap = document.createElement('div'); wrap.className='item';
-          const a = document.createElement('a'); a.href=`/photo.html?id=${encodeURIComponent(f.id)}&name=${encodeURIComponent(f.name)}`;
-          const img = document.createElement('img'); img.src=url; img.alt=f.name; img.loading='lazy';
-          const cap = document.createElement('div'); cap.className='cap'; cap.textContent=f.name;
-          a.appendChild(img); wrap.appendChild(a); wrap.appendChild(cap); grid.appendChild(wrap);
+          const a = document.createElement("a");
+          a.href = `/photo.html?id=${encodeURIComponent(f.id)}&name=${encodeURIComponent(f.name)}`;
+          a.title = f.name;
+          const img = document.createElement("img");
+          img.src = url; img.alt = f.name; img.loading="lazy";
+          a.appendChild(img);
+          grid.appendChild(a);
         }
-      }catch(e){ status.textContent='❌ '+e.message; }
+      } catch(e){ status.textContent="❌ "+e.message; }
     }
-    function logout(){ window.netlifyIdentity.logout(); window.location.replace('/'); }
-    document.addEventListener('DOMContentLoaded', requireLogin);
+
+    async function fetchBlobURL(id){
+      const t = await token();
+      const r = await fetch(`${BACKEND}/file/${id}`, { headers:{ Authorization:`Bearer ${t}` } });
+      if(!r.ok) throw new Error("Fetch failed");
+      return URL.createObjectURL(await r.blob());
+    }
+
+    function logout(){ window.netlifyIdentity.logout(); window.location.replace("/"); }
+    document.addEventListener("DOMContentLoaded", requireLogin);
   </script>
   <style>
-    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#f8f8f8; }
-    header{ display:flex; align-items:center; gap:10px; padding:16px; background:#fff; position:sticky; top:0; border-bottom:1px solid #eee; }
-    header a, header button{ padding:8px 12px; border:1px solid #ddd; border-radius:12px; background:#fff; cursor:pointer; text-decoration:none; color:#111 }
-    h2{ margin:0; font-size:18px; }
-    #status{ padding:10px 16px; color:#666 }
-    #grid{ padding:16px; display:grid; gap:12px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
-    .item{ display:flex; flex-direction:column; gap:6px; }
-    .item img{ width:100%; height:180px; object-fit:cover; border-radius:12px; border:1px solid #eee; background:#fff; }
-    .cap{ color:#555; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    body{ font-family:system-ui; margin:0; }
+    header{ display:flex; align-items:center; gap:10px; padding:16px; background:#fff; border-bottom:1px solid #eee; }
+    header a, header button{ padding:6px 10px; border:1px solid #ccc; border-radius:8px; text-decoration:none; color:#000; background:#fff; }
+    #status{ padding:10px; color:#555 }
+    #grid{ display:grid; gap:12px; padding:16px; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); }
+    #grid img{ width:100%; border-radius:10px; border:1px solid #eee; object-fit:cover; }
   </style>
 </head>
 <body>
   <header>
-    <h2>Shree • Gallery</h2>
+    <h2>Gallery</h2>
     <a href="/life.html">Life</a>
     <a href="/upload.html">Upload</a>
-    <button onclick="loadGallery()">Refresh</button>
     <button onclick="logout()">Logout</button>
   </header>
+
   <div id="status"></div>
   <div id="grid"></div>
 </body>
