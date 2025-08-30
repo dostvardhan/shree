@@ -5,53 +5,85 @@
   <title>Shree • Life</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <script src="/.netlify/identity/widget.js"></script>
+  <!-- Use CDN widget -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script>
     const BACKEND = "https://shree-drive.onrender.com";
+    const API_URL = "https://shreshthapushkar.com/.netlify/identity";
 
     function requireLogin() {
-      if (!window.netlifyIdentity) return alert("Identity not loaded");
-      window.netlifyIdentity.on('init', u => { if (!u) window.location.replace('/'); else loadTop9(); });
-      window.netlifyIdentity.init();
+      if (!window.netlifyIdentity) {
+        alert("Identity widget not loaded");
+        return;
+      }
+      window.netlifyIdentity.init({ APIUrl: API_URL });
+      window.netlifyIdentity.on("init", u => {
+        if (!u) {
+          window.location.replace("/");
+        } else {
+          loadTop9();
+        }
+      });
     }
-    async function token(){
-      const u = window.netlifyIdentity.currentUser(); if(!u) throw new Error('Not logged in'); return await u.jwt();
+
+    async function token() {
+      const u = window.netlifyIdentity.currentUser();
+      if (!u) throw new Error("Not logged in");
+      return await u.jwt();
     }
-    async function loadTop9(){
-      const status = document.getElementById('status');
-      const grid = document.getElementById('grid');
-      status.textContent = 'Loading...';
-      grid.innerHTML='';
+
+    async function loadTop9() {
+      const status = document.getElementById("status");
+      const grid = document.getElementById("grid");
+      status.textContent = "Loading...";
+      grid.innerHTML = "";
 
       try {
         const t = await token();
-        const r = await fetch(`${BACKEND}/list?pageSize=9`, { headers:{ Authorization:`Bearer ${t}` }});
+        const r = await fetch(`${BACKEND}/list?pageSize=9`, {
+          headers: { Authorization: `Bearer ${t}` },
+        });
         const files = await r.json();
-        if(!r.ok) throw new Error(files.error || 'List failed');
-        if(!files.length){ status.textContent='No images yet.'; return; }
-        status.textContent='';
+        if (!r.ok) throw new Error(files.error || "List failed");
+        if (!files.length) {
+          status.textContent = "No images yet.";
+          return;
+        }
+        status.textContent = "";
 
         for (const f of files) {
           const url = await fetchBlobURL(f.id);
-          const a = document.createElement('a');
+          const a = document.createElement("a");
           a.href = `/photo.html?id=${encodeURIComponent(f.id)}&name=${encodeURIComponent(f.name)}`;
           a.title = f.name;
-          const img = document.createElement('img');
-          img.src = url; img.alt = f.name; img.loading='lazy';
+          const img = document.createElement("img");
+          img.src = url;
+          img.alt = f.name;
+          img.loading = "lazy";
           a.appendChild(img);
           grid.appendChild(a);
         }
-      } catch(e){ status.textContent = '❌ ' + e.message; }
+      } catch (e) {
+        status.textContent = "❌ " + e.message;
+      }
     }
-    async function fetchBlobURL(id){
+
+    async function fetchBlobURL(id) {
       const t = await token();
-      const r = await fetch(`${BACKEND}/file/${id}`, { headers:{ Authorization:`Bearer ${t}` }});
-      if(!r.ok) throw new Error('Fetch image failed');
+      const r = await fetch(`${BACKEND}/file/${id}`, {
+        headers: { Authorization: `Bearer ${t}` },
+      });
+      if (!r.ok) throw new Error("Fetch image failed");
       const blob = await r.blob();
       return URL.createObjectURL(blob);
     }
-    function logout(){ window.netlifyIdentity.logout(); window.location.replace('/'); }
-    document.addEventListener('DOMContentLoaded', requireLogin);
+
+    function logout() {
+      window.netlifyIdentity.logout();
+      window.location.replace("/");
+    }
+
+    document.addEventListener("DOMContentLoaded", requireLogin);
   </script>
   <style>
     :root{ --gap:14px; }
