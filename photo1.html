@@ -2,55 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Shree • Photo</title>
+  <title>Shree • Photo 1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script>
-    const BACKEND = "https://shree-drive.onrender.com";
     const API_URL = "https://shreshthapushkar.com/.netlify/identity";
-
     function requireLogin() {
       if (!window.netlifyIdentity) { alert("Identity not loaded"); return; }
       window.netlifyIdentity.init({ APIUrl: API_URL });
-      window.netlifyIdentity.on("init", u => { if (!u) window.location.replace("/"); else loadPhoto(); });
+      window.netlifyIdentity.on("init", u => { if (!u) location.replace("/"); });
     }
-
-    async function token(){ const u=window.netlifyIdentity.currentUser(); if(!u) throw new Error("Not logged in"); return await u.jwt(); }
-
-    async function loadPhoto(){
-      const p=new URLSearchParams(location.search);
-      const id=p.get("id"), name=p.get("name");
-      document.getElementById("title").textContent = name||"Photo";
-      try{
-        const t=await token();
-        const r=await fetch(`${BACKEND}/file/${id}`, { headers:{Authorization:`Bearer ${t}`} });
-        if(!r.ok) throw new Error("Fetch failed");
-        const blob=await r.blob();
-        const url=URL.createObjectURL(blob);
-        document.getElementById("img").src=url;
-      }catch(e){
-        document.getElementById("status").textContent="❌ "+e.message;
-      }
-    }
-
     function logout(){ window.netlifyIdentity.logout(); location.replace("/"); }
     document.addEventListener("DOMContentLoaded", requireLogin);
   </script>
   <style>
-    body{ font-family:system-ui; margin:0; text-align:center; }
-    header{ padding:12px; background:#fff; border-bottom:1px solid #eee; }
-    img{ max-width:95%; margin-top:20px; border-radius:10px; }
-    #status{ margin:10px; color:#555; }
+    body{text-align:center;font-family:'Segoe UI',sans-serif;margin:0;background:#fafafa;}
+    header{padding:16px;background:#fff;border-bottom:1px solid #eee;}
+    header h2{margin:0;color:olive;}
+    header a, header button{padding:6px 12px;margin:0 6px;border:1px solid #ccc;border-radius:8px;text-decoration:none;color:#111;background:#fff;cursor:pointer;}
+    img{max-width:85%;margin:20px auto;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,0.15);}
+    .quote{margin-top:10px;font-size:16px;color:olive;font-style:italic;}
+    nav{margin:20px;}
+    nav a{margin:0 10px;text-decoration:none;color:#006600;font-weight:bold;}
   </style>
 </head>
 <body>
   <header>
-    <h2 id="title">Photo</h2>
-    <a href="/gallery.html">Back to Gallery</a>
+    <h2>🌿 Life Moments</h2>
+    <a href="/life.html">Life</a>
+    <a href="/gallery.html">Gallery</a>
     <button onclick="logout()">Logout</button>
   </header>
-  <div id="status"></div>
-  <img id="img" alt="Photo" />
+
+  <img src="/photo1.jpg" alt="Photo 1" />
+  <div class="quote">“Every picture tells a story.”</div>
+
+  <nav>
+    <a href="/photo9.html">⬅ Prev</a>
+    <a href="/photo2.html">Next ➡</a>
+  </nav>
 </body>
 </html>
