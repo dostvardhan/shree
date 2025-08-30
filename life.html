@@ -1,110 +1,84 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
   <title>Shree • Life</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Use CDN widget -->
+  <!-- Identity -->
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script>
-    const BACKEND = "https://shree-drive.onrender.com";
     const API_URL = "https://shreshthapushkar.com/.netlify/identity";
-
     function requireLogin() {
-      if (!window.netlifyIdentity) {
-        alert("Identity widget not loaded");
-        return;
-      }
+      if (!window.netlifyIdentity) return alert("Identity not loaded");
       window.netlifyIdentity.init({ APIUrl: API_URL });
-      window.netlifyIdentity.on("init", u => {
-        if (!u) {
-          window.location.replace("/");
-        } else {
-          loadTop9();
-        }
-      });
+      window.netlifyIdentity.on("init", u => { if (!u) location.replace("/"); });
     }
-
-    async function token() {
-      const u = window.netlifyIdentity.currentUser();
-      if (!u) throw new Error("Not logged in");
-      return await u.jwt();
-    }
-
-    async function loadTop9() {
-      const status = document.getElementById("status");
-      const grid = document.getElementById("grid");
-      status.textContent = "Loading...";
-      grid.innerHTML = "";
-
-      try {
-        const t = await token();
-        const r = await fetch(`${BACKEND}/list?pageSize=9`, {
-          headers: { Authorization: `Bearer ${t}` },
-        });
-        const files = await r.json();
-        if (!r.ok) throw new Error(files.error || "List failed");
-        if (!files.length) {
-          status.textContent = "No images yet.";
-          return;
-        }
-        status.textContent = "";
-
-        for (const f of files) {
-          const url = await fetchBlobURL(f.id);
-          const a = document.createElement("a");
-          a.href = `/photo.html?id=${encodeURIComponent(f.id)}&name=${encodeURIComponent(f.name)}`;
-          a.title = f.name;
-          const img = document.createElement("img");
-          img.src = url;
-          img.alt = f.name;
-          img.loading = "lazy";
-          a.appendChild(img);
-          grid.appendChild(a);
-        }
-      } catch (e) {
-        status.textContent = "❌ " + e.message;
-      }
-    }
-
-    async function fetchBlobURL(id) {
-      const t = await token();
-      const r = await fetch(`${BACKEND}/file/${id}`, {
-        headers: { Authorization: `Bearer ${t}` },
-      });
-      if (!r.ok) throw new Error("Fetch image failed");
-      const blob = await r.blob();
-      return URL.createObjectURL(blob);
-    }
-
-    function logout() {
-      window.netlifyIdentity.logout();
-      window.location.replace("/");
-    }
-
+    function logout(){ window.netlifyIdentity.logout(); location.replace("/"); }
     document.addEventListener("DOMContentLoaded", requireLogin);
   </script>
+
   <style>
-    :root{ --gap:14px; }
-    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#f8f8f8; }
-    header{ display:flex; align-items:center; gap:10px; padding:16px; background:#fff; position:sticky; top:0; border-bottom:1px solid #eee; }
-    header a, header button{ padding:8px 12px; border:1px solid #ddd; border-radius:12px; background:#fff; cursor:pointer; text-decoration:none; color:#111 }
-    h2{ margin:0; font-size:18px; }
-    #status{ padding:10px 16px; color:#666 }
-    #grid{ padding:16px; display:grid; gap:var(--gap); grid-template-columns: repeat(3, 1fr); }
-    #grid img{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:12px; border:1px solid #eee; background:#fff; }
-    @media (max-width:780px){ #grid{ grid-template-columns: repeat(2,1fr);} }
+    body{margin:0;font-family:sans-serif;background:#fafafa;}
+    header{display:flex;align-items:center;gap:12px;padding:16px;background:#fff;position:sticky;top:0;border-bottom:1px solid #eee;}
+    header a, header button{padding:8px 12px;border:1px solid #ddd;border-radius:12px;background:#fff;cursor:pointer;text-decoration:none;color:#111}
+    h2{margin:0;}
+
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:16px;}
+    .card{position:relative;overflow:hidden;border-radius:12px;background:#fff;box-shadow:0 4px 8px rgba(0,0,0,0.05);}
+    .card img{width:100%;display:block;transition:transform .3s ease;}
+    .card:hover img{transform:scale(1.05);}
+    .quote{text-align:center;padding:8px;font-size:14px;color:#444;}
+
+    /* floating hearts */
+    .hearts{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);pointer-events:none;}
+    .heart{position:absolute;bottom:0;font-size:18px;color:#e63946;opacity:0;animation:floatUp 2s linear forwards;}
+    @keyframes floatUp {
+      0%   {transform:translateY(0) scale(0.8); opacity:1;}
+      50%  {opacity:1;}
+      100% {transform:translateY(-120px) scale(1.2); opacity:0;}
+    }
+
+    @media(max-width:768px){.grid{grid-template-columns:repeat(2,1fr);} }
   </style>
 </head>
 <body>
   <header>
-    <h2>Shree • Life</h2>
+    <h2>❤️ Life Moments</h2>
     <a href="/gallery.html">Gallery</a>
     <a href="/upload.html">Upload</a>
     <button onclick="logout()">Logout</button>
   </header>
-  <div id="status"></div>
-  <div id="grid"></div>
+
+  <div class="grid">
+    <!-- Photo 1 -->
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo1.html"><img src="/photo1.jpg" alt="Photo 1"></a>
+      <div class="hearts"></div>
+      <div class="quote">"Quote for photo 1 here..."</div>
+    </div>
+    <!-- Photo 2 -->
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo2.html"><img src="/photo2.jpg" alt="Photo 2"></a>
+      <div class="hearts"></div>
+      <div class="quote">"Quote for photo 2 here..."</div>
+    </div>
+    <!-- ... repeat for photo3–photo9 ... -->
+  </div>
+
+  <script>
+    function spawnHearts(card){
+      const container = card.querySelector('.hearts');
+      for(let i=0;i<3;i++){ // 3 hearts each hover
+        const heart = document.createElement('div');
+        heart.className = 'heart';
+        heart.textContent = '❤️';
+        heart.style.left = (Math.random()*40 - 20) + "px"; // spread
+        heart.style.animationDelay = (i*0.3)+"s";
+        container.appendChild(heart);
+        setTimeout(()=>heart.remove(),2000);
+      }
+    }
+  </script>
 </body>
 </html>
