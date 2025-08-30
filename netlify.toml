@@ -1,19 +1,4 @@
 # netlify.toml
 
 [build]
-  # Publish dir = repo root (change only if your site publishes from a subfolder)
   publish = "."
-
-# Bypass Edge Functions for Netlify internal endpoints (Identity, JWKS, etc.)
-# Fireproof installed an Edge Function named "fireproof_server".
-[[edge_functions]]
-function = "fireproof_server"
-path = "/*"
-excludedPath = ["/.netlify/*"]
-
-# If you have any other Edge Function from extensions (e.g., "neon"),
-# add a similar block for it too. Example:
-# [[edge_functions]]
-# function = "neon"
-# path = "/*"
-# excludedPath = ["/.netlify/*"]
