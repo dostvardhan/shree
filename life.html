@@ -19,26 +19,26 @@
   </script>
 
   <style>
-    body{margin:0;font-family: 'Segoe UI',sans-serif;background:#fafafa;}
+    body{margin:0;font-family:'Segoe UI',sans-serif;background:#fafafa;}
     header{padding:20px;text-align:center;background:#fff;border-bottom:1px solid #eee;}
     header h1{margin:0;font-size:28px;color:olive;font-weight:bold;}
     header nav{margin-top:10px;}
     header a, header button{padding:8px 14px;margin:0 6px;border:1px solid #ccc;border-radius:10px;background:#fff;text-decoration:none;color:#111;cursor:pointer;}
 
-    /* grid tuning */
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:12px;}
-    .card{position:relative;overflow:hidden;border-radius:14px;background:#fff;box-shadow:0 4px 8px rgba(0,0,0,0.06);}
+    /* grid tuning - photos smaller */
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;padding:28px;}
+    .card{position:relative;overflow:hidden;border-radius:14px;background:#fff;box-shadow:0 4px 10px rgba(0,0,0,0.06);}
     .card img{width:100%;height:auto;display:block;transition:transform .35s ease;}
-    .card:hover img{transform:scale(1.1);}
+    .card:hover img{transform:scale(1.08);}
     .quote{text-align:center;padding:10px;font-size:15px;color:olive;font-style:italic;}
 
-    /* floating hearts stronger */
+    /* floating hearts stronger + more */
     .hearts{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);pointer-events:none;}
-    .heart{position:absolute;bottom:0;font-size:22px;color:#e63946;opacity:0;animation:floatUp 3s ease-out forwards;}
+    .heart{position:absolute;bottom:0;font-size:20px;color:#e63946;opacity:0;animation:floatUp 3.5s ease-out forwards;}
     @keyframes floatUp {
       0%   {transform:translateY(0) scale(0.8); opacity:1;}
       40%  {opacity:1;}
-      100% {transform:translateY(-180px) scale(1.4); opacity:0;}
+      100% {transform:translateY(-200px) scale(1.4); opacity:0;}
     }
 
     @media(max-width:768px){.grid{grid-template-columns:repeat(2,1fr);} }
@@ -105,14 +105,14 @@
   <script>
     function spawnHearts(card){
       const container = card.querySelector('.hearts');
-      for(let i=0;i<4;i++){ // thoda zyada hearts
+      for(let i=0;i<6;i++){ // more hearts now
         const heart = document.createElement('div');
         heart.className = 'heart';
         heart.textContent = '❤️';
-        heart.style.left = (Math.random()*50 - 25) + "px";
-        heart.style.animationDelay = (i*0.4)+"s";
+        heart.style.left = (Math.random()*60 - 30) + "px"; // spread wider
+        heart.style.animationDelay = (i*0.25)+"s";
         container.appendChild(heart);
-        setTimeout(()=>heart.remove(),3000);
+        setTimeout(()=>heart.remove(),3500);
       }
     }
   </script>
