@@ -5,7 +5,7 @@
   <title>Shree • Life</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Identity -->
+  <!-- Netlify Identity -->
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script>
     const API_URL = "https://shreshthapushkar.com/.netlify/identity";
@@ -19,20 +19,21 @@
   </script>
 
   <style>
-    body{margin:0;font-family:sans-serif;background:#fafafa;}
-    header{display:flex;align-items:center;gap:12px;padding:16px;background:#fff;position:sticky;top:0;border-bottom:1px solid #eee;}
-    header a, header button{padding:8px 12px;border:1px solid #ddd;border-radius:12px;background:#fff;cursor:pointer;text-decoration:none;color:#111}
-    h2{margin:0;}
+    body{margin:0;font-family: 'Segoe UI',sans-serif;background:#fafafa;}
+    header{padding:20px;text-align:center;background:#fff;border-bottom:1px solid #eee;}
+    header h1{margin:0;font-size:28px;color:olive;font-weight:bold;}
+    header nav{margin-top:10px;}
+    header a, header button{padding:8px 14px;margin:0 6px;border:1px solid #ccc;border-radius:10px;background:#fff;text-decoration:none;color:#111;cursor:pointer;}
 
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:16px;}
-    .card{position:relative;overflow:hidden;border-radius:12px;background:#fff;box-shadow:0 4px 8px rgba(0,0,0,0.05);}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:20px;}
+    .card{position:relative;overflow:hidden;border-radius:14px;background:#fff;box-shadow:0 4px 8px rgba(0,0,0,0.05);}
     .card img{width:100%;display:block;transition:transform .3s ease;}
-    .card:hover img{transform:scale(1.05);}
-    .quote{text-align:center;padding:8px;font-size:14px;color:#444;}
+    .card:hover img{transform:scale(1.07);}
+    .quote{text-align:center;padding:10px;font-size:15px;color:olive;font-style:italic;}
 
     /* floating hearts */
     .hearts{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);pointer-events:none;}
-    .heart{position:absolute;bottom:0;font-size:18px;color:#e63946;opacity:0;animation:floatUp 2s linear forwards;}
+    .heart{position:absolute;bottom:0;font-size:20px;color:#e63946;opacity:0;animation:floatUp 2s linear forwards;}
     @keyframes floatUp {
       0%   {transform:translateY(0) scale(0.8); opacity:1;}
       50%  {opacity:1;}
@@ -44,36 +45,70 @@
 </head>
 <body>
   <header>
-    <h2>❤️ Life Moments</h2>
-    <a href="/gallery.html">Gallery</a>
-    <a href="/upload.html">Upload</a>
-    <button onclick="logout()">Logout</button>
+    <h1>🌿 Life is Beautiful 🌿</h1>
+    <nav>
+      <a href="/gallery.html">Gallery</a>
+      <a href="/upload.html">Upload</a>
+      <button onclick="logout()">Logout</button>
+    </nav>
   </header>
 
   <div class="grid">
-    <!-- Photo 1 -->
     <div class="card" onmouseenter="spawnHearts(this)">
       <a href="/photo1.html"><img src="/photo1.jpg" alt="Photo 1"></a>
       <div class="hearts"></div>
-      <div class="quote">"Quote for photo 1 here..."</div>
+      <div class="quote">“Every picture tells a story.”</div>
     </div>
-    <!-- Photo 2 -->
     <div class="card" onmouseenter="spawnHearts(this)">
       <a href="/photo2.html"><img src="/photo2.jpg" alt="Photo 2"></a>
       <div class="hearts"></div>
-      <div class="quote">"Quote for photo 2 here..."</div>
+      <div class="quote">“Smiles are contagious.”</div>
     </div>
-    <!-- ... repeat for photo3–photo9 ... -->
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo3.html"><img src="/photo3.jpg" alt="Photo 3"></a>
+      <div class="hearts"></div>
+      <div class="quote">“Love makes everything brighter.”</div>
+    </div>
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo4.html"><img src="/photo4.jpg" alt="Photo 4"></a>
+      <div class="hearts"></div>
+      <div class="quote">“Little things matter most.”</div>
+    </div>
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo5.html"><img src="/photo5.jpg" alt="Photo 5"></a>
+      <div class="hearts"></div>
+      <div class="quote">“Together is our favorite place.”</div>
+    </div>
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo6.html"><img src="/photo6.jpg" alt="Photo 6"></a>
+      <div class="hearts"></div>
+      <div class="quote">“Memories are timeless treasures.”</div>
+    </div>
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo7.html"><img src="/photo7.jpg" alt="Photo 7"></a>
+      <div class="hearts"></div>
+      <div class="quote">“Happiness looks good on us.”</div>
+    </div>
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo8.html"><img src="/photo8.jpg" alt="Photo 8"></a>
+      <div class="hearts"></div>
+      <div class="quote">“A moment lasts forever.”</div>
+    </div>
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo9.html"><img src="/photo9.jpg" alt="Photo 9"></a>
+      <div class="hearts"></div>
+      <div class="quote">“Captured with love.”</div>
+    </div>
   </div>
 
   <script>
     function spawnHearts(card){
       const container = card.querySelector('.hearts');
-      for(let i=0;i<3;i++){ // 3 hearts each hover
+      for(let i=0;i<3;i++){
         const heart = document.createElement('div');
         heart.className = 'heart';
         heart.textContent = '❤️';
-        heart.style.left = (Math.random()*40 - 20) + "px"; // spread
+        heart.style.left = (Math.random()*40 - 20) + "px";
         heart.style.animationDelay = (i*0.3)+"s";
         container.appendChild(heart);
         setTimeout(()=>heart.remove(),2000);
