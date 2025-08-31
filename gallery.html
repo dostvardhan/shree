@@ -1,83 +1,84 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
   <title>Shree • Gallery</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script>
     const BACKEND = "https://shree-drive.onrender.com";
-    const API_URL = "https://shreshthapushkar.com/.netlify/identity";
 
-    function requireLogin() {
-      if (!window.netlifyIdentity) {
-        alert("Identity widget not loaded");
-        return;
-      }
-      window.netlifyIdentity.init({ APIUrl: API_URL });
-      window.netlifyIdentity.on("init", u => { if (!u) window.location.replace("/"); else loadAll(); });
+    async function requireLogin() {
+      if (!window.netlifyIdentity) return alert("Identity not loaded");
+      window.netlifyIdentity.init();
+      window.netlifyIdentity.on("init", u => { if (!u) location.replace("/"); else loadGallery(); });
     }
 
-    async function token() {
+    async function token(){
       const u = window.netlifyIdentity.currentUser();
-      if (!u) throw new Error("Not logged in");
+      if(!u) throw new Error("Not logged in");
       return await u.jwt();
     }
 
-    async function loadAll() {
+    async function loadGallery(){
       const grid = document.getElementById("grid");
       const status = document.getElementById("status");
-      status.textContent = "Loading…";
-      grid.innerHTML = "";
+      grid.innerHTML = ""; status.textContent = "Loading...";
+
       try {
         const t = await token();
-        const r = await fetch(`${BACKEND}/list`, { headers:{ Authorization:`Bearer ${t}` } });
+        const r = await fetch(`${BACKEND}/list`, { headers:{Authorization:`Bearer ${t}`}});
         const files = await r.json();
-        if (!r.ok) throw new Error(files.error || "List failed");
-        if (!files.length){ status.textContent="No images yet."; return; }
-        status.textContent="";
+        if(!r.ok) throw new Error(files.error || "List failed");
+        if(!files.length){ status.textContent="No images yet."; return; }
+
+        status.textContent = "";
         for(const f of files){
-          const url = await fetchBlobURL(f.id);
-          const a = document.createElement("a");
-          a.href = `/photo.html?id=${encodeURIComponent(f.id)}&name=${encodeURIComponent(f.name)}`;
-          a.title = f.name;
-          const img = document.createElement("img");
-          img.src = url; img.alt = f.name; img.loading="lazy";
-          a.appendChild(img);
-          grid.appendChild(a);
+          const imgUrl = `${BACKEND}/file/${f.id}?jwt=${t}`;
+          const div = document.createElement("div");
+          div.className = "card";
+          div.innerHTML = `
+            <img src="${imgUrl}" alt="${f.name}" loading="lazy">
+            <div class="quote">${f.quote || ""}</div>
+          `;
+          grid.appendChild(div);
         }
-      } catch(e){ status.textContent="❌ "+e.message; }
+      } catch(e){ status.textContent = "❌ "+e.message; }
     }
 
-    async function fetchBlobURL(id){
-      const t = await token();
-      const r = await fetch(`${BACKEND}/file/${id}`, { headers:{ Authorization:`Bearer ${t}` } });
-      if(!r.ok) throw new Error("Fetch failed");
-      return URL.createObjectURL(await r.blob());
-    }
-
-    function logout(){ window.netlifyIdentity.logout(); window.location.replace("/"); }
+    function logout(){ window.netlifyIdentity.logout(); location.replace("/"); }
     document.addEventListener("DOMContentLoaded", requireLogin);
   </script>
+
   <style>
-    body{ font-family:system-ui; margin:0; }
-    header{ display:flex; align-items:center; gap:10px; padding:16px; background:#fff; border-bottom:1px solid #eee; }
-    header a, header button{ padding:6px 10px; border:1px solid #ccc; border-radius:8px; text-decoration:none; color:#000; background:#fff; }
-    #status{ padding:10px; color:#555 }
-    #grid{ display:grid; gap:12px; padding:16px; grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); }
-    #grid img{ width:100%; border-radius:10px; border:1px solid #eee; object-fit:cover; }
+    body{margin:0;font-family:'Segoe UI',sans-serif;background:#fafafa;}
+    header{padding:20px;text-align:center;background:#fff;border-bottom:1px solid #eee;}
+    header h2{margin:0;color:olive;}
+    header nav{margin-top:10px;}
+    header a,header button{padding:8px 14px;margin:0 6px;border:1px solid #ccc;border-radius:10px;text-decoration:none;background:#fff;color:#111;cursor:pointer;}
+
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;padding:30px;max-width:1100px;margin:auto;}
+    .card{background:#fff;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.08);overflow:hidden;}
+    .card img{width:100%;display:block;}
+    .quote{text-align:center;padding:8px;font-size:14px;color:olive;font-style:italic;}
+
+    @media(max-width:768px){
+      .grid{grid-template-columns:repeat(2,1fr);gap:20px;padding:20px;}
+    }
   </style>
 </head>
 <body>
   <header>
-    <h2>Gallery</h2>
-    <a href="/life.html">Life</a>
-    <a href="/upload.html">Upload</a>
-    <button onclick="logout()">Logout</button>
+    <h2>🌿 Gallery 🌿</h2>
+    <nav>
+      <a href="/life.html">Life</a>
+      <a href="/upload.html">Upload</a>
+      <button onclick="logout()">Logout</button>
+    </nav>
   </header>
 
-  <div id="status"></div>
-  <div id="grid"></div>
+  <div id="status" style="text-align:center;color:#666;padding:10px;"></div>
+  <div id="grid" class="grid"></div>
 </body>
 </html>
