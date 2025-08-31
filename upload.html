@@ -1,62 +1,79 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
   <title>Shree • Upload</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <script>
     const BACKEND = "https://shree-drive.onrender.com";
-    const API_URL = "https://shreshthapushkar.com/.netlify/identity";
 
-    function requireLogin() {
-      if (!window.netlifyIdentity) {
-        alert("Identity widget not loaded");
-        return;
-      }
-      window.netlifyIdentity.init({ APIUrl: API_URL });
-      window.netlifyIdentity.on("init", u => { if (!u) window.location.replace("/"); });
+    async function requireLogin() {
+      if (!window.netlifyIdentity) return alert("Identity not loaded");
+      window.netlifyIdentity.init();
+      window.netlifyIdentity.on("init", u => { if (!u) location.replace("/"); });
     }
 
-    async function token() {
+    async function token(){
       const u = window.netlifyIdentity.currentUser();
-      if (!u) throw new Error("Not logged in");
+      if(!u) throw new Error("Not logged in");
       return await u.jwt();
     }
 
-    async function doUpload() {
-      const status = document.getElementById("status");
+    async function doUpload(){
       const file = document.getElementById("file").files[0];
-      if (!file) return alert("Select a file first");
+      const quote = document.getElementById("quote").value;
+      const status = document.getElementById("status");
+      if(!file){ alert("Select a file"); return; }
+      status.textContent="Uploading...";
 
-      status.textContent = "Uploading…";
       try {
         const t = await token();
         const form = new FormData();
         form.append("file", file);
-        const r = await fetch(`${BACKEND}/upload`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${t}` },
-          body: form
-        });
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error || "Upload failed");
-        status.textContent = "✅ Uploaded: " + data.name;
-      } catch (e) {
-        status.textContent = "❌ " + e.message;
-      }
+        form.append("quote", quote);
+
+        const r = await fetch(`${BACKEND}/upload`, { method:"POST", headers:{Authorization:`Bearer ${t}`}, body:form });
+        const out = await r.json();
+        if(!r.ok) throw new Error(out.error||"Upload failed");
+
+        status.textContent="✅ Uploaded!";
+      } catch(e){ status.textContent="❌ "+e.message; }
     }
 
-    function logout(){ window.netlifyIdentity.logout(); window.location.replace("/"); }
+    function logout(){ window.netlifyIdentity.logout(); location.replace("/"); }
     document.addEventListener("DOMContentLoaded", requireLogin);
   </script>
+
   <style>
-    body{ font-family:system-ui; margin:0; padding:16px; }
-    header{ display:flex; align-items:center; gap:10px; margin-bottom:20px; }
-    input[type=file]{ margin:10px 0; }
-    button{ padding:8px 14px; border-radius:8px; border:1px solid #ccc; cursor:pointer; }
-    #status{ margin-top:12px; color:#333; }
+    body{margin:0;font-family:'Segoe UI',sans-serif;background:#fafafa;text-align:center;}
+    header{padding:20px;background:#fff;border-bottom:1px solid #eee;}
+    header h2{margin:0;color:olive;}
+    header nav{margin-top:10px;}
+    header a,header button{padding:8px 14px;margin:0 6px;border:1px solid #ccc;border-radius:10px;text-decoration:none;background:#fff;color:#111;cursor:pointer;}
+
+    main{max-width:500px;margin:40px auto;padding:20px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);}
+    input,textarea,button{margin:10px 0;padding:10px;width:100%;border:1px solid #ccc;border-radius:8px;font-size:14px;}
+    button{background:olive;color:#fff;font-weight:bold;cursor:pointer;}
+    #status{margin-top:10px;color:#333;}
   </style>
 </head>
-<
+<body>
+  <header>
+    <h2>🌿 Upload a Photo 🌿</h2>
+    <nav>
+      <a href="/life.html">Life</a>
+      <a href="/gallery.html">Gallery</a>
+      <button onclick="logout()">Logout</button>
+    </nav>
+  </header>
+
+  <main>
+    <input type="file" id="file" accept="image/*">
+    <textarea id="quote" rows="3" placeholder="Write a quote..."></textarea>
+    <button onclick="doUpload()">Upload</button>
+    <div id="status"></div>
+  </main>
+</body>
+</html>
