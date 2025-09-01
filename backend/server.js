@@ -37,7 +37,6 @@ function requireAuth(req, res, next) {
     const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
     if (!token) return res.status(401).json({ error: 'No token' });
 
-    // Just decode without verifying
     const decoded = jwt.decode(token, { complete: true });
     if (!decoded) return res.status(401).json({ error: 'Invalid token' });
 
@@ -57,12 +56,16 @@ const drive = google.drive({ version: 'v3', auth: oauth2 });
 async function ensurePublic(id) {
   if (String(MAKE_PUBLIC).toLowerCase() !== 'true') return;
   try {
-    await drive.permissions.create({ fileId: id, requestBody: { role: 'reader', type: 'anyone' } });
+    await drive.permissions.create({
+      fileId: id,
+      requestBody: { role: 'reader', type: 'anyone' }
+    });
   } catch {}
 }
 
 // Routes
 app.get('/health', (req,res)=>res.json({ ok:true }));
+
 app.get('/diag', async (req, res) => {
   try {
     const about = await drive.about.get({ fields: 'user(displayName,permissionId)' });
@@ -75,4 +78,47 @@ app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error:'No file' });
     if (!DRIVE_FOLDER_ID) return res.status(500).json({ error:'DRIVE_FOLDER_ID not set' });
 
-    const name = `${Date.now()}_${(req.file.originalnam_
+    const name = `${Date.now()}_${(req.file.originalname||'upload').replace(/[^\w.\-]/g,'_')}`;
+    const r = await drive.files.create({
+      requestBody: { name, parents:[DRIVE_FOLDER_ID] },
+      media: { mimeType: req.file.mimetype, body: Buffer.from(req.file.buffer) },
+      fields: 'id,name,mimeType,createdTime'
+    });
+    await ensurePublic(r.data.id);
+    res.json({ ok:true, id:r.data.id, name:r.data.name, mimeType:r.data.mimeType, createdTime:r.data.createdTime });
+  } catch(e){ res.status(500).json({ ok:false, error:e.message }); }
+});
+
+app.get('/list', requireAuth, async (req, res) => {
+  try {
+    if (!DRIVE_FOLDER_ID) return res.status(500).json({ error:'DRIVE_FOLDER_ID not set' });
+    const pageSize = Math.min(Number(req.query.pageSize || 100), 1000);
+    const r = await drive.files.list({
+      q: `'${DRIVE_FOLDER_ID}' in parents and trashed=false`,
+      orderBy: 'createdTime desc',
+      pageSize,
+      fields: 'files(id,name,mimeType,createdTime)'
+    });
+    res.json(r.data.files || []);
+  } catch(e){ res.status(500).json({ error:e.message }); }
+});
+
+app.get('/file/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (DRIVE_FOLDER_ID) {
+      const meta = await drive.files.get({ fileId: id, fields: 'parents,mimeType,name' });
+      const ok = (meta.data.parents || []).includes(DRIVE_FOLDER_ID);
+      if (!ok) return res.status(403).json({ error: 'Forbidden' });
+      res.setHeader('Content-Type', meta.data.mimeType || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(meta.data.name)}"`);
+    }
+    res.setHeader('Cache-Control', 'private, max-age=60');
+    const stream = await drive.files.get({ fileId: id, alt:'media' }, { responseType: 'stream' });
+    stream.data.on('error', () => res.status(500).end());
+    stream.data.pipe(res);
+  } catch(e){ res.status(404).json({ error:'Not found' }); }
+});
+
+// ✅ THIS LINE WAS MISSING BEFORE
+app.listen(PORT, ()=> console.log('Server on :' + PORT));
