@@ -63,16 +63,26 @@ async function ensurePublic(id) {
   } catch {}
 }
 
-// Routes
+// Root route (for Render health check)
+app.get('/', (req,res)=>res.json({ ok:true, msg:'Shree Drive backend running' }));
+
+// Health check route
 app.get('/health', (req,res)=>res.json({ ok:true }));
 
+// Diagnostic
 app.get('/diag', async (req, res) => {
   try {
     const about = await drive.about.get({ fields: 'user(displayName,permissionId)' });
-    res.json({ ok:true, user:about.data.user, folder:DRIVE_FOLDER_ID||null, makePublic:MAKE_PUBLIC });
+    res.json({
+      ok:true,
+      user:about.data.user,
+      folder:DRIVE_FOLDER_ID||null,
+      makePublic:MAKE_PUBLIC
+    });
   } catch(e){ res.status(500).json({ ok:false, error:e.message }); }
 });
 
+// Upload
 app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error:'No file' });
@@ -85,10 +95,17 @@ app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
       fields: 'id,name,mimeType,createdTime'
     });
     await ensurePublic(r.data.id);
-    res.json({ ok:true, id:r.data.id, name:r.data.name, mimeType:r.data.mimeType, createdTime:r.data.createdTime });
+    res.json({
+      ok:true,
+      id:r.data.id,
+      name:r.data.name,
+      mimeType:r.data.mimeType,
+      createdTime:r.data.createdTime
+    });
   } catch(e){ res.status(500).json({ ok:false, error:e.message }); }
 });
 
+// List files
 app.get('/list', requireAuth, async (req, res) => {
   try {
     if (!DRIVE_FOLDER_ID) return res.status(500).json({ error:'DRIVE_FOLDER_ID not set' });
@@ -103,6 +120,7 @@ app.get('/list', requireAuth, async (req, res) => {
   } catch(e){ res.status(500).json({ error:e.message }); }
 });
 
+// Fetch file
 app.get('/file/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -120,5 +138,5 @@ app.get('/file/:id', requireAuth, async (req, res) => {
   } catch(e){ res.status(404).json({ error:'Not found' }); }
 });
 
-// ✅ THIS LINE WAS MISSING BEFORE
+// Start server
 app.listen(PORT, ()=> console.log('Server on :' + PORT));
