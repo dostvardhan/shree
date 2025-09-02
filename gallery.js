@@ -1,4 +1,4 @@
-// gallery.js (final, working with backend /list array)
+// gallery.js (debug version)
 document.addEventListener("DOMContentLoaded", initGallery);
 const BACKEND = "https://shree-drive.onrender.com";
 
@@ -23,16 +23,22 @@ async function initGallery() {
   if (!user) { alert("Login failed."); return; }
 
   const token = await user.jwt();
+
+  // 🔎 DEBUG: print JWT header + payload
+  const header = JSON.parse(atob(token.split('.')[0]));
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  console.log("🔑 JWT Header:", header);
+  console.log("📦 JWT Payload:", payload);
+
   if (!token || token.length < 100) { alert("Invalid token."); return; }
   console.log("JWT length:", token.length);
 
   try {
     const resp = await fetch(`${BACKEND}/list`, { headers: { Authorization: `Bearer ${token}` } });
-    if (!resp.ok) throw new Error(`List failed: ${resp.status}`);
     const files = await resp.json();
+    console.log("📂 List response:", files);
 
     const gallery = document.getElementById("gallery");
-    const status = document.getElementById("status");
     if (gallery) gallery.innerHTML = "";
 
     if (!files.length) {
@@ -61,34 +67,16 @@ async function initGallery() {
         }
         item.appendChild(img);
 
-        // ✅ Quote/description show
         if (f.description) {
           const cap = document.createElement("div");
           cap.className = "quote";
           cap.textContent = f.description;
           item.appendChild(cap);
         }
-      } else {
-        const a = document.createElement("button");
-        a.textContent = `Download ${f.name}`;
-        a.onclick = async () => {
-          const r = await fetch(`${BACKEND}/file/${encodeURIComponent(f.id)}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (!r.ok) return alert('Download failed: ' + r.status);
-          const blob = await r.blob();
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = url; link.download = f.name || "file";
-          document.body.appendChild(link); link.click(); link.remove();
-          URL.revokeObjectURL(url);
-        };
-        item.appendChild(a);
       }
 
       if (gallery) gallery.appendChild(item);
     }
-    if (status) status.textContent = '';
   } catch (e) {
     console.error(e);
     alert("Error loading gallery: " + e.message);
