@@ -1,5 +1,4 @@
-// upload.js
-
+// upload.js (debug version)
 document.addEventListener("DOMContentLoaded", () => {
   const fileInput = document.getElementById("file");
   const btn = document.getElementById("uploadBtn");
@@ -13,21 +12,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      // Get Netlify Identity current user
       const u = netlifyIdentity.currentUser();
       if (!u) {
         alert("You must be logged in");
         return;
       }
 
-      // Get JWT token from Identity
       const token = await u.jwt();
 
-      // Prepare file data
+      // 🔎 DEBUG: print JWT header + payload
+      const header = JSON.parse(atob(token.split('.')[0]));
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log("🔑 JWT Header:", header);
+      console.log("📦 JWT Payload:", payload);
+
       const fd = new FormData();
       fd.append("file", f);
+      fd.append("quote", document.getElementById("quote")?.value || "");
 
-      // Call backend (Render) API
       const res = await fetch("https://shree-drive.onrender.com/upload", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
