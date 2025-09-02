@@ -1,21 +1,36 @@
-// upload.js (JWT debug only)
-document.addEventListener("DOMContentLoaded", async () => {
-  if (typeof netlifyIdentity === "undefined") {
-    console.error("Netlify Identity not loaded");
-    return;
-  }
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>JWT Debug</title>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+  <h2>JWT Debug</h2>
+  <button id="login">Login</button>
+  <button id="logout">Logout</button>
 
-  netlifyIdentity.on("init", async (u) => {
-    if (!u) {
-      console.warn("Not logged in");
-      return;
-    }
-    const token = await u.jwt();
-    const header = JSON.parse(atob(token.split('.')[0]));
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    console.log("🔑 JWT Header:", header);
-    console.log("📦 JWT Payload:", payload);
-  });
+  <script>
+    // Init identity
+    netlifyIdentity.init();
 
-  netlifyIdentity.init();
-});
+    document.getElementById("login").onclick = () => netlifyIdentity.open();
+    document.getElementById("logout").onclick = () => netlifyIdentity.logout();
+
+    netlifyIdentity.on("login", async user => {
+      console.log("Logged in:", user.email);
+
+      const token = await user.jwt();
+      console.log("JWT raw:", token);
+
+      // Split JWT
+      const parts = token.split(".");
+      const header = JSON.parse(atob(parts[0]));
+      const payload = JSON.parse(atob(parts[1]));
+
+      console.log("kid:", header.kid);
+      console.log("iss:", payload.iss);
+    });
+  </script>
+</body>
+</html>
