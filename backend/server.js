@@ -151,6 +151,7 @@ app.get('/auth/url', (req, res) => {
   const url = oauth2.generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent',
+    response_type: 'code',   // ✅ FIX ADDED
     scope: scopes
   });
   res.json({ url });
