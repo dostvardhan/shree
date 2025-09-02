@@ -34,17 +34,18 @@
     document.addEventListener("DOMContentLoaded", () => {
       if (window.netlifyIdentity) {
         netlifyIdentity.init();
-        netlifyIdentity.on("init", u => { 
-          if(!u) {
-            console.warn("⚠️ No user logged in, redirecting...");
-            window.location='/'; 
+        netlifyIdentity.on("init", user => {
+          console.log("🔎 Netlify Identity init:", user);
+          if (!user) {
+            document.getElementById("status").textContent = "⚠️ Not logged in. Please login first.";
+            window.location.href = "/"; // redirect to home/login
           } else {
-            console.log("✅ Logged in as:", u.email);
+            console.log("✅ Logged in as:", user.email);
             loadGallery();
           }
         });
       } else {
-        console.error("❌ Identity script failed to load");
+        console.error("❌ Identity script not loaded");
       }
     });
 
