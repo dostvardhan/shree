@@ -4,6 +4,7 @@ const express = require('express');
 const multer = require('multer');
 const jwt = require('jsonwebtoken');
 const { google } = require('googleapis');
+const { Readable } = require('stream');   // ✅ stream import
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 30 * 1024 * 1024 } });
@@ -84,18 +85,21 @@ app.get('/diag', async (req, res) => {
   } catch(e){ res.status(500).json({ ok:false, error:e.message }); }
 });
 
-// Upload
+// Upload (✅ stream fix applied)
 app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error:'No file' });
     if (!DRIVE_FOLDER_ID) return res.status(500).json({ error:'DRIVE_FOLDER_ID not set' });
 
     const name = `${Date.now()}_${(req.file.originalname||'upload').replace(/[^\w.\-]/g,'_')}`;
+    const stream = Readable.from(req.file.buffer);   // ✅ convert buffer to stream
+
     const r = await drive.files.create({
       requestBody: { name, parents:[DRIVE_FOLDER_ID] },
-      media: { mimeType: req.file.mimetype, body: Buffer.from(req.file.buffer) },
+      media: { mimeType: req.file.mimetype, body: stream },
       fields: 'id,name,mimeType,createdTime'
     });
+
     await ensurePublic(r.data.id);
     res.json({
       ok:true,
@@ -104,7 +108,9 @@ app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
       mimeType:r.data.mimeType,
       createdTime:r.data.createdTime
     });
-  } catch(e){ res.status(500).json({ ok:false, error:e.message }); }
+  } catch(e){ 
+    res.status(500).json({ ok:false, error:e.message }); 
+  }
 });
 
 // List files
