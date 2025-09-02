@@ -142,18 +142,15 @@ app.get('/file/:id', requireAuth, async (req, res) => {
 
 // ===== OAuth routes for generating refresh token =====
 
-// Step 1: generate Google login URL
+// Step 1: generate Google login URL (manual build)
 app.get('/auth/url', (req, res) => {
   const scopes = [
     'https://www.googleapis.com/auth/drive.file',
     'https://www.googleapis.com/auth/drive.metadata.readonly'
-  ];
-  const url = oauth2.generateAuthUrl({
-    access_type: 'offline',
-    prompt: 'consent',
-    response_type: 'code',   // ✅ FIX ADDED
-    scope: scopes
-  });
+  ].join(' ');
+
+  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(CLIENT_ID)}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${encodeURIComponent(scopes)}&access_type=offline&prompt=consent`;
+
   res.json({ url });
 });
 
