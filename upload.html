@@ -2,78 +2,68 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Shree • Upload</title>
+  <title>🌿 Upload a Photo 🌿</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  <script>
-    const BACKEND = "https://shree-drive.onrender.com";
-
-    async function requireLogin() {
-      if (!window.netlifyIdentity) return alert("Identity not loaded");
-      window.netlifyIdentity.init();
-      window.netlifyIdentity.on("init", u => { if (!u) location.replace("/"); });
-    }
-
-    async function token(){
-      const u = window.netlifyIdentity.currentUser();
-      if(!u) throw new Error("Not logged in");
-      return await u.jwt();
-    }
-
-    async function doUpload(){
-      const file = document.getElementById("file").files[0];
-      const quote = document.getElementById("quote").value;
-      const status = document.getElementById("status");
-      if(!file){ alert("Select a file"); return; }
-      status.textContent="Uploading...";
-
-      try {
-        const t = await token();
-        const form = new FormData();
-        form.append("file", file);
-        form.append("quote", quote);
-
-        const r = await fetch(`${BACKEND}/upload`, { method:"POST", headers:{Authorization:`Bearer ${t}`}, body:form });
-        const out = await r.json();
-        if(!r.ok) throw new Error(out.error||"Upload failed");
-
-        status.textContent="✅ Uploaded!";
-      } catch(e){ status.textContent="❌ "+e.message; }
-    }
-
-    function logout(){ window.netlifyIdentity.logout(); location.replace("/"); }
-    document.addEventListener("DOMContentLoaded", requireLogin);
-  </script>
-
+  <script src="/.netlify/identity/widget.js"></script>
   <style>
-    body{margin:0;font-family:'Segoe UI',sans-serif;background:#fafafa;text-align:center;}
-    header{padding:20px;background:#fff;border-bottom:1px solid #eee;}
-    header h2{margin:0;color:olive;}
-    header nav{margin-top:10px;}
-    header a,header button{padding:8px 14px;margin:0 6px;border:1px solid #ccc;border-radius:10px;text-decoration:none;background:#fff;color:#111;cursor:pointer;}
-
-    main{max-width:500px;margin:40px auto;padding:20px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);}
-    input,textarea,button{margin:10px 0;padding:10px;width:100%;border:1px solid #ccc;border-radius:8px;font-size:14px;}
-    button{background:olive;color:#fff;font-weight:bold;cursor:pointer;}
-    #status{margin-top:10px;color:#333;}
+    body{font-family:sans-serif;background:#f8f8f8;margin:0;padding:20px;}
+    header{display:flex;gap:10px;align-items:center;margin-bottom:20px;}
+    header a, header button{padding:6px 12px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;text-decoration:none;color:#111}
+    h2{margin:0 0 20px 0;color:olive;}
+    input,textarea{display:block;margin-bottom:10px;padding:8px;width:100%;max-width:400px;}
+    button{padding:10px 20px;background:olive;color:#fff;border:none;border-radius:8px;cursor:pointer;}
+    #status{margin-top:10px;color:#444;}
   </style>
 </head>
 <body>
   <header>
     <h2>🌿 Upload a Photo 🌿</h2>
-    <nav>
-      <a href="/life.html">Life</a>
-      <a href="/gallery.html">Gallery</a>
-      <button onclick="logout()">Logout</button>
-    </nav>
+    <a href="/life.html">Life</a>
+    <a href="/gallery.html">Gallery</a>
+    <button onclick="logout()">Logout</button>
   </header>
 
-  <main>
-    <input type="file" id="file" accept="image/*">
-    <textarea id="quote" rows="3" placeholder="Write a quote..."></textarea>
-    <button onclick="doUpload()">Upload</button>
-    <div id="status"></div>
-  </main>
+  <input type="file" id="file" accept="image/*">
+  <textarea id="quote" placeholder="Write a quote..."></textarea>
+  <button onclick="doUpload()">Upload</button>
+  <div id="status"></div>
+
+  <script>
+    const BACKEND = "https://shree-drive.onrender.com";
+
+    function logout(){ window.netlifyIdentity.logout(); window.location='/'; }
+
+    async function token(){
+      const u = netlifyIdentity.currentUser();
+      if(!u) throw new Error("Not logged in");
+      return await u.jwt();
+    }
+
+    async function doUpload(){
+      const file = document.getElementById('file').files[0];
+      const quote = document.getElementById('quote').value.trim();
+      if(!file) return alert("Choose a file first!");
+      document.getElementById('status').textContent = "⏳ Uploading...";
+
+      try {
+        const t = await token();
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('quote', quote);
+
+        const r = await fetch(`${BACKEND}/upload`, {
+          method:'POST',
+          headers:{ Authorization:`Bearer ${t}` },
+          body: fd
+        });
+        const data = await r.json();
+        if(!r.ok || !data.ok) throw new Error(data.error || "Upload failed");
+
+        document.getElementById('status').textContent = "✅ Uploaded!";
+      } catch(e){
+        document.getElementById('status').textContent = "❌ " + e.message;
+      }
+    }
+  </script>
 </body>
 </html>
