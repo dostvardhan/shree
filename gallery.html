@@ -1,115 +1,61 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>🌿 Shree Gallery 🌿</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- ✅ Correct Netlify Identity widget -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  <style>
-    body{margin:0;font-family:sans-serif;background:#f8f8f8;}
-    header{display:flex;align-items:center;gap:10px;padding:16px;background:#fff;position:sticky;top:0;border-bottom:1px solid #eee;}
-    header a,header button{padding:6px 12px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;text-decoration:none;color:#111}
-    h2{margin:0;color:olive;}
-    #status{padding:10px;color:#666;}
-    #grid{padding:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}
-    .card{background:#fff;border:1px solid #eee;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;}
-    .card img{width:100%;height:200px;object-fit:cover;}
-    .quote{padding:10px;font-size:14px;color:#444;text-align:center;background:#fafafa;}
-  </style>
+  <meta charset="UTF-8" />
+  <title>Gallery</title>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 </head>
 <body>
-  <header>
-    <h2>🌿 Gallery</h2>
-    <a href="/life.html">Life</a>
-    <a href="/upload.html">Upload</a>
-    <button onclick="logout()">Logout</button>
-  </header>
-  <div id="status">Loading...</div>
-  <div id="grid"></div>
+  <h2>🖼️ Photo Gallery</h2>
+  <div id="gallery"></div>
+  <div id="status"></div>
 
   <script>
-    const BACKEND = "https://shree-drive.onrender.com";
+    let auth0Client;
 
-    document.addEventListener("DOMContentLoaded", () => {
-      if (window.netlifyIdentity) {
-        netlifyIdentity.init();
-        netlifyIdentity.on("init", user => {
-          console.log("🔎 Netlify Identity init:", user);
-          if (!user) {
-            document.getElementById("status").textContent = "⚠️ Not logged in. Please login first.";
-            window.location.href = "/"; // redirect to home/login
-          } else {
-            console.log("✅ Logged in as:", user.email);
-            loadGallery();
-          }
+    async function initAuth0() {
+      auth0Client = await createAuth0Client({
+        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
+        client_id: "0glcwUr7ZZ9sbBTPBiUPahEqqwUcuzfR",
+        audience: "https://shreshthapushkar.com/api",
+        cacheLocation: "localstorage"
+      });
+
+      if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
+        await auth0Client.handleRedirectCallback();
+        window.history.replaceState({}, document.title, "/gallery.html");
+      }
+
+      const isAuthenticated = await auth0Client.isAuthenticated();
+      if (!isAuthenticated) {
+        await auth0Client.loginWithRedirect({
+          redirect_uri: window.location.origin + "/gallery.html"
         });
       } else {
-        console.error("❌ Identity script not loaded");
-      }
-    });
-
-    function logout(){ window.netlifyIdentity.logout(); window.location='/'; }
-
-    async function token(){
-      const u = netlifyIdentity.currentUser();
-      if(!u) throw new Error("Not logged in");
-      return await u.jwt();
-    }
-
-    async function fetchBlobURL(id){
-      const t = await token();
-      const r = await fetch(`${BACKEND}/file/${id}`, { headers:{ Authorization:`Bearer ${t}` }});
-      if(!r.ok) throw new Error("Fetch failed");
-      const blob = await r.blob();
-      return URL.createObjectURL(blob);
-    }
-
-    async function loadGallery(){
-      const status=document.getElementById('status');
-      const grid=document.getElementById('grid');
-      status.textContent="Loading...";
-      grid.innerHTML="";
-      try{
-        const t = await token();
-        console.log("🔑 JWT length:", t.length);
-
-        const r = await fetch(`${BACKEND}/list`, { 
-          headers:{ Authorization:`Bearer ${t}` }
-        });
-        console.log("📡 Response status:", r.status);
-
-        const text = await r.text();
-        console.log("📦 Raw response:", text);
-
-        const files = JSON.parse(text);
-        if(!r.ok) throw new Error(files.error||"List failed");
-
-        if(!files.length){ status.textContent="No images yet."; return; }
-
-        status.textContent="";
-        for(const f of files){
-          const url = await fetchBlobURL(f.id);
-          const div=document.createElement('div');
-          div.className="card";
-
-          const img=document.createElement('img');
-          img.src=url;
-          img.alt=f.name;
-
-          const q=document.createElement('div');
-          q.className="quote";
-          q.textContent=f.description||"";
-
-          div.appendChild(img);
-          div.appendChild(q);
-          grid.appendChild(div);
-        }
-      }catch(e){ 
-        console.error("❌ Gallery error:", e);
-        status.textContent="❌ "+e.message; 
+        document.getElementById("status").innerText = "✅ Logged in as " + (await auth0Client.getUser()).email;
+        loadGallery();
       }
     }
+
+    async function loadGallery() {
+      const token = await auth0Client.getTokenSilently();
+
+      const res = await fetch("https://shree-drive.onrender.com/list", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const files = await res.json();
+      const galleryDiv = document.getElementById("gallery");
+
+      galleryDiv.innerHTML = files.map(f => `
+        <div style="margin:10px; display:inline-block; text-align:center;">
+          <img src="https://drive.google.com/uc?id=${f.id}" width="200"/>
+          <p>${f.name}</p>
+        </div>
+      `).join("");
+    }
+
+    initAuth0();
   </script>
 </body>
 </html>
