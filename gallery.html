@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <title>🌿 Shree Gallery 🌿</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="/.netlify/identity/widget.js"></script>
+  <!-- ✅ Correct Netlify Identity widget -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <style>
     body{margin:0;font-family:sans-serif;background:#f8f8f8;}
     header{display:flex;align-items:center;gap:10px;padding:16px;background:#fff;position:sticky;top:0;border-bottom:1px solid #eee;}
@@ -29,6 +30,15 @@
 
   <script>
     const BACKEND = "https://shree-drive.onrender.com";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.netlifyIdentity) {
+        netlifyIdentity.init();
+        netlifyIdentity.on("init", u => { if(!u) window.location='/'; else loadGallery(); });
+      } else {
+        alert("Identity not loaded");
+      }
+    });
 
     function logout(){ window.netlifyIdentity.logout(); window.location='/'; }
 
@@ -74,12 +84,6 @@
         }
       }catch(e){ status.textContent="❌ "+e.message; }
     }
-
-    document.addEventListener("DOMContentLoaded", ()=>{
-      if(!window.netlifyIdentity){ alert("Identity not loaded"); return; }
-      window.netlifyIdentity.on("init",u=>{ if(!u) window.location='/'; else loadGallery(); });
-      window.netlifyIdentity.init();
-    });
   </script>
 </body>
 </html>
