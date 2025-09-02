@@ -2,83 +2,84 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Shree • Gallery</title>
+  <title>🌿 Shree Gallery 🌿</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  <script>
-    const BACKEND = "https://shree-drive.onrender.com";
-
-    async function requireLogin() {
-      if (!window.netlifyIdentity) return alert("Identity not loaded");
-      window.netlifyIdentity.init();
-      window.netlifyIdentity.on("init", u => { if (!u) location.replace("/"); else loadGallery(); });
-    }
-
-    async function token(){
-      const u = window.netlifyIdentity.currentUser();
-      if(!u) throw new Error("Not logged in");
-      return await u.jwt();
-    }
-
-    async function loadGallery(){
-      const grid = document.getElementById("grid");
-      const status = document.getElementById("status");
-      grid.innerHTML = ""; status.textContent = "Loading...";
-
-      try {
-        const t = await token();
-        const r = await fetch(`${BACKEND}/list`, { headers:{Authorization:`Bearer ${t}`}});
-        const files = await r.json();
-        if(!r.ok) throw new Error(files.error || "List failed");
-        if(!files.length){ status.textContent="No images yet."; return; }
-
-        status.textContent = "";
-        for(const f of files){
-          const imgUrl = `${BACKEND}/file/${f.id}?jwt=${t}`;
-          const div = document.createElement("div");
-          div.className = "card";
-          div.innerHTML = `
-            <img src="${imgUrl}" alt="${f.name}" loading="lazy">
-            <div class="quote">${f.quote || ""}</div>
-          `;
-          grid.appendChild(div);
-        }
-      } catch(e){ status.textContent = "❌ "+e.message; }
-    }
-
-    function logout(){ window.netlifyIdentity.logout(); location.replace("/"); }
-    document.addEventListener("DOMContentLoaded", requireLogin);
-  </script>
-
+  <script src="/.netlify/identity/widget.js"></script>
   <style>
-    body{margin:0;font-family:'Segoe UI',sans-serif;background:#fafafa;}
-    header{padding:20px;text-align:center;background:#fff;border-bottom:1px solid #eee;}
-    header h2{margin:0;color:olive;}
-    header nav{margin-top:10px;}
-    header a,header button{padding:8px 14px;margin:0 6px;border:1px solid #ccc;border-radius:10px;text-decoration:none;background:#fff;color:#111;cursor:pointer;}
-
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;padding:30px;max-width:1100px;margin:auto;}
-    .card{background:#fff;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.08);overflow:hidden;}
-    .card img{width:100%;display:block;}
-    .quote{text-align:center;padding:8px;font-size:14px;color:olive;font-style:italic;}
-
-    @media(max-width:768px){
-      .grid{grid-template-columns:repeat(2,1fr);gap:20px;padding:20px;}
-    }
+    body{margin:0;font-family:sans-serif;background:#f8f8f8;}
+    header{display:flex;align-items:center;gap:10px;padding:16px;background:#fff;position:sticky;top:0;border-bottom:1px solid #eee;}
+    header a,header button{padding:6px 12px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;text-decoration:none;color:#111}
+    h2{margin:0;color:olive;}
+    #status{padding:10px;color:#666;}
+    #grid{padding:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}
+    .card{background:#fff;border:1px solid #eee;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;}
+    .card img{width:100%;height:200px;object-fit:cover;}
+    .quote{padding:10px;font-size:14px;color:#444;text-align:center;background:#fafafa;}
   </style>
 </head>
 <body>
   <header>
-    <h2>🌿 Gallery 🌿</h2>
-    <nav>
-      <a href="/life.html">Life</a>
-      <a href="/upload.html">Upload</a>
-      <button onclick="logout()">Logout</button>
-    </nav>
+    <h2>🌿 Gallery</h2>
+    <a href="/life.html">Life</a>
+    <a href="/upload.html">Upload</a>
+    <button onclick="logout()">Logout</button>
   </header>
+  <div id="status">Loading...</div>
+  <div id="grid"></div>
 
-  <div id="status" style="text-align:center;color:#666;padding:10px;"></div>
-  <div id="grid" class="grid"></div>
+  <script>
+    const BACKEND = "https://shree-drive.onrender.com";
+
+    function logout(){ window.netlifyIdentity.logout(); window.location='/'; }
+
+    async function token(){
+      const u = netlifyIdentity.currentUser();
+      if(!u) throw new Error("Not logged in");
+      return await u.jwt();
+    }
+
+    async function fetchBlobURL(id){
+      const t = await token();
+      const r = await fetch(`${BACKEND}/file/${id}`, { headers:{ Authorization:`Bearer ${t}` }});
+      if(!r.ok) throw new Error("Fetch failed");
+      const blob = await r.blob();
+      return URL.createObjectURL(blob);
+    }
+
+    async function loadGallery(){
+      const status=document.getElementById('status');
+      const grid=document.getElementById('grid');
+      status.textContent="Loading...";
+      grid.innerHTML="";
+      try{
+        const t = await token();
+        const r = await fetch(`${BACKEND}/list`, { headers:{ Authorization:`Bearer ${t}` }});
+        const files = await r.json();
+        if(!r.ok) throw new Error(files.error||"List failed");
+        if(!files.length){ status.textContent="No images yet."; return; }
+        status.textContent="";
+        for(const f of files){
+          const url = await fetchBlobURL(f.id);
+          const div=document.createElement('div');
+          div.className="card";
+          const img=document.createElement('img');
+          img.src=url;
+          img.alt=f.name;
+          const q=document.createElement('div');
+          q.className="quote";
+          q.textContent=f.description||"";
+          div.appendChild(img);
+          div.appendChild(q);
+          grid.appendChild(div);
+        }
+      }catch(e){ status.textContent="❌ "+e.message; }
+    }
+
+    document.addEventListener("DOMContentLoaded", ()=>{
+      if(!window.netlifyIdentity){ alert("Identity not loaded"); return; }
+      window.netlifyIdentity.on("init",u=>{ if(!u) window.location='/'; else loadGallery(); });
+      window.netlifyIdentity.init();
+    });
+  </script>
 </body>
 </html>
