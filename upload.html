@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <title>🌿 Upload a Photo 🌿</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="/.netlify/identity/widget.js"></script>
+  <!-- ✅ Correct Netlify Identity widget -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
   <style>
     body{font-family:sans-serif;background:#f8f8f8;margin:0;padding:20px;}
     header{display:flex;gap:10px;align-items:center;margin-bottom:20px;}
@@ -30,6 +31,10 @@
 
   <script>
     const BACKEND = "https://shree-drive.onrender.com";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.netlifyIdentity) netlifyIdentity.init();
+    });
 
     function logout(){ window.netlifyIdentity.logout(); window.location='/'; }
 
