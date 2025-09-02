@@ -1,4 +1,4 @@
-// gallery.js (final, secure Bearer fetch)
+// gallery.js (final, working with backend /list array)
 document.addEventListener("DOMContentLoaded", initGallery);
 const BACKEND = "https://shree-drive.onrender.com";
 
@@ -28,14 +28,13 @@ async function initGallery() {
 
   try {
     const resp = await fetch(`${BACKEND}/list`, { headers: { Authorization: `Bearer ${token}` } });
-    const data = await resp.json();
-    if (!resp.ok || !data.ok) throw new Error(data.error || `List failed: ${resp.status}`);
+    if (!resp.ok) throw new Error(`List failed: ${resp.status}`);
+    const files = await resp.json();
 
     const gallery = document.getElementById("gallery");
-    const status = document.getElementById("status"); // optional
+    const status = document.getElementById("status");
     if (gallery) gallery.innerHTML = "";
 
-    const files = data.files || [];
     if (!files.length) {
       if (gallery) gallery.innerHTML = "<p>No files found.</p>";
       return;
@@ -62,10 +61,13 @@ async function initGallery() {
         }
         item.appendChild(img);
 
-        const cap = document.createElement("div");
-        cap.className = "name";
-        cap.textContent = f.name;
-        item.appendChild(cap);
+        // ✅ Quote/description show
+        if (f.description) {
+          const cap = document.createElement("div");
+          cap.className = "quote";
+          cap.textContent = f.description;
+          item.appendChild(cap);
+        }
       } else {
         const a = document.createElement("button");
         a.textContent = `Download ${f.name}`;
@@ -93,5 +95,4 @@ async function initGallery() {
   }
 }
 
-// optional refresh hook
 window.refreshGallery = initGallery;
