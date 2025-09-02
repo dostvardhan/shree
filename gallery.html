@@ -36,15 +36,15 @@
         netlifyIdentity.init();
         netlifyIdentity.on("init", u => { 
           if(!u) {
-            console.warn("No user logged in, redirecting...");
+            console.warn("⚠️ No user logged in, redirecting...");
             window.location='/'; 
           } else {
-            console.log("User logged in:", u.email);
+            console.log("✅ Logged in as:", u.email);
             loadGallery();
           }
         });
       } else {
-        alert("Identity not loaded");
+        console.error("❌ Identity script failed to load");
       }
     });
 
@@ -71,17 +71,19 @@
       grid.innerHTML="";
       try{
         const t = await token();
-        console.log("JWT token length:", t.length);
+        console.log("🔑 JWT length:", t.length);
 
         const r = await fetch(`${BACKEND}/list`, { 
           headers:{ Authorization:`Bearer ${t}` }
         });
-        console.log("Response status:", r.status);
+        console.log("📡 Response status:", r.status);
 
-        const files = await r.json();
-        console.log("Files JSON:", files);
+        const text = await r.text();
+        console.log("📦 Raw response:", text);
 
+        const files = JSON.parse(text);
         if(!r.ok) throw new Error(files.error||"List failed");
+
         if(!files.length){ status.textContent="No images yet."; return; }
 
         status.textContent="";
@@ -103,7 +105,7 @@
           grid.appendChild(div);
         }
       }catch(e){ 
-        console.error("Gallery error:", e);
+        console.error("❌ Gallery error:", e);
         status.textContent="❌ "+e.message; 
       }
     }
