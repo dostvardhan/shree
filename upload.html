@@ -1,74 +1,83 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>🌿 Upload a Photo 🌿</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- ✅ Correct Netlify Identity widget -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  <style>
-    body{font-family:sans-serif;background:#f8f8f8;margin:0;padding:20px;}
-    header{display:flex;gap:10px;align-items:center;margin-bottom:20px;}
-    header a, header button{padding:6px 12px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;text-decoration:none;color:#111}
-    h2{margin:0 0 20px 0;color:olive;}
-    input,textarea{display:block;margin-bottom:10px;padding:8px;width:100%;max-width:400px;}
-    button{padding:10px 20px;background:olive;color:#fff;border:none;border-radius:8px;cursor:pointer;}
-    #status{margin-top:10px;color:#444;}
-  </style>
+  <meta charset="UTF-8" />
+  <title>Upload Photo</title>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 </head>
 <body>
-  <header>
-    <h2>🌿 Upload a Photo 🌿</h2>
-    <a href="/life.html">Life</a>
-    <a href="/gallery.html">Gallery</a>
-    <button onclick="logout()">Logout</button>
-  </header>
+  <h2>📸 Upload Photo</h2>
 
-  <input type="file" id="file" accept="image/*">
-  <textarea id="quote" placeholder="Write a quote..."></textarea>
-  <button onclick="doUpload()">Upload</button>
+  <form id="uploadForm">
+    <input type="file" id="fileInput" name="file" required /><br><br>
+    <input type="text" id="quoteInput" placeholder="Write a quote..." /><br><br>
+    <button type="submit">Upload</button>
+  </form>
+
+  <div id="preview"></div>
   <div id="status"></div>
 
   <script>
-    const BACKEND = "https://shree-drive.onrender.com";
+    let auth0Client;
 
-    document.addEventListener("DOMContentLoaded", () => {
-      if (window.netlifyIdentity) netlifyIdentity.init();
-    });
+    async function initAuth0() {
+      auth0Client = await createAuth0Client({
+        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",   // 🔑 Your Auth0 Domain
+        client_id: "0glcwUr7ZZ9sbBTPBiUPahEqqwUcuzfR", // 🔑 Your Auth0 Client ID
+        audience: "https://shreshthapushkar.com/api",
+        cacheLocation: "localstorage"
+      });
 
-    function logout(){ window.netlifyIdentity.logout(); window.location='/'; }
+      if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
+        await auth0Client.handleRedirectCallback();
+        window.history.replaceState({}, document.title, "/upload.html");
+      }
 
-    async function token(){
-      const u = netlifyIdentity.currentUser();
-      if(!u) throw new Error("Not logged in");
-      return await u.jwt();
-    }
-
-    async function doUpload(){
-      const file = document.getElementById('file').files[0];
-      const quote = document.getElementById('quote').value.trim();
-      if(!file) return alert("Choose a file first!");
-      document.getElementById('status').textContent = "⏳ Uploading...";
-
-      try {
-        const t = await token();
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('quote', quote);
-
-        const r = await fetch(`${BACKEND}/upload`, {
-          method:'POST',
-          headers:{ Authorization:`Bearer ${t}` },
-          body: fd
+      const isAuthenticated = await auth0Client.isAuthenticated();
+      if (!isAuthenticated) {
+        await auth0Client.loginWithRedirect({
+          redirect_uri: window.location.origin + "/upload.html"
         });
-        const data = await r.json();
-        if(!r.ok || !data.ok) throw new Error(data.error || "Upload failed");
-
-        document.getElementById('status').textContent = "✅ Uploaded!";
-      } catch(e){
-        document.getElementById('status').textContent = "❌ " + e.message;
+      } else {
+        document.getElementById("status").innerText = "✅ Logged in as " + (await auth0Client.getUser()).email;
       }
     }
+
+    initAuth0();
+
+    // Preview image
+    document.getElementById("fileInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          document.getElementById("preview").innerHTML = `<img src="${ev.target.result}" width="200"/>`;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Upload form submit
+    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const token = await auth0Client.getTokenSilently();
+      const file = document.getElementById("fileInput").files[0];
+      const quote = document.getElementById("quoteInput").value;
+
+      const formData = new FormData();
+      formData.append("file", file, file.name);
+      formData.append("quote", quote);
+
+      const res = await fetch("https://shree-drive.onrender.com/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+
+      const data = await res.json();
+      document.getElementById("status").innerText = JSON.stringify(data, null, 2);
+    });
   </script>
 </body>
 </html>
