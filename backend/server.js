@@ -1,10 +1,11 @@
-// server.js — Shree Drive (PRIVATE, with quotes support)
+// server.js — Shree Drive (PRIVATE)
+// Env vars: ALLOWED_ORIGIN, JWKS_URI, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, REFRESH_TOKEN, DRIVE_FOLDER_ID, MAKE_PUBLIC=false
 
 const express = require('express');
 const multer = require('multer');
 const jwt = require('jsonwebtoken');
+const jwksClient = require('jwks-rsa');
 const { google } = require('googleapis');
-const { Readable } = require('stream');   // for upload stream
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 30 * 1024 * 1024 } });
@@ -12,6 +13,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 30 
 const {
   PORT = 3000,
   ALLOWED_ORIGIN,
+  JWKS_URI,
   CLIENT_ID,
   CLIENT_SECRET,
   REDIRECT_URI,
@@ -20,7 +22,7 @@ const {
   MAKE_PUBLIC = 'false',
 } = process.env;
 
-// Middleware: CORS
+// CORS
 app.use((req, res, next) => {
   if (ALLOWED_ORIGIN) res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
   res.header('Vary', 'Origin');
@@ -31,64 +33,64 @@ app.use((req, res, next) => {
   next();
 });
 
-// Identity JWT verify (decode only)
+// Identity JWT verify (RS256 via JWKS)
+const jwks = jwksClient({ jwksUri: JWKS_URI, cache: true, cacheMaxAge: 10 * 60 * 1000, rateLimit: true });
+function getKey(header, cb) {
+  jwks.getSigningKey(header.kid, (err, key) => {
+    if (err) return cb(err);
+    cb(null, key.getPublicKey());
+  });
+}
 function requireAuth(req, res, next) {
   try {
     const auth = req.headers.authorization || '';
     const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
     if (!token) return res.status(401).json({ error: 'No token' });
-
-    const decoded = jwt.decode(token, { complete: true });
-    if (!decoded) return res.status(401).json({ error: 'Invalid token' });
-
-    req.user = decoded.payload;
-    next();
-  } catch (e) {
-    res.status(401).json({ error: 'Unauthorized: ' + e.message });
+    // ✅ Relaxed: no issuer check
+    jwt.verify(token, getKey, { algorithms: ['RS256'] }, (err, decoded) => {
+      if (err) return res.status(401).json({ error: `Unauthorized: ${err.message}` });
+      req.user = decoded;
+      next();
+    });
+  } catch {
+    res.status(401).json({ error: 'Unauthorized' });
   }
 }
 
 // Google Drive client
 const oauth2 = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
-if (REFRESH_TOKEN) oauth2.setCredentials({ refresh_token: REFRESH_TOKEN });
+oauth2.setCredentials({ refresh_token: REFRESH_TOKEN });
 const drive = google.drive({ version: 'v3', auth: oauth2 });
 
 // Helpers
 async function ensurePublic(id) {
   if (String(MAKE_PUBLIC).toLowerCase() !== 'true') return;
   try {
-    await drive.permissions.create({
-      fileId: id,
-      requestBody: { role: 'reader', type: 'anyone' }
-    });
+    await drive.permissions.create({ fileId: id, requestBody: { role: 'reader', type: 'anyone' } });
   } catch {}
 }
 
-// Root + health
-app.get('/', (req,res)=>res.json({ ok:true, msg:'Shree Drive backend running' }));
+// Routes
 app.get('/health', (req,res)=>res.json({ ok:true }));
 
-// Diagnostic
 app.get('/diag', async (req, res) => {
   try {
     const about = await drive.about.get({ fields: 'user(displayName,permissionId)' });
-    res.json({ ok:true, user:about.data.user, folder:DRIVE_FOLDER_ID||null, makePublic:MAKE_PUBLIC });
+    res.json({ ok:true, user:about.data.user, folder:DRIVE_FOLDER_ID||null, makePublic:MAKE_PUBLIC, jwks:JWKS_URI });
   } catch(e){ res.status(500).json({ ok:false, error:e.message }); }
 });
 
-// Upload with quote (saved as description)
 app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error:'No file' });
     if (!DRIVE_FOLDER_ID) return res.status(500).json({ error:'DRIVE_FOLDER_ID not set' });
 
     const name = `${Date.now()}_${(req.file.originalname||'upload').replace(/[^\w.\-]/g,'_')}`;
-    const stream = Readable.from(req.file.buffer);
-    const quote = req.body.quote || "";
+    const desc = req.body.quote || '';
 
     const r = await drive.files.create({
-      requestBody: { name, parents:[DRIVE_FOLDER_ID], description: quote },
-      media: { mimeType: req.file.mimetype, body: stream },
+      requestBody: { name, parents:[DRIVE_FOLDER_ID], description: desc },
+      media: { mimeType: req.file.mimetype, body: Buffer.from(req.file.buffer) },
       fields: 'id,name,mimeType,createdTime,description'
     });
 
@@ -97,7 +99,6 @@ app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
   } catch(e){ res.status(500).json({ ok:false, error:e.message }); }
 });
 
-// List files (with description)
 app.get('/list', requireAuth, async (req, res) => {
   try {
     if (!DRIVE_FOLDER_ID) return res.status(500).json({ error:'DRIVE_FOLDER_ID not set' });
@@ -112,7 +113,6 @@ app.get('/list', requireAuth, async (req, res) => {
   } catch(e){ res.status(500).json({ error:e.message }); }
 });
 
-// Fetch file
 app.get('/file/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -130,26 +130,4 @@ app.get('/file/:id', requireAuth, async (req, res) => {
   } catch(e){ res.status(404).json({ error:'Not found' }); }
 });
 
-// OAuth routes
-app.get('/auth/url', (req, res) => {
-  const scopes = [
-    'https://www.googleapis.com/auth/drive.file',
-    'https://www.googleapis.com/auth/drive.metadata.readonly'
-  ].join(' ');
-  const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(CLIENT_ID)}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${encodeURIComponent(scopes)}&access_type=offline&prompt=consent`;
-  res.json({ url });
-});
-
-app.get('/oauth2callback', async (req, res) => {
-  const code = req.query.code;
-  if (!code) return res.status(400).send('Missing code');
-  try {
-    const { tokens } = await oauth2.getToken(code);
-    res.json({ ok: true, tokens });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
-  }
-});
-
-// Start server
 app.listen(PORT, ()=> console.log('Server on :' + PORT));
