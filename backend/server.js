@@ -49,7 +49,9 @@ function requireAuth(req, res, next) {
 
 // Google Drive client
 const oauth2 = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
-oauth2.setCredentials({ refresh_token: REFRESH_TOKEN });
+if (REFRESH_TOKEN) {
+  oauth2.setCredentials({ refresh_token: REFRESH_TOKEN });
+}
 const drive = google.drive({ version: 'v3', auth: oauth2 });
 
 // Helpers
@@ -136,6 +138,34 @@ app.get('/file/:id', requireAuth, async (req, res) => {
     stream.data.on('error', () => res.status(500).end());
     stream.data.pipe(res);
   } catch(e){ res.status(404).json({ error:'Not found' }); }
+});
+
+// ===== OAuth routes for generating refresh token =====
+
+// Step 1: generate Google login URL
+app.get('/auth/url', (req, res) => {
+  const scopes = [
+    'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/drive.metadata.readonly'
+  ];
+  const url = oauth2.generateAuthUrl({
+    access_type: 'offline',
+    prompt: 'consent',
+    scope: scopes
+  });
+  res.json({ url });
+});
+
+// Step 2: handle callback, exchange code for tokens
+app.get('/oauth2callback', async (req, res) => {
+  const code = req.query.code;
+  if (!code) return res.status(400).send('Missing code');
+  try {
+    const { tokens } = await oauth2.getToken(code);
+    res.json({ ok: true, tokens });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
 });
 
 // Start server
