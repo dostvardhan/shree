@@ -1,28 +1,76 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shree • Private Gallery</title>
+  <meta charset="UTF-8" />
+  <title>Gallery</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Netlify Identity (point to .com) -->
-  <script
-    src="https://identity.netlify.com/v1/netlify-identity-widget.js"
-    data-netlify-identity-site="https://shreshthapushkar.com">
-  </script>
-
-  <style>
-    body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; }
-    h1 { margin: 0 0 12px; }
-    #gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 12px; }
-    .gallery-item { border: 1px solid #ddd; border-radius: 10px; padding: 8px; overflow: hidden; }
-    .gallery-item img { width: 100%; height: 160px; object-fit: cover; display:block; border-radius: 8px; }
-  </style>
+  <!-- ✅ Local Auth0 SDK (relative path) -->
+  <script src="./auth0-spa-js.production.js"></script>
 </head>
 <body>
-  <h1>Shree • Private Gallery</h1>
-  <div id="gallery">Loading…</div>
+  <h2>🖼️ Photo Gallery</h2>
+  <div id="gallery"></div>
+  <div id="status"></div>
 
-  <script src="gallery.js" defer></script>
+  <script>
+    let auth0Client;
+
+    async function initAuth0() {
+      auth0Client = await createAuth0Client({
+        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
+        client_id: "vI2cLCbnMh18LqyQrUjGiaw3zsTkV9yT",
+        audience: "https://shreshthapushkar.com/api",
+        cacheLocation: "localstorage"
+      });
+
+      if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
+        await auth0Client.handleRedirectCallback();
+        window.history.replaceState({}, document.title, "/gallery.html");
+      }
+
+      const isAuthenticated = await auth0Client.isAuthenticated();
+      if (!isAuthenticated) {
+        await auth0Client.loginWithRedirect({
+          redirect_uri: window.location.origin + "/gallery.html"
+        });
+        return;
+      }
+
+      document.getElementById("status").innerText =
+        "✅ Logged in as " + (await auth0Client.getUser()).email;
+
+      loadGallery();
+    }
+
+    async function loadGallery() {
+      try {
+        const token = await auth0Client.getTokenSilently();
+        const res = await fetch("https://shree-drive.onrender.com/list", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const files = await res.json();
+
+        const galleryDiv = document.getElementById("gallery");
+        if (!files.length) {
+          galleryDiv.innerHTML = "<p>No files yet.</p>";
+          return;
+        }
+
+        galleryDiv.innerHTML = files.map(f => `
+          <div style="margin:10px; display:inline-block; text-align:center;">
+            <img src="https://drive.google.com/uc?id=${f.id}" width="200"/>
+            <p>${f.name}</p>
+          </div>
+        `).join("");
+      } catch (err) {
+        console.error("Gallery load error:", err);
+        document.getElementById("status").innerText =
+          "❌ Failed to load gallery: " + err.message;
+      }
+    }
+
+    initAuth0();
+  </script>
 </body>
 </html>

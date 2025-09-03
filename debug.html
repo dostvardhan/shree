@@ -11,25 +11,23 @@
   <button id="logout">Logout</button>
 
   <script>
-    // Init identity
     netlifyIdentity.init();
 
     document.getElementById("login").onclick = () => netlifyIdentity.open();
     document.getElementById("logout").onclick = () => netlifyIdentity.logout();
 
     netlifyIdentity.on("login", async user => {
-      console.log("Logged in:", user.email);
+      console.log("✅ Logged in as:", user.email);
 
       const token = await user.jwt();
-      console.log("JWT raw:", token);
+      console.log("🔑 JWT raw:", token);
 
-      // Split JWT
       const parts = token.split(".");
       const header = JSON.parse(atob(parts[0]));
       const payload = JSON.parse(atob(parts[1]));
 
-      console.log("kid:", header.kid);
-      console.log("iss:", payload.iss);
+      console.log("👉 kid:", header.kid);
+      console.log("👉 iss:", payload.iss);
     });
   </script>
 </body>

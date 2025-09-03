@@ -1,278 +1,133 @@
-// server.js
-// Shree Drive Backend — Netlify Identity + Google Drive
-// Packages: express, cors, multer, googleapis, jsonwebtoken, jwks-rsa
-
-// ---------- Boot & Env ----------
-require('dotenv').config(); // harmless on Render if .env absent
+// server.js — Shree Drive (PRIVATE)
+// Env vars: ALLOWED_ORIGIN, JWKS_URI, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, REFRESH_TOKEN, DRIVE_FOLDER_ID, MAKE_PUBLIC=false
 
 const express = require('express');
-const cors = require('cors');
 const multer = require('multer');
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
 const { google } = require('googleapis');
-const path = require('path');
-const fs = require('fs');
 
 const app = express();
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 30 * 1024 * 1024 } });
 
-// ---------- CORS ----------
-const parseOrigins = (val) => {
-  if (!val) return true; // reflect request origin
-  const arr = val.split(',').map(s => s.trim()).filter(Boolean);
-  return function(origin, cb) {
-    if (!origin) return cb(null, true);
-    if (arr.includes(origin)) return cb(null, true);
-    return cb(null, false);
-  };
-};
+const {
+  PORT = 3000,
+  ALLOWED_ORIGIN,
+  JWKS_URI,
+  CLIENT_ID,
+  CLIENT_SECRET,
+  REDIRECT_URI,
+  REFRESH_TOKEN,
+  DRIVE_FOLDER_ID,
+  MAKE_PUBLIC = 'false',
+} = process.env;
 
-app.use(cors({
-  origin: parseOrigins(process.env.ALLOWED_ORIGIN),
-  methods: ['GET','HEAD','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Authorization','Content-Type','X-NI-Issuer'],
-  exposedHeaders: ['Content-Length','Last-Modified','Content-Type','Content-Disposition'],
-  credentials: false,
-  maxAge: 86400,
-  optionsSuccessStatus: 204,
-}));
-app.options('*', cors());
+// CORS
+app.use((req, res, next) => {
+  if (ALLOWED_ORIGIN) res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+  res.header('Vary', 'Origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 
-// ---------- Helpful boot logs ----------
-console.log('🚀 Server booting…');
-console.log('NETLIFY_IDENTITY_ISSUER =', process.env.NETLIFY_IDENTITY_ISSUER || '(not set)');
-console.log('ALLOWED_ORIGIN =', process.env.ALLOWED_ORIGIN || '(reflect)');
-console.log('DRIVE_FOLDER_ID =', process.env.DRIVE_FOLDER_ID || '(root)');
-console.log('MAKE_PUBLIC =', process.env.MAKE_PUBLIC || 'false');
+// Identity JWT verify (RS256 via JWKS)
+const jwks = jwksClient({ jwksUri: JWKS_URI, cache: true, cacheMaxAge: 10 * 60 * 1000, rateLimit: true });
+function getKey(header, cb) {
+  jwks.getSigningKey(header.kid, (err, key) => {
+    if (err) return cb(err);
+    cb(null, key.getPublicKey());
+  });
+}
+function requireAuth(req, res, next) {
+  try {
+    const auth = req.headers.authorization || '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+    if (!token) return res.status(401).json({ error: 'No token' });
+    // ✅ Relaxed: no issuer check
+    jwt.verify(token, getKey, { algorithms: ['RS256'] }, (err, decoded) => {
+      if (err) return res.status(401).json({ error: `Unauthorized: ${err.message}` });
+      req.user = decoded;
+      next();
+    });
+  } catch {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+}
 
-// ---------- Health/Diag ----------
-app.get('/health', (req, res) => res.status(200).send('ok'));
+// Google Drive client
+const oauth2 = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
+oauth2.setCredentials({ refresh_token: REFRESH_TOKEN });
+const drive = google.drive({ version: 'v3', auth: oauth2 });
+
+// Helpers
+async function ensurePublic(id) {
+  if (String(MAKE_PUBLIC).toLowerCase() !== 'true') return;
+  try {
+    await drive.permissions.create({ fileId: id, requestBody: { role: 'reader', type: 'anyone' } });
+  } catch {}
+}
+
+// Routes
+app.get('/health', (req,res)=>res.json({ ok:true }));
 
 app.get('/diag', async (req, res) => {
   try {
-    const auth = getOAuth2Client();
-    const drive = google.drive({ version: 'v3', auth });
     const about = await drive.about.get({ fields: 'user(displayName,permissionId)' });
-    res.json({
-      ok: true,
-      issuerEnv: process.env.NETLIFY_IDENTITY_ISSUER || null,
-      user: about.data.user,
-      folder: process.env.DRIVE_FOLDER_ID || null,
-      time: new Date().toISOString(),
-      // helpful to see which issuers are accepted:
-      allowedIssuers: ALLOWED_ISSUERS,
-    });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: String(e.message || e) });
-  }
+    res.json({ ok:true, user:about.data.user, folder:DRIVE_FOLDER_ID||null, makePublic:MAKE_PUBLIC, jwks:JWKS_URI });
+  } catch(e){ res.status(500).json({ ok:false, error:e.message }); }
 });
 
-// ---------- Netlify Identity JWT Verify ----------
-
-// (1) Old helper (kept for fallback from header/env)
-const getIssuer = (req) => {
-  const fromEnv = (process.env.NETLIFY_IDENTITY_ISSUER || '').trim();
-  const fromHeader = (req.headers['x-ni-issuer'] || '').trim();
-  // env wins; header is fallback if env absent
-  return fromEnv || fromHeader;
-};
-
-// (2) NEW: allow both .com and .netlify.app issuers (dual-issuer)
-const ALLOWED_ISSUERS = [
-  (process.env.NETLIFY_IDENTITY_ISSUER || '').trim(),
-  'https://shreshthapushkar.com/.netlify/identity',
-  'https://shreshthapushkar.netlify.app/.netlify/identity',
-].filter(Boolean);
-
-function pickIssuerForToken(token, fallback) {
+app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
   try {
-    const decoded = jwt.decode(token, { complete: true });
-    const iss = decoded?.payload?.iss;
-    if (iss && ALLOWED_ISSUERS.includes(iss)) return iss;
-  } catch (_) {}
-  return fallback || ALLOWED_ISSUERS[0];
-}
+    if (!req.file) return res.status(400).json({ error:'No file' });
+    if (!DRIVE_FOLDER_ID) return res.status(500).json({ error:'DRIVE_FOLDER_ID not set' });
 
-const clientsCache = new Map();
-const getJWKSClient = (issuer) => {
-  if (clientsCache.has(issuer)) return clientsCache.get(issuer);
-  const client = jwksClient({
-    jwksUri: `${issuer}/.well-known/jwks.json`,
-    cache: true,
-    cacheMaxEntries: 5,
-    cacheMaxAge: 10 * 60 * 1000,
-    timeout: 8000,
-  });
-  clientsCache.set(issuer, client);
-  return client;
-};
+    const name = `${Date.now()}_${(req.file.originalname||'upload').replace(/[^\w.\-]/g,'_')}`;
+    const desc = req.body.quote || '';
 
-function authMiddleware(req, res, next) {
-  const authz = req.headers.authorization || '';
-  const token = authz.startsWith('Bearer ') ? authz.slice(7) : null;
-  if (!token) return res.status(401).json({ ok: false, error: 'Missing Bearer token' });
-
-  // OLD: const ISSUER = getIssuer(req);
-  // NEW: prefer token.iss if it's in ALLOWED_ISSUERS; else fallback to header/env
-  const ISSUER = pickIssuerForToken(token, getIssuer(req));
-  if (!ISSUER) return res.status(500).json({ ok: false, error: 'Issuer not configured' });
-
-  const client = getJWKSClient(ISSUER);
-
-  const getKey = (header, callback) => {
-    client.getSigningKey(header.kid, (err, key) => {
-      if (err) return callback(err);
-      const signingKey = key.getPublicKey();
-      callback(null, signingKey);
+    const r = await drive.files.create({
+      requestBody: { name, parents:[DRIVE_FOLDER_ID], description: desc },
+      media: { mimeType: req.file.mimetype, body: Buffer.from(req.file.buffer) },
+      fields: 'id,name,mimeType,createdTime,description'
     });
-  };
 
-  jwt.verify(
-    token,
-    getKey,
-    {
-      algorithms: ['RS256'],
-      issuer: ISSUER,
-      // Netlify Identity tokens often have no audience we control; skip audience check.
-      ignoreExpiration: false,
-    },
-    (err, decoded) => {
-      if (err) {
-        return res.status(401).json({ ok: false, error: 'JWT verify failed', detail: String(err.message || err) });
-      }
-      req.user = decoded;
-      next();
-    }
-  );
-}
+    await ensurePublic(r.data.id);
+    res.json({ ok:true, ...r.data });
+  } catch(e){ res.status(500).json({ ok:false, error:e.message }); }
+});
 
-// ---------- Google OAuth2 (Refresh Token flow) ----------
-function getOAuth2Client() {
-  const {
-    CLIENT_ID,
-    CLIENT_SECRET,
-    REDIRECT_URI,
-    REFRESH_TOKEN
-  } = process.env;
-
-  if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI || !REFRESH_TOKEN) {
-    throw new Error('Google OAuth env missing: CLIENT_ID/CLIENT_SECRET/REDIRECT_URI/REFRESH_TOKEN');
-  }
-
-  const oAuth2Client = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
-  oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
-  return oAuth2Client;
-}
-
-function getDrive() {
-  const auth = getOAuth2Client();
-  return google.drive({ version: 'v3', auth });
-}
-
-// ---------- Multer (in-memory) ----------
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB
-
-// ---------- Helpers ----------
-async function ensurePublic(drive, fileId) {
+app.get('/list', requireAuth, async (req, res) => {
   try {
-    await drive.permissions.create({
-      fileId,
-      requestBody: {
-        role: 'reader',
-        type: 'anyone',
-      },
-    });
-  } catch (e) {
-    // ignore if already public or insufficient permission error
-    console.warn('ensurePublic warn:', e.message || e);
-  }
-}
-
-function driveFields(fields) {
-  return fields || 'id,name,mimeType,size,createdTime,modifiedTime,webViewLink,webContentLink,thumbnailLink,iconLink';
-}
-
-// ---------- Routes (protected) ----------
-
-// List files in DRIVE_FOLDER_ID (or root)
-app.get('/list', authMiddleware, async (req, res) => {
-  try {
-    const drive = getDrive();
-    const folderId = process.env.DRIVE_FOLDER_ID || null;
-
-    let q = "trashed = false";
-    if (folderId) q = `'${folderId}' in parents and ${q}`;
-
-    const resp = await drive.files.list({
-      q,
-      fields: `files(${driveFields()}),nextPageToken`,
+    if (!DRIVE_FOLDER_ID) return res.status(500).json({ error:'DRIVE_FOLDER_ID not set' });
+    const pageSize = Math.min(Number(req.query.pageSize || 100), 1000);
+    const r = await drive.files.list({
+      q: `'${DRIVE_FOLDER_ID}' in parents and trashed=false`,
       orderBy: 'createdTime desc',
-      pageSize: 100,
-      supportsAllDrives: false,
+      pageSize,
+      fields: 'files(id,name,mimeType,createdTime,description)'
     });
-
-    res.json({ ok: true, files: resp.data.files || [] });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: String(e.message || e) });
-  }
+    res.json(r.data.files || []);
+  } catch(e){ res.status(500).json({ error:e.message }); }
 });
 
-// Upload file to Drive
-app.post('/upload', authMiddleware, upload.single('file'), async (req, res) => {
+app.get('/file/:id', requireAuth, async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ ok: false, error: 'file is required (multipart/form-data)' });
-
-    const drive = getDrive();
-    const folderId = process.env.DRIVE_FOLDER_ID || null;
-
-    const fileMeta = {
-      name: req.file.originalname,
-      mimeType: req.file.mimetype || 'application/octet-stream',
-      ...(folderId ? { parents: [folderId] } : {}),
-    };
-
-    const media = {
-      mimeType: req.file.mimetype || 'application/octet-stream',
-      body: BufferToStream(req.file.buffer),
-    };
-
-    const created = await drive.files.create({
-      requestBody: fileMeta,
-      media,
-      fields: driveFields(),
-      supportsAllDrives: false,
-    });
-
-    const makePublic = String(process.env.MAKE_PUBLIC || '').toLowerCase() === 'true';
-    if (makePublic) {
-      await ensurePublic(drive, created.data.id);
-      // re-fetch links to ensure webViewLink/webContentLink present
-      const fetched = await drive.files.get({
-        fileId: created.data.id,
-        fields: driveFields(),
-      });
-      return res.json({ ok: true, file: fetched.data });
+    const { id } = req.params;
+    if (DRIVE_FOLDER_ID) {
+      const meta = await drive.files.get({ fileId: id, fields: 'parents,mimeType,name' });
+      const ok = (meta.data.parents || []).includes(DRIVE_FOLDER_ID);
+      if (!ok) return res.status(403).json({ error: 'Forbidden' });
+      res.setHeader('Content-Type', meta.data.mimeType || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(meta.data.name)}"`);
     }
-
-    res.json({ ok: true, file: created.data });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: String(e.message || e) });
-  }
+    res.setHeader('Cache-Control', 'private, max-age=60');
+    const stream = await drive.files.get({ fileId: id, alt:'media' }, { responseType: 'stream' });
+    stream.data.on('error', () => res.status(500).end());
+    stream.data.pipe(res);
+  } catch(e){ res.status(404).json({ error:'Not found' }); }
 });
 
-// ---------- Utils ----------
-function BufferToStream(buffer) {
-  const { Readable } = require('stream');
-  const stream = new Readable();
-  stream.push(buffer);
-  stream.push(null);
-  return stream;
-}
-
-// ---------- Start ----------
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`✅ Shree Drive listening on :${PORT}`);
-});
+app.listen(PORT, ()=> console.log('Server on :' + PORT));

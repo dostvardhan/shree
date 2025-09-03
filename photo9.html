@@ -1,97 +1,47 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Photo 9 Memories</title>
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script>
-if (window.netlifyIdentity) {
-    window.netlifyIdentity.on('init', user => {
-        if (!user) {
-            window.location.href = "/";
-        }
-    });
-}
-</script>
-<style>
-body {
-    margin:0;
-    font-family:'Segoe UI',sans-serif;
-    background: linear-gradient(135deg, #a3c4f3, #f8e1a0);
-    overflow:hidden;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    min-height:100vh;
-    color:#4b3f2f;
-    text-align:center;
-}
-.particle {
-    position:absolute;
-    width:6px;
-    height:6px;
-    background: rgba(255,215,100,0.5);
-    border-radius:50%;
-    animation: float 12s linear infinite;
-}
-@keyframes float {
-    0% {transform: translateY(0) translateX(0);}
-    50% {transform: translateY(-30px) translateX(20px);}
-    100% {transform: translateY(0) translateX(0);}
-}
-img {
-    max-width:80%;
-    max-height:65vh;
-    object-fit:contain;
-    border-radius:15px;
-    box-shadow:0 0 60px rgba(255,215,150,0.5);
-    transition: transform 0.5s ease, box-shadow 0.5s ease;
-}
-img:hover {
-    transform: scale(1.05);
-    box-shadow:0 0 90px rgba(255,215,150,0.7);
-}
-.quote {
-    font-size:26px;
-    margin-top:25px;
-    max-width:80%;
-    opacity:0;
-    transform: translateY(20px);
-    animation: fadeInUp 1s forwards 0.5s;
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-}
-@keyframes fadeInUp { to {opacity:1; transform: translateY(0);} }
-.heart-nav {
-    position:absolute;
-    top:50%;
-    font-size:40px;
-    cursor:pointer;
-    color:#ff6f61;
-    transition: all 0.3s ease;
-    user-select:none;
-    animation: pulse 2s infinite;
-    z-index:10; /* ensures visible above particles */
-}
-.heart-nav:hover {
-    transform: scale(1.2);
-    text-shadow:0 0 20px #ff6f61,0 0 40px #ff9a80;
-}
-@keyframes pulse {0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
-#prev { left:20px; } 
-#next { right:20px; }
-</style>
+  <meta charset="utf-8" />
+  <title>Shree • Photo 9</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script>
+    const API_URL = "https://shreshthapushkar.com/.netlify/identity";
+    function requireLogin() {
+      if (!window.netlifyIdentity) { alert("Identity not loaded"); return; }
+      window.netlifyIdentity.init({ APIUrl: API_URL });
+      window.netlifyIdentity.on("init", u => { if (!u) location.replace("/"); });
+    }
+    function logout(){ window.netlifyIdentity.logout(); location.replace("/"); }
+    document.addEventListener("DOMContentLoaded", requireLogin);
+  </script>
+
+  <style>
+    body{text-align:center;font-family:'Segoe UI',sans-serif;margin:0;background:#fafafa;}
+    header{padding:16px;background:#fff;border-bottom:1px solid #eee;}
+    header h2{margin:0;color:olive;}
+    header a, header button{padding:6px 12px;margin:0 6px;border:1px solid #ccc;border-radius:8px;text-decoration:none;color:#111;background:#fff;cursor:pointer;}
+    img{max-width:85%;margin:20px auto;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,0.15);}
+    .quote{margin-top:10px;font-size:16px;color:olive;font-style:italic;}
+    nav{margin:20px;}
+    nav a{margin:0 10px;text-decoration:none;color:#006600;font-weight:bold;}
+  </style>
 </head>
 <body>
-<div class="particle" style="top:10%; left:20%; animation-duration:12s;"></div>
-<div class="particle" style="top:30%; left:50%; animation-duration:15s;"></div>
-<div class="particle" style="top:60%; left:70%; animation-duration:10s;"></div>
-<div class="particle" style="top:80%; left:40%; animation-duration:18s;"></div>
+  <header>
+    <h2>🌿 Life Moments</h2>
+    <a href="/life.html">Life</a>
+    <a href="/gallery.html">Gallery</a>
+    <button onclick="logout()">Logout</button>
+  </header>
 
-<a id="prev" class="heart-nav" href="photo8.html">&#10084;&#65039;</a>
-<img src="photo9.jpg" alt="Photo 9">
-<a id="next" class="heart-nav" href="upload.html">&#10084;&#65039;</a>
-<div class="quote">Memories last forever, and this photo is a treasure of such timeless joy.</div>
+  <img src="/photo9.jpg" alt="Photo 9" />
+  <div class="quote">“Captured with love.”</div>
+
+  <nav>
+    <a href="/photo8.html">⬅ Prev</a>
+    <a href="/photo1.html">Next ➡</a>
+  </nav>
 </body>
 </html>

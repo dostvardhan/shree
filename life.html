@@ -1,203 +1,122 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Life is Beautiful</title>
+  <meta charset="utf-8">
+  <title>Shree • Life</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Dancing+Script&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Netlify Identity -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script>
+    const API_URL = "https://shreshthapushkar.com/.netlify/identity";
+    function requireLogin() {
+      if (!window.netlifyIdentity) return alert("Identity not loaded");
+      window.netlifyIdentity.init({ APIUrl: API_URL });
+      window.netlifyIdentity.on("init", u => { if (!u) location.replace("/"); });
+    }
+    function logout(){ window.netlifyIdentity.logout(); location.replace("/"); }
+    document.addEventListener("DOMContentLoaded", requireLogin);
+  </script>
 
-<!-- Styles (kept your original look) -->
-<style>
-/* Top toolbar */
-.toolbar {
-  position: sticky; top: 0; z-index: 1000;
-  background: #ffffffcc; backdrop-filter: saturate(120%) blur(6px);
-  border-bottom: 1px solid #eee;
-  display: flex; gap: 8px; justify-content: flex-end; align-items: center;
-  padding: 8px 12px;
-}
-.pill {
-  font: 13px/1 'Roboto', sans-serif;
-  background:#f8fafc; border:1px solid #e5e7eb; color:#0f172a;
-  border-radius: 999px; padding: 6px 12px; cursor:pointer;
-}
-.pill.logout { background:#fee2e2; }
+  <style>
+    body{margin:0;font-family:'Segoe UI',sans-serif;background:#fafafa;}
+    header{padding:20px;text-align:center;background:#fff;border-bottom:1px solid #eee;}
+    header h1{margin:0;font-size:28px;color:olive;font-weight:bold;}
+    header nav{margin-top:10px;}
+    header a, header button{padding:8px 14px;margin:0 6px;border:1px solid #ccc;border-radius:10px;background:#fff;text-decoration:none;color:#111;cursor:pointer;}
 
-body {
-  margin:0;
-  font-family:'Roboto', sans-serif;
-  background: linear-gradient(135deg, #fff8f2, #ffe6eb); /* light cream + pink */
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  min-height:100vh;
-  text-align:center;
-  overflow-x:hidden;
-  overflow-y:auto;
-  position:relative;
-}
+    /* grid tuning - smaller photos but not blank */
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;padding:30px;max-width:1100px;margin:auto;}
+    .card{position:relative;overflow:hidden;border-radius:14px;background:#fff;box-shadow:0 4px 10px rgba(0,0,0,0.06);}
+    .card img{width:100%;height:auto;display:block;transition:transform .35s ease;}
+    .card:hover img{transform:scale(1.08);}
+    .quote{text-align:center;padding:10px;font-size:15px;color:olive;font-style:italic;}
 
-h1 {
-  margin-top:30px;
-  font-size:46px;
-  font-family: 'Great Vibes', cursive;
-  color:#800000; /* maroon */
-  text-shadow:1px 1px 6px rgba(0,0,0,0.2);
-}
+    /* floating hearts stronger + more */
+    .hearts{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);pointer-events:none;}
+    .heart{position:absolute;bottom:0;font-size:20px;color:#e63946;opacity:0;animation:floatUp 3.5s ease-out forwards;}
+    @keyframes floatUp {
+      0%   {transform:translateY(0) scale(0.8); opacity:1;}
+      40%  {opacity:1;}
+      100% {transform:translateY(-200px) scale(1.4); opacity:0;}
+    }
 
-.gallery {
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  margin:20px 0 40px;
-  gap:20px;
-  z-index:1;
-  position:relative;
-  padding: 0 12px;
-}
-
-.gallery img {
-  width:250px;
-  height:auto;
-  max-height:200px;
-  object-fit: contain;
-  border-radius:15px;
-  box-shadow:0 0 40px rgba(0,0,0,0.2);
-  transition: transform 0.5s ease, box-shadow 0.5s ease;
-  cursor:pointer;
-}
-
-.gallery img:hover {
-  transform: scale(1.2);
-  z-index:10;
-  box-shadow:0 0 90px rgba(255,215,150,0.7);
-}
-
-.quote {
-  font-size:24px;
-  margin-bottom:70px;
-  max-width:80%;
-  text-shadow: 1px 1px 6px rgba(0,0,0,0.15);
-  position:relative;
-  z-index:1;
-  font-family: 'Dancing Script', cursive;
-  color:#556b2f; /* olive green */
-}
-
-/* Hearts container */
-#heartsContainer {
-  position:fixed;
-  bottom:0;
-  left:0;
-  width:100%;
-  height:100%;
-  pointer-events:none;
-  overflow:hidden;
-  z-index:0;
-}
-.heart-svg {
-  position:absolute;
-  width:20px;
-  height:20px;
-  fill:pink;
-  animation: floatUp linear infinite;
-}
-@keyframes floatUp {
-  0% { transform: translateY(100vh) scale(0.5); opacity:0.8; }
-  50% { opacity:1; }
-  100% { transform: translateY(-50px) scale(1); opacity:0; }
-}
-
-/* Bottom CTA */
-.cta {
-  position: fixed; right: 16px; bottom: 16px; z-index: 1000;
-}
-.cta .btn {
-  padding: 12px 16px; border-radius: 12px; border: 0;
-  background:#111827; color:#fff; box-shadow:0 6px 20px rgba(0,0,0,.18);
-  cursor: pointer;
-}
-</style>
+    @media(max-width:768px){
+      .grid{grid-template-columns:repeat(2,1fr);gap:20px;padding:20px;}
+    }
+  </style>
 </head>
 <body>
+  <header>
+    <h1>🌿 Life is Beautiful 🌿</h1>
+    <nav>
+      <a href="/gallery.html">Gallery</a>
+      <a href="/upload.html">Upload</a>
+      <button onclick="logout()">Logout</button>
+    </nav>
+  </header>
 
-<!-- Auth toolbar -->
-<div class="toolbar">
-  <button class="pill" onclick="go('/welcome.html')">Home</button>
-  <button class="pill" onclick="go('/gallery.html')">Gallery</button>
-  <button class="pill" onclick="go('/upload.html')">Upload</button>
-  <button class="pill logout" onclick="logoutAndExit()">Logout</button>
-</div>
+  <div class="grid">
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo1.html"><img src="/photo1.jpg" alt="Photo 1"></a>
+      <div class="hearts"></div>
+      <div class="quote">“Every picture tells a story.”</div>
+    </div>
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo2.html"><img src="/photo2.jpg" alt="Photo 2"></a>
+      <div class="hearts"></div>
+      <div class="quote">“Smiles are contagious.”</div>
+    </div>
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo3.html"><img src="/photo3.jpg" alt="Photo 3"></a>
+      <div class="hearts"></div>
+      <div class="quote">“Love makes everything brighter.”</div>
+    </div>
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo4.html"><img src="/photo4.jpg" alt="Photo 4"></a>
+      <div class="hearts"></div>
+      <div class="quote">“Little things matter most.”</div>
+    </div>
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo5.html"><img src="/photo5.jpg" alt="Photo 5"></a>
+      <div class="hearts"></div>
+      <div class="quote">“Together is our favorite place.”</div>
+    </div>
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo6.html"><img src="/photo6.jpg" alt="Photo 6"></a>
+      <div class="hearts"></div>
+      <div class="quote">“Memories are timeless treasures.”</div>
+    </div>
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo7.html"><img src="/photo7.jpg" alt="Photo 7"></a>
+      <div class="hearts"></div>
+      <div class="quote">“Happiness looks good on us.”</div>
+    </div>
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo8.html"><img src="/photo8.jpg" alt="Photo 8"></a>
+      <div class="hearts"></div>
+      <div class="quote">“A moment lasts forever.”</div>
+    </div>
+    <div class="card" onmouseenter="spawnHearts(this)">
+      <a href="/photo9.html"><img src="/photo9.jpg" alt="Photo 9"></a>
+      <div class="hearts"></div>
+      <div class="quote">“Captured with love.”</div>
+    </div>
+  </div>
 
-<h1>Life is Beautiful</h1>
-
-<div class="gallery">
-  <a href="photo1.html"><img src="photo1.jpg" alt="Photo 1"></a>
-  <a href="photo2.html"><img src="photo2.jpg" alt="Photo 2"></a>
-  <a href="photo3.html"><img src="photo3.jpg" alt="Photo 3"></a>
-  <a href="photo4.html"><img src="photo4.jpg" alt="Photo 4"></a>
-  <a href="photo5.html"><img src="photo5.jpg" alt="Photo 5"></a>
-  <a href="photo6.html"><img src="photo6.jpg" alt="Photo 6"></a>
-  <a href="photo7.html"><img src="photo7.jpg" alt="Photo 7"></a>
-  <a href="photo8.html"><img src="photo8.jpg" alt="Photo 8"></a>
-  <a href="photo9.html"><img src="photo9.jpg" alt="Photo 9"></a>
-</div>
-
-<div class="quote">Life is a collection of moments, each memory a heartbeat in our story.</div>
-
-<div id="heartsContainer"></div>
-
-<!-- Bottom Next CTA -->
-<div class="cta">
-  <button class="btn" onclick="go('/upload.html')">Next: Upload →</button>
-</div>
-
-<!-- Netlify Identity (guard + helpers) -->
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script>
-  // Enforce login on this page
-  async function enforceAuth(redirectIfClosed='/index.html'){
-    netlifyIdentity.init();
-    const u = netlifyIdentity.currentUser();
-    if (u) return true;
-    netlifyIdentity.open();
-    await new Promise((r)=>{
-      let done=false;
-      const finish=()=>{ if(!done){ done=true; r(); } };
-      netlifyIdentity.on('login', finish);
-      netlifyIdentity.on('close', finish);
-    });
-    if (!netlifyIdentity.currentUser()) { location.replace(redirectIfClosed); return false; }
-    return true;
-  }
-  function logoutAndExit(){ netlifyIdentity.logout(); setTimeout(()=>location.replace('/index.html'),300); }
-  function go(p){ location.href=p; }
-
-  // Hearts animation (your original)
-  const colors = ['#ff7f7f','#ff4d6d','#ff99aa','#ff4d4d','#c71585'];
-  const heartsContainer = document.getElementById('heartsContainer');
-  function spawnHearts(){
-    for(let i=0;i<30;i++){
-      const heart = document.createElementNS("http://www.w3.org/2000/svg","svg");
-      heart.setAttribute("viewBox","0 0 32 29.6");
-      heart.classList.add('heart-svg');
-      heart.style.left = Math.random()*100 + "vw";
-      heart.style.animationDuration = (8 + Math.random()*5) + "s"; // slower 8-13s
-      const color = colors[Math.floor(Math.random()*colors.length)];
-      heart.innerHTML = `<path d="M23.6,0c-2.8,0-5.4,1.6-6.6,4C15.8,1.6,13.2,0,10.4,0C4.6,0,0,4.6,0,10.4
-      c0,11.5,16,19.2,16,19.2s16-7.7,16-19.2C32,4.6,27.4,0,23.6,0z" fill="${color}"/>`;
-      heartsContainer.appendChild(heart);
+  <script>
+    function spawnHearts(card){
+      const container = card.querySelector('.hearts');
+      for(let i=0;i<6;i++){ // more hearts
+        const heart = document.createElement('div');
+        heart.className = 'heart';
+        heart.textContent = '❤️';
+        heart.style.left = (Math.random()*60 - 30) + "px";
+        heart.style.animationDelay = (i*0.25)+"s";
+        container.appendChild(heart);
+        setTimeout(()=>heart.remove(),3500);
+      }
     }
-  }
-
-  // Run: first enforce login, then render hearts (so popup overlays cleanly)
-  (async ()=>{
-    const ok = await enforceAuth();
-    if(ok) spawnHearts();
-  })();
-</script>
-
+  </script>
 </body>
 </html>

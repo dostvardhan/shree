@@ -1,11 +1,13 @@
-/.netlify/*   /.netlify/:splat   200
+/                /index.html 200
 
-# Sirf yeh pages members ke liye (baaki sab public rehne do)
-/gallery.html  /gallery.html   200!  Role=member
-/upload.html   /upload.html    200!  Role=member
-/secret.html   /secret.html    200!  Role=member
+/life.html       /401.html 401! Role=guest
+/life.html       /life.html 200 Role=member
 
-# Optional: unauthorized users ko login page dikhao
-/gallery.html  /login.html     401
-/upload.html   /login.html     401
-/secret.html   /login.html     401
+/upload.html     /401.html 401! Role=guest
+/upload.html     /upload.html 200 Role=member
+
+/gallery.html    /401.html 401! Role=guest
+/gallery.html    /gallery.html 200 Role=member
+
+/photo*.html     /401.html 401! Role=guest
+/photo*:splat    /photo:splat 200 Role=member
