@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <title>Upload Photo</title>
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- ✅ Auth0 SDK -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/latest/auth0-spa-js.production.js"></script>
 </head>
 <body>
   <h2>📸 Upload Photo</h2>
@@ -22,8 +25,8 @@
 
     async function initAuth0() {
       auth0Client = await createAuth0Client({
-        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",   // 🔑 Your Auth0 Domain
-        client_id: "0glcwUr7ZZ9sbBTPBiUPahEqqwUcuzfR", // 🔑 Your Auth0 Client ID
+        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
+        client_id: "vI2cLCbnMh18LqyQrUjGiaw3zsTkV9yT", // ✅ latest Client ID
         audience: "https://shreshthapushkar.com/api",
         cacheLocation: "localstorage"
       });
@@ -38,46 +41,59 @@
         await auth0Client.loginWithRedirect({
           redirect_uri: window.location.origin + "/upload.html"
         });
-      } else {
-        document.getElementById("status").innerText = "✅ Logged in as " + (await auth0Client.getUser()).email;
+        return;
       }
+
+      document.getElementById("status").innerText =
+        "✅ Logged in as " + (await auth0Client.getUser()).email;
+
+      // ✅ attach listener AFTER login
+      document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        try {
+          const token = await auth0Client.getTokenSilently();
+          const file = document.getElementById("fileInput").files[0];
+          const quote = document.getElementById("quoteInput").value;
+
+          if (!file) {
+            alert("Please select a file first!");
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append("file", file, file.name);
+          formData.append("quote", quote);
+
+          const res = await fetch("https://shree-drive.onrender.com/upload", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData
+          });
+
+          const data = await res.json();
+          document.getElementById("status").innerText = JSON.stringify(data, null, 2);
+        } catch (err) {
+          console.error("Upload failed:", err);
+          document.getElementById("status").innerText = "❌ Upload failed: " + err.message;
+        }
+      });
     }
 
-    initAuth0();
-
-    // Preview image
+    // ✅ Image preview
     document.getElementById("fileInput").addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = (ev) => {
-          document.getElementById("preview").innerHTML = `<img src="${ev.target.result}" width="200"/>`;
+          document.getElementById("preview").innerHTML =
+            `<img src="${ev.target.result}" width="200"/>`;
         };
         reader.readAsDataURL(file);
       }
     });
 
-    // Upload form submit
-    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const token = await auth0Client.getTokenSilently();
-      const file = document.getElementById("fileInput").files[0];
-      const quote = document.getElementById("quoteInput").value;
-
-      const formData = new FormData();
-      formData.append("file", file, file.name);
-      formData.append("quote", quote);
-
-      const res = await fetch("https://shree-drive.onrender.com/upload", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData
-      });
-
-      const data = await res.json();
-      document.getElementById("status").innerText = JSON.stringify(data, null, 2);
-    });
+    initAuth0();
   </script>
 </body>
 </html>
