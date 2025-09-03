@@ -5,7 +5,7 @@
   <title>Upload Photo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- ✅ Use absolute URL for Auth0 SDK -->
+  <!-- ✅ Auth0 SDK absolute URL -->
   <script src="https://shreshthapushkar.com/auth0-spa-js.production.js"></script>
 </head>
 <body>
@@ -47,12 +47,12 @@
       document.getElementById("status").innerText =
         "✅ Logged in as " + (await auth0Client.getUser()).email;
 
-      // ✅ Attach listener here after auth
+      // ✅ Upload listener
       document.getElementById("uploadForm").addEventListener("submit", handleUpload);
     }
 
     async function handleUpload(e) {
-      e.preventDefault(); // ✅ block default form reload
+      e.preventDefault();
 
       try {
         const token = await auth0Client.getTokenSilently();
