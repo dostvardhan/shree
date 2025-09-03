@@ -2,21 +2,64 @@ import express from "express";
 import multer from "multer";
 import cors from "cors";
 import { google } from "googleapis";
+import jwt from "jsonwebtoken";
+import jwksClient from "jwks-rsa";
+import { Readable } from "stream";
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// ✅ CORS allow only your Netlify site
+// -------------------------
+// CORS setup
+// -------------------------
 app.use(
   cors({
-    origin: process.env.ALLOWED_ORIGIN || "*",
+    origin: process.env.ALLOWED_ORIGIN,
     credentials: true,
   })
 );
-
 app.use(express.json());
 
-// 🔑 Google OAuth2 setup
+// -------------------------
+// Auth0 JWT verification
+// -------------------------
+const client = jwksClient({
+  jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
+});
+
+function getKey(header, callback) {
+  client.getSigningKey(header.kid, (err, key) => {
+    if (err) return callback(err);
+    const signingKey = key.getPublicKey();
+    callback(null, signingKey);
+  });
+}
+
+function requireAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "No token provided" });
+
+  const token = authHeader.split(" ")[1];
+
+  jwt.verify(
+    token,
+    getKey,
+    {
+      algorithms: ["RS256"],
+      audience: process.env.AUTH0_AUDIENCE,
+      issuer: `https://${process.env.AUTH0_DOMAIN}/`,
+    },
+    (err, decoded) => {
+      if (err) return res.status(401).json({ error: "Invalid token" });
+      req.user = decoded;
+      next();
+    }
+  );
+}
+
+// -------------------------
+// Google Drive setup
+// -------------------------
 const oauth2Client = new google.auth.OAuth2(
   process.env.CLIENT_ID,
   process.env.CLIENT_SECRET,
@@ -28,11 +71,24 @@ oauth2Client.setCredentials({
 });
 
 const drive = google.drive({ version: "v3", auth: oauth2Client });
-
 const FOLDER_ID = process.env.DRIVE_FOLDER_ID;
 
-// ✅ Upload route
-app.post("/upload", upload.single("file"), async (req, res) => {
+// -------------------------
+// Helper: Buffer → Stream
+// -------------------------
+function bufferToStream(buffer) {
+  const stream = new Readable();
+  stream.push(buffer);
+  stream.push(null);
+  return stream;
+}
+
+// -------------------------
+// Routes
+// -------------------------
+
+// Upload file
+app.post("/upload", requireAuth, upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
@@ -43,9 +99,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 
     const media = {
       mimeType: req.file.mimetype,
-      body: Buffer.isBuffer(req.file.buffer)
-        ? BufferToStream(req.file.buffer)
-        : req.file.buffer,
+      body: bufferToStream(req.file.buffer),
     };
 
     const file = await drive.files.create({
@@ -54,18 +108,8 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       fields: "id, name",
     });
 
-    // Make file public if enabled
-    if (process.env.MAKE_PUBLIC === "true") {
-      await drive.permissions.create({
-        fileId: file.data.id,
-        requestBody: { role: "reader", type: "anyone" },
-      });
-    }
-
-    const fileUrl =
-      process.env.MAKE_PUBLIC === "true"
-        ? `https://drive.google.com/uc?id=${file.data.id}`
-        : `https://drive.google.com/file/d/${file.data.id}/view`;
+    // No public permission (MAKE_PUBLIC=false)
+    let fileUrl = `https://drive.google.com/file/d/${file.data.id}/view`;
 
     res.json({ id: file.data.id, name: file.data.name, url: fileUrl });
   } catch (err) {
@@ -74,8 +118,8 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-// ✅ List files route
-app.get("/list", async (req, res) => {
+// List files
+app.get("/list", requireAuth, async (req, res) => {
   try {
     const response = await drive.files.list({
       q: `'${FOLDER_ID}' in parents and trashed=false`,
@@ -86,10 +130,7 @@ app.get("/list", async (req, res) => {
       id: file.id,
       name: file.name,
       mimeType: file.mimeType,
-      url:
-        process.env.MAKE_PUBLIC === "true"
-          ? `https://drive.google.com/uc?id=${file.id}`
-          : `https://drive.google.com/file/d/${file.id}/view`,
+      url: `https://drive.google.com/file/d/${file.id}/view`,
     }));
 
     res.json({ files });
@@ -99,7 +140,7 @@ app.get("/list", async (req, res) => {
   }
 });
 
-// ✅ Small diag route (check if working)
+// Diag route
 app.get("/diag", async (req, res) => {
   try {
     const about = await drive.about.get({ fields: "user, storageQuota" });
@@ -113,14 +154,9 @@ app.get("/diag", async (req, res) => {
   }
 });
 
-function BufferToStream(buffer) {
-  const { Readable } = require("stream");
-  const stream = new Readable();
-  stream.push(buffer);
-  stream.push(null);
-  return stream;
-}
-
+// -------------------------
+// Start server
+// -------------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
