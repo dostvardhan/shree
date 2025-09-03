@@ -1,15 +1,18 @@
 {
-  "name": "shree-drive",
-  "private": true,
-  "type": "commonjs",
+  "name": "shree-backend",
   "version": "1.0.0",
+  "description": "Private backend for shree-drive with Auth0 + Google Drive integration",
   "main": "server.js",
-  "scripts": { "start": "node server.js" },
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.19.2",
-    "googleapis": "^131.0.0",
-    "jsonwebtoken": "^9.0.2",
+    "googleapis": "^135.0.0",
     "jwks-rsa": "^3.1.0",
+    "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1"
   }
 }
