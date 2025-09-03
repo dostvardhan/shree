@@ -5,8 +5,8 @@
   <title>Upload Photo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- ✅ Auth0 SDK -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/latest/auth0-spa-js.production.js"></script>
+  <!-- ✅ Auth0 SDK (working CDN) -->
+  <script src="https://unpkg.com/@auth0/auth0-spa-js@2.1.3/dist/auth0-spa-js.production.js"></script>
 </head>
 <body>
   <h2>📸 Upload Photo</h2>
@@ -47,7 +47,7 @@
       document.getElementById("status").innerText =
         "✅ Logged in as " + (await auth0Client.getUser()).email;
 
-      // ✅ attach listener AFTER login
+      // ✅ Attach submit listener AFTER login
       document.getElementById("uploadForm").addEventListener("submit", async (e) => {
         e.preventDefault();
 
