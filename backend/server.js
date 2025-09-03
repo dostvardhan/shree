@@ -1,133 +1,127 @@
-// server.js — Shree Drive (PRIVATE)
-// Env vars: ALLOWED_ORIGIN, JWKS_URI, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, REFRESH_TOKEN, DRIVE_FOLDER_ID, MAKE_PUBLIC=false
-
-const express = require('express');
-const multer = require('multer');
-const jwt = require('jsonwebtoken');
-const jwksClient = require('jwks-rsa');
-const { google } = require('googleapis');
+import express from "express";
+import multer from "multer";
+import cors from "cors";
+import { google } from "googleapis";
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 30 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage() });
 
-const {
-  PORT = 3000,
-  ALLOWED_ORIGIN,
-  JWKS_URI,
-  CLIENT_ID,
-  CLIENT_SECRET,
-  REDIRECT_URI,
-  REFRESH_TOKEN,
-  DRIVE_FOLDER_ID,
-  MAKE_PUBLIC = 'false',
-} = process.env;
+// ✅ CORS allow only your Netlify site
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGIN || "*",
+    credentials: true,
+  })
+);
 
-// CORS
-app.use((req, res, next) => {
-  if (ALLOWED_ORIGIN) res.header('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
-  res.header('Vary', 'Origin');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Headers', 'Authorization, Content-Type');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
-  next();
+app.use(express.json());
+
+// 🔑 Google OAuth2 setup
+const oauth2Client = new google.auth.OAuth2(
+  process.env.CLIENT_ID,
+  process.env.CLIENT_SECRET,
+  process.env.REDIRECT_URI
+);
+
+oauth2Client.setCredentials({
+  refresh_token: process.env.REFRESH_TOKEN,
 });
 
-// Identity JWT verify (RS256 via JWKS)
-const jwks = jwksClient({ jwksUri: JWKS_URI, cache: true, cacheMaxAge: 10 * 60 * 1000, rateLimit: true });
-function getKey(header, cb) {
-  jwks.getSigningKey(header.kid, (err, key) => {
-    if (err) return cb(err);
-    cb(null, key.getPublicKey());
-  });
-}
-function requireAuth(req, res, next) {
+const drive = google.drive({ version: "v3", auth: oauth2Client });
+
+const FOLDER_ID = process.env.DRIVE_FOLDER_ID;
+
+// ✅ Upload route
+app.post("/upload", upload.single("file"), async (req, res) => {
   try {
-    const auth = req.headers.authorization || '';
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-    if (!token) return res.status(401).json({ error: 'No token' });
-    // ✅ Relaxed: no issuer check
-    jwt.verify(token, getKey, { algorithms: ['RS256'] }, (err, decoded) => {
-      if (err) return res.status(401).json({ error: `Unauthorized: ${err.message}` });
-      req.user = decoded;
-      next();
-    });
-  } catch {
-    res.status(401).json({ error: 'Unauthorized' });
-  }
-}
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-// Google Drive client
-const oauth2 = new google.auth.OAuth2(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
-oauth2.setCredentials({ refresh_token: REFRESH_TOKEN });
-const drive = google.drive({ version: 'v3', auth: oauth2 });
+    const fileMetadata = {
+      name: req.file.originalname,
+      parents: [FOLDER_ID],
+    };
 
-// Helpers
-async function ensurePublic(id) {
-  if (String(MAKE_PUBLIC).toLowerCase() !== 'true') return;
-  try {
-    await drive.permissions.create({ fileId: id, requestBody: { role: 'reader', type: 'anyone' } });
-  } catch {}
-}
+    const media = {
+      mimeType: req.file.mimetype,
+      body: Buffer.isBuffer(req.file.buffer)
+        ? BufferToStream(req.file.buffer)
+        : req.file.buffer,
+    };
 
-// Routes
-app.get('/health', (req,res)=>res.json({ ok:true }));
-
-app.get('/diag', async (req, res) => {
-  try {
-    const about = await drive.about.get({ fields: 'user(displayName,permissionId)' });
-    res.json({ ok:true, user:about.data.user, folder:DRIVE_FOLDER_ID||null, makePublic:MAKE_PUBLIC, jwks:JWKS_URI });
-  } catch(e){ res.status(500).json({ ok:false, error:e.message }); }
-});
-
-app.post('/upload', requireAuth, upload.single('file'), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ error:'No file' });
-    if (!DRIVE_FOLDER_ID) return res.status(500).json({ error:'DRIVE_FOLDER_ID not set' });
-
-    const name = `${Date.now()}_${(req.file.originalname||'upload').replace(/[^\w.\-]/g,'_')}`;
-    const desc = req.body.quote || '';
-
-    const r = await drive.files.create({
-      requestBody: { name, parents:[DRIVE_FOLDER_ID], description: desc },
-      media: { mimeType: req.file.mimetype, body: Buffer.from(req.file.buffer) },
-      fields: 'id,name,mimeType,createdTime,description'
+    const file = await drive.files.create({
+      resource: fileMetadata,
+      media: media,
+      fields: "id, name",
     });
 
-    await ensurePublic(r.data.id);
-    res.json({ ok:true, ...r.data });
-  } catch(e){ res.status(500).json({ ok:false, error:e.message }); }
-});
-
-app.get('/list', requireAuth, async (req, res) => {
-  try {
-    if (!DRIVE_FOLDER_ID) return res.status(500).json({ error:'DRIVE_FOLDER_ID not set' });
-    const pageSize = Math.min(Number(req.query.pageSize || 100), 1000);
-    const r = await drive.files.list({
-      q: `'${DRIVE_FOLDER_ID}' in parents and trashed=false`,
-      orderBy: 'createdTime desc',
-      pageSize,
-      fields: 'files(id,name,mimeType,createdTime,description)'
-    });
-    res.json(r.data.files || []);
-  } catch(e){ res.status(500).json({ error:e.message }); }
-});
-
-app.get('/file/:id', requireAuth, async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (DRIVE_FOLDER_ID) {
-      const meta = await drive.files.get({ fileId: id, fields: 'parents,mimeType,name' });
-      const ok = (meta.data.parents || []).includes(DRIVE_FOLDER_ID);
-      if (!ok) return res.status(403).json({ error: 'Forbidden' });
-      res.setHeader('Content-Type', meta.data.mimeType || 'application/octet-stream');
-      res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(meta.data.name)}"`);
+    // Make file public if enabled
+    if (process.env.MAKE_PUBLIC === "true") {
+      await drive.permissions.create({
+        fileId: file.data.id,
+        requestBody: { role: "reader", type: "anyone" },
+      });
     }
-    res.setHeader('Cache-Control', 'private, max-age=60');
-    const stream = await drive.files.get({ fileId: id, alt:'media' }, { responseType: 'stream' });
-    stream.data.on('error', () => res.status(500).end());
-    stream.data.pipe(res);
-  } catch(e){ res.status(404).json({ error:'Not found' }); }
+
+    const fileUrl =
+      process.env.MAKE_PUBLIC === "true"
+        ? `https://drive.google.com/uc?id=${file.data.id}`
+        : `https://drive.google.com/file/d/${file.data.id}/view`;
+
+    res.json({ id: file.data.id, name: file.data.name, url: fileUrl });
+  } catch (err) {
+    console.error("Upload error:", err);
+    res.status(500).json({ error: "Upload failed" });
+  }
 });
 
-app.listen(PORT, ()=> console.log('Server on :' + PORT));
+// ✅ List files route
+app.get("/list", async (req, res) => {
+  try {
+    const response = await drive.files.list({
+      q: `'${FOLDER_ID}' in parents and trashed=false`,
+      fields: "files(id, name, mimeType)",
+    });
+
+    const files = response.data.files.map((file) => ({
+      id: file.id,
+      name: file.name,
+      mimeType: file.mimeType,
+      url:
+        process.env.MAKE_PUBLIC === "true"
+          ? `https://drive.google.com/uc?id=${file.id}`
+          : `https://drive.google.com/file/d/${file.id}/view`,
+    }));
+
+    res.json({ files });
+  } catch (err) {
+    console.error("List error:", err);
+    res.status(500).json({ error: "Failed to fetch list" });
+  }
+});
+
+// ✅ Small diag route (check if working)
+app.get("/diag", async (req, res) => {
+  try {
+    const about = await drive.about.get({ fields: "user, storageQuota" });
+    res.json({
+      ok: true,
+      user: about.data.user,
+      folder: FOLDER_ID,
+    });
+  } catch (err) {
+    res.json({ ok: false, error: err.message });
+  }
+});
+
+function BufferToStream(buffer) {
+  const { Readable } = require("stream");
+  const stream = new Readable();
+  stream.push(buffer);
+  stream.push(null);
+  return stream;
+}
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});
