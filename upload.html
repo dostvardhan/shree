@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>Shree • Upload</title>
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
+  <!-- Local copy of Auth0 SPA JS -->
+  <script src="/auth0-spa-js.production.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; }
     .row { margin: 12px 0; }
@@ -35,13 +36,13 @@
         clientId: "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR",
         authorizationParams: {
           audience: "https://shree-drive.onrender.com",
-          redirect_uri: window.location.href.split('?')[0]   // ✅ always match current page
+          redirect_uri: window.location.href.split('?')[0]
         }
       });
 
       if (window.location.search.includes("code=")) {
         await auth0Client.handleRedirectCallback();
-        window.history.replaceState({}, document.title, window.location.pathname); // ✅ clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
 
       if (await auth0Client.isAuthenticated()) {
