@@ -1,3 +1,4 @@
+// server.js
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -17,7 +18,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 // -------------------------
 app.use(
   cors({
-    origin: process.env.ALLOWED_ORIGIN,
+    origin: process.env.ALLOWED_ORIGIN || "*",
     credentials: true,
   })
 );
@@ -26,20 +27,32 @@ app.use(express.json());
 // -------------------------
 // Auth0 JWT verification
 // -------------------------
+if (!process.env.AUTH0_DOMAIN) {
+  console.warn("⚠️ AUTH0_DOMAIN missing in env");
+}
+
 const jwks = jwksClient({
   jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
+  cache: true,
+  rateLimit: true,
 });
 
 function getKey(header, callback) {
+  if (!header || !header.kid) return callback(new Error("No kid in token header"));
   jwks.getSigningKey(header.kid, (err, key) => {
     if (err) return callback(err);
-    const signingKey = key.getPublicKey();
-    callback(null, signingKey);
+    try {
+      const signingKey = key.getPublicKey();
+      callback(null, signingKey);
+    } catch (e) {
+      // older jwks-rsa versions use .rsaPublicKey
+      const signingKey = key.publicKey || key.rsaPublicKey;
+      callback(null, signingKey);
+    }
   });
 }
 
 function requireAuth(req, res, next) {
-  // Bearer token only (safer than query)
   const authHeader = req.headers.authorization || "";
   if (!authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "No token provided" });
@@ -55,7 +68,10 @@ function requireAuth(req, res, next) {
       issuer: `https://${process.env.AUTH0_DOMAIN}/`,
     },
     (err, decoded) => {
-      if (err) return res.status(401).json({ error: "Invalid token" });
+      if (err) {
+        console.error("JWT verify failed:", err.message || err);
+        return res.status(401).json({ error: "Invalid token" });
+      }
       req.user = decoded;
       next();
     }
@@ -66,13 +82,15 @@ function requireAuth(req, res, next) {
 // Google Drive setup
 // -------------------------
 const oauth2Client = new google.auth.OAuth2(
-  process.env.CLIENT_ID,       // Google OAuth Client ID (.apps.googleusercontent.com)
-  process.env.CLIENT_SECRET,   // Google OAuth Client Secret
-  process.env.REDIRECT_URI     // https://developers.google.com/oauthplayground
+  process.env.CLIENT_ID || "",
+  process.env.CLIENT_SECRET || "",
+  process.env.REDIRECT_URI || ""
 );
-oauth2Client.setCredentials({
-  refresh_token: process.env.REFRESH_TOKEN,
-});
+if (process.env.REFRESH_TOKEN) {
+  oauth2Client.setCredentials({
+    refresh_token: process.env.REFRESH_TOKEN,
+  });
+}
 const drive = google.drive({ version: "v3", auth: oauth2Client });
 const FOLDER_ID = process.env.DRIVE_FOLDER_ID;
 
@@ -100,7 +118,8 @@ app.get("/diag", async (req, res) => {
       folder: FOLDER_ID,
     });
   } catch (err) {
-    res.json({ ok: false, error: err.message });
+    console.error("Diag error:", err?.response?.data || err.message);
+    res.status(500).json({ ok: false, error: err.message });
   }
 });
 
@@ -111,7 +130,7 @@ app.post("/upload", requireAuth, upload.single("file"), async (req, res) => {
 
     const fileMetadata = {
       name: req.file.originalname,
-      parents: [FOLDER_ID],
+      parents: FOLDER_ID ? [FOLDER_ID] : undefined,
     };
 
     const media = {
@@ -125,7 +144,6 @@ app.post("/upload", requireAuth, upload.single("file"), async (req, res) => {
       fields: "id, name",
     });
 
-    // We keep files private (MAKE_PUBLIC=false). No permissions added.
     res.json({
       id: file.data.id,
       name: file.data.name,
@@ -141,14 +159,16 @@ app.get("/list", requireAuth, async (req, res) => {
   try {
     const response = await drive.files.list({
       q: `'${FOLDER_ID}' in parents and trashed=false`,
-      fields: "files(id, name, mimeType)",
+      fields: "files(id, name, mimeType, description)",
       orderBy: "createdTime desc",
+      pageSize: 100,
     });
 
     const files = (response.data.files || []).map((f) => ({
       id: f.id,
       name: f.name,
       mimeType: f.mimeType,
+      description: f.description,
     }));
 
     res.json({ files });
@@ -169,14 +189,8 @@ app.get("/file/:id", requireAuth, async (req, res) => {
       fields: "id, name, mimeType",
     });
 
-    res.setHeader(
-      "Content-Type",
-      meta.data.mimeType || "application/octet-stream"
-    );
-    res.setHeader(
-      "Content-Disposition",
-      `inline; filename="${meta.data.name.replace(/"/g, '\\"')}"`
-    );
+    res.setHeader("Content-Type", meta.data.mimeType || "application/octet-stream");
+    res.setHeader("Content-Disposition", `inline; filename="${(meta.data.name || 'file').replace(/"/g, '\\"')}"`);
 
     const driveRes = await drive.files.get(
       { fileId, alt: "media" },
@@ -191,7 +205,11 @@ app.get("/file/:id", requireAuth, async (req, res) => {
       .pipe(res);
   } catch (err) {
     console.error("File stream error:", err?.response?.data || err.message);
-    if (!res.headersSent) res.status(404).json({ error: "File not found" });
+    if (err?.response?.status === 404) {
+      return res.status(404).json({ error: "File not found" });
+    }
+    // If auth failed earlier the middleware would have returned; treat other issues as 500
+    res.status(500).json({ error: "Failed to stream file" });
   }
 });
 
