@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>Shree • Private Gallery</title>
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
+  <!-- Local copy of Auth0 SPA JS -->
+  <script src="/auth0-spa-js.production.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; }
     .actions { margin-bottom: 16px; }
@@ -34,7 +35,7 @@
         clientId: "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR",
         authorizationParams: {
           audience: "https://shree-drive.onrender.com",
-          redirect_uri: window.location.href.split('?')[0]   // ✅ always match current page
+          redirect_uri: window.location.href.split('?')[0]
         }
       });
 
