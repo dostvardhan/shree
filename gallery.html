@@ -3,47 +3,111 @@
 <head>
   <meta charset="UTF-8" />
   <title>Shree • Private Gallery</title>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-    img { width: 100%; border-radius: 8px; }
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    .actions { margin-bottom: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    img { width: 100%; border-radius: 10px; display: block; }
+    button { padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; background: #f7f7f7; cursor: pointer; }
+    button + button { margin-left: 8px; }
   </style>
 </head>
 <body>
   <h1>Shree • Private Gallery</h1>
-  <button onclick="loadGallery()">Reload</button>
-  <div id="gallery" class="grid"></div>
+
+  <div class="actions">
+    <button id="login">Login</button>
+    <button id="logout" style="display:none">Logout</button>
+    <a href="upload.html" style="margin-left:12px;">Go to Upload</a>
+  </div>
+
+  <div id="gallery" class="grid">Loading...</div>
 
   <script>
+    let auth0Client;
+    let accessToken;
+
+    async function initAuth() {
+      auth0Client = await createAuth0Client({
+        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
+        clientId: "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR",
+        authorizationParams: {
+          audience: "https://shree-drive.onrender.com",
+          redirect_uri: window.location.origin + "/gallery.html"
+        }
+      });
+
+      // If returning from Auth0
+      if (window.location.search.includes("code=")) {
+        await auth0Client.handleRedirectCallback();
+        window.history.replaceState({}, document.title, "/gallery.html");
+      }
+
+      const isAuth = await auth0Client.isAuthenticated();
+      if (isAuth) {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("logout").style.display = "inline-block";
+        accessToken = await auth0Client.getTokenSilently();
+        loadGallery();
+      } else {
+        document.getElementById("gallery").innerText = "Please login to view gallery.";
+      }
+    }
+
+    document.getElementById("login").addEventListener("click", async () => {
+      await auth0Client.loginWithRedirect();
+    });
+
+    document.getElementById("logout").addEventListener("click", async () => {
+      await auth0Client.logout({
+        logoutParams: { returnTo: "https://shreshthapushkar.com" }
+      });
+    });
+
     async function loadGallery() {
       const gallery = document.getElementById("gallery");
       gallery.innerHTML = "Loading...";
 
       try {
-        const res = await fetch("https://shree-drive.onrender.com/list", {
-          credentials: "include"
+        // 1) Get list with Bearer token
+        const listRes = await fetch("https://shree-drive.onrender.com/list", {
+          headers: { Authorization: `Bearer ${accessToken}` }
         });
-        const data = await res.json();
+        const data = await listRes.json();
+        if (!listRes.ok) {
+          gallery.innerHTML = "❌ Error: " + (data.error || listRes.status);
+          return;
+        }
 
-        if (res.ok) {
-          gallery.innerHTML = "";
-          data.files.forEach(file => {
-            if (file.mimeType.startsWith("image/")) {
-              const img = document.createElement("img");
-              img.src = file.url;
-              img.alt = file.name;
-              gallery.appendChild(img);
-            }
+        // 2) For each image, fetch bytes via secure stream (header, not query)
+        gallery.innerHTML = "";
+        for (const file of data.files) {
+          if (!file.mimeType || !file.mimeType.startsWith("image/")) continue;
+
+          const imgRes = await fetch(`https://shree-drive.onrender.com/file/${file.id}`, {
+            headers: { Authorization: `Bearer ${accessToken}` }
           });
-        } else {
-          gallery.innerHTML = "❌ Error: " + data.error;
+          if (!imgRes.ok) continue;
+
+          const blob = await imgRes.blob();
+          const url = URL.createObjectURL(blob);
+
+          const img = document.createElement("img");
+          img.src = url;
+          img.alt = file.name;
+          gallery.appendChild(img);
+        }
+
+        if (!gallery.children.length) {
+          gallery.innerHTML = "No images yet.";
         }
       } catch (err) {
         gallery.innerHTML = "❌ Failed: " + err.message;
       }
     }
 
-    loadGallery();
+    initAuth();
   </script>
 </body>
 </html>
