@@ -14,57 +14,92 @@
     .hint{font-size:.9rem;color:#666;margin-top:12px}
     .log{margin-top:14px;font:12px/1.4 ui-monospace,Consolas,monospace;color:#333;white-space:pre-wrap;background:#f5f5f5;border:1px solid #eee;border-radius:8px;padding:10px;max-height:180px;overflow:auto}
   </style>
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  <!-- Auth0 SDK: local or CDN.
+       If you keep local copy, ensure /auth0-spa-js.production.js exists.
+       Alternatively uncomment the CDN line and remove local file. -->
+  <script src="/auth0-spa-js.production.js"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@2.1.3/dist/auth0-spa-js.production.js"></script> -->
 </head>
 <body>
   <div class="card">
     <h1>Private access</h1>
     <p>Only invited users can sign in.</p>
-    <button id="btn">Sign in with Netlify Identity</button>
-    <div class="hint">If you don't have an invite, ask the site owner.</div>
+    <button id="btn">Sign in with Auth0</button>
+    <div class="hint">If you don't have access, ask the site owner.</div>
     <div id="log" class="log" hidden></div>
   </div>
 
   <script>
-    // Small logger box for quick debug
+    // ----- CONFIG: change these to match your Auth0 app -----
+    const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
+    const AUTH0_CLIENT_ID = "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
+    const AUTH0_AUDIENCE = "https://shree-drive.onrender.com"; // your backend audience
+    const REDIRECT_AFTER_LOGIN = "/gallery.html"; // where to go after login
+    // -------------------------------------------------------
+
     const logBox = document.getElementById('log');
     function log(...a){ try{ logBox.hidden=false; logBox.textContent += a.map(x => typeof x==='string'?x:JSON.stringify(x)).join(' ') + '\n'; }catch(e){} }
 
-    // Explicitly point to Identity API (sometimes helps)
-    const APIUrl = 'https://shreshthapushkar.com/.netlify/identity';
+    (async () => {
+      if (typeof createAuth0Client !== "function") {
+        log("Auth0 SDK not found. Make sure auth0-spa-js.production.js is present or use CDN.");
+        // option: fallback to plain link to homepage
+        return;
+      }
 
-    // Basic connectivity checks
-    fetch(APIUrl).then(r => { log('identity root:', r.status); }).catch(e => log('identity error:', e?.message||e));
-    fetch(APIUrl + '/settings').then(r => { log('settings:', r.status); return r.json(); })
-      .then(j => log('inviteOnly:', j?.invite_only)).catch(e => log('settings error:', e?.message||e));
-
-    if (!window.netlifyIdentity) {
-      alert('Identity widget failed to load. Check network/ad-blockers.');
-    } else {
-      netlifyIdentity.on('init', function(user){
-        log('init user:', !!user);
-        if (user) {
-          const next = sessionStorage.getItem('next') || '/';
-          sessionStorage.removeItem('next');
-          window.location.replace(next);
+      // create client
+      const auth0 = await createAuth0Client({
+        domain: AUTH0_DOMAIN,
+        clientId: AUTH0_CLIENT_ID,
+        authorizationParams: {
+          audience: AUTH0_AUDIENCE,
+          redirect_uri: window.location.origin + window.location.pathname // handle redirect on same page
         }
       });
-      netlifyIdentity.on('login', function(user){
-        log('login:', user && user.email);
-        const next = sessionStorage.getItem('next') || '/';
-        sessionStorage.removeItem('next');
-        window.location.replace(next);
+
+      // If redirected back from Auth0 (code & state present), handle callback
+      if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
+        try {
+          const result = await auth0.handleRedirectCallback();
+          log("Handled redirect callback:", result);
+        } catch (err) {
+          log("Callback error:", err && err.message ? err.message : err);
+        }
+        // remove query params to clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        // redirect to intended page
+        window.location.replace(REDIRECT_AFTER_LOGIN);
+        return;
+      }
+
+      // If user already authenticated, send straight to app
+      try {
+        const isAuth = await auth0.isAuthenticated();
+        if (isAuth) {
+          window.location.replace(REDIRECT_AFTER_LOGIN);
+          return;
+        }
+      } catch (e) {
+        log("isAuthenticated error:", e && e.message);
+      }
+
+      // Wire login button
+      document.getElementById('btn').addEventListener('click', async () => {
+        try {
+          await auth0.loginWithRedirect({
+            authorizationParams: {
+              audience: AUTH0_AUDIENCE,
+              // optional: scope
+              scope: "openid profile email"
+            },
+            appState: { target: REDIRECT_AFTER_LOGIN }
+          });
+        } catch (e) {
+          log("loginWithRedirect error:", e && e.message);
+        }
       });
-      netlifyIdentity.on('error', function(e){ log('identity error:', e && (e.message || e)); });
-
-      // Important: explicit init with APIUrl
-      netlifyIdentity.init({ APIUrl });
-    }
-
-    document.getElementById('btn').addEventListener('click', function(){
-      if (!window.netlifyIdentity){ alert('Identity not available'); return; }
-      netlifyIdentity.open('login');
-    });
+    })();
   </script>
 </body>
 </html>
