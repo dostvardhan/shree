@@ -35,13 +35,13 @@
         clientId: "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR",
         authorizationParams: {
           audience: "https://shree-drive.onrender.com",
-          redirect_uri: window.location.origin + "/upload.html"
+          redirect_uri: window.location.href.split('?')[0]   // ✅ always match current page
         }
       });
 
       if (window.location.search.includes("code=")) {
         await auth0Client.handleRedirectCallback();
-        window.history.replaceState({}, document.title, "/upload.html");
+        window.history.replaceState({}, document.title, window.location.pathname); // ✅ clean URL
       }
 
       if (await auth0Client.isAuthenticated()) {
