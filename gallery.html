@@ -34,13 +34,13 @@
         clientId: "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR",
         authorizationParams: {
           audience: "https://shree-drive.onrender.com",
-          redirect_uri: window.location.origin + "/gallery.html"
+          redirect_uri: window.location.href.split('?')[0]   // ✅ always match current page
         }
       });
 
       if (window.location.search.includes("code=")) {
         await auth0Client.handleRedirectCallback();
-        window.history.replaceState({}, document.title, "/gallery.html");
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
 
       const isAuth = await auth0Client.isAuthenticated();
@@ -66,14 +66,12 @@
       const gallery = document.getElementById("gallery");
       gallery.innerHTML = "Loading...";
       try {
-        // 1) get list
         const listRes = await fetch("https://shree-drive.onrender.com/list", {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
         const data = await listRes.json();
         if (!listRes.ok) { gallery.innerHTML = "❌ " + (data.error || listRes.status); return; }
 
-        // 2) fetch each image via secure stream + blob
         gallery.innerHTML = "";
         for (const file of data.files) {
           if (!file.mimeType?.startsWith("image/")) continue;
