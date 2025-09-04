@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -12,58 +12,18 @@
     #debug{ margin-top:10px; font-size:12px; color:#666; white-space:pre-wrap; }
   </style>
 
-  <!-- Use the official CDN for the widget -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <!-- Auth0 SDK (use local copy or CDN) -->
+  <script src="/auth0-spa-js.production.js"></script>
 
-  <script>
-    const API_URL = 'https://shreshthapushkar.com/.netlify/identity';
-
-    function log(m){ const el = document.getElementById('debug'); if (el) el.textContent = m; }
-
-    async function checkIdentityHealth(){
-      try {
-        const r = await fetch(API_URL + '/health', { cache: 'no-store' });
-        log(`Identity health: ${r.status} ${r.statusText}`);
-      } catch (e) {
-        log('Identity health check failed: ' + e.message);
-      }
-    }
-
-    function setupIdentity(){
-      if (!window.netlifyIdentity) {
-        log('❌ netlifyIdentity object missing (CDN failed to load?)');
-        return;
-      }
-
-      // Point the widget at YOUR domain’s Identity endpoint
-      window.netlifyIdentity.init({ APIUrl: API_URL });
-
-      window.netlifyIdentity.on('init', (user) => {
-        log(user ? 'Already logged in → redirecting…' : 'Identity ready.');
-        if (user) location.replace('/life.html');
-      });
-      window.netlifyIdentity.on('login', () => location.replace('/life.html'));
-      window.netlifyIdentity.on('signup', () => location.replace('/life.html'));
-    }
-
-    function openLogin(){
-      if (!window.netlifyIdentity) return log('❌ Identity not loaded.');
-      try { window.netlifyIdentity.open('login'); }
-      catch(e){ window.netlifyIdentity.init({ APIUrl: API_URL }); setTimeout(()=>window.netlifyIdentity.open('login'), 200); }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      setupIdentity();
-      checkIdentityHealth();
-    });
-  </script>
+  <!-- Our guard (must come AFTER auth0-spa-js) -->
+  <script src="/guard-auth-auth0.js"></script>
 </head>
 <body>
   <div class="card">
     <h1>Welcome ✨</h1>
     <p>Private access only. Please log in.</p>
     <div class="row">
-      <button onclick="openLogin()">Log in / Sign up</button>
+      <button onclick="window.__AUTH__.login()">Log in / Sign up</button>
     </div>
     <div id="debug"></div>
   </div>
