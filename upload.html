@@ -1,90 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Shree • Upload</title>
-  <!-- Local copy of Auth0 SPA JS -->
-  <script src="/auth0-spa-js.production.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 24px; }
-    .row { margin: 12px 0; }
-    button { padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; background: #f7f7f7; cursor: pointer; }
-  </style>
-</head>
-<body>
-  <h1>Shree • Upload</h1>
+<script>
+  // ensure guard-auth-auth0.js is included before this
+  async function initAuth() {
+    if (!window.__AUTH__) {
+      console.error("Auth helper missing");
+      return;
+    }
+    await window.__AUTH__.init();
+    const c = await window.__AUTH__.getClient();
+    const isAuth = await c.isAuthenticated();
+    if (isAuth) {
+      document.getElementById("login").style.display = "none";
+      document.getElementById("logout").style.display = "inline";
+      document.getElementById("upload-area").style.display = "block";
+    } else {
+      document.getElementById("upload-area").style.display = "none";
+    }
 
-  <div class="row">
-    <button id="login">Login</button>
-    <button id="logout" style="display:none">Logout</button>
-    <a href="gallery.html" style="margin-left:12px;">Go to Gallery</a>
-  </div>
+    document.getElementById("login").addEventListener("click", ()=>window.__AUTH__.login());
+    document.getElementById("logout").addEventListener("click", ()=>window.__AUTH__.logout());
+  }
 
-  <div id="upload-area" class="row" style="display:none">
-    <input type="file" id="fileInput" />
-    <button onclick="doUpload()">Upload</button>
-    <p id="status"></p>
-  </div>
+  async function doUpload() {
+    const fileInput = document.getElementById("fileInput");
+    if (!fileInput.files.length) { alert("Choose a file first!"); return; }
 
-  <script>
-    let auth0Client;
-    let accessToken;
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+    document.getElementById("status").innerText = "Uploading...";
 
-    async function initAuth() {
-      auth0Client = await createAuth0Client({
-        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
-        clientId: "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR",
-        authorizationParams: {
-          audience: "https://shree-drive.onrender.com",
-          redirect_uri: window.location.href.split('?')[0]
-        }
+    try {
+      const res = await window.__AUTH__.authFetch("https://shree-drive.onrender.com/upload", {
+        method: "POST",
+        body: formData
       });
-
-      if (window.location.search.includes("code=")) {
-        await auth0Client.handleRedirectCallback();
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-
-      if (await auth0Client.isAuthenticated()) {
-        document.getElementById("login").style.display = "none";
-        document.getElementById("logout").style.display = "inline";
-        document.getElementById("upload-area").style.display = "block";
-        accessToken = await auth0Client.getTokenSilently();
-      } else {
-        document.getElementById("upload-area").style.display = "none";
-      }
+      const data = await res.json().catch(()=>({ error: 'Invalid JSON' }));
+      document.getElementById("status").innerText = res.ok ? ("✅ Uploaded: " + (data.name || '')) : ("❌ " + (data.error || res.status));
+    } catch (e) {
+      document.getElementById("status").innerText = "❌ " + e.message;
     }
+  }
 
-    document.getElementById("login").addEventListener("click", async () => {
-      await auth0Client.loginWithRedirect();
-    });
-
-    document.getElementById("logout").addEventListener("click", async () => {
-      await auth0Client.logout({ logoutParams: { returnTo: "https://shreshthapushkar.com" } });
-    });
-
-    async function doUpload() {
-      const fileInput = document.getElementById("fileInput");
-      if (!fileInput.files.length) { alert("Choose a file first!"); return; }
-
-      const formData = new FormData();
-      formData.append("file", fileInput.files[0]);
-      document.getElementById("status").innerText = "Uploading...";
-
-      try {
-        const res = await fetch("https://shree-drive.onrender.com/upload", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${accessToken}` },
-          body: formData
-        });
-        const data = await res.json();
-        document.getElementById("status").innerText = res.ok ? ("✅ Uploaded: " + data.name) : ("❌ " + (data.error || res.status));
-      } catch (e) {
-        document.getElementById("status").innerText = "❌ " + e.message;
-      }
-    }
-
-    initAuth();
-  </script>
-</body>
-</html>
+  // start
+  initAuth();
+</script>
