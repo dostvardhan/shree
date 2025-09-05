@@ -5,18 +5,10 @@
   <title>Shree • Life</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Netlify Identity -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  <script>
-    const API_URL = "https://shreshthapushkar.com/.netlify/identity";
-    function requireLogin() {
-      if (!window.netlifyIdentity) return alert("Identity not loaded");
-      window.netlifyIdentity.init({ APIUrl: API_URL });
-      window.netlifyIdentity.on("init", u => { if (!u) location.replace("/"); });
-    }
-    function logout(){ window.netlifyIdentity.logout(); location.replace("/"); }
-    document.addEventListener("DOMContentLoaded", requireLogin);
-  </script>
+  <!-- 1) Auth0 SDK (local or CDN). Make sure this file exists at the path or replace with CDN link) -->
+  <script src="/auth0-spa-js.production.js"></script>
+  <!-- 2) Our guard (Auth0 wrapper + authFetch). Must load AFTER the Auth0 SDK -->
+  <script src="/guard-auth-auth0.js"></script>
 
   <style>
     body{margin:0;font-family:'Segoe UI',sans-serif;background:#fafafa;}
@@ -50,13 +42,14 @@
   <header>
     <h1>🌿 Life is Beautiful 🌿</h1>
     <nav>
-      <a href="/gallery.html">Gallery</a>
-      <a href="/upload.html">Upload</a>
-      <button onclick="logout()">Logout</button>
+      <a id="link-gallery" href="/gallery.html">Gallery</a>
+      <a id="link-upload" href="/upload.html">Upload</a>
+      <button id="btn-logout" style="display:none">Logout</button>
     </nav>
   </header>
 
-  <div class="grid">
+  <div class="grid" id="grid">
+    <!-- cards (static examples) -->
     <div class="card" onmouseenter="spawnHearts(this)">
       <a href="/photo1.html"><img src="/photo1.jpg" alt="Photo 1"></a>
       <div class="hearts"></div>
@@ -105,9 +98,10 @@
   </div>
 
   <script>
+    // small helper to animate hearts
     function spawnHearts(card){
       const container = card.querySelector('.hearts');
-      for(let i=0;i<6;i++){ // more hearts
+      for(let i=0;i<6;i++){
         const heart = document.createElement('div');
         heart.className = 'heart';
         heart.textContent = '❤️';
@@ -118,5 +112,55 @@
       }
     }
   </script>
-</body>
-</html>
+
+  <script>
+    // ------------ Auth0 check & logout wiring ------------
+    (async function(){
+      // Values must match Auth0 app (same as used in gallery/upload pages)
+      const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
+      const AUTH0_CLIENT_ID = "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
+      const SITE_ORIGIN = window.location.origin || "https://shreshthapushkar.com";
+
+      // Wait until createAuth0Client is available (loaded from auth0-spa-js.production.js)
+      if (typeof createAuth0Client !== "function") {
+        console.error("Auth0 SDK missing (createAuth0Client not found). Make sure auth0-spa-js.production.js is loaded first.");
+        // fallback: redirect to home
+        location.replace("/");
+        return;
+      }
+
+      try {
+        const auth0 = await createAuth0Client({
+          domain: AUTH0_DOMAIN,
+          clientId: AUTH0_CLIENT_ID,
+          authorizationParams: {
+            audience: "https://shree-drive.onrender.com", // same audience used in other pages
+            redirect_uri: SITE_ORIGIN + "/gallery.html" // after login we'll show gallery (or change as you like)
+          }
+        });
+
+        // If page was loaded after an auth redirect, handle it
+        if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
+          try {
+            await auth0.handleRedirectCallback();
+            // remove query params
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } catch (err) {
+            console.warn("Redirect callback handle error:", err);
+          }
+        }
+
+        const isAuthenticated = await auth0.isAuthenticated();
+
+        if (!isAuthenticated) {
+          // Not authenticated → send to homepage (or login page)
+          // We remember current page so guard-auth-auth0 might redirect back, but simple: redirect to home
+          location.replace("/");
+          return;
+        }
+
+        // Show logout button
+        const logoutBtn = document.getElementById("btn-logout");
+        if (logoutBtn) {
+          logoutBtn.style.display = "inline-block";
+          logoutBtn.onclick = async () => {

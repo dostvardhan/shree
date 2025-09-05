@@ -1,49 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Shree • Upload</title>
-</head>
-<body>
-  <h1>Shree • Upload</h1>
-  
-  <input type="file" id="fileInput" />
-  <button onclick="doUpload()">Upload</button>
-  <p id="status"></p>
-
-  <p><a href="gallery.html">Go to Gallery</a></p>
-
-  <script>
-    async function doUpload() {
-      const fileInput = document.getElementById("fileInput");
-      if (!fileInput.files.length) {
-        alert("Choose a file first!");
-        return;
-      }
-      const file = fileInput.files[0];
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      document.getElementById("status").innerText = "Uploading...";
-
-      try {
-        const res = await fetch("https://shree-drive.onrender.com/upload", {
-          method: "POST",
-          body: formData,
-          credentials: "include"
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-          document.getElementById("status").innerText = "✅ Uploaded: " + data.name;
-        } else {
-          document.getElementById("status").innerText = "❌ Error: " + data.error;
-        }
-      } catch (err) {
-        document.getElementById("status").innerText = "❌ Failed: " + err.message;
-      }
+<script>
+  // ensure guard-auth-auth0.js is included before this
+  async function initAuth() {
+    if (!window.__AUTH__) {
+      console.error("Auth helper missing");
+      return;
     }
-  </script>
-</body>
-</html>
+    await window.__AUTH__.init();
+    const c = await window.__AUTH__.getClient();
+    const isAuth = await c.isAuthenticated();
+    if (isAuth) {
+      document.getElementById("login").style.display = "none";
+      document.getElementById("logout").style.display = "inline";
+      document.getElementById("upload-area").style.display = "block";
+    } else {
+      document.getElementById("upload-area").style.display = "none";
+    }
+
+    document.getElementById("login").addEventListener("click", ()=>window.__AUTH__.login());
+    document.getElementById("logout").addEventListener("click", ()=>window.__AUTH__.logout());
+  }
+
+  async function doUpload() {
+    const fileInput = document.getElementById("fileInput");
+    if (!fileInput.files.length) { alert("Choose a file first!"); return; }
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+    document.getElementById("status").innerText = "Uploading...";
+
+    try {
+      const res = await window.__AUTH__.authFetch("https://shree-drive.onrender.com/upload", {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json().catch(()=>({ error: 'Invalid JSON' }));
+      document.getElementById("status").innerText = res.ok ? ("✅ Uploaded: " + (data.name || '')) : ("❌ " + (data.error || res.status));
+    } catch (e) {
+      document.getElementById("status").innerText = "❌ " + e.message;
+    }
+  }
+
+  // start
+  initAuth();
+</script>

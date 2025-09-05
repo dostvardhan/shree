@@ -1,41 +1,34 @@
-// gallery.js (debug version)
+// gallery.js (Auth0-ready)
 document.addEventListener("DOMContentLoaded", initGallery);
 const BACKEND = "https://shree-drive.onrender.com";
 
 async function initGallery() {
-  console.log("Gallery JS loaded");
+  console.log("Gallery JS loaded (auth0 version)");
 
-  if (typeof netlifyIdentity === "undefined") {
-    alert("Identity widget missing.");
+  if (!window.__AUTH__) {
+    alert("Auth helper missing. Include guard-auth-auth0.js first.");
     return;
   }
-  await new Promise((res) => { netlifyIdentity.on("init", res); netlifyIdentity.init(); });
-
-  let user = netlifyIdentity.currentUser();
-  if (!user) {
-    await new Promise((res) => {
-      const onLogin = () => (netlifyIdentity.off("login", onLogin), res());
-      netlifyIdentity.on("login", onLogin);
-      netlifyIdentity.open("login");
-    });
-    user = netlifyIdentity.currentUser();
-  }
-  if (!user) { alert("Login failed."); return; }
-
-  const token = await user.jwt();
-
-  // 🔎 DEBUG: print JWT header + payload
-  const header = JSON.parse(atob(token.split('.')[0]));
-  const payload = JSON.parse(atob(token.split('.')[1]));
-  console.log("🔑 JWT Header:", header);
-  console.log("📦 JWT Payload:", payload);
-
-  if (!token || token.length < 100) { alert("Invalid token."); return; }
-  console.log("JWT length:", token.length);
 
   try {
-    const resp = await fetch(`${BACKEND}/list`, { headers: { Authorization: `Bearer ${token}` } });
-    const files = await resp.json();
+    // ensure client inicialized
+    await window.__AUTH__.init();
+  } catch (e) {
+    console.error("Auth init failed:", e);
+    alert("Auth init failed: " + (e.message || e));
+    return;
+  }
+
+  try {
+    const resp = await window.__AUTH__.authFetch(`${BACKEND}/list`);
+    if (!resp.ok) {
+      const err = await resp.json().catch(()=>({ error: resp.status }));
+      console.error("List fetch failed:", resp.status, err);
+      document.getElementById("gallery").innerText = "❌ " + (err.error || resp.status);
+      return;
+    }
+    const data = await resp.json();
+    const files = data.files || [];
     console.log("📂 List response:", files);
 
     const gallery = document.getElementById("gallery");
@@ -55,9 +48,7 @@ async function initGallery() {
         img.alt = f.name;
         img.loading = "lazy";
         try {
-          const fileResp = await fetch(`${BACKEND}/file/${encodeURIComponent(f.id)}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const fileResp = await window.__AUTH__.authFetch(`${BACKEND}/file/${encodeURIComponent(f.id)}`);
           if (!fileResp.ok) throw new Error(`Fetch image failed: ${fileResp.status}`);
           const blob = await fileResp.blob();
           img.src = URL.createObjectURL(blob);

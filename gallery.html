@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>Shree • Private Gallery</title>
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.5/auth0-spa-js.production.js"></script>
+  <!-- Local copy of Auth0 SPA JS -->
+  <script src="/auth0-spa-js.production.js"></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; }
     .actions { margin-bottom: 16px; }
@@ -34,14 +35,13 @@
         clientId: "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR",
         authorizationParams: {
           audience: "https://shree-drive.onrender.com",
-          redirect_uri: window.location.origin + "/gallery.html"
+          redirect_uri: window.location.href.split('?')[0]
         }
       });
 
-      // If returning from Auth0
       if (window.location.search.includes("code=")) {
         await auth0Client.handleRedirectCallback();
-        window.history.replaceState({}, document.title, "/gallery.html");
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
 
       const isAuth = await auth0Client.isAuthenticated();
@@ -60,30 +60,22 @@
     });
 
     document.getElementById("logout").addEventListener("click", async () => {
-      await auth0Client.logout({
-        logoutParams: { returnTo: "https://shreshthapushkar.com" }
-      });
+      await auth0Client.logout({ logoutParams: { returnTo: "https://shreshthapushkar.com" } });
     });
 
     async function loadGallery() {
       const gallery = document.getElementById("gallery");
       gallery.innerHTML = "Loading...";
-
       try {
-        // 1) Get list with Bearer token
         const listRes = await fetch("https://shree-drive.onrender.com/list", {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
         const data = await listRes.json();
-        if (!listRes.ok) {
-          gallery.innerHTML = "❌ Error: " + (data.error || listRes.status);
-          return;
-        }
+        if (!listRes.ok) { gallery.innerHTML = "❌ " + (data.error || listRes.status); return; }
 
-        // 2) For each image, fetch bytes via secure stream (header, not query)
         gallery.innerHTML = "";
         for (const file of data.files) {
-          if (!file.mimeType || !file.mimeType.startsWith("image/")) continue;
+          if (!file.mimeType?.startsWith("image/")) continue;
 
           const imgRes = await fetch(`https://shree-drive.onrender.com/file/${file.id}`, {
             headers: { Authorization: `Bearer ${accessToken}` }
@@ -98,12 +90,9 @@
           img.alt = file.name;
           gallery.appendChild(img);
         }
-
-        if (!gallery.children.length) {
-          gallery.innerHTML = "No images yet.";
-        }
-      } catch (err) {
-        gallery.innerHTML = "❌ Failed: " + err.message;
+        if (!gallery.children.length) gallery.innerHTML = "No images yet.";
+      } catch (e) {
+        gallery.innerHTML = "❌ " + e.message;
       }
     }
 

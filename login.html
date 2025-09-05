@@ -1,70 +1,36 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="robots" content="noindex,nofollow" />
   <title>Sign in · Private Area</title>
+  <script src="/auth0-spa-js.production.js"></script>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;background:#fafafa}
-    .card{max-width:440px;padding:28px;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.06);background:#fff}
-    h1{font-size:1.25rem;margin:0 0 12px}
-    p{color:#555;margin:0 0 18px}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;background:#fafafa}
+    .card{max-width:440px;padding:28px;border-radius:12px;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.06)}
     button{padding:10px 14px;border-radius:10px;border:1px solid #ddd;background:#fff;cursor:pointer}
-    .hint{font-size:.9rem;color:#666;margin-top:12px}
-    .log{margin-top:14px;font:12px/1.4 ui-monospace,Consolas,monospace;color:#333;white-space:pre-wrap;background:#f5f5f5;border:1px solid #eee;border-radius:8px;padding:10px;max-height:180px;overflow:auto}
   </style>
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
   <div class="card">
-    <h1>Private access</h1>
-    <p>Only invited users can sign in.</p>
-    <button id="btn">Sign in with Netlify Identity</button>
-    <div class="hint">If you don't have an invite, ask the site owner.</div>
-    <div id="log" class="log" hidden></div>
+    <h1>Sign in</h1>
+    <p>Private area — sign in with Auth0</p>
+    <button id="btn">Sign in with Auth0</button>
   </div>
 
   <script>
-    // Small logger box for quick debug
-    const logBox = document.getElementById('log');
-    function log(...a){ try{ logBox.hidden=false; logBox.textContent += a.map(x => typeof x==='string'?x:JSON.stringify(x)).join(' ') + '\n'; }catch(e){} }
+    const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
+    const AUTH0_CLIENT_ID = "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
+    const AUTH0_AUDIENCE = "https://shree-drive.onrender.com";
 
-    // Explicitly point to Identity API (sometimes helps)
-    const APIUrl = 'https://shreshthapushkar.com/.netlify/identity';
-
-    // Basic connectivity checks
-    fetch(APIUrl).then(r => { log('identity root:', r.status); }).catch(e => log('identity error:', e?.message||e));
-    fetch(APIUrl + '/settings').then(r => { log('settings:', r.status); return r.json(); })
-      .then(j => log('inviteOnly:', j?.invite_only)).catch(e => log('settings error:', e?.message||e));
-
-    if (!window.netlifyIdentity) {
-      alert('Identity widget failed to load. Check network/ad-blockers.');
-    } else {
-      netlifyIdentity.on('init', function(user){
-        log('init user:', !!user);
-        if (user) {
-          const next = sessionStorage.getItem('next') || '/';
-          sessionStorage.removeItem('next');
-          window.location.replace(next);
-        }
+    (async function(){
+      const auth0 = await createAuth0Client({
+        domain: AUTH0_DOMAIN,
+        clientId: AUTH0_CLIENT_ID,
+        authorizationParams: { audience: AUTH0_AUDIENCE, redirect_uri: window.location.origin + '/' }
       });
-      netlifyIdentity.on('login', function(user){
-        log('login:', user && user.email);
-        const next = sessionStorage.getItem('next') || '/';
-        sessionStorage.removeItem('next');
-        window.location.replace(next);
-      });
-      netlifyIdentity.on('error', function(e){ log('identity error:', e && (e.message || e)); });
-
-      // Important: explicit init with APIUrl
-      netlifyIdentity.init({ APIUrl });
-    }
-
-    document.getElementById('btn').addEventListener('click', function(){
-      if (!window.netlifyIdentity){ alert('Identity not available'); return; }
-      netlifyIdentity.open('login');
-    });
+      document.getElementById('btn').addEventListener('click', () => auth0.loginWithRedirect());
+    })();
   </script>
 </body>
 </html>
