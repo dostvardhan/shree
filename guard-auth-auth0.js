@@ -1,5 +1,3 @@
-<!-- guard-auth-auth0.js (include this as a script file in <head>) -->
-<script>
 (() => {
   // CONFIG - update if you want to override
   const AUTH0_DOMAIN = 'dev-zzhjbmtzoxtgoz31.us.auth0.com';
@@ -154,4 +152,3 @@
     domain: AUTH0_DOMAIN,
   };
 })();
-</script>
