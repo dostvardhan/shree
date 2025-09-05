@@ -5,10 +5,26 @@
   <title>Shree • Life</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- 1) Auth0 SDK (local or CDN). Make sure this file exists at the path or replace with CDN link) -->
-  <script src="/auth0-spa-js.production.js"></script>
-  <!-- 2) Our guard (Auth0 wrapper + authFetch). Must load AFTER the Auth0 SDK -->
-  <script src="/guard-auth-auth0.js"></script>
+  <!--
+    Auth0 config for this page.
+    Replace placeholders only if you want to override values — otherwise the guard script can read the same values from other pages.
+  -->
+  <script>
+    // Optional per-page override (not strictly required if your guard script reads env or global)
+    window.SHREE_AUTH0 = {
+      domain: 'dev-zzhjbmtzoxtgoz31.us.auth0.com',   // your Auth0 domain
+      client_id: '0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR', // your Auth0 client id
+      audience: 'https://shree-drive.onrender.com', // API identifier (must match server)
+      redirect_uri: window.location.origin + '/gallery.html'
+    };
+  </script>
+
+  <!-- Auth0 SPA SDK (CDN) - MUST be included BEFORE your guard/init script -->
+  <!-- If you prefer a local copy, replace this src with "/auth0-spa-js.production.js" -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.30.0/auth0-spa-js.production.js"></script>
+
+  <!-- Your guard/init script (must run after Auth0 SDK) -->
+  <script src="/guard-auth-auth0.js" defer></script>
 
   <style>
     body{margin:0;font-family:'Segoe UI',sans-serif;background:#fafafa;}
@@ -116,30 +132,35 @@
   <script>
     // ------------ Auth0 check & logout wiring ------------
     (async function(){
-      // Values must match Auth0 app (same as used in gallery/upload pages)
-      const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
-      const AUTH0_CLIENT_ID = "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
+      // Prefer the page-level config, fallback to these if needed
+      const AUTH0_DOMAIN = (window.SHREE_AUTH0 && window.SHREE_AUTH0.domain) || "dev-zzhjbmtzoxtgoz31.us.auth0.com";
+      const AUTH0_CLIENT_ID = (window.SHREE_AUTH0 && window.SHREE_AUTH0.client_id) || "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
       const SITE_ORIGIN = window.location.origin || "https://shreshthapushkar.com";
+      const AUDIENCE = (window.SHREE_AUTH0 && window.SHREE_AUTH0.audience) || "https://shree-drive.onrender.com";
+      const REDIRECT = (window.SHREE_AUTH0 && window.SHREE_AUTH0.redirect_uri) || (SITE_ORIGIN + "/gallery.html");
 
-      // Wait until createAuth0Client is available (loaded from auth0-spa-js.production.js)
+      // Ensure SDK loaded
       if (typeof createAuth0Client !== "function") {
-        console.error("Auth0 SDK missing (createAuth0Client not found). Make sure auth0-spa-js.production.js is loaded first.");
-        // fallback: redirect to home
-        location.replace("/");
+        console.error("Auth0 SDK missing (createAuth0Client not found). Make sure auth0-spa-js is loaded first.");
+        // fallback: redirect to homepage (safe)
+        try { location.replace("/"); } catch(e) {}
         return;
       }
 
       try {
+        // create client using modern createAuth0Client options
         const auth0 = await createAuth0Client({
           domain: AUTH0_DOMAIN,
-          clientId: AUTH0_CLIENT_ID,
+          client_id: AUTH0_CLIENT_ID,
           authorizationParams: {
-            audience: "https://shree-drive.onrender.com", // same audience used in other pages
-            redirect_uri: SITE_ORIGIN + "/gallery.html" // after login we'll show gallery (or change as you like)
-          }
+            audience: AUDIENCE,
+            redirect_uri: REDIRECT
+          },
+          cacheLocation: 'localstorage',
+          useRefreshTokens: true
         });
 
-        // If page was loaded after an auth redirect, handle it
+        // Handle redirect callback if present (user just logged in)
         if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
           try {
             await auth0.handleRedirectCallback();
@@ -153,14 +174,74 @@
         const isAuthenticated = await auth0.isAuthenticated();
 
         if (!isAuthenticated) {
-          // Not authenticated → send to homepage (or login page)
-          // We remember current page so guard-auth-auth0 might redirect back, but simple: redirect to home
-          location.replace("/");
+          // Not authenticated -> redirect to home (or you can redirect to login page)
+          try { location.replace("/"); } catch(e) {}
           return;
         }
 
-        // Show logout button
+        // Show logout button and wire it
         const logoutBtn = document.getElementById("btn-logout");
         if (logoutBtn) {
           logoutBtn.style.display = "inline-block";
           logoutBtn.onclick = async () => {
+            try {
+              // perform logout via Auth0 and return to site origin
+              auth0.logout({ returnTo: SITE_ORIGIN });
+            } catch (err) {
+              console.error('Logout error', err);
+              // fallback redirect
+              try { location.replace(SITE_ORIGIN); } catch(e) {}
+            }
+          };
+        }
+
+        // Optionally show user name/avatar on the page (small badge)
+        try {
+          const user = await auth0.getUser();
+          if (user) {
+            const badge = document.createElement('div');
+            badge.style.position = 'absolute';
+            badge.style.top = '22px';
+            badge.style.right = '20px';
+            badge.style.padding = '6px 10px';
+            badge.style.borderRadius = '18px';
+            badge.style.background = '#fff';
+            badge.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)';
+            badge.style.fontSize = '13px';
+            badge.textContent = user.name || user.email || 'You';
+            document.body.appendChild(badge);
+          }
+        } catch (e) {
+          console.warn('Could not fetch user info', e);
+        }
+
+        // OPTIONAL: Dynamic gallery loading example (commented)
+        /*
+        fetch('/api/list-photos')
+          .then(r => r.json())
+          .then(list => {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            list.forEach(item => {
+              const card = document.createElement('div');
+              card.className = 'card';
+              card.onmouseenter = () => spawnHearts(card);
+              card.innerHTML = `<a href="${item.page || '#'}"><img src="${item.url}" alt=""></a>
+                                <div class="hearts"></div>
+                                <div class="quote">${item.caption || ''}</div>`;
+              grid.appendChild(card);
+            });
+          })
+          .catch(err => console.warn('Could not load photos', err));
+        */
+
+      } catch (err) {
+        console.error('Auth flow error on life.html:', err);
+        // if anything goes wrong, redirect to home to re-login
+        try { location.replace('/'); } catch(e) {}
+      }
+    })();
+  </script>
+
+</body>
+</html>
