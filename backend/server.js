@@ -14,8 +14,6 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Repo root is one level up from backend/ when Render uses Root Directory = backend
 const REPO_ROOT = path.join(__dirname, "..");
 const UPLOAD_DIR = path.join(__dirname, "uploads");
 
@@ -25,10 +23,9 @@ const PORT = Number(process.env.PORT || 3000);
 app.use(cors());
 app.use(express.json());
 
-// ensure upload dir exists
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
-/** --- Serve static front-end from repo root --- **/
+// serve static files from repo root
 app.use(express.static(REPO_ROOT));
 app.get("/", (req, res) => {
   const idx = path.join(REPO_ROOT, "index.html");
@@ -36,11 +33,9 @@ app.get("/", (req, res) => {
   res.type("text").send("Shree backend running — no index.html at repo root.");
 });
 
-/** Health/diag endpoints (use from Render health check) */
 app.get("/diag", (req, res) => res.json({ status: "ok", time: new Date().toISOString() }));
 app.get("/healthz", (req, res) => res.json({ status: "ok", uptime: process.uptime() }));
 
-/** --- Auth0 JWT verification (RS256) --- **/
 const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN; // e.g. dev-xxxx.us.auth0.com
 const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE;
 
@@ -83,7 +78,6 @@ function checkJwt(req, res, next) {
   );
 }
 
-/** --- Google Drive (optional) --- **/
 let drive = null;
 try {
   const oauth2Client = new google.auth.OAuth2();
@@ -95,7 +89,6 @@ try {
   console.warn("Google Drive init error:", e && e.message);
 }
 
-/** --- Upload endpoints --- **/
 const upload = multer({ dest: UPLOAD_DIR });
 
 app.post("/upload", checkJwt, upload.single("file"), async (req, res) => {
@@ -142,7 +135,6 @@ app.get("/file/:id", checkJwt, async (req, res) => {
   }
 });
 
-/** --- error handling & start --- **/
 process.on("uncaughtException", (err) => console.error("UNCAUGHT:", err && err.stack || err));
 process.on("unhandledRejection", (r) => console.error("UNHANDLED REJECTION:", r));
 
