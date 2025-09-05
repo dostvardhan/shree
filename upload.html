@@ -1,45 +1,136 @@
-<script>
-  // ensure guard-auth-auth0.js is included before this
-  async function initAuth() {
-    if (!window.__AUTH__) {
-      console.error("Auth helper missing");
-      return;
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Upload — Shree</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <!-- ===== Auth0 SDK =====
+       Replace this CDN line with your local copy if you prefer:
+       <script src="/auth0-spa-js.production.js"></script>
+  -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.30.0/auth0-spa-js.production.js"></script>
+
+  <!-- The guard you already have which exposes window.__AUTH__ -->
+  <script src="/guard-auth-auth0.js" defer></script>
+
+  <style>
+    body { font-family: Inter, system-ui, Arial, sans-serif; margin: 24px; max-width:760px; }
+    header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    h1 { margin:0; font-size:20px; color: #2f5132; }
+    .controls { margin-top:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    input[type=file] { padding:6px; }
+    button { padding:10px 14px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer; }
+    #status { margin-top:14px; font-size:14px; color:#333; }
+    #upload-area { margin-top:18px; display:none; }
+    .small { font-size:13px; color:#666; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Upload — Private</h1>
+      <div class="small">Only invited users can upload</div>
+    </div>
+    <div>
+      <button id="login">Login</button>
+      <button id="logout" style="display:none">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="upload-area">
+      <div class="controls">
+        <input id="fileInput" type="file" accept="image/*" />
+        <button id="btnUpload">Upload</button>
+      </div>
+      <div id="status">Choose a file to upload.</div>
+    </section>
+  </main>
+
+  <!-- Inline script uses your existing window.__AUTH__ API -->
+  <script>
+    // ensure guard-auth-auth0.js is included before this (it exposes window.__AUTH__)
+    async function initAuth() {
+      if (!window.__AUTH__) {
+        console.error("Auth helper missing (window.__AUTH__). Make sure guard-auth-auth0.js is loaded.");
+        document.getElementById('status').innerText = 'Auth not available - contact admin.';
+        return;
+      }
+
+      try {
+        // initialize guard (this will handle redirect callbacks etc)
+        await window.__AUTH__.init();
+
+        // get client to check login status
+        const client = await window.__AUTH__.getClient();
+        const isAuth = await client.isAuthenticated();
+
+        // UI wiring
+        const loginBtn = document.getElementById('login');
+        const logoutBtn = document.getElementById('logout');
+        const uploadArea = document.getElementById('upload-area');
+        const status = document.getElementById('status');
+
+        loginBtn.addEventListener('click', () => window.__AUTH__.login());
+        logoutBtn.addEventListener('click', () => window.__AUTH__.logout());
+
+        if (isAuth) {
+          loginBtn.style.display = 'none';
+          logoutBtn.style.display = 'inline-block';
+          uploadArea.style.display = 'block';
+          status.innerText = 'Ready — choose an image and click Upload.';
+        } else {
+          loginBtn.style.display = 'inline-block';
+          logoutBtn.style.display = 'none';
+          uploadArea.style.display = 'none';
+          status.innerText = 'You are not logged in. Click Login to continue.';
+        }
+
+        // Upload handler
+        document.getElementById('btnUpload').addEventListener('click', async () => {
+          const fileInput = document.getElementById('fileInput');
+          if (!fileInput.files || !fileInput.files[0]) {
+            status.innerText = 'Please choose a file first.';
+            return;
+          }
+
+          const file = fileInput.files[0];
+          const form = new FormData();
+          form.append('file', file);
+          form.append('makePublic', 'false');
+
+          status.innerText = 'Uploading...';
+
+          try {
+            const res = await window.__AUTH__.authFetch('https://shree-drive.onrender.com/upload', {
+              method: 'POST',
+              body: form
+            });
+
+            const data = await res.json().catch(() => ({ error: 'Invalid JSON response', status: res.status }));
+            if (!res.ok) {
+              console.error('Upload failed', res.status, data);
+              status.innerText = 'Upload failed: ' + (data.error || res.status);
+            } else {
+              status.innerText = '✅ Uploaded: ' + (data.name || data.id || 'success');
+              // optional: clear file input
+              fileInput.value = '';
+            }
+          } catch (err) {
+            console.error('Upload error', err);
+            status.innerText = 'Upload error: ' + (err.message || err);
+          }
+        });
+
+      } catch (err) {
+        console.error('initAuth error', err);
+        document.getElementById('status').innerText = 'Auth init error: ' + (err.message || err);
+      }
     }
-    await window.__AUTH__.init();
-    const c = await window.__AUTH__.getClient();
-    const isAuth = await c.isAuthenticated();
-    if (isAuth) {
-      document.getElementById("login").style.display = "none";
-      document.getElementById("logout").style.display = "inline";
-      document.getElementById("upload-area").style.display = "block";
-    } else {
-      document.getElementById("upload-area").style.display = "none";
-    }
 
-    document.getElementById("login").addEventListener("click", ()=>window.__AUTH__.login());
-    document.getElementById("logout").addEventListener("click", ()=>window.__AUTH__.logout());
-  }
-
-  async function doUpload() {
-    const fileInput = document.getElementById("fileInput");
-    if (!fileInput.files.length) { alert("Choose a file first!"); return; }
-
-    const formData = new FormData();
-    formData.append("file", fileInput.files[0]);
-    document.getElementById("status").innerText = "Uploading...";
-
-    try {
-      const res = await window.__AUTH__.authFetch("https://shree-drive.onrender.com/upload", {
-        method: "POST",
-        body: formData
-      });
-      const data = await res.json().catch(()=>({ error: 'Invalid JSON' }));
-      document.getElementById("status").innerText = res.ok ? ("✅ Uploaded: " + (data.name || '')) : ("❌ " + (data.error || res.status));
-    } catch (e) {
-      document.getElementById("status").innerText = "❌ " + e.message;
-    }
-  }
-
-  // start
-  initAuth();
-</script>
+    // start
+    initAuth();
+  </script>
+</body>
+</html>
