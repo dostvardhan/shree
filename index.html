@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Welcome • Shreshtha</title>
+  <script src="/auth0-spa-js.production.js"></script>
+  <script src="/guard-auth-auth0.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+    button { margin: 6px; padding: 10px 16px; border-radius: 6px; }
+    a { display: inline-block; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Welcome ✨</h1>
+  <p>Private site — login required to continue.</p>
+
+  <p>
+    <button id="login" onclick="window.__AUTH__.login()">Login</button>
+    <button id="logout" onclick="window.__AUTH__.logout()">Logout</button>
+  </p>
+
+  <a href="/life.html">Go to Life Page</a>
+  <br>
+  <a href="/gallery.html">Go to Gallery</a>
+  <br>
+  <a href="/upload.html">Go to Upload</a>
+</body>
+</html>
