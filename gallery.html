@@ -1,72 +1,40 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Shree • Private Gallery</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.30.0/auth0-spa-js.production.js"></script>
-  <script src="/js/guard-auth-auth0.js" defer></script>
-  <script src="/js/guard-auth.js" defer></script>
+  <meta charset="utf-8"/>
+  <title>Gallery</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 24px; }
-    .actions { margin-bottom: 16px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-    img { width: 100%; border-radius: 10px; display: block; }
-    button { padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; background: #f7f7f7; cursor: pointer; }
+    body{font-family:Arial,Helvetica,sans-serif;background:#fff;margin:0;padding:20px}
+    img{max-width:100%;margin:10px 0}
   </style>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js" defer></script>
+  <script defer>
+  (function(){
+    const AUTH0_DOMAIN="dev-zzhjbmtzoxtgoz31.us.auth0.com";
+    const AUTH0_CLIENT_ID="0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
+    const AUTH0_AUDIENCE="https://shree-drive.onrender.com";
+    window.__AUTH_READY__=(async function init(){
+      const auth0=await createAuth0Client({domain:AUTH0_DOMAIN,client_id:AUTH0_CLIENT_ID,audience:AUTH0_AUDIENCE,cacheLocation:"memory"});
+      window.__AUTH__={isAuthenticated:()=>auth0.isAuthenticated(),login:()=>auth0.loginWithRedirect({redirect_uri:window.location.href}),logout:()=>auth0.logout({returnTo:window.location.origin}),getUser:()=>auth0.getUser()};
+      return window.__AUTH__;
+    })();
+  })();
+  </script>
 </head>
 <body>
-  <h1>Shree • Private Gallery</h1>
-
-  <div class="actions">
-    <button id="login">Login</button>
-    <button id="logout" style="display:none">Logout</button>
-    <a href="upload.html" style="margin-left:12px;">Go to Upload</a>
+  <h1>Gallery 📷</h1>
+  <div id="photos">
+    <img src="/photo1.jpg" alt="Photo 1"/>
+    <img src="/photo2.jpg" alt="Photo 2"/>
   </div>
-
-  <div id="gallery" class="grid">Loading...</div>
+  <button id="logout-btn">Logout</button>
 
   <script>
-    (async function(){
-      try {
-        await window.__AUTH__.init();
-        const client = await window.__AUTH__.getClient();
-        const isAuth = await client.isAuthenticated();
-        const loginBtn = document.getElementById('login'), logoutBtn = document.getElementById('logout');
-        if (isAuth) {
-          loginBtn.style.display = 'none';
-          logoutBtn.style.display = 'inline-block';
-        }
-        loginBtn.addEventListener('click', ()=>window.__AUTH__.login());
-        logoutBtn.addEventListener('click', ()=>window.__AUTH__.logout());
-        if (!isAuth) { document.getElementById('gallery').innerText = 'Please login to view gallery.'; return; }
-
-        // get token and fetch list
-        const token = await client.getTokenSilently({ audience: window.__AUTH__.audience });
-        const listRes = await fetch('https://shree-drive.onrender.com/list', { headers: { Authorization: 'Bearer ' + token }});
-        if (!listRes.ok) { document.getElementById('gallery').innerText = 'Cannot load gallery: ' + listRes.status; return; }
-        const json = await listRes.json();
-        const files = json.files || [];
-        const gallery = document.getElementById('gallery');
-        gallery.innerHTML = '';
-        for (const file of files) {
-          if (!file.mimeType || !file.mimeType.startsWith('image/')) continue;
-          // fetch file stream via backend
-          const fRes = await fetch('https://shree-drive.onrender.com/file/' + file.id, { headers: { Authorization: 'Bearer ' + token }});
-          if (!fRes.ok) continue;
-          const blob = await fRes.blob();
-          const url = URL.createObjectURL(blob);
-          const img = document.createElement('img');
-          img.src = url;
-          img.alt = file.name;
-          gallery.appendChild(img);
-        }
-        if (!gallery.children.length) gallery.innerText = 'No images yet.';
-      } catch (e) {
-        console.error('Gallery error', e);
-        document.getElementById('gallery').innerText = 'Error: ' + e.message;
-      }
-    })();
+  (async function(){
+    const auth=await window.__AUTH_READY__;
+    if(!await auth.isAuthenticated()){await auth.login();return;}
+    document.getElementById("logout-btn").onclick=()=>auth.logout();
+  })();
   </script>
 </body>
 </html>
