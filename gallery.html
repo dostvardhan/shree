@@ -1,17 +1,18 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8">
   <title>Shree • Private Gallery</title>
-  <!-- Local copy of Auth0 SPA JS -->
-  <script src="/auth0-spa-js.production.js"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.30.0/auth0-spa-js.production.js"></script>
+  <script src="/js/guard-auth-auth0.js" defer></script>
+  <script src="/js/guard-auth.js" defer></script>
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; }
     .actions { margin-bottom: 16px; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
     img { width: 100%; border-radius: 10px; display: block; }
     button { padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; background: #f7f7f7; cursor: pointer; }
-    button + button { margin-left: 8px; }
   </style>
 </head>
 <body>
@@ -26,77 +27,46 @@
   <div id="gallery" class="grid">Loading...</div>
 
   <script>
-    let auth0Client;
-    let accessToken;
-
-    async function initAuth() {
-      auth0Client = await createAuth0Client({
-        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
-        clientId: "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR",
-        authorizationParams: {
-          audience: "https://shree-drive.onrender.com",
-          redirect_uri: window.location.href.split('?')[0]
-        }
-      });
-
-      if (window.location.search.includes("code=")) {
-        await auth0Client.handleRedirectCallback();
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-
-      const isAuth = await auth0Client.isAuthenticated();
-      if (isAuth) {
-        document.getElementById("login").style.display = "none";
-        document.getElementById("logout").style.display = "inline-block";
-        accessToken = await auth0Client.getTokenSilently();
-        loadGallery();
-      } else {
-        document.getElementById("gallery").innerText = "Please login to view gallery.";
-      }
-    }
-
-    document.getElementById("login").addEventListener("click", async () => {
-      await auth0Client.loginWithRedirect();
-    });
-
-    document.getElementById("logout").addEventListener("click", async () => {
-      await auth0Client.logout({ logoutParams: { returnTo: "https://shreshthapushkar.com" } });
-    });
-
-    async function loadGallery() {
-      const gallery = document.getElementById("gallery");
-      gallery.innerHTML = "Loading...";
+    (async function(){
       try {
-        const listRes = await fetch("https://shree-drive.onrender.com/list", {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        });
-        const data = await listRes.json();
-        if (!listRes.ok) { gallery.innerHTML = "❌ " + (data.error || listRes.status); return; }
+        await window.__AUTH__.init();
+        const client = await window.__AUTH__.getClient();
+        const isAuth = await client.isAuthenticated();
+        const loginBtn = document.getElementById('login'), logoutBtn = document.getElementById('logout');
+        if (isAuth) {
+          loginBtn.style.display = 'none';
+          logoutBtn.style.display = 'inline-block';
+        }
+        loginBtn.addEventListener('click', ()=>window.__AUTH__.login());
+        logoutBtn.addEventListener('click', ()=>window.__AUTH__.logout());
+        if (!isAuth) { document.getElementById('gallery').innerText = 'Please login to view gallery.'; return; }
 
-        gallery.innerHTML = "";
-        for (const file of data.files) {
-          if (!file.mimeType?.startsWith("image/")) continue;
-
-          const imgRes = await fetch(`https://shree-drive.onrender.com/file/${file.id}`, {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          });
-          if (!imgRes.ok) continue;
-
-          const blob = await imgRes.blob();
+        // get token and fetch list
+        const token = await client.getTokenSilently({ audience: window.__AUTH__.audience });
+        const listRes = await fetch('https://shree-drive.onrender.com/list', { headers: { Authorization: 'Bearer ' + token }});
+        if (!listRes.ok) { document.getElementById('gallery').innerText = 'Cannot load gallery: ' + listRes.status; return; }
+        const json = await listRes.json();
+        const files = json.files || [];
+        const gallery = document.getElementById('gallery');
+        gallery.innerHTML = '';
+        for (const file of files) {
+          if (!file.mimeType || !file.mimeType.startsWith('image/')) continue;
+          // fetch file stream via backend
+          const fRes = await fetch('https://shree-drive.onrender.com/file/' + file.id, { headers: { Authorization: 'Bearer ' + token }});
+          if (!fRes.ok) continue;
+          const blob = await fRes.blob();
           const url = URL.createObjectURL(blob);
-
-          const img = document.createElement("img");
+          const img = document.createElement('img');
           img.src = url;
           img.alt = file.name;
           gallery.appendChild(img);
         }
-        if (!gallery.children.length) gallery.innerHTML = "No images yet.";
+        if (!gallery.children.length) gallery.innerText = 'No images yet.';
       } catch (e) {
-        gallery.innerHTML = "❌ " + e.message;
+        console.error('Gallery error', e);
+        document.getElementById('gallery').innerText = 'Error: ' + e.message;
       }
-    }
-
-    initAuth();
+    })();
   </script>
 </body>
 </html>
