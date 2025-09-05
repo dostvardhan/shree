@@ -10,29 +10,84 @@
     button{padding:8px 14px;margin:6px;border:1px solid #ccc;border-radius:6px;cursor:pointer}
     a{display:block;margin:6px;font-size:13px}
   </style>
+
+  <!-- Auth0 SDK -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js" defer></script>
+
+  <!-- Inline Auth guard -->
+  <script defer>
+  (function(){
+    const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
+    const AUTH0_CLIENT_ID = "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
+    const AUTH0_AUDIENCE = "https://shree-drive.onrender.com";
+    window.__AUTH_READY__ = (async function init(){
+      if (typeof createAuth0Client !== 'function') {
+        console.error('Auth0 SDK missing');
+        return null;
+      }
+      const auth0 = await createAuth0Client({
+        domain: AUTH0_DOMAIN,
+        client_id: AUTH0_CLIENT_ID,
+        audience: AUTH0_AUDIENCE,
+        cacheLocation: 'memory'
+      });
+      window.__AUTH__ = {
+        _auth0: auth0,
+        isAuthenticated: () => auth0.isAuthenticated(),
+        login: (opts={}) => auth0.loginWithRedirect({ redirect_uri: window.location.origin + '/', ...opts }),
+        logout: (opts={}) => auth0.logout({ returnTo: window.location.origin }),
+        getUser: () => auth0.getUser(),
+        getToken: (opts={}) => auth0.getTokenSilently(opts),
+        authFetch: async (url, init={}) => {
+          try {
+            const token = await auth0.getTokenSilently();
+            const headers = new Headers(init.headers || {});
+            if (token) headers.set('Authorization', 'Bearer ' + token);
+            return fetch(url, { ...init, headers, credentials: 'include' });
+          } catch (e) {
+            // fallback to normal fetch
+            return fetch(url, init);
+          }
+        }
+      };
+      return window.__AUTH__;
+    })();
+  })();
+  </script>
 </head>
 <body>
   <div class="card">
     <h2>Welcome ✨</h2>
-    <p>Private site — login required.</p>
-    <div>
-      <a href="/life.html">Go to Life Page</a>
-      <a href="/gallery.html">Go to Gallery</a>
-      <a href="/upload.html">Go to Upload</a>
+    <p style="font-size:13px; color:#666">Private site — invite-only. Login to continue.</p>
+
+    <div style="margin-top:12px">
+      <a href="/life.html">Sweet memories of Shreshtha</a>
+      <a href="/gallery.html">Gallery</a>
+      <a href="/upload.html">Upload</a>
     </div>
+
     <div id="user-info" style="margin-top:14px;font-size:13px;color:#444"></div>
-    <button id="logout-btn">Logout</button>
+    <button id="logout-btn" style="display:none">Logout</button>
   </div>
 
-  <!-- Auth0 guard inline -->
-  [GUARD_SNIPPET]
   <script>
   (async function(){
     const auth = await window.__AUTH_READY__;
+    if(!auth) {
+      document.getElementById('user-info').textContent = 'Auth not ready — try refresh.';
+      return;
+    }
+    // If not authenticated, redirect to login immediately
+    if(!await auth.isAuthenticated()){
+      await auth.login();
+      return;
+    }
+    // show user info
     const user = await auth.getUser();
-    document.getElementById("user-info").textContent =
-      user ? "Signed in as " + (user.name||user.email) : "";
-    document.getElementById("logout-btn").onclick = () => auth.logout();
+    document.getElementById('user-info').textContent = user ? `Signed in as ${user.name || user.email}` : '';
+    const logoutBtn = document.getElementById('logout-btn');
+    logoutBtn.style.display = 'inline-block';
+    logoutBtn.onclick = () => auth.logout();
   })();
   </script>
 </body>
