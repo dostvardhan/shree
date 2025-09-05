@@ -5,14 +5,12 @@
   <title>Upload — Shree</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <!-- ===== Auth0 SDK =====
-       Replace this CDN line with your local copy if you prefer:
-       <script src="/auth0-spa-js.production.js"></script>
-  -->
+  <!-- Auth0 SDK -->
   <script src="https://cdn.auth0.com/js/auth0-spa-js/1.30.0/auth0-spa-js.production.js"></script>
 
-  <!-- The guard you already have which exposes window.__AUTH__ -->
-  <script src="/guard-auth-auth0.js" defer></script>
+  <!-- Guard -->
+  <script src="/js/guard-auth-auth0.js" defer></script>
+  <script src="/js/guard-auth.js" defer></script>
 
   <style>
     body { font-family: Inter, system-ui, Arial, sans-serif; margin: 24px; max-width:760px; }
@@ -48,88 +46,40 @@
     </section>
   </main>
 
-  <!-- Inline script uses your existing window.__AUTH__ API -->
   <script>
-    // ensure guard-auth-auth0.js is included before this (it exposes window.__AUTH__)
     async function initAuth() {
-      if (!window.__AUTH__) {
-        console.error("Auth helper missing (window.__AUTH__). Make sure guard-auth-auth0.js is loaded.");
-        document.getElementById('status').innerText = 'Auth not available - contact admin.';
-        return;
-      }
-
+      if (!window.__AUTH__) { document.getElementById('status').innerText = 'Auth helper missing'; return; }
       try {
-        // initialize guard (this will handle redirect callbacks etc)
         await window.__AUTH__.init();
-
-        // get client to check login status
         const client = await window.__AUTH__.getClient();
         const isAuth = await client.isAuthenticated();
+        const loginBtn = document.getElementById('login'), logoutBtn = document.getElementById('logout'), uploadArea = document.getElementById('upload-area'), status = document.getElementById('status');
 
-        // UI wiring
-        const loginBtn = document.getElementById('login');
-        const logoutBtn = document.getElementById('logout');
-        const uploadArea = document.getElementById('upload-area');
-        const status = document.getElementById('status');
-
-        loginBtn.addEventListener('click', () => window.__AUTH__.login());
-        logoutBtn.addEventListener('click', () => window.__AUTH__.logout());
+        loginBtn.addEventListener('click', ()=>window.__AUTH__.login());
+        logoutBtn.addEventListener('click', ()=>window.__AUTH__.logout());
 
         if (isAuth) {
-          loginBtn.style.display = 'none';
-          logoutBtn.style.display = 'inline-block';
-          uploadArea.style.display = 'block';
-          status.innerText = 'Ready — choose an image and click Upload.';
+          loginBtn.style.display='none'; logoutBtn.style.display='inline-block'; uploadArea.style.display='block'; status.innerText='Ready — choose an image and click Upload.';
         } else {
-          loginBtn.style.display = 'inline-block';
-          logoutBtn.style.display = 'none';
-          uploadArea.style.display = 'none';
-          status.innerText = 'You are not logged in. Click Login to continue.';
+          loginBtn.style.display='inline-block'; logoutBtn.style.display='none'; uploadArea.style.display='none'; status.innerText='You are not logged in. Click Login to continue.';
         }
 
-        // Upload handler
-        document.getElementById('btnUpload').addEventListener('click', async () => {
-          const fileInput = document.getElementById('fileInput');
-          if (!fileInput.files || !fileInput.files[0]) {
-            status.innerText = 'Please choose a file first.';
-            return;
-          }
-
-          const file = fileInput.files[0];
-          const form = new FormData();
-          form.append('file', file);
-          form.append('makePublic', 'false');
-
-          status.innerText = 'Uploading...';
-
+        document.getElementById('btnUpload').addEventListener('click', async ()=>{
+          const f = document.getElementById('fileInput').files[0];
+          if (!f) { status.innerText='Please choose a file.'; return; }
+          const fd = new FormData(); fd.append('file', f); fd.append('makePublic','false');
+          status.innerText='Uploading...';
           try {
-            const res = await window.__AUTH__.authFetch('https://shree-drive.onrender.com/upload', {
-              method: 'POST',
-              body: form
-            });
-
-            const data = await res.json().catch(() => ({ error: 'Invalid JSON response', status: res.status }));
-            if (!res.ok) {
-              console.error('Upload failed', res.status, data);
-              status.innerText = 'Upload failed: ' + (data.error || res.status);
-            } else {
-              status.innerText = '✅ Uploaded: ' + (data.name || data.id || 'success');
-              // optional: clear file input
-              fileInput.value = '';
-            }
-          } catch (err) {
-            console.error('Upload error', err);
-            status.innerText = 'Upload error: ' + (err.message || err);
-          }
+            const res = await window.__AUTH__.authFetch('https://shree-drive.onrender.com/upload', { method:'POST', body: fd });
+            const data = await res.json().catch(()=>({ error: 'Invalid JSON', status: res.status }));
+            if (!res.ok) { status.innerText = 'Upload failed: ' + (data.error || res.status); } else { status.innerText = '✅ Uploaded: ' + (data.name || data.id || 'ok'); document.getElementById('fileInput').value=''; }
+          } catch (e) { status.innerText = 'Upload error: ' + e.message; }
         });
 
-      } catch (err) {
-        console.error('initAuth error', err);
-        document.getElementById('status').innerText = 'Auth init error: ' + (err.message || err);
+      } catch (e) {
+        console.error('initAuth error', e); document.getElementById('status').innerText = 'Auth init error: ' + (e.message || e);
       }
     }
-
-    // start
     initAuth();
   </script>
 </body>
