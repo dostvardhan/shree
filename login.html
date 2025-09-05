@@ -1,127 +1,35 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Login · Shree</title>
-  <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;background:#fafafa}
-    .card{max-width:520px;padding:28px;border:1px solid #e6e6e6;border-radius:12px;background:#fff;box-shadow:0 8px 30px rgba(0,0,0,0.06)}
-    h1{margin:0 0 12px;font-size:1.25rem}
-    p{color:#555;margin:0 0 18px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-    button{padding:10px 14px;border-radius:10px;border:1px solid #ddd;background:#fff;cursor:pointer}
-    .hint{font-size:.9rem;color:#666;margin-top:12px}
-    .log{margin-top:14px;font:12px/1.4 ui-monospace,Consolas,monospace;color:#333;white-space:pre-wrap;background:#f8f8f8;border:1px solid #eee;border-radius:8px;padding:10px;max-height:160px;overflow:auto}
-  </style>
-
-  <!-- Auth0 SPA SDK (local copy recommended: /auth0-spa-js.production.js) -->
+  <title>Sign in · Private Area</title>
   <script src="/auth0-spa-js.production.js"></script>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:grid;place-items:center;min-height:100vh;margin:0;background:#fafafa}
+    .card{max-width:440px;padding:28px;border-radius:12px;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.06)}
+    button{padding:10px 14px;border-radius:10px;border:1px solid #ddd;background:#fff;cursor:pointer}
+  </style>
 </head>
 <body>
   <div class="card">
-    <h1>Sign in to Shree</h1>
-    <p>Private area — use your account to continue.</p>
-
-    <div class="row">
-      <button id="loginBtn">Sign in (redirect)</button>
-      <button id="popupBtn">Sign in (popup)</button>
-      <button id="cancelBtn" style="display:none">Cancel</button>
-    </div>
-
-    <div class="hint">If you were redirected here by a protected page, you'll be sent back after login.</div>
-    <div id="log" class="log" hidden></div>
+    <h1>Sign in</h1>
+    <p>Private area — sign in with Auth0</p>
+    <button id="btn">Sign in with Auth0</button>
   </div>
 
   <script>
-    // === EDIT THESE to match your Auth0 app (already taken from your repo earlier) ===
     const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
     const AUTH0_CLIENT_ID = "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
     const AUTH0_AUDIENCE = "https://shree-drive.onrender.com";
-    // ==============================================================================
-
-    const logEl = document.getElementById('log');
-    function log(...m) {
-      try { logEl.hidden = false; logEl.textContent += m.map(x => typeof x === 'string' ? x : JSON.stringify(x)).join(' ') + '\n'; } catch(e) {}
-      console.log(...m);
-    }
-
-    // remember where to go back to
-    function rememberNext() {
-      try { sessionStorage.setItem('next', location.search.includes('next=') ? new URLSearchParams(location.search).get('next') : (sessionStorage.getItem('next') || '/')); } catch(_) {}
-    }
-    function consumeNextOrHome() {
-      try { const n = sessionStorage.getItem('next') || '/'; sessionStorage.removeItem('next'); return n; } catch(_) { return '/'; }
-    }
 
     (async function(){
-      if (typeof createAuth0Client !== 'function') {
-        log('Auth0 SDK missing. Put /auth0-spa-js.production.js in root or use CDN.');
-        return;
-      }
-
-      // Create client
       const auth0 = await createAuth0Client({
         domain: AUTH0_DOMAIN,
-        client_id: AUTH0_CLIENT_ID,
-        authorizationParams: {
-          audience: AUTH0_AUDIENCE,
-          redirect_uri: window.location.origin + window.location.pathname
-        },
-        cacheLocation: 'localstorage' // optional: keeps tokens after reload
+        clientId: AUTH0_CLIENT_ID,
+        authorizationParams: { audience: AUTH0_AUDIENCE, redirect_uri: window.location.origin + '/' }
       });
-
-      // If redirected back with code, handle the callback
-      if (window.location.search.includes('code=') || window.location.search.includes('state=')) {
-        try {
-          log('Handling redirect callback...');
-          const result = await auth0.handleRedirectCallback();
-          log('Callback result:', result);
-        } catch (err) {
-          log('Callback error:', err.message || err);
-        } finally {
-          // clean the URL (remove code/state)
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      }
-
-      // If already authenticated, go to next
-      const isAuthenticated = await auth0.isAuthenticated();
-      if (isAuthenticated) {
-        log('Already authenticated, redirecting to next...');
-        const dest = consumeNextOrHome();
-        window.location.replace(dest);
-        return;
-      }
-
-      document.getElementById('loginBtn').onclick = async () => {
-        rememberNext();
-        // redirect flow
-        await auth0.loginWithRedirect();
-      };
-
-      document.getElementById('popupBtn').onclick = async () => {
-        document.getElementById('cancelBtn').style.display = 'inline-block';
-        try {
-          await auth0.loginWithPopup({authorizationParams:{audience:AUTH0_AUDIENCE}});
-          const user = await auth0.getUser();
-          log('Popup login success:', user && user.email);
-          const dest = consumeNextOrHome();
-          window.location.replace(dest);
-        } catch (err) {
-          log('Popup login failed:', err.message || err);
-        } finally {
-          document.getElementById('cancelBtn').style.display = 'none';
-        }
-      };
-
-      document.getElementById('cancelBtn').onclick = () => {
-        // popup cancel UI hook (no direct cancel method in SDK)
-        log('Cancelled popup attempt (user action).');
-        document.getElementById('cancelBtn').style.display = 'none';
-      };
-
-      log('Login page ready.');
+      document.getElementById('btn').addEventListener('click', () => auth0.loginWithRedirect());
     })();
   </script>
 </body>
