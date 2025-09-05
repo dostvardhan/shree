@@ -2,11 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>Upload</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Upload • Shreshtha</title>
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;background:#f4f4f4;margin:0;padding:20px}
-    input,button{margin:6px;padding:8px}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f4f4;color:#222;padding:20px;}
+    h1{text-align:center;color:#444;}
+    form{max-width:400px;margin:30px auto;padding:20px;background:#fff;box-shadow:0 6px 15px rgba(0,0,0,.2);border-radius:12px;text-align:center;}
+    input[type=file]{margin:10px auto;display:block;}
+    button{padding:8px 16px;margin-top:12px;border:none;border-radius:6px;background:#3b7ddd;color:#fff;cursor:pointer;}
+    #status{margin-top:15px;font-size:14px;}
+    #logout-btn{position:fixed;top:15px;right:15px;padding:6px 12px;border:none;border-radius:6px;background:#ff5c8d;color:#fff;cursor:pointer;}
   </style>
+
+  <!-- Auth0 SDK -->
   <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js" defer></script>
   <script defer>
   (function(){
@@ -15,19 +23,32 @@
     const AUTH0_AUDIENCE="https://shree-drive.onrender.com";
     window.__AUTH_READY__=(async function init(){
       const auth0=await createAuth0Client({domain:AUTH0_DOMAIN,client_id:AUTH0_CLIENT_ID,audience:AUTH0_AUDIENCE,cacheLocation:"memory"});
-      window.__AUTH__={isAuthenticated:()=>auth0.isAuthenticated(),login:()=>auth0.loginWithRedirect({redirect_uri:window.location.href}),logout:()=>auth0.logout({returnTo:window.location.origin}),getUser:()=>auth0.getUser(),getToken:()=>auth0.getTokenSilently(),authFetch:async(u,o={})=>{const t=await auth0.getTokenSilently();const h=new Headers(o.headers||{});h.set("Authorization","Bearer "+t);return fetch(u,{...o,headers:h})}};
+      window.__AUTH__={
+        isAuthenticated:()=>auth0.isAuthenticated(),
+        login:()=>auth0.loginWithRedirect({redirect_uri:window.location.href}),
+        logout:()=>auth0.logout({returnTo:window.location.origin}),
+        getUser:()=>auth0.getUser(),
+        getToken:()=>auth0.getTokenSilently(),
+        authFetch:async(u,o={})=>{
+          const t=await auth0.getTokenSilently();
+          const h=new Headers(o.headers||{});
+          h.set("Authorization","Bearer "+t);
+          return fetch(u,{...o,headers:h});
+        }
+      };
       return window.__AUTH__;
     })();
   })();
   </script>
 </head>
 <body>
-  <h1>Upload Photo 📤</h1>
+  <h1>Upload a Photo 📤</h1>
   <form id="upload-form">
-    <input type="file" id="file-input" required/>
+    <input type="file" id="file-input" required>
     <button type="submit">Upload</button>
+    <div id="status"></div>
   </form>
-  <div id="status"></div>
+
   <button id="logout-btn">Logout</button>
 
   <script>
@@ -36,7 +57,7 @@
     if(!await auth.isAuthenticated()){await auth.login();return;}
     document.getElementById("logout-btn").onclick=()=>auth.logout();
 
-    document.getElementById("upload-form").onsubmit=async(e)=>{
+    document.getElementById("upload-form").onsubmit=async e=>{
       e.preventDefault();
       const f=document.getElementById("file-input").files[0];
       if(!f) return;
