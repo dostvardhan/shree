@@ -19,68 +19,8 @@
       100%{transform:translateY(-110vh) scale(0.5);opacity:0;}
     }
     #logout-btn{position:fixed;top:15px;right:15px;padding:6px 12px;border:none;border-radius:6px;background:#ff5c8d;color:#fff;cursor:pointer;}
+    /* hide until auth ok */
+    #protected-content{display:none;}
   </style>
 
-  <!-- Auth0 SDK -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js" defer></script>
-  <!-- Guard -->
-  <script defer>
-  (function(){
-    const AUTH0_DOMAIN="dev-zzhjbmtzoxtgoz31.us.auth0.com";
-    const AUTH0_CLIENT_ID="0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
-    const AUTH0_AUDIENCE="https://shree-drive.onrender.com";
-    window.__AUTH_READY__=(async function init(){
-      const auth0=await createAuth0Client({
-        domain:AUTH0_DOMAIN,client_id:AUTH0_CLIENT_ID,audience:AUTH0_AUDIENCE,cacheLocation:"memory"
-      });
-      window.__AUTH__={
-        isAuthenticated:()=>auth0.isAuthenticated(),
-        login:()=>auth0.loginWithRedirect({redirect_uri:window.location.href}),
-        logout:()=>auth0.logout({returnTo:window.location.origin}),
-        getUser:()=>auth0.getUser()
-      };
-      return window.__AUTH__;
-    })();
-  })();
-  </script>
-</head>
-<body>
-  <h1>Life Moments 🌸</h1>
-  <div class="gallery">
-    <div class="card"><img src="photo1.jpg"/><div class="quote">“Smile makes life brighter ✨”</div></div>
-    <div class="card"><img src="photo2.jpg"/><div class="quote">“Cherish every little moment 💖”</div></div>
-    <div class="card"><img src="photo3.jpg"/><div class="quote">“Keep blooming 🌸 like flowers”</div></div>
-    <div class="card"><img src="photo4.jpg"/><div class="quote">“Hearts flow where love grows 💕”</div></div>
-    <div class="card"><img src="photo5.jpg"/><div class="quote">“Every photo is a story 📷”</div></div>
-    <div class="card"><img src="photo6.jpg"/><div class="quote">“Happiness is homemade ☀️”</div></div>
-    <div class="card"><img src="photo7.jpg"/><div class="quote">“Simple joys make life grand 🌈”</div></div>
-    <div class="card"><img src="photo8.jpg"/><div class="quote">“The best memories are unplanned 🌟”</div></div>
-    <div class="card"><img src="photo9.jpg"/><div class="quote">“Forever captured in smiles 💫”</div></div>
-  </div>
-
-  <button id="logout-btn">Logout</button>
-
-  <!-- floating hearts generator -->
-  <script>
-  function createHeart(){
-    const heart=document.createElement("div");
-    heart.className="heart";
-    heart.style.left=Math.random()*100+"vw";
-    heart.style.fontSize=(14+Math.random()*20)+"px";
-    heart.innerHTML="❤";
-    document.body.appendChild(heart);
-    setTimeout(()=>heart.remove(),6000);
-  }
-  setInterval(createHeart,800);
-  </script>
-
-  <!-- Auth check -->
-  <script>
-  (async function(){
-    const auth=await window.__AUTH_READY__;
-    if(!await auth.isAuthenticated()){await auth.login();return;}
-    document.getElementById("logout-btn").onclick=()=>auth.logout();
-  })();
-  </script>
-</body>
-</html>
+  <!-- A
