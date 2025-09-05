@@ -1,102 +1,212 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Shree • Life</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- Auth0 SDK -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.30.0/auth0-spa-js.production.js"></script>
-  <script src="/js/guard-auth-auth0.js" defer></script>
-  <script src="/js/guard-auth.js" defer></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Welcome • Shreshtha</title>
 
   <style>
-    body{margin:0;font-family:'Segoe UI',sans-serif;background:#fafafa;}
-    header{padding:20px;text-align:center;background:#fff;border-bottom:1px solid #eee;}
-    header h1{margin:0;font-size:28px;color:olive;font-weight:bold;}
-    header nav{margin-top:10px;}
-    header a, header button{padding:8px 14px;margin:0 6px;border:1px solid #ccc;border-radius:10px;background:#fff;text-decoration:none;color:#111;cursor:pointer;}
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;padding:30px;max-width:1100px;margin:auto;}
-    .card{position:relative;overflow:hidden;border-radius:14px;background:#fff;box-shadow:0 4px 10px rgba(0,0,0,0.06);}
-    .card img{width:100%;height:auto;display:block;transition:transform .35s ease;}
-    .card:hover img{transform:scale(1.08);}
-    .quote{text-align:center;padding:10px;font-size:15px;color:olive;font-style:italic;}
-    .hearts{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);pointer-events:none;}
-    .heart{position:absolute;bottom:0;font-size:20px;color:#e63946;opacity:0;animation:floatUp 3.5s ease-out forwards;}
-    @keyframes floatUp {0%{transform:translateY(0) scale(0.8);opacity:1;}40%{opacity:1;}100%{transform:translateY(-200px) scale(1.4);opacity:0;}}
-    @media(max-width:768px){.grid{grid-template-columns:repeat(2,1fr);gap:20px;padding:20px;}}
+    body{font-family:Arial, Helvetica, sans-serif; background:#3a3240; color:#222; margin:0; padding:0; display:flex; align-items:flex-start; justify-content:center; min-height:100vh}
+    .card {background: #fff; width:520px; margin:40px; padding:28px; box-shadow: 0 6px 20px rgba(0,0,0,.25); border-radius:8px; text-align:center;}
+    a{display:block; margin:8px 0; font-size:13px}
+    button {padding:8px 14px; border-radius:6px; border:1px solid #ccc; background:#f7f7f7; cursor:pointer}
   </style>
-</head>
-<body>
-  <header>
-    <h1>🌿 Life is Beautiful 🌿</h1>
-    <nav>
-      <a id="link-gallery" href="/gallery.html">Gallery</a>
-      <a id="link-upload" href="/upload.html">Upload</a>
-      <button id="btn-logout" style="display:none">Logout</button>
-    </nav>
-  </header>
 
-  <div class="grid" id="grid">
-    <!-- static placeholder cards -->
-    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo1.html"><img src="/photo1.jpg" alt="Photo 1"></a><div class="hearts"></div><div class="quote">“Every picture tells a story.”</div></div>
-    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo2.html"><img src="/photo2.jpg" alt="Photo 2"></a><div class="hearts"></div><div class="quote">“Smiles are contagious.”</div></div>
-    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo3.html"><img src="/photo3.jpg" alt="Photo 3"></a><div class="hearts"></div><div class="quote">“Love makes everything brighter.”</div></div>
-    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo4.html"><img src="/photo4.jpg" alt="Photo 4"></a><div class="hearts"></div><div class="quote">“Little things matter most.”</div></div>
-    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo5.html"><img src="/photo5.jpg" alt="Photo 5"></a><div class="hearts"></div><div class="quote">“Together is our favorite place.”</div></div>
-    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo6.html"><img src="/photo6.jpg" alt="Photo 6"></a><div class="hearts"></div><div class="quote">“Memories are timeless treasures.”</div></div>
-    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo7.html"><img src="/photo7.jpg" alt="Photo 7"></a><div class="hearts"></div><div class="quote">“Happiness looks good on us.”</div></div>
-    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo8.html"><img src="/photo8.jpg" alt="Photo 8"></a><div class="hearts"></div><div class="quote">“A moment lasts forever.”</div></div>
-    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo9.html"><img src="/photo9.jpg" alt="Photo 9"></a><div class="hearts"></div><div class="quote">“Captured with love.”</div></div>
+  <!-- Auth0 SPA JS from official CDN (fast fix) -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js" defer></script>
+
+  <!-- Inline guard/init script (loads AFTER SDK because of defer order) -->
+  <script defer>
+  (function(){
+    // ---------- REPLACE these with your real Auth0 values ----------
+    const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com"; // e.g. dev-xxxxxx.auth0.com
+    const AUTH0_CLIENT_ID = "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
+    const AUTH0_AUDIENCE = "https://shree-drive.onrender.com"; // optional
+    const REDIRECT_AFTER_LOGIN = "/life.html"; // change if needed
+    // ---------------------------------------------------------------
+
+    // expose a promise so other scripts can await readiness
+    window.__AUTH_READY__ = (async function init() {
+      try {
+        if (typeof createAuth0Client !== 'function') {
+          console.error('Auth0 SDK not found: createAuth0Client is not a function');
+          return null;
+        }
+
+        const auth0 = await createAuth0Client({
+          domain: AUTH0_DOMAIN,
+          client_id: AUTH0_CLIENT_ID,
+          audience: AUTH0_AUDIENCE || undefined,
+          cacheLocation: 'memory',
+          useRefreshTokens: false,
+        });
+
+        // helper wrappers
+        const wrapper = {
+          _auth0: auth0,
+          isAuthenticated: async () => {
+            try { return await auth0.isAuthenticated(); } catch(e){ console.error(e); return false; }
+          },
+          login: async (opts = {}) => {
+            // redirect-based login (uses Auth0 hosted login page)
+            return auth0.loginWithRedirect({
+              redirect_uri: window.location.origin + REDIRECT_AFTER_LOGIN,
+              ...opts
+            });
+          },
+          handleRedirectCallback: async () => {
+            try {
+              const result = await auth0.handleRedirectCallback();
+              return result;
+            } catch(e) {
+              console.warn('handleRedirectCallback err', e);
+              return null;
+            }
+          },
+          logout: (opts = {}) => {
+            return auth0.logout({ returnTo: window.location.origin + (opts.returnTo || '/') });
+          },
+          getUser: async () => {
+            try { return await auth0.getUser(); } catch(e){ return null; }
+          },
+          getToken: async (opts = {}) => {
+            try { return await auth0.getTokenSilently(opts); } catch(e){ console.error('getToken err', e); return null; }
+          },
+          authFetch: async (input, init = {}) => {
+            // fetch wrapper that adds Authorization header when token is available
+            try {
+              const token = await wrapper.getToken();
+              const headers = new Headers(init.headers || {});
+              if (token) headers.set('Authorization', 'Bearer ' + token);
+              const merged = Object.assign({}, init, { headers });
+              return fetch(input, merged);
+            } catch(e) {
+              console.error('authFetch error', e);
+              return fetch(input, init);
+            }
+          }
+        };
+
+        // export
+        window.__AUTH__ = wrapper;
+        return wrapper;
+      } catch (err) {
+        console.error('Auth init failed', err);
+        return null;
+      }
+    })();
+  })();
+  </script>
+</head>
+
+<body>
+  <div class="card">
+    <h2>Welcome ✨</h2>
+    <p style="font-size:13px; color:#666">Private site — login required to continue.</p>
+
+    <div id="login-area" style="margin-top:16px">
+      <button id="login-btn">Login</button>
+      <button id="logout-btn" style="display:none">Logout</button>
+    </div>
+
+    <div style="margin-top:18px; font-size:13px">
+      <a href="/life.html">Go to Life Page</a>
+      <a href="/gallery.html">Go to Gallery</a>
+      <a href="/upload.html">Go to Upload</a>
+    </div>
+
+    <div id="user-info" style="margin-top:14px; font-size:13px; color:#444"></div>
   </div>
 
   <script>
-    function spawnHearts(card){
-      const container = card.querySelector('.hearts');
-      for(let i=0;i<6;i++){
-        const heart = document.createElement('div');
-        heart.className = 'heart';
-        heart.textContent = '❤️';
-        heart.style.left = (Math.random()*60 - 30) + "px";
-        heart.style.animationDelay = (i*0.25)+"s";
-        container.appendChild(heart);
-        setTimeout(()=>heart.remove(),3500);
-      }
-    }
-  </script>
-
-  <script>
+    // UI wiring: uses window.__AUTH_READY__ promise
     (async function(){
+      const loginBtn = document.getElementById('login-btn');
+      const logoutBtn = document.getElementById('logout-btn');
+      const userInfo = document.getElementById('user-info');
+
+      // Wait until guard/SDK inits or times out
+      let auth = null;
       try {
-        await window.__AUTH__.init();
-        const client = await window.__AUTH__.getClient();
-        const isAuth = await client.isAuthenticated();
-        if (!isAuth) { location.replace('/'); return; }
-
-        const logoutBtn = document.getElementById('btn-logout');
-        logoutBtn.style.display = 'inline-block';
-        logoutBtn.onclick = () => window.__AUTH__.logout();
-
-        try {
-          const user = await client.getUser();
-          if (user) {
-            const badge = document.createElement('div');
-            badge.style.position = 'absolute';
-            badge.style.top = '22px';
-            badge.style.right = '20px';
-            badge.style.padding = '6px 10px';
-            badge.style.borderRadius = '18px';
-            badge.style.background = '#fff';
-            badge.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)';
-            badge.style.fontSize = '13px';
-            badge.textContent = user.name || user.email || 'You';
-            document.body.appendChild(badge);
-          }
-        } catch(e){ /* ignore */ }
-      } catch(err){
-        console.error('Auth flow error on life.html:', err);
-        try{ location.replace('/'); } catch(e){}
+        // wait up to ~6s for init; avoid indefinite waiting
+        auth = await Promise.race([
+          window.__AUTH_READY__,
+          new Promise(resolve => setTimeout(() => resolve(null), 6000))
+        ]);
+      } catch(e) {
+        console.error('auth await err', e);
       }
+
+      function showUser(u) {
+        if (!u) { userInfo.textContent = ''; return; }
+        userInfo.textContent = `Signed in as ${u.name || u.email || u.sub}`;
+      }
+
+      async function refreshUI() {
+        if (!auth) {
+          loginBtn.style.display = 'inline-block';
+          logoutBtn.style.display = 'none';
+          showUser(null);
+          return;
+        }
+        const isAuth = await auth.isAuthenticated();
+        if (isAuth) {
+          loginBtn.style.display = 'none';
+          logoutBtn.style.display = 'inline-block';
+          const user = await auth.getUser();
+          showUser(user);
+        } else {
+          loginBtn.style.display = 'inline-block';
+          logoutBtn.style.display = 'none';
+          showUser(null);
+        }
+      }
+
+      loginBtn.addEventListener('click', async function () {
+        if (!auth) {
+          alert('Auth not ready. Please try again in a moment.');
+          return;
+        }
+        try {
+          await auth.login();
+          // After redirect flow user will land on REDIRECT_AFTER_LOGIN; this page might be replaced.
+        } catch (e) {
+          console.error('login err', e);
+        }
+      });
+
+      logoutBtn.addEventListener('click', function () {
+        if (!auth) {
+          alert('Auth not ready.');
+          return;
+        }
+        auth.logout({ returnTo: '/' });
+      });
+
+      // handle page load after redirect from Auth0
+      (async function handleRedirectIfAny(){
+        if (!auth) return;
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('code') && url.searchParams.has('state')) {
+          try {
+            await auth._auth0.handleRedirectCallback();
+            // clean url (remove query params)
+            url.searchParams.delete('code');
+            url.searchParams.delete('state');
+            window.history.replaceState({}, document.title, url.pathname + url.search);
+            // redirect to desired page
+            window.location.href = REDIRECT_AFTER_LOGIN || '/';
+          } catch (e) {
+            console.warn('redirect handling failed', e);
+          }
+        }
+      })();
+
+      // initial UI
+      await refreshUI();
+
+      // optionally refresh UI every 10s to pick up login state changes (not required)
+      setInterval(refreshUI, 10000);
     })();
   </script>
 </body>
