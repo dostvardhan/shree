@@ -5,26 +5,10 @@
   <title>Shree • Life</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!--
-    Auth0 config for this page.
-    Replace placeholders only if you want to override values — otherwise the guard script can read the same values from other pages.
-  -->
-  <script>
-    // Optional per-page override (not strictly required if your guard script reads env or global)
-    window.SHREE_AUTH0 = {
-      domain: 'dev-zzhjbmtzoxtgoz31.us.auth0.com',   // your Auth0 domain
-      client_id: '0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR', // your Auth0 client id
-      audience: 'https://shree-drive.onrender.com', // API identifier (must match server)
-      redirect_uri: window.location.origin + '/gallery.html'
-    };
-  </script>
-
-  <!-- Auth0 SPA SDK (CDN) - MUST be included BEFORE your guard/init script -->
-  <!-- If you prefer a local copy, replace this src with "/auth0-spa-js.production.js" -->
+  <!-- Auth0 SDK -->
   <script src="https://cdn.auth0.com/js/auth0-spa-js/1.30.0/auth0-spa-js.production.js"></script>
-
-  <!-- Your guard/init script (must run after Auth0 SDK) -->
-  <script src="/guard-auth-auth0.js" defer></script>
+  <script src="/js/guard-auth-auth0.js" defer></script>
+  <script src="/js/guard-auth.js" defer></script>
 
   <style>
     body{margin:0;font-family:'Segoe UI',sans-serif;background:#fafafa;}
@@ -32,26 +16,15 @@
     header h1{margin:0;font-size:28px;color:olive;font-weight:bold;}
     header nav{margin-top:10px;}
     header a, header button{padding:8px 14px;margin:0 6px;border:1px solid #ccc;border-radius:10px;background:#fff;text-decoration:none;color:#111;cursor:pointer;}
-
-    /* grid tuning - smaller photos but not blank */
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;padding:30px;max-width:1100px;margin:auto;}
     .card{position:relative;overflow:hidden;border-radius:14px;background:#fff;box-shadow:0 4px 10px rgba(0,0,0,0.06);}
     .card img{width:100%;height:auto;display:block;transition:transform .35s ease;}
     .card:hover img{transform:scale(1.08);}
     .quote{text-align:center;padding:10px;font-size:15px;color:olive;font-style:italic;}
-
-    /* floating hearts stronger + more */
     .hearts{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);pointer-events:none;}
     .heart{position:absolute;bottom:0;font-size:20px;color:#e63946;opacity:0;animation:floatUp 3.5s ease-out forwards;}
-    @keyframes floatUp {
-      0%   {transform:translateY(0) scale(0.8); opacity:1;}
-      40%  {opacity:1;}
-      100% {transform:translateY(-200px) scale(1.4); opacity:0;}
-    }
-
-    @media(max-width:768px){
-      .grid{grid-template-columns:repeat(2,1fr);gap:20px;padding:20px;}
-    }
+    @keyframes floatUp {0%{transform:translateY(0) scale(0.8);opacity:1;}40%{opacity:1;}100%{transform:translateY(-200px) scale(1.4);opacity:0;}}
+    @media(max-width:768px){.grid{grid-template-columns:repeat(2,1fr);gap:20px;padding:20px;}}
   </style>
 </head>
 <body>
@@ -65,56 +38,19 @@
   </header>
 
   <div class="grid" id="grid">
-    <!-- cards (static examples) -->
-    <div class="card" onmouseenter="spawnHearts(this)">
-      <a href="/photo1.html"><img src="/photo1.jpg" alt="Photo 1"></a>
-      <div class="hearts"></div>
-      <div class="quote">“Every picture tells a story.”</div>
-    </div>
-    <div class="card" onmouseenter="spawnHearts(this)">
-      <a href="/photo2.html"><img src="/photo2.jpg" alt="Photo 2"></a>
-      <div class="hearts"></div>
-      <div class="quote">“Smiles are contagious.”</div>
-    </div>
-    <div class="card" onmouseenter="spawnHearts(this)">
-      <a href="/photo3.html"><img src="/photo3.jpg" alt="Photo 3"></a>
-      <div class="hearts"></div>
-      <div class="quote">“Love makes everything brighter.”</div>
-    </div>
-    <div class="card" onmouseenter="spawnHearts(this)">
-      <a href="/photo4.html"><img src="/photo4.jpg" alt="Photo 4"></a>
-      <div class="hearts"></div>
-      <div class="quote">“Little things matter most.”</div>
-    </div>
-    <div class="card" onmouseenter="spawnHearts(this)">
-      <a href="/photo5.html"><img src="/photo5.jpg" alt="Photo 5"></a>
-      <div class="hearts"></div>
-      <div class="quote">“Together is our favorite place.”</div>
-    </div>
-    <div class="card" onmouseenter="spawnHearts(this)">
-      <a href="/photo6.html"><img src="/photo6.jpg" alt="Photo 6"></a>
-      <div class="hearts"></div>
-      <div class="quote">“Memories are timeless treasures.”</div>
-    </div>
-    <div class="card" onmouseenter="spawnHearts(this)">
-      <a href="/photo7.html"><img src="/photo7.jpg" alt="Photo 7"></a>
-      <div class="hearts"></div>
-      <div class="quote">“Happiness looks good on us.”</div>
-    </div>
-    <div class="card" onmouseenter="spawnHearts(this)">
-      <a href="/photo8.html"><img src="/photo8.jpg" alt="Photo 8"></a>
-      <div class="hearts"></div>
-      <div class="quote">“A moment lasts forever.”</div>
-    </div>
-    <div class="card" onmouseenter="spawnHearts(this)">
-      <a href="/photo9.html"><img src="/photo9.jpg" alt="Photo 9"></a>
-      <div class="hearts"></div>
-      <div class="quote">“Captured with love.”</div>
-    </div>
+    <!-- static placeholder cards -->
+    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo1.html"><img src="/photo1.jpg" alt="Photo 1"></a><div class="hearts"></div><div class="quote">“Every picture tells a story.”</div></div>
+    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo2.html"><img src="/photo2.jpg" alt="Photo 2"></a><div class="hearts"></div><div class="quote">“Smiles are contagious.”</div></div>
+    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo3.html"><img src="/photo3.jpg" alt="Photo 3"></a><div class="hearts"></div><div class="quote">“Love makes everything brighter.”</div></div>
+    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo4.html"><img src="/photo4.jpg" alt="Photo 4"></a><div class="hearts"></div><div class="quote">“Little things matter most.”</div></div>
+    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo5.html"><img src="/photo5.jpg" alt="Photo 5"></a><div class="hearts"></div><div class="quote">“Together is our favorite place.”</div></div>
+    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo6.html"><img src="/photo6.jpg" alt="Photo 6"></a><div class="hearts"></div><div class="quote">“Memories are timeless treasures.”</div></div>
+    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo7.html"><img src="/photo7.jpg" alt="Photo 7"></a><div class="hearts"></div><div class="quote">“Happiness looks good on us.”</div></div>
+    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo8.html"><img src="/photo8.jpg" alt="Photo 8"></a><div class="hearts"></div><div class="quote">“A moment lasts forever.”</div></div>
+    <div class="card" onmouseenter="spawnHearts(this)"><a href="/photo9.html"><img src="/photo9.jpg" alt="Photo 9"></a><div class="hearts"></div><div class="quote">“Captured with love.”</div></div>
   </div>
 
   <script>
-    // small helper to animate hearts
     function spawnHearts(card){
       const container = card.querySelector('.hearts');
       for(let i=0;i<6;i++){
@@ -130,74 +66,19 @@
   </script>
 
   <script>
-    // ------------ Auth0 check & logout wiring ------------
     (async function(){
-      // Prefer the page-level config, fallback to these if needed
-      const AUTH0_DOMAIN = (window.SHREE_AUTH0 && window.SHREE_AUTH0.domain) || "dev-zzhjbmtzoxtgoz31.us.auth0.com";
-      const AUTH0_CLIENT_ID = (window.SHREE_AUTH0 && window.SHREE_AUTH0.client_id) || "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
-      const SITE_ORIGIN = window.location.origin || "https://shreshthapushkar.com";
-      const AUDIENCE = (window.SHREE_AUTH0 && window.SHREE_AUTH0.audience) || "https://shree-drive.onrender.com";
-      const REDIRECT = (window.SHREE_AUTH0 && window.SHREE_AUTH0.redirect_uri) || (SITE_ORIGIN + "/gallery.html");
-
-      // Ensure SDK loaded
-      if (typeof createAuth0Client !== "function") {
-        console.error("Auth0 SDK missing (createAuth0Client not found). Make sure auth0-spa-js is loaded first.");
-        // fallback: redirect to homepage (safe)
-        try { location.replace("/"); } catch(e) {}
-        return;
-      }
-
       try {
-        // create client using modern createAuth0Client options
-        const auth0 = await createAuth0Client({
-          domain: AUTH0_DOMAIN,
-          client_id: AUTH0_CLIENT_ID,
-          authorizationParams: {
-            audience: AUDIENCE,
-            redirect_uri: REDIRECT
-          },
-          cacheLocation: 'localstorage',
-          useRefreshTokens: true
-        });
+        await window.__AUTH__.init();
+        const client = await window.__AUTH__.getClient();
+        const isAuth = await client.isAuthenticated();
+        if (!isAuth) { location.replace('/'); return; }
 
-        // Handle redirect callback if present (user just logged in)
-        if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
-          try {
-            await auth0.handleRedirectCallback();
-            // remove query params
-            window.history.replaceState({}, document.title, window.location.pathname);
-          } catch (err) {
-            console.warn("Redirect callback handle error:", err);
-          }
-        }
+        const logoutBtn = document.getElementById('btn-logout');
+        logoutBtn.style.display = 'inline-block';
+        logoutBtn.onclick = () => window.__AUTH__.logout();
 
-        const isAuthenticated = await auth0.isAuthenticated();
-
-        if (!isAuthenticated) {
-          // Not authenticated -> redirect to home (or you can redirect to login page)
-          try { location.replace("/"); } catch(e) {}
-          return;
-        }
-
-        // Show logout button and wire it
-        const logoutBtn = document.getElementById("btn-logout");
-        if (logoutBtn) {
-          logoutBtn.style.display = "inline-block";
-          logoutBtn.onclick = async () => {
-            try {
-              // perform logout via Auth0 and return to site origin
-              auth0.logout({ returnTo: SITE_ORIGIN });
-            } catch (err) {
-              console.error('Logout error', err);
-              // fallback redirect
-              try { location.replace(SITE_ORIGIN); } catch(e) {}
-            }
-          };
-        }
-
-        // Optionally show user name/avatar on the page (small badge)
         try {
-          const user = await auth0.getUser();
+          const user = await client.getUser();
           if (user) {
             const badge = document.createElement('div');
             badge.style.position = 'absolute';
@@ -211,37 +92,12 @@
             badge.textContent = user.name || user.email || 'You';
             document.body.appendChild(badge);
           }
-        } catch (e) {
-          console.warn('Could not fetch user info', e);
-        }
-
-        // OPTIONAL: Dynamic gallery loading example (commented)
-        /*
-        fetch('/api/list-photos')
-          .then(r => r.json())
-          .then(list => {
-            const grid = document.getElementById('grid');
-            grid.innerHTML = '';
-            list.forEach(item => {
-              const card = document.createElement('div');
-              card.className = 'card';
-              card.onmouseenter = () => spawnHearts(card);
-              card.innerHTML = `<a href="${item.page || '#'}"><img src="${item.url}" alt=""></a>
-                                <div class="hearts"></div>
-                                <div class="quote">${item.caption || ''}</div>`;
-              grid.appendChild(card);
-            });
-          })
-          .catch(err => console.warn('Could not load photos', err));
-        */
-
-      } catch (err) {
+        } catch(e){ /* ignore */ }
+      } catch(err){
         console.error('Auth flow error on life.html:', err);
-        // if anything goes wrong, redirect to home to re-login
-        try { location.replace('/'); } catch(e) {}
+        try{ location.replace('/'); } catch(e){}
       }
     })();
   </script>
-
 </body>
 </html>
