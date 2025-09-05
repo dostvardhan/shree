@@ -1,93 +1,87 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Welcome • Shreshtha</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shreshtha — Private</title>
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;background:#3a3240;color:#222;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;margin:0}
-    .card{background:#fff;width:520px;margin:40px;padding:28px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.25);text-align:center}
-    button{padding:8px 14px;margin:6px;border:1px solid #ccc;border-radius:6px;cursor:pointer}
-    a{display:block;margin:6px;font-size:13px}
+    html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;background:#3a3240;color:#fff}
+    .box{width:520px;margin:60px auto;padding:28px;background:#fff;border-radius:8px;color:#222;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+    a{color:#6a27a8}
+    .small{font-size:13px;color:#666;margin-top:12px}
   </style>
-
-  <!-- Auth0 SDK -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js" defer></script>
-
-  <!-- Inline Auth guard -->
-  <script defer>
-  (function(){
-    const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
-    const AUTH0_CLIENT_ID = "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
-    const AUTH0_AUDIENCE = "https://shree-drive.onrender.com";
-    window.__AUTH_READY__ = (async function init(){
-      if (typeof createAuth0Client !== 'function') {
-        console.error('Auth0 SDK missing');
-        return null;
-      }
-      const auth0 = await createAuth0Client({
-        domain: AUTH0_DOMAIN,
-        client_id: AUTH0_CLIENT_ID,
-        audience: AUTH0_AUDIENCE,
-        cacheLocation: 'memory'
-      });
-      window.__AUTH__ = {
-        _auth0: auth0,
-        isAuthenticated: () => auth0.isAuthenticated(),
-        login: (opts={}) => auth0.loginWithRedirect({ redirect_uri: window.location.origin + '/', ...opts }),
-        logout: (opts={}) => auth0.logout({ returnTo: window.location.origin }),
-        getUser: () => auth0.getUser(),
-        getToken: (opts={}) => auth0.getTokenSilently(opts),
-        authFetch: async (url, init={}) => {
-          try {
-            const token = await auth0.getTokenSilently();
-            const headers = new Headers(init.headers || {});
-            if (token) headers.set('Authorization', 'Bearer ' + token);
-            return fetch(url, { ...init, headers, credentials: 'include' });
-          } catch (e) {
-            // fallback to normal fetch
-            return fetch(url, init);
-          }
-        }
-      };
-      return window.__AUTH__;
-    })();
-  })();
-  </script>
 </head>
 <body>
-  <div class="card">
+  <div class="box" id="box">
     <h2>Welcome ✨</h2>
-    <p style="font-size:13px; color:#666">Private site — invite-only. Login to continue.</p>
-
-    <div style="margin-top:12px">
-      <a href="/life.html">Sweet memories of Shreshtha</a>
-      <a href="/gallery.html">Gallery</a>
-      <a href="/upload.html">Upload</a>
-    </div>
-
-    <div id="user-info" style="margin-top:14px;font-size:13px;color:#444"></div>
-    <button id="logout-btn" style="display:none">Logout</button>
+    <p style="margin:6px 0">This is a private, invite-only site.</p>
+    <p style="margin:12px 0">Please sign in to continue.</p>
+    <p id="status" class="small">Preparing secure sign-in…</p>
+    <!-- no links visible here — only login -->
   </div>
 
   <script>
-  (async function(){
-    const auth = await window.__AUTH_READY__;
-    if(!auth) {
-      document.getElementById('user-info').textContent = 'Auth not ready — try refresh.';
-      return;
+  (function(){
+    // CONFIG — update if needed (these are your known values)
+    const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
+    const CLIENT_ID = "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
+    const AUDIENCE = "https://shree-drive.onrender.com";
+    const REDIRECT_AFTER_LOGIN = window.location.origin + "/welcome.html"; // where user lands after login
+
+    // helper show status
+    const statusEl = document.getElementById('status');
+    function setStatus(s){ statusEl.textContent = s; }
+
+    // Primary: use SPA SDK if available (preferred)
+    function trySdkFlow(){
+      if(typeof createAuth0Client === 'function'){
+        setStatus('Using Auth0 SDK — redirecting to hosted login...');
+        // create client then redirect
+        createAuth0Client({ domain: AUTH0_DOMAIN, client_id: CLIENT_ID, audience: AUDIENCE })
+          .then(c => c.loginWithRedirect({ redirect_uri: REDIRECT_AFTER_LOGIN }))
+          .catch(e => {
+            console.warn('SDK loginWithRedirect failed', e);
+            fallbackDirect();
+          });
+        return true;
+      }
+      return false;
     }
-    // If not authenticated, redirect to login immediately
-    if(!await auth.isAuthenticated()){
-      await auth.login();
-      return;
+
+    // Fallback: direct Universal Login authorize endpoint (implicit token flow)
+    function fallbackDirect(){
+      setStatus('Fallback: opening Auth0 login page (hosted) — if you see this repeatedly, check network/CDN).');
+      const params = new URLSearchParams({
+        response_type: 'token id_token',   // implicit (fallback). Short-term only.
+        client_id: CLIENT_ID,
+        redirect_uri: REDIRECT_AFTER_LOGIN,
+        scope: 'openid profile email',
+        audience: AUDIENCE,
+        nonce: Math.random().toString(36).slice(2)
+      });
+      const url = `https://${AUTH0_DOMAIN}/authorize?${params.toString()}`;
+      // final redirect
+      window.location.href = url;
     }
-    // show user info
-    const user = await auth.getUser();
-    document.getElementById('user-info').textContent = user ? `Signed in as ${user.name || user.email}` : '';
-    const logoutBtn = document.getElementById('logout-btn');
-    logoutBtn.style.display = 'inline-block';
-    logoutBtn.onclick = () => auth.logout();
+
+    // Try SDK first; if not available within 2s, fallback to direct redirect
+    try {
+      setStatus('Checking Auth0 availability…');
+      const used = trySdkFlow();
+      if(!used){
+        // wait briefly in case script arrives, then fallback
+        setTimeout(() => {
+          if(typeof createAuth0Client === 'function'){
+            trySdkFlow();
+          } else {
+            fallbackDirect();
+          }
+        }, 1400);
+      }
+    } catch (e){
+      console.error(e);
+      fallbackDirect();
+    }
   })();
   </script>
 </body>
