@@ -2,11 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>Gallery</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Gallery • Shreshtha</title>
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;background:#fff;margin:0;padding:20px}
-    img{max-width:100%;margin:10px 0}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#fdfdfd;color:#222;}
+    h1{text-align:center;padding:20px;color:#444;}
+    .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;padding:20px;}
+    .card{overflow:hidden;border-radius:12px;box-shadow:0 6px 15px rgba(0,0,0,.15);}
+    .card img{width:100%;display:block;transition:transform .35s ease;}
+    .card:hover img{transform:scale(1.05);}
+    #logout-btn{position:fixed;top:15px;right:15px;padding:6px 12px;border:none;border-radius:6px;background:#ff5c8d;color:#fff;cursor:pointer;}
   </style>
+
+  <!-- Auth0 SDK -->
   <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js" defer></script>
   <script defer>
   (function(){
@@ -22,11 +30,19 @@
   </script>
 </head>
 <body>
-  <h1>Gallery 📷</h1>
-  <div id="photos">
-    <img src="/photo1.jpg" alt="Photo 1"/>
-    <img src="/photo2.jpg" alt="Photo 2"/>
+  <h1>Photo Gallery 📸</h1>
+  <div class="gallery">
+    <div class="card"><img src="photo1.jpg" alt="Photo 1"></div>
+    <div class="card"><img src="photo2.jpg" alt="Photo 2"></div>
+    <div class="card"><img src="photo3.jpg" alt="Photo 3"></div>
+    <div class="card"><img src="photo4.jpg" alt="Photo 4"></div>
+    <div class="card"><img src="photo5.jpg" alt="Photo 5"></div>
+    <div class="card"><img src="photo6.jpg" alt="Photo 6"></div>
+    <div class="card"><img src="photo7.jpg" alt="Photo 7"></div>
+    <div class="card"><img src="photo8.jpg" alt="Photo 8"></div>
+    <div class="card"><img src="photo9.jpg" alt="Photo 9"></div>
   </div>
+
   <button id="logout-btn">Logout</button>
 
   <script>
