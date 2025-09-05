@@ -1,49 +1,39 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Welcome • Shreshtha</title>
-
-  <!-- Auth0 SDK (CDN) -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.30.0/auth0-spa-js.production.js"></script>
-
-  <!-- Guard (must be after SDK) -->
-  <script src="/js/guard-auth-auth0.js" defer></script>
-  <script src="/js/guard-auth.js" defer></script>
-
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-    button { margin: 6px; padding: 10px 16px; border-radius: 6px; }
-    a { display: inline-block; margin-top: 20px; }
+    body{font-family:Arial,Helvetica,sans-serif;background:#3a3240;color:#222;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;margin:0}
+    .card{background:#fff;width:520px;margin:40px;padding:28px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.25);text-align:center}
+    button{padding:8px 14px;margin:6px;border:1px solid #ccc;border-radius:6px;cursor:pointer}
+    a{display:block;margin:6px;font-size:13px}
   </style>
 </head>
 <body>
-  <h1>Welcome ✨</h1>
-  <p>Private site — login required to continue.</p>
+  <div class="card">
+    <h2>Welcome ✨</h2>
+    <p>Private site — login required.</p>
+    <div>
+      <a href="/life.html">Go to Life Page</a>
+      <a href="/gallery.html">Go to Gallery</a>
+      <a href="/upload.html">Go to Upload</a>
+    </div>
+    <div id="user-info" style="margin-top:14px;font-size:13px;color:#444"></div>
+    <button id="logout-btn">Logout</button>
+  </div>
 
-  <p>
-    <button id="login" onclick="window.__AUTH__.login()">Login</button>
-    <button id="logout" onclick="window.__AUTH__.logout()" style="display:none">Logout</button>
-  </p>
-
-  <p>
-    <a href="/life.html">Go to Life Page</a><br>
-    <a href="/gallery.html">Go to Gallery</a><br>
-    <a href="/upload.html">Go to Upload</a>
-  </p>
-
+  <!-- Auth0 guard inline -->
+  [GUARD_SNIPPET]
   <script>
-    // Small UI wiring for showing logout when logged in
-    (async function () {
-      try {
-        await window.__AUTH__.init();
-        const client = await window.__AUTH__.getClient();
-        if (await client.isAuthenticated()) {
-          document.getElementById('login').style.display = 'none';
-          document.getElementById('logout').style.display = 'inline-block';
-        }
-      } catch (e) { /* ignore */ }
-    })();
+  (async function(){
+    const auth = await window.__AUTH_READY__;
+    const user = await auth.getUser();
+    document.getElementById("user-info").textContent =
+      user ? "Signed in as " + (user.name||user.email) : "";
+    document.getElementById("logout-btn").onclick = () => auth.logout();
+  })();
   </script>
 </body>
 </html>
