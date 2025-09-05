@@ -7,7 +7,6 @@
   <style>
     html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;background:#3a3240;color:#fff}
     .box{width:520px;margin:60px auto;padding:28px;background:#fff;border-radius:8px;color:#222;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.25)}
-    a{color:#6a27a8}
     .small{font-size:13px;color:#666;margin-top:12px}
   </style>
 </head>
@@ -17,42 +16,44 @@
     <p style="margin:6px 0">This is a private, invite-only site.</p>
     <p style="margin:12px 0">Please sign in to continue.</p>
     <p id="status" class="small">Preparing secure sign-in…</p>
-    <!-- no links visible here — only login -->
+    <!-- intentionally no links -->
   </div>
 
   <script>
   (function(){
-    // CONFIG — update if needed (these are your known values)
+    // CONFIG — keep these as your project values
     const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
     const CLIENT_ID = "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
     const AUDIENCE = "https://shree-drive.onrender.com";
-    const REDIRECT_AFTER_LOGIN = window.location.origin + "/welcome.html"; // where user lands after login
+    const REDIRECT_AFTER_LOGIN = window.location.origin + "/welcome.html";
 
-    // helper show status
     const statusEl = document.getElementById('status');
     function setStatus(s){ statusEl.textContent = s; }
 
-    // Primary: use SPA SDK if available (preferred)
+    // Try SPA SDK flow first (preferred)
     function trySdkFlow(){
-      if(typeof createAuth0Client === 'function'){
+      if (typeof createAuth0Client === 'function') {
         setStatus('Using Auth0 SDK — redirecting to hosted login...');
-        // create client then redirect
-        createAuth0Client({ domain: AUTH0_DOMAIN, client_id: CLIENT_ID, audience: AUDIENCE })
-          .then(c => c.loginWithRedirect({ redirect_uri: REDIRECT_AFTER_LOGIN }))
-          .catch(e => {
-            console.warn('SDK loginWithRedirect failed', e);
-            fallbackDirect();
-          });
+        createAuth0Client({
+          domain: AUTH0_DOMAIN,
+          client_id: CLIENT_ID,
+          audience: AUDIENCE
+        })
+        .then(client => client.loginWithRedirect({ redirect_uri: REDIRECT_AFTER_LOGIN }))
+        .catch(err => {
+          console.warn('SDK loginWithRedirect failed', err);
+          fallbackDirect();
+        });
         return true;
       }
       return false;
     }
 
-    // Fallback: direct Universal Login authorize endpoint (implicit token flow)
+    // Fallback: direct Universal Login (hosted) — pragmatic short-term fallback
     function fallbackDirect(){
-      setStatus('Fallback: opening Auth0 login page (hosted) — if you see this repeatedly, check network/CDN).');
+      setStatus('Opening Auth0 hosted login…');
       const params = new URLSearchParams({
-        response_type: 'token id_token',   // implicit (fallback). Short-term only.
+        response_type: 'token id_token',
         client_id: CLIENT_ID,
         redirect_uri: REDIRECT_AFTER_LOGIN,
         scope: 'openid profile email',
@@ -60,29 +61,29 @@
         nonce: Math.random().toString(36).slice(2)
       });
       const url = `https://${AUTH0_DOMAIN}/authorize?${params.toString()}`;
-      // final redirect
       window.location.href = url;
     }
 
-    // Try SDK first; if not available within 2s, fallback to direct redirect
+    // Wait briefly for SDK to appear, otherwise fallback
     try {
       setStatus('Checking Auth0 availability…');
       const used = trySdkFlow();
-      if(!used){
-        // wait briefly in case script arrives, then fallback
+      if (!used) {
         setTimeout(() => {
-          if(typeof createAuth0Client === 'function'){
+          if (typeof createAuth0Client === 'function') {
             trySdkFlow();
           } else {
             fallbackDirect();
           }
         }, 1400);
       }
-    } catch (e){
+    } catch (e) {
       console.error(e);
       fallbackDirect();
     }
   })();
   </script>
+  <!-- load SDK (deferred) so the page can still fallback quickly if CDN blocked) -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js" defer></script>
 </body>
 </html>
