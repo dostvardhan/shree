@@ -1,52 +1,125 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Gallery</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="/auth0-spa-js.production.js"></script>
+  <meta charset="utf-8" />
+  <title>Gallery — Shreshthapushkar</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <script src="/auth-init.js" defer></script>
+
+  <style>
+    body { font-family: Arial, sans-serif; padding: 18px; }
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      max-width: 900px;
+      margin-top: 20px;
+    }
+    .card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      background: #fafafa;
+    }
+    .card img {
+      max-width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .caption {
+      font-size: 13px;
+      margin-top: 6px;
+      text-align: center;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h2>Photo Gallery</h2>
+  <div id="info">Loading...</div>
+  <div id="grid"></div>
+  <p><a href="/upload.html">Upload a photo</a> | <a href="/index.html">Home</a></p>
+
   <script>
-    let auth0Client;
-
-    async function initAuth0() {
-      auth0Client = await createAuth0Client({
-        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
-        client_id: "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR",
-        audience: "https://shree-drive.onrender.com",
-        cacheLocation: "localstorage",
-        useRefreshTokens: true,
-        redirect_uri: window.location.origin + "/welcome.html"
-      });
-
-      const isAuthenticated = await auth0Client.isAuthenticated();
-      if (!isAuthenticated) return window.location.href = "/index.html";
-
-      const token = await auth0Client.getTokenSilently({ audience: "https://shree-drive.onrender.com" });
-      const resp = await fetch("https://shree-drive.onrender.com/api/list", {
-        headers: { Authorization: "Bearer " + token }
-      });
-      const data = await resp.json();
-      const gallery = document.getElementById("gallery");
-      gallery.innerHTML = "";
-      for (const f of data.files) {
-        const r = await fetch(`https://shree-drive.onrender.com/api/file/${f.id}`, {
-          headers: { Authorization: "Bearer " + token }
+    function onAuthReady(cb) {
+      if (window.__AUTH_READY__) {
+        window.__AUTH_READY__.then(cb).catch(err => {
+          document.getElementById('info').innerText = "Auth failed: " + (err.message||err);
+          console.error("Auth init failed:", err);
         });
-        const blob = await r.blob();
-        const url = URL.createObjectURL(blob);
-        const img = document.createElement("img");
-        img.src = url;
-        img.alt = f.name;
-        img.classList.add("thumb");
-        gallery.appendChild(img);
+      } else {
+        setTimeout(() => onAuthReady(cb), 100);
       }
     }
 
-    window.onload = initAuth0;
+    onAuthReady(async () => {
+      const authed = await window.__AUTH__.isAuthenticated();
+      if (!authed) {
+        document.getElementById('info').innerHTML =
+          'You must log in first. <button id="doLogin">Login</button>';
+        document.getElementById('doLogin').onclick = () =>
+          window.__AUTH__.login({ redirect_uri: window.location.origin + '/gallery.html' });
+        return;
+      }
+
+      document.getElementById('info').innerText = "Fetching photos...";
+
+      try {
+        const res = await window.__AUTH__.authFetch("https://shree-drive.onrender.com/api/list");
+        if (!res.ok) {
+          document.getElementById('info').innerText = "List failed: " + res.status;
+          return;
+        }
+        const items = await res.json();
+        const grid = document.getElementById('grid');
+        grid.innerHTML = "";
+        if (!items.length) {
+          document.getElementById('info').innerText = "No photos yet.";
+          return;
+        }
+        document.getElementById('info').innerText = "";
+
+        for (const it of items) {
+          const card = document.createElement('div');
+          card.className = "card";
+
+          const img = document.createElement('img');
+          img.alt = it.caption || "photo";
+
+          // fetch each photo blob
+          (async (id, el) => {
+            try {
+              const r = await window.__AUTH__.authFetch("https://shree-drive.onrender.com/api/file/" + id);
+              if (!r.ok) {
+                el.alt = "load error";
+                return;
+              }
+              const blob = await r.blob();
+              el.src = URL.createObjectURL(blob);
+            } catch (e) {
+              el.alt = "error";
+            }
+          })(it.id, img);
+
+          const cap = document.createElement('div');
+          cap.className = "caption";
+          cap.innerText = it.caption || "";
+
+          card.appendChild(img);
+          card.appendChild(cap);
+          grid.appendChild(card);
+        }
+      } catch (err) {
+        document.getElementById('info').innerText = "Error: " + err;
+        console.error("Gallery error:", err);
+      }
+    });
   </script>
-</head>
-<body>
-  <h1>Gallery</h1>
-  <div id="gallery" class="photo-grid">Loading...</div>
 </body>
 </html>
