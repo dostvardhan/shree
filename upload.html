@@ -1,49 +1,95 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Upload</title>
-  <script src="/auth0-spa-js.production.js"></script>
-  <script>
-    let auth0Client;
+  <meta charset="utf-8" />
+  <title>Upload Photo — Shreshthapushkar</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-    async function initAuth0() {
-      auth0Client = await createAuth0Client({
-        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
-        client_id: "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR",
-        audience: "https://shree-drive.onrender.com",
-        cacheLocation: "localstorage",
-        useRefreshTokens: true,
-        redirect_uri: window.location.origin + "/welcome.html"
-      });
+  <script src="/auth-init.js" defer></script>
 
-      const isAuthenticated = await auth0Client.isAuthenticated();
-      if (!isAuthenticated) return window.location.href = "/index.html";
+  <style>
+    body { font-family: Arial, sans-serif; padding: 18px; }
+    form { max-width: 400px; margin-top: 20px; }
+    input[type="text"], input[type="file"] {
+      margin-bottom: 12px; width: 100%; padding: 6px;
     }
-
-    async function doUpload() {
-      const fileInput = document.getElementById("file");
-      if (!fileInput.files.length) return alert("Select a file first!");
-
-      const token = await auth0Client.getTokenSilently({ audience: "https://shree-drive.onrender.com" });
-      const fd = new FormData();
-      fd.append("file", fileInput.files[0]);
-
-      const resp = await fetch("https://shree-drive.onrender.com/api/upload", {
-        method: "POST",
-        headers: { Authorization: "Bearer " + token },
-        body: fd
-      });
-      const data = await resp.json();
-      alert("Upload response: " + JSON.stringify(data));
-    }
-
-    window.onload = initAuth0;
-  </script>
+    button { padding: 6px 12px; }
+    #result { margin-top: 12px; font-size: 14px; }
+  </style>
 </head>
 <body>
-  <h1>Upload a Photo</h1>
-  <input type="file" id="file">
-  <button onclick="doUpload()">Upload</button>
+  <h2>Upload a New Photo</h2>
+  <div id="loginNote">Checking authentication...</div>
+
+  <form id="uploadForm" style="display:none">
+    <input id="photoFile" type="file" accept="image/*" required />
+    <input id="caption" type="text" placeholder="Caption (optional)" />
+    <button type="submit">Upload</button>
+  </form>
+
+  <div id="result"></div>
+  <p><a href="/gallery.html">Back to Gallery</a></p>
+
+  <script>
+    function onAuthReady(cb) {
+      if (window.__AUTH_READY__) {
+        window.__AUTH_READY__.then(cb).catch(err => {
+          document.getElementById('loginNote').innerText = "Auth failed: " + (err.message||err);
+          console.error("Auth init failed:", err);
+        });
+      } else {
+        setTimeout(() => onAuthReady(cb), 100);
+      }
+    }
+
+    onAuthReady(async () => {
+      const authed = await window.__AUTH__.isAuthenticated();
+      const loginNote = document.getElementById('loginNote');
+      const form = document.getElementById('uploadForm');
+      const result = document.getElementById('result');
+
+      if (!authed) {
+        loginNote.innerHTML = 'You must log in first. <button id="doLogin">Login</button>';
+        document.getElementById('doLogin').onclick = () =>
+          window.__AUTH__.login({ redirect_uri: window.location.origin + '/upload.html' });
+        return;
+      }
+
+      loginNote.innerText = "Logged in — you can upload now.";
+      form.style.display = "block";
+
+      form.addEventListener('submit', async ev => {
+        ev.preventDefault();
+        result.innerText = "Uploading...";
+
+        const fileInput = document.getElementById('photoFile');
+        if (!fileInput.files.length) {
+          result.innerText = "Please select a file.";
+          return;
+        }
+
+        const fd = new FormData();
+        fd.append('file', fileInput.files[0]);
+        fd.append('caption', document.getElementById('caption').value || '');
+
+        try {
+          const res = await window.__AUTH__.authFetch("https://shree-drive.onrender.com/api/upload", {
+            method: "POST",
+            body: fd
+          });
+          if (!res.ok) {
+            result.innerText = "Upload failed: " + res.status + " " + (await res.text());
+          } else {
+            const json = await res.json();
+            result.innerText = "Upload successful! ID: " + (json.id || "unknown");
+            form.reset();
+          }
+        } catch (err) {
+          result.innerText = "Error: " + err;
+          console.error("Upload error:", err);
+        }
+      });
+    });
+  </script>
 </body>
 </html>
