@@ -5,67 +5,85 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Upload • Shreshtha</title>
   <style>
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#3b3f2d;color:#fff;padding:18px}
-    h1{text-align:center;color:#f7cfe0;}
-    form{max-width:520px;margin:20px auto;padding:18px;background:#2f3227;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.3);text-align:center}
-    input[type=file]{display:block;margin:12px auto}
-    button{padding:8px 14px;border-radius:8px;border:none;background:#8fa85d;color:#fff;cursor:pointer}
-    #status{margin-top:12px;color:#ffd6e6;}
-    #protected{display:none}
-    #logout{position:fixed;top:12px;right:12px;padding:6px 10px;border-radius:6px;background:#f76ca2;color:#fff;border:none}
+    body{font-family:Arial,Helvetica,sans-serif;background:#f7f7f7;margin:0;color:#222;display:flex;align-items:flex-start;justify-content:center;min-height:100vh}
+    .card{width:560px;margin:40px;background:#fff;padding:22px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+    label{display:block;margin:12px 0 6px}
+    input[type=file]{display:block}
+    .btn{margin-top:12px;padding:8px 12px;border-radius:6px;border:none;background:#20603f;color:#fff;cursor:pointer}
+    .logout{background:#f76ca2}
+    .status{margin-top:12px;font-size:13px;color:#666}
   </style>
 
   <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js" defer></script>
-  <script defer>
-  (function(){
-    const AUTH0_DOMAIN="dev-zzhjbmtzoxtgoz31.us.auth0.com";
-    const AUTH0_CLIENT_ID="0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
-    const AUTH0_AUDIENCE="https://shree-drive.onrender.com";
-    window.__AUTH_READY__=(async function(){ const a = await createAuth0Client({domain:AUTH0_DOMAIN,client_id:AUTH0_CLIENT_ID,audience:AUTH0_AUDIENCE,cacheLocation:'memory'}); return window.__AUTH__={_auth0:a,isAuthenticated:()=>a.isAuthenticated(),login:()=>a.loginWithRedirect({redirect_uri:window.location.href}),logout:()=>a.logout({returnTo:window.location.origin}),getUser:()=>a.getUser(),getToken:()=>a.getTokenSilently(),authFetch:async(u,o={})=>{ const t=await a.getTokenSilently(); const h=new Headers(o.headers||{}); if(t) h.set('Authorization','Bearer '+t); return fetch(u,{...o,headers:h,credentials:'include'}); } }; })();
-  })();
-  </script>
 </head>
 <body>
-  <div id="protected">
-    <h1>Upload a Photo</h1>
-    <form id="uploadForm">
-      <input id="file" type="file" accept="image/*" required />
-      <input id="caption" type="text" placeholder="Caption (optional)" style="width:100%;padding:8px;margin-top:8px;border-radius:6px;border:none"/>
-      <button type="submit">Upload</button>
-      <div id="status"></div>
-    </form>
-    <button id="logout">Logout</button>
+  <div class="card">
+    <h2>Upload Photo</h2>
+    <p class="status" id="status">Checking authentication…</p>
+    <div id="form" style="display:none">
+      <label>Choose photo</label>
+      <input id="file" type="file" accept="image/*" />
+      <label>Caption / Quote</label>
+      <input id="caption" type="text" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ddd"/>
+      <button id="uploadBtn" class="btn">Upload</button>
+      <button id="logoutBtn" class="btn logout">Logout</button>
+    </div>
   </div>
 
   <script>
+  const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
+  const AUTH0_CLIENT_ID = "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT";
+  const AUTH0_AUDIENCE = "https://shree-drive.onrender.com";
+  const UPLOAD_ENDPOINT = "/api/upload"; // change if your backend uses another path
+
+  async function waitForSDK(){
+    let w=0;
+    while(typeof createAuth0Client!=='function' && w < 3500){ await new Promise(r=>setTimeout(r,150)); w+=150; }
+    return typeof createAuth0Client === 'function';
+  }
+
   (async function(){
-    const auth = await window.__AUTH_READY__;
-    if(!await auth.isAuthenticated()){ await auth.login(); return; }
-    document.getElementById('protected').style.display='block';
-    document.getElementById('logout').onclick = ()=>auth.logout();
+    const ok = await waitForSDK();
+    const statusEl = document.getElementById('status');
+    if(!ok){ statusEl.textContent = 'Auth SDK not available. Refresh.'; return; }
+    const auth0 = await createAuth0Client({ domain: AUTH0_DOMAIN, client_id: AUTH0_CLIENT_ID, audience: AUTH0_AUDIENCE });
+    if(!await auth0.isAuthenticated()){
+      await auth0.loginWithRedirect({ redirect_uri: window.location.origin + '/welcome.html' });
+      return;
+    }
 
-    const form = document.getElementById('uploadForm');
-    form.onsubmit = async function(e){
-      e.preventDefault();
-      const f = document.getElementById('file').files[0];
+    statusEl.style.display='none';
+    document.getElementById('form').style.display='block';
+    document.getElementById('logoutBtn').onclick = ()=> auth0.logout({ returnTo: window.location.origin });
+
+    document.getElementById('uploadBtn').onclick = async function(){
+      const fileEl = document.getElementById('file');
       const caption = document.getElementById('caption').value || '';
-      if(!f) return;
-      const fd = new FormData();
-      fd.append('file', f);
-      // optional: include caption as metadata via another field
-      fd.append('caption', caption);
+      if(!fileEl.files || fileEl.files.length===0){ alert('Pick a file'); return; }
+      const f = fileEl.files[0];
+      const form = new FormData();
+      form.append('file', f);
+      form.append('caption', caption);
 
-      document.getElementById('status').textContent = 'Uploading...';
-      const res = await auth.authFetch('https://shree-drive.onrender.com/upload', { method:'POST', body: fd });
-      if(!res.ok){
-        const txt = await res.text();
-        document.getElementById('status').textContent = 'Upload failed: ' + res.status + ' ' + txt;
-        return;
+      // get token
+      let token = null;
+      try { token = await auth0.getTokenSilently(); } catch(e){ console.warn('token silent failed', e); }
+      if(!token){ alert('Could not get auth token'); return; }
+
+      const st = document.getElementById('status'); st.style.display='block'; st.textContent='Uploading...';
+      try {
+        const res = await fetch(UPLOAD_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+          body: form
+        });
+        if(!res.ok) throw new Error('upload failed ' + res.status);
+        const json = await res.json();
+        st.textContent = 'Upload successful';
+      } catch(e){
+        console.error(e);
+        st.textContent = 'Upload failed. See console.';
       }
-      const json = await res.json();
-      document.getElementById('status').textContent = 'Upload successful';
-      // optional: refresh by redirecting to gallery
-      setTimeout(()=>location.href='/life.html',800);
     };
   })();
   </script>
