@@ -1,31 +1,65 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Shreshthapushkar</title>
-  <script src="/auth0-spa-js.production.js"></script>
-  <script>
-    let auth0Client;
-    async function initAuth0() {
-      auth0Client = await createAuth0Client({
-        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
-        client_id: "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR",
-        audience: "https://shree-drive.onrender.com",
-        cacheLocation: "localstorage",
-        useRefreshTokens: true,
-        redirect_uri: window.location.origin + "/welcome.html"
-      });
-    }
+  <meta charset="utf-8" />
+  <title>Shreshthapushkar — Home</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-    async function login() {
-      await auth0Client.loginWithRedirect();
-    }
+  <!-- Auth initializer (will auto-load Auth0 SDK) -->
+  <script src="/auth-init.js" defer></script>
 
-    window.onload = initAuth0;
-  </script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 18px; }
+    #loginBtn, #logoutBtn { padding:6px 10px; margin:6px; }
+    #galleryLink, #uploadLink { margin-left:8px; }
+  </style>
 </head>
 <body>
-  <h1>Welcome to Shreshthapushkar</h1>
-  <button onclick="login()">Login</button>
+  <h2>Welcome to Shreshthapushkar</h2>
+
+  <div id="authUI">
+    <button id="loginBtn">Login</button>
+    <button id="logoutBtn" style="display:none">Logout</button>
+    <a id="galleryLink" href="/gallery.html">Gallery</a>
+    <a id="uploadLink" href="/upload.html">Upload</a>
+  </div>
+
+  <div id="status" style="margin-top:12px">Loading auth...</div>
+
+<script>
+  // Wait until auth-init.js finishes
+  window.__AUTH_READY__.then(async () => {
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const status = document.getElementById('status');
+
+    async function refreshUI(){
+      const authed = await window.__AUTH__.isAuthenticated();
+      if (authed) {
+        loginBtn.style.display = 'none';
+        logoutBtn.style.display = 'inline-block';
+        const user = await window.__AUTH__.getUser();
+        status.innerText = 'Signed in as ' + (user ? (user.name || user.email || user.sub) : 'user');
+      } else {
+        loginBtn.style.display = 'inline-block';
+        logoutBtn.style.display = 'none';
+        status.innerText = 'Not signed in';
+      }
+    }
+
+    loginBtn.addEventListener('click', async () => {
+      await window.__AUTH__.login({ redirect_uri: window.location.origin + '/index.html' });
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      window.__AUTH__.logout({ returnTo: window.location.origin + '/index.html' });
+    });
+
+    await refreshUI();
+  }).catch(err => {
+    document.getElementById('status').innerText = 'Auth init failed: ' + (err.message || err);
+    console.error('Auth init failed:', err);
+  });
+</script>
 </body>
 </html>
