@@ -5,85 +5,86 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Shreshtha — Private</title>
   <style>
-    html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;background:#3a3240;color:#fff}
-    .box{width:520px;margin:60px auto;padding:28px;background:#fff;border-radius:8px;color:#222;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.25)}
-    .small{font-size:13px;color:#666;margin-top:12px}
+    html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;background:#27322f;color:#fff}
+    .box{width:520px;margin:60px auto;padding:28px;background:#fff;border-radius:10px;color:#222;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+    .small{font-size:13px;color:#666;margin-top:10px}
   </style>
 </head>
 <body>
   <div class="box" id="box">
     <h2>Welcome ✨</h2>
-    <p style="margin:6px 0">This is a private, invite-only site.</p>
-    <p style="margin:12px 0">Please sign in to continue.</p>
-    <p id="status" class="small">Preparing secure sign-in…</p>
-    <!-- intentionally no links -->
+    <p>This is a private, invite-only site.</p>
+    <p class="small" id="status">Preparing secure sign-in…</p>
   </div>
 
   <script>
-  (function(){
-    // CONFIG — keep these as your project values
-    const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
-    const CLIENT_ID = "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
-    const AUDIENCE = "https://shree-drive.onrender.com";
-    const REDIRECT_AFTER_LOGIN = window.location.origin + "/welcome.html";
+  // CONFIG — keep these exact values
+  const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
+  const AUTH0_CLIENT_ID = "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT";
+  const AUTH0_AUDIENCE = "https://shree-drive.onrender.com";
+  const REDIRECT_AFTER_LOGIN = window.location.origin + "/welcome.html";
 
+  // robust dynamic loader for SDK (CDN -> local fallback)
+  function loadScript(src, timeout=4000){
+    return new Promise((resolve,reject)=>{
+      if(document.querySelector('script[src="'+src+'"]')) return resolve(src);
+      const s=document.createElement('script');
+      s.src=src; s.defer=true;
+      s.onload = () => resolve(src);
+      s.onerror = () => reject(new Error('load error: '+src));
+      document.head.appendChild(s);
+      setTimeout(()=> {
+        if(typeof createAuth0Client === 'function') resolve(src);
+        else reject(new Error('timeout: '+src));
+      }, timeout);
+    });
+  }
+
+  async function ensureSdk(){
     const statusEl = document.getElementById('status');
-    function setStatus(s){ statusEl.textContent = s; }
+    function setStatus(t){ statusEl.textContent = t; }
+    setStatus('Checking Auth0 availability…');
 
-    // Try SPA SDK flow first (preferred)
-    function trySdkFlow(){
-      if (typeof createAuth0Client === 'function') {
-        setStatus('Using Auth0 SDK — redirecting to hosted login...');
-        createAuth0Client({
-          domain: AUTH0_DOMAIN,
-          client_id: CLIENT_ID,
-          audience: AUDIENCE
-        })
-        .then(client => client.loginWithRedirect({ redirect_uri: REDIRECT_AFTER_LOGIN }))
-        .catch(err => {
-          console.warn('SDK loginWithRedirect failed', err);
-          fallbackDirect();
-        });
-        return true;
-      }
-      return false;
-    }
-
-    // Fallback: direct Universal Login (hosted) — pragmatic short-term fallback
-    function fallbackDirect(){
-      setStatus('Opening Auth0 hosted login…');
-      const params = new URLSearchParams({
-        response_type: 'token id_token',
-        client_id: CLIENT_ID,
-        redirect_uri: REDIRECT_AFTER_LOGIN,
-        scope: 'openid profile email',
-        audience: AUDIENCE,
-        nonce: Math.random().toString(36).slice(2)
-      });
-      const url = `https://${AUTH0_DOMAIN}/authorize?${params.toString()}`;
-      window.location.href = url;
-    }
-
-    // Wait briefly for SDK to appear, otherwise fallback
     try {
-      setStatus('Checking Auth0 availability…');
-      const used = trySdkFlow();
-      if (!used) {
-        setTimeout(() => {
-          if (typeof createAuth0Client === 'function') {
-            trySdkFlow();
-          } else {
-            fallbackDirect();
-          }
-        }, 1400);
+      await loadScript('https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js', 3500);
+      if(typeof createAuth0Client === 'function') { setStatus('Auth0 SDK loaded (CDN)'); return true; }
+    } catch(e){ console.warn('CDN load failed', e); }
+
+    try {
+      setStatus('Falling back to local SDK…');
+      await loadScript('/auth0-spa-js.production.js', 3500);
+      if(typeof createAuth0Client === 'function'){ setStatus('Auth0 SDK loaded (local)'); return true; }
+    } catch(e){ console.warn('local load failed', e); }
+
+    return false;
+  }
+
+  (async function(){
+    const sdkReady = await ensureSdk();
+
+    // If SDK loaded: use SPA loginWithRedirect (preferred)
+    if(sdkReady && typeof createAuth0Client === 'function'){
+      try {
+        const auth0 = await createAuth0Client({ domain: AUTH0_DOMAIN, client_id: AUTH0_CLIENT_ID, audience: AUTH0_AUDIENCE });
+        document.getElementById('status').textContent = 'Redirecting to hosted login…';
+        await auth0.loginWithRedirect({ redirect_uri: REDIRECT_AFTER_LOGIN });
+        return;
+      } catch(e){
+        console.warn('loginWithRedirect failed', e);
       }
-    } catch (e) {
-      console.error(e);
-      fallbackDirect();
     }
+
+    // final fallback: direct authorize endpoint
+    const params = new URLSearchParams({
+      response_type: 'token id_token',
+      client_id: AUTH0_CLIENT_ID,
+      redirect_uri: REDIRECT_AFTER_LOGIN,
+      scope: 'openid profile email',
+      audience: AUTH0_AUDIENCE,
+      nonce: Math.random().toString(36).slice(2)
+    });
+    window.location.href = `https://${AUTH0_DOMAIN}/authorize?${params.toString()}`;
   })();
   </script>
-  <!-- load SDK (deferred) so the page can still fallback quickly if CDN blocked) -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js" defer></script>
 </body>
 </html>
