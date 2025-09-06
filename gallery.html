@@ -3,61 +3,68 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Gallery • Shreshtha</title>
+  <title>Life Moments • Shreshtha</title>
   <style>
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#3b3f2d;color:#fff;}
-    h1{text-align:center;padding:18px;color:#f7cfe0;}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;padding:18px;max-width:1100px;margin:0 auto;}
-    .card{overflow:hidden;border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.3);height:180px;}
-    .card img{width:100%;height:100%;object-fit:cover;transition:transform .35s;}
-    .card:hover img{transform:scale(1.05);}
-    #protected{display:none;}
-    #logout{position:fixed;top:14px;right:14px;padding:6px 10px;border-radius:6px;background:#f76ca2;color:#fff;border:none;cursor:pointer;}
+    body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#374b3f;color:#fff;overflow-x:hidden}
+    h1{text-align:center;padding:20px;color:#ffdede;font-size:28px}
+    .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;padding:18px;max-width:1100px;margin:0 auto}
+    .card{position:relative;overflow:hidden;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.3);background:#000}
+    .card img{width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
+    .card:hover img{transform:scale(1.08)}
+    .quote{position:absolute;left:0;right:0;bottom:0;padding:14px;background:rgba(0,0,0,.45);font-size:15px;text-align:center}
+    #logoutBtn{position:fixed;top:15px;right:15px;padding:8px 12px;border:none;border-radius:8px;background:#ff5c8d;color:#fff;cursor:pointer}
   </style>
 
   <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js" defer></script>
-  <script defer>
-  (function(){
-    const AUTH0_DOMAIN="dev-zzhjbmtzoxtgoz31.us.auth0.com";
-    const AUTH0_CLIENT_ID="0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
-    const AUTH0_AUDIENCE="https://shree-drive.onrender.com";
-    window.__AUTH_READY__=(async function(){
-      const a = await createAuth0Client({domain:AUTH0_DOMAIN,client_id:AUTH0_CLIENT_ID,audience:AUTH0_AUDIENCE,cacheLocation:'memory'});
-      return window.__AUTH__ = { _auth0: a, isAuthenticated: ()=>a.isAuthenticated(), login: ()=>a.loginWithRedirect({redirect_uri:window.location.href}), logout: ()=>a.logout({returnTo:window.location.origin}), getUser: ()=>a.getUser(), authFetch: async(u,o={})=>{ const t=await a.getTokenSilently(); const h=new Headers(o.headers||{}); if(t) h.set('Authorization','Bearer '+t); return fetch(u,{...o,headers:h,credentials:'include'}); } };
-    })();
-  })();
-  </script>
 </head>
 <body>
-  <div id="protected">
-    <h1>Gallery</h1>
-    <div class="grid" id="grid"></div>
-    <button id="logout">Logout</button>
-  </div>
+  <h1>Sweet Memories of Shreshtha 🌸</h1>
+  <div class="gallery" id="gallery"></div>
+  <button id="logoutBtn" style="display:none">Logout</button>
 
   <script>
-  (async function(){
-    const auth = await window.__AUTH_READY__;
-    if(!await auth.isAuthenticated()){ await auth.login(); return; }
-    document.getElementById('protected').style.display='block';
-    document.getElementById('logout').onclick=()=>auth.logout();
+  // Guard & show a static set (but only after auth). If you want the images to be server-provided, replace with API fetch like gallery.html.
+  const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
+  const AUTH0_CLIENT_ID = "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT";
+  const AUTH0_AUDIENCE = "https://shree-drive.onrender.com";
 
-    const res = await auth.authFetch('https://shree-drive.onrender.com/list');
-    if(!res.ok){ console.error('list err', res.status); return; }
-    const json = await res.json();
-    const files = json.files || [];
-    const grid = document.getElementById('grid');
-    for(const f of files){
-      try{
-        const r = await auth.authFetch(`https://shree-drive.onrender.com/files/${f.id}`);
-        if(!r.ok) { console.warn('file fetch fail', f.id); continue; }
-        const blob = await r.blob();
-        const url = URL.createObjectURL(blob);
-        const card = document.createElement('div'); card.className='card';
-        const img = document.createElement('img'); img.src=url; img.alt=f.name||'';
-        card.appendChild(img); grid.appendChild(card);
-        img.onload = ()=>URL.revokeObjectURL(url);
-      }catch(e){ console.error(e); }
+  async function ensureSDK(){
+    let waited=0;
+    while(typeof createAuth0Client!=='function' && waited<4000){
+      await new Promise(r=>setTimeout(r,150)); waited+=150;
+    }
+    return typeof createAuth0Client === 'function';
+  }
+
+  (async function(){
+    const ok = await ensureSDK();
+    if(!ok){ alert('Auth SDK missing - refresh'); return; }
+    const auth0 = await createAuth0Client({ domain: AUTH0_DOMAIN, client_id: AUTH0_CLIENT_ID, audience: AUTH0_AUDIENCE });
+    if(!await auth0.isAuthenticated()){
+      await auth0.loginWithRedirect({ redirect_uri: window.location.origin + '/welcome.html' });
+      return;
+    }
+    document.getElementById('logoutBtn').style.display='block';
+    document.getElementById('logoutBtn').onclick = ()=> auth0.logout({ returnTo: window.location.origin });
+
+    // static list of 9 photos + quotes (or change to fetch from API)
+    const items = [
+      {src:'/photo1.jpg', q:'Smile makes life brighter ✨'},
+      {src:'/photo2.jpg', q:'Cherish every little moment 💖'},
+      {src:'/photo3.jpg', q:'Keep blooming 🌸 like flowers'},
+      {src:'/photo4.jpg', q:'Hearts flow where love grows 💕'},
+      {src:'/photo5.jpg', q:'Every photo is a story 📷'},
+      {src:'/photo6.jpg', q:'Happiness is homemade ☀️'},
+      {src:'/photo7.jpg', q:'Simple joys make life grand 🌈'},
+      {src:'/photo8.jpg', q:'The best memories are unplanned 🌟'},
+      {src:'/photo9.jpg', q:'Forever captured in smiles 💫'}
+    ];
+    const g = document.getElementById('gallery');
+    for(const it of items){
+      const d=document.createElement('div'); d.className='card';
+      const img=document.createElement('img'); img.src=it.src; img.alt=it.q;
+      const q=document.createElement('div'); q.className='quote'; q.textContent = it.q;
+      d.appendChild(img); d.appendChild(q); g.appendChild(d);
     }
   })();
   </script>
