@@ -1,43 +1,80 @@
-<script>
-  function onAuthReady(cb) {
-    if (window.__AUTH_READY__) {
-      window.__AUTH_READY__.then(cb).catch(err => {
-        document.getElementById('status').innerText = 'Auth init failed: ' + (err.message || err);
-        console.error('Auth init failed:', err);
-      });
-    } else {
-      // retry after a short delay if __AUTH_READY__ not yet defined
-      setTimeout(() => onAuthReady(cb), 100);
-    }
-  }
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Shreshthapushkar — Home</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  onAuthReady(async () => {
-    const loginBtn = document.getElementById('loginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const status = document.getElementById('status');
+  <!-- Auth initializer (loads Auth0 SDK dynamically) -->
+  <script src="/auth-init.js" defer></script>
 
-    async function refreshUI(){
-      const authed = await window.__AUTH__.isAuthenticated();
-      if (authed) {
-        loginBtn.style.display = 'none';
-        logoutBtn.style.display = 'inline-block';
-        const user = await window.__AUTH__.getUser();
-        status.innerText = 'Signed in as ' + (user ? (user.name || user.email || user.sub) : 'user');
+  <style>
+    body { font-family: Arial, sans-serif; padding: 18px; }
+    #loginBtn, #logoutBtn { padding:6px 10px; margin:6px; }
+    #galleryLink, #uploadLink { margin-left:8px; }
+  </style>
+</head>
+<body>
+  <h2>Welcome to Shreshthapushkar</h2>
+
+  <div id="authUI">
+    <button id="loginBtn">Login</button>
+    <button id="logoutBtn" style="display:none">Logout</button>
+    <a id="galleryLink" href="/gallery.html">Gallery</a>
+    <a id="uploadLink" href="/upload.html">Upload</a>
+  </div>
+
+  <div id="status" style="margin-top:12px">Loading auth...</div>
+
+  <script>
+    // Helper to wait until __AUTH_READY__ exists
+    function onAuthReady(cb) {
+      if (window.__AUTH_READY__) {
+        window.__AUTH_READY__.then(cb).catch(err => {
+          document.getElementById('status').innerText =
+            'Auth init failed: ' + (err.message || err);
+          console.error('Auth init failed:', err);
+        });
       } else {
-        loginBtn.style.display = 'inline-block';
-        logoutBtn.style.display = 'none';
-        status.innerText = 'Not signed in';
+        setTimeout(() => onAuthReady(cb), 100);
       }
     }
 
-    loginBtn.addEventListener('click', async () => {
-      await window.__AUTH__.login({ redirect_uri: window.location.origin + '/index.html' });
-    });
+    onAuthReady(async () => {
+      const loginBtn = document.getElementById('loginBtn');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const status = document.getElementById('status');
 
-    logoutBtn.addEventListener('click', () => {
-      window.__AUTH__.logout({ returnTo: window.location.origin + '/index.html' });
-    });
+      async function refreshUI(){
+        const authed = await window.__AUTH__.isAuthenticated();
+        if (authed) {
+          loginBtn.style.display = 'none';
+          logoutBtn.style.display = 'inline-block';
+          const user = await window.__AUTH__.getUser();
+          status.innerText =
+            'Signed in as ' +
+            (user ? (user.name || user.email || user.sub) : 'user');
+        } else {
+          loginBtn.style.display = 'inline-block';
+          logoutBtn.style.display = 'none';
+          status.innerText = 'Not signed in';
+        }
+      }
 
-    await refreshUI();
-  });
-</script>
+      loginBtn.addEventListener('click', async () => {
+        await window.__AUTH__.login({
+          redirect_uri: window.location.origin + '/index.html'
+        });
+      });
+
+      logoutBtn.addEventListener('click', () => {
+        window.__AUTH__.logout({
+          returnTo: window.location.origin + '/index.html'
+        });
+      });
+
+      await refreshUI();
+    });
+  </script>
+</body>
+</html>
