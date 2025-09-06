@@ -1,34 +1,17 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>Shreshthapushkar — Home</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-
-  <!-- Auth initializer (will auto-load Auth0 SDK) -->
-  <script src="/auth-init.js" defer></script>
-
-  <style>
-    body { font-family: Arial, sans-serif; padding: 18px; }
-    #loginBtn, #logoutBtn { padding:6px 10px; margin:6px; }
-    #galleryLink, #uploadLink { margin-left:8px; }
-  </style>
-</head>
-<body>
-  <h2>Welcome to Shreshthapushkar</h2>
-
-  <div id="authUI">
-    <button id="loginBtn">Login</button>
-    <button id="logoutBtn" style="display:none">Logout</button>
-    <a id="galleryLink" href="/gallery.html">Gallery</a>
-    <a id="uploadLink" href="/upload.html">Upload</a>
-  </div>
-
-  <div id="status" style="margin-top:12px">Loading auth...</div>
-
 <script>
-  // Wait until auth-init.js finishes
-  window.__AUTH_READY__.then(async () => {
+  function onAuthReady(cb) {
+    if (window.__AUTH_READY__) {
+      window.__AUTH_READY__.then(cb).catch(err => {
+        document.getElementById('status').innerText = 'Auth init failed: ' + (err.message || err);
+        console.error('Auth init failed:', err);
+      });
+    } else {
+      // retry after a short delay if __AUTH_READY__ not yet defined
+      setTimeout(() => onAuthReady(cb), 100);
+    }
+  }
+
+  onAuthReady(async () => {
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     const status = document.getElementById('status');
@@ -56,10 +39,5 @@
     });
 
     await refreshUI();
-  }).catch(err => {
-    document.getElementById('status').innerText = 'Auth init failed: ' + (err.message || err);
-    console.error('Auth init failed:', err);
   });
 </script>
-</body>
-</html>
