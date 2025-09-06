@@ -1,72 +1,52 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Life Moments • Shreshtha</title>
-  <style>
-    body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#374b3f;color:#fff;overflow-x:hidden}
-    h1{text-align:center;padding:20px;color:#ffdede;font-size:28px}
-    .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;padding:18px;max-width:1100px;margin:0 auto}
-    .card{position:relative;overflow:hidden;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.3);background:#000}
-    .card img{width:100%;height:100%;object-fit:cover;transition:transform .45s ease}
-    .card:hover img{transform:scale(1.08)}
-    .quote{position:absolute;left:0;right:0;bottom:0;padding:14px;background:rgba(0,0,0,.45);font-size:15px;text-align:center}
-    #logoutBtn{position:fixed;top:15px;right:15px;padding:8px 12px;border:none;border-radius:8px;background:#ff5c8d;color:#fff;cursor:pointer}
-  </style>
+  <meta charset="UTF-8">
+  <title>Gallery</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="/auth0-spa-js.production.js"></script>
+  <script>
+    let auth0Client;
 
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.19/auth0-spa-js.production.js" defer></script>
+    async function initAuth0() {
+      auth0Client = await createAuth0Client({
+        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
+        client_id: "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR",
+        audience: "https://shree-drive.onrender.com",
+        cacheLocation: "localstorage",
+        useRefreshTokens: true,
+        redirect_uri: window.location.origin + "/welcome.html"
+      });
+
+      const isAuthenticated = await auth0Client.isAuthenticated();
+      if (!isAuthenticated) return window.location.href = "/index.html";
+
+      const token = await auth0Client.getTokenSilently({ audience: "https://shree-drive.onrender.com" });
+      const resp = await fetch("https://shree-drive.onrender.com/api/list", {
+        headers: { Authorization: "Bearer " + token }
+      });
+      const data = await resp.json();
+      const gallery = document.getElementById("gallery");
+      gallery.innerHTML = "";
+      for (const f of data.files) {
+        const r = await fetch(`https://shree-drive.onrender.com/api/file/${f.id}`, {
+          headers: { Authorization: "Bearer " + token }
+        });
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = f.name;
+        img.classList.add("thumb");
+        gallery.appendChild(img);
+      }
+    }
+
+    window.onload = initAuth0;
+  </script>
 </head>
 <body>
-  <h1>Sweet Memories of Shreshtha 🌸</h1>
-  <div class="gallery" id="gallery"></div>
-  <button id="logoutBtn" style="display:none">Logout</button>
-
-  <script>
-  // Guard & show a static set (but only after auth). If you want the images to be server-provided, replace with API fetch like gallery.html.
-  const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
-  const AUTH0_CLIENT_ID = "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT";
-  const AUTH0_AUDIENCE = "https://shree-drive.onrender.com";
-
-  async function ensureSDK(){
-    let waited=0;
-    while(typeof createAuth0Client!=='function' && waited<4000){
-      await new Promise(r=>setTimeout(r,150)); waited+=150;
-    }
-    return typeof createAuth0Client === 'function';
-  }
-
-  (async function(){
-    const ok = await ensureSDK();
-    if(!ok){ alert('Auth SDK missing - refresh'); return; }
-    const auth0 = await createAuth0Client({ domain: AUTH0_DOMAIN, client_id: AUTH0_CLIENT_ID, audience: AUTH0_AUDIENCE });
-    if(!await auth0.isAuthenticated()){
-      await auth0.loginWithRedirect({ redirect_uri: window.location.origin + '/welcome.html' });
-      return;
-    }
-    document.getElementById('logoutBtn').style.display='block';
-    document.getElementById('logoutBtn').onclick = ()=> auth0.logout({ returnTo: window.location.origin });
-
-    // static list of 9 photos + quotes (or change to fetch from API)
-    const items = [
-      {src:'/photo1.jpg', q:'Smile makes life brighter ✨'},
-      {src:'/photo2.jpg', q:'Cherish every little moment 💖'},
-      {src:'/photo3.jpg', q:'Keep blooming 🌸 like flowers'},
-      {src:'/photo4.jpg', q:'Hearts flow where love grows 💕'},
-      {src:'/photo5.jpg', q:'Every photo is a story 📷'},
-      {src:'/photo6.jpg', q:'Happiness is homemade ☀️'},
-      {src:'/photo7.jpg', q:'Simple joys make life grand 🌈'},
-      {src:'/photo8.jpg', q:'The best memories are unplanned 🌟'},
-      {src:'/photo9.jpg', q:'Forever captured in smiles 💫'}
-    ];
-    const g = document.getElementById('gallery');
-    for(const it of items){
-      const d=document.createElement('div'); d.className='card';
-      const img=document.createElement('img'); img.src=it.src; img.alt=it.q;
-      const q=document.createElement('div'); q.className='quote'; q.textContent = it.q;
-      d.appendChild(img); d.appendChild(q); g.appendChild(d);
-    }
-  })();
-  </script>
+  <h1>Gallery</h1>
+  <div id="gallery" class="photo-grid">Loading...</div>
 </body>
 </html>
