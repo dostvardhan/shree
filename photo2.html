@@ -5,17 +5,34 @@
   <title>Shree • Photo 2</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Netlify Identity -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <!-- AUTH GUARD (Auth0-based) -->
   <script>
-    const API_URL = "https://shreshthapushkar.com/.netlify/identity";
-    function requireLogin() {
-      if (!window.netlifyIdentity) { alert("Identity not loaded"); return; }
-      window.netlifyIdentity.init({ APIUrl: API_URL });
-      window.netlifyIdentity.on("init", u => { if (!u) location.replace("/"); });
+    /**
+     * Minimal client-side guard for protected pages.
+     * Expects a valid Auth0 access token stored at localStorage.getItem('access_token').
+     * If missing (not logged in), redirects to /index.html.
+     *
+     * Your login flow should store access_token (and optionally id_token, access_token_exp).
+     */
+    (function guardAuth(){
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        location.replace('/index.html');
+        return;
+      }
+      // Optionally: verify expiry if you store it in localStorage
+      // const exp = localStorage.getItem('access_token_exp');
+      // if (exp && Date.now() > Number(exp)) { location.replace('/index.html'); return; }
+    })();
+
+    function logout(){
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('id_token');
+      localStorage.removeItem('access_token_exp');
+      // To perform a full Auth0 logout (optional), redirect to:
+      // location.replace('https://YOUR_AUTH0_DOMAIN/v2/logout?returnTo=' + encodeURIComponent(location.origin + '/index.html') + '&client_id=YOUR_CLIENT_ID');
+      location.replace('/index.html');
     }
-    function logout(){ window.netlifyIdentity.logout(); location.replace("/"); }
-    document.addEventListener("DOMContentLoaded", requireLogin);
   </script>
 
   <style>
