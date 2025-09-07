@@ -12,7 +12,7 @@ await new Promise(r => s.onload = r);
 
 const auth0Config = {
 domain: 'dev-zzhjbmtzoxtgoz31.us.auth0.com',
-client_id: '0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR',
+client_id: '6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT',
 audience: 'https://shree-drive.onrender.com',
 cacheLocation: 'localstorage',
 useRefreshTokens: true
