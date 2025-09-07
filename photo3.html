@@ -5,16 +5,32 @@
   <title>Shree • Photo 3</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <!-- AUTH GUARD (Auth0-based) -->
   <script>
-    const API_URL = "https://shreshthapushkar.com/.netlify/identity";
-    function requireLogin() {
-      if (!window.netlifyIdentity) { alert("Identity not loaded"); return; }
-      window.netlifyIdentity.init({ APIUrl: API_URL });
-      window.netlifyIdentity.on("init", u => { if (!u) location.replace("/"); });
+    /**
+     * Minimal guard for protected pages.
+     * Requires a valid Auth0 access token in localStorage.
+     * Redirects to /index.html if not found.
+     */
+    (function guardAuth(){
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        location.replace('/index.html');
+        return;
+      }
+      // Optional: expiry check if you store 'access_token_exp'
+      // const exp = localStorage.getItem('access_token_exp');
+      // if (exp && Date.now() > Number(exp)) { location.replace('/index.html'); return; }
+    })();
+
+    function logout(){
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('id_token');
+      localStorage.removeItem('access_token_exp');
+      // Optional full Auth0 logout:
+      // location.replace('https://YOUR_AUTH0_DOMAIN/v2/logout?returnTo=' + encodeURIComponent(location.origin + '/index.html') + '&client_id=YOUR_CLIENT_ID');
+      location.replace('/index.html');
     }
-    function logout(){ window.netlifyIdentity.logout(); location.replace("/"); }
-    document.addEventListener("DOMContentLoaded", requireLogin);
   </script>
 
   <style>
