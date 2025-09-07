@@ -1,13 +1,73 @@
+<!doctype html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>shreshthapushkar — Login</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <!-- Auth0 SPA lib from CDN (ensure this loads first) -->
+  <!-- Load Auth0 SPA JS from CDN -->
   <script src="https://cdn.auth0.com/js/auth0-spa-js/1.22/auth0-spa-js.production.js"></script>
 
-  <!-- your auth init + guard -->
-  <script>window.AUTH0_DOMAIN='dev-zzhjbmtzoxtgoz31.us.auth0.com'; window.AUTH0_CLIENT_ID='0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR'; window.AUTH0_AUDIENCE='https://shree-drive.onrender.com';</script>
+  <!-- Config (replace values only if needed) -->
+  <script>
+    window.AUTH0_DOMAIN = 'dev-zzhjbmtzoxtgoz31.us.auth0.com';
+    window.AUTH0_CLIENT_ID = '0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR';
+    window.AUTH0_AUDIENCE = 'https://shree-drive.onrender.com';
+  </script>
+
+  <!-- Your init + guard -->
   <script src="/auth-init.js"></script>
   <script src="/guard-auth.js"></script>
+
+  <style>
+    body {
+      font-family: system-ui, Segoe UI, Roboto, Arial;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #f6f4ee;
+    }
+    .card {
+      background: #fff;
+      padding: 28px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      text-align: center;
+      max-width: 400px;
+    }
+    button {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      background: #2b6cb0;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #265999;
+    }
+  </style>
 </head>
+<body>
+  <div class="card">
+    <h1>Login to view Shreshtha's Memories</h1>
+    <p>Private, invite-only</p>
+    <button id="btn-login">Login with Auth0</button>
+  </div>
+
+  <script>
+    document.getElementById('btn-login').addEventListener('click', async () => {
+      try {
+        document.getElementById('btn-login').textContent = 'Redirecting…';
+        await auth0Login();
+      } catch (err) {
+        console.error('Login error', err);
+        alert('Login failed: ' + err.message);
+      }
+    });
+  </script>
+</body>
+</html>
