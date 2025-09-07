@@ -4,162 +4,206 @@
   <meta charset="utf-8" />
   <title>Sweet Memories of Shreshtha's Life</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <script src="/auth-init.js" defer></script>
 
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #f2f7f2;
-      color: #333;
-      overflow-x: hidden;
+    :root{
+      --bg:#f2f7f2;
+      --accent:#355e3b; /* olive header */
+      --card:#ffffff;
+      --muted:#6b6b6b;
     }
-    h1 {
-      text-align: center;
-      margin: 24px 0;
-      color: #355e3b;
-      font-size: 28px;
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg,#f6faf4 0%,var(--bg) 100%);
+      color:#222;
+      -webkit-font-smoothing:antialiased;
     }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 16px;
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 20px;
+    header{
+      background: var(--accent);
+      color:#fff;
+      padding:20px 10px;
+      text-align:center;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
     }
-    .card {
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      overflow: hidden;
-      position: relative;
-      text-align: center;
-      cursor: pointer;
+    header h1{ margin:0; font-size:22px; letter-spacing:0.2px; }
+    main{ max-width:1100px; margin:22px auto; padding:0 18px 60px; }
+
+    /* Responsive grid but natural image heights */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap:18px;
+      align-items:start;
     }
-    .card img {
-      width: 100%;
-      height: 220px;
-      object-fit: cover;
-      transition: transform 0.3s ease;
-      display: block;
+
+    .card{
+      background: var(--card);
+      border-radius:14px;
+      box-shadow: 0 6px 18px rgba(19,19,19,0.06);
+      overflow: visible;
+      position:relative;
+      transform-origin:center;
+      transition: transform 220ms ease;
+      cursor:pointer;
+      padding-bottom:10px;
     }
-    .card:hover img {
-      transform: scale(1.08);
+
+    /* Image preserves natural aspect */
+    .card img{
+      display:block;
+      width:100%;
+      height:auto; /* important: no forced crop */
+      border-top-left-radius:14px;
+      border-top-right-radius:14px;
+      transition: transform 300ms cubic-bezier(.2,.9,.2,1);
+      will-change: transform;
     }
-    .quote {
-      padding: 10px;
-      font-size: 14px;
-      color: #444;
+    /* gentle zoom on hover */
+    .card:hover img{ transform: scale(1.06); }
+
+    .quote{
+      padding:10px 12px 16px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.3;
+      text-align:center;
     }
-    /* hearts */
-    .heart {
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      background: red;
+
+    /* Heart style (pyara & soft) */
+    .heart{
+      position:absolute;
+      width:16px;
+      height:16px;
       transform: rotate(45deg);
-      animation: floatUp 2s linear forwards;
-      opacity: 0.8;
+      pointer-events:none;
+      opacity:0.98;
+      z-index:5;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.08));
+      animation: pop 240ms ease-out, floatUp 1400ms ease-in forwards;
+      border-radius:2px;
+      overflow:visible;
     }
-    .heart::before,
-    .heart::after {
-      content: '';
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      background: red;
-      border-radius: 50%;
+    .heart::before, .heart::after{
+      content:"";
+      position:absolute;
+      width:16px;
+      height:16px;
+      border-radius:50%;
+      background:inherit;
+      left:0;
+      top:-8px;
     }
-    .heart::before {
-      top: -8px;
-      left: 0;
+    .heart::after{
+      left:-8px;
+      top:0;
     }
-    .heart::after {
-      left: -8px;
-      top: 0;
+
+    @keyframes pop{
+      0%{ transform: rotate(45deg) scale(0); opacity:0; }
+      65%{ transform: rotate(45deg) scale(1.12); opacity:1; }
+      100%{ transform: rotate(45deg) scale(1); opacity:1; }
     }
-    @keyframes floatUp {
-      0% { transform: translateY(0) scale(1) rotate(45deg); opacity: 1; }
-      100% { transform: translateY(-120px) scale(1.4) rotate(45deg); opacity: 0; }
+    @keyframes floatUp{
+      0%{ transform: translateY(0) rotate(45deg); opacity:1; }
+      100%{ transform: translateY(-100px) rotate(-10deg); opacity:0; }
+    }
+
+    /* small screens spacing */
+    @media (max-width:520px){
+      header h1{ font-size:18px; }
+      main{ padding:0 12px 40px; }
+      .quote{ font-size:13px; padding:8px 10px 12px; }
     }
   </style>
 </head>
 <body>
-  <h1>Sweet Memories of Shreshtha's Life</h1>
+  <header><h1>Sweet Memories of Shreshtha's Life</h1></header>
 
-  <div class="grid">
-    <div class="card">
-      <img src="photo1.jpg" alt="Memory 1" />
-      <div class="quote">"A smile that lights up the day."</div>
-    </div>
-    <div class="card">
-      <img src="photo2.jpg" alt="Memory 2" />
-      <div class="quote">"Joy in the little moments."</div>
-    </div>
-    <div class="card">
-      <img src="photo3.jpg" alt="Memory 3" />
-      <div class="quote">"Everyday magic with you."</div>
-    </div>
-    <div class="card">
-      <img src="photo4.jpg" alt="Memory 4" />
-      <div class="quote">"Laughter is our language."</div>
-    </div>
-    <div class="card">
-      <img src="photo5.jpg" alt="Memory 5" />
-      <div class="quote">"Together in every season."</div>
-    </div>
-    <div class="card">
-      <img src="photo6.jpg" alt="Memory 6" />
-      <div class="quote">"Love in every heartbeat."</div>
-    </div>
-    <div class="card">
-      <img src="photo7.jpg" alt="Memory 7" />
-      <div class="quote">"Dreams weaved together."</div>
-    </div>
-    <div class="card">
-      <img src="photo8.jpg" alt="Memory 8" />
-      <div class="quote">"Holding on to happiness."</div>
-    </div>
-    <div class="card">
-      <img src="photo9.jpg" alt="Memory 9" />
-      <div class="quote">"Forever in these memories."</div>
-    </div>
-  </div>
+  <main>
+    <section class="grid" id="grid">
+      <!-- Example cards: replace src with your real photos -->
+      <article class="card"><img src="photo1.jpg" alt="Memory 1"><div class="quote">A smile that lights up the day.</div></article>
+      <article class="card"><img src="photo2.jpg" alt="Memory 2"><div class="quote">Joy in the little moments.</div></article>
+      <article class="card"><img src="photo3.jpg" alt="Memory 3"><div class="quote">Everyday magic with you.</div></article>
+      <article class="card"><img src="photo4.jpg" alt="Memory 4"><div class="quote">Laughter is our language.</div></article>
+      <article class="card"><img src="photo5.jpg" alt="Memory 5"><div class="quote">Together in every season.</div></article>
+      <article class="card"><img src="photo6.jpg" alt="Memory 6"><div class="quote">Love in every heartbeat.</div></article>
+      <article class="card"><img src="photo7.jpg" alt="Memory 7"><div class="quote">Dreams weaved together.</div></article>
+      <article class="card"><img src="photo8.jpg" alt="Memory 8"><div class="quote">Holding on to happiness.</div></article>
+      <article class="card"><img src="photo9.jpg" alt="Memory 9"><div class="quote">Forever in these memories.</div></article>
+    </section>
+  </main>
 
   <script>
-    // Auth guard
+    // Auth guard (same pattern as other pages)
     function onAuthReady(cb) {
       if (window.__AUTH_READY__) {
         window.__AUTH_READY__.then(cb).catch(err => {
-          document.body.innerHTML = '<p>Auth failed: ' + (err.message||err) + '</p>';
+          document.body.innerHTML = '<p style="padding:20px">Auth failed: ' + (err.message||err) + '</p>';
         });
       } else {
-        setTimeout(() => onAuthReady(cb), 100);
+        setTimeout(()=>onAuthReady(cb),100);
       }
     }
+
     onAuthReady(async () => {
       const authed = await window.__AUTH__.isAuthenticated();
       if (!authed) {
+        // redirect to login page if not authed
         window.__AUTH__.login({ redirect_uri: window.location.origin + '/life.html' });
+        return;
       }
     });
 
-    // floating hearts on hover
-    document.querySelectorAll('.card').forEach(card => {
-      card.addEventListener('mouseenter', () => {
-        for (let i = 0; i < 4; i++) {
-          const heart = document.createElement('div');
-          heart.className = 'heart';
-          heart.style.left = (50 + Math.random()*40 - 20) + '%';
-          heart.style.bottom = '30px';
-          heart.style.background = ['#ff4d6d','#ff6b81','#ff3b3f'][Math.floor(Math.random()*3)];
-          card.appendChild(heart);
-          setTimeout(() => heart.remove(), 2000);
+    // Hearts spawn only when user hovers a card
+    (function(){
+      const colors = ['#ff7b9b','#ff9fb0','#ffd1d9','#ff6b81','#ff8fa3'];
+      function spawnHearts(card){
+        const rect = card.getBoundingClientRect();
+        // create several hearts with slight delays
+        for(let i=0;i<6;i++){
+          setTimeout(()=>{
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            const size = 12 + Math.round(Math.random()*12);
+            heart.style.width = size+'px';
+            heart.style.height = size+'px';
+            const color = colors[Math.floor(Math.random()*colors.length)];
+            heart.style.background = color;
+            // position - random within lower half of the card
+            const left = (10 + Math.random()*80); // percent
+            heart.style.left = left+'%';
+            // place near bottom inside card
+            heart.style.bottom = '18px';
+            // reduce opacity for small hearts
+            heart.style.opacity = (0.7 + Math.random()*0.3).toString();
+            // add to card
+            card.appendChild(heart);
+            // remove after animation done (~1500-1800ms)
+            setTimeout(()=>{ heart.remove(); },1800 + Math.random()*300);
+          }, i*80);
         }
+      }
+
+      // attach listeners
+      document.querySelectorAll('.card').forEach(card=>{
+        let hoverTimer = null;
+        card.addEventListener('mouseenter', ()=> {
+          // spawn immediately and every 900ms while hovered
+          spawnHearts(card);
+          hoverTimer = setInterval(()=> spawnHearts(card), 900);
+        });
+        card.addEventListener('mouseleave', ()=> {
+          if(hoverTimer) clearInterval(hoverTimer);
+          hoverTimer = null;
+        });
+        // optional: also spawn on click/tap for mobile
+        card.addEventListener('click', ()=> spawnHearts(card));
       });
-    });
+    })();
   </script>
 </body>
 </html>
