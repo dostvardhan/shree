@@ -1,215 +1,165 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Sweet Memories • Shreshtha</title>
+  <meta charset="utf-8" />
+  <title>Sweet Memories of Shreshtha's Life</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <script src="/auth-init.js" defer></script>
+
   <style>
-    body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background:#3b3f2d;color:#fff;overflow-x:hidden;}
-    h1{text-align:center;padding:20px;color:#f7cfe0;font-size:28px;}
-    .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:20px;max-width:980px;margin:0 auto;}
-    .card{position:relative;overflow:hidden;border-radius:12px;box-shadow:0 6px 16px rgba(0,0,0,.32);height:190px;background:rgba(255,255,255,0.02);}
-    .card img{width:100%;height:100%;object-fit:cover;transition:transform .38s ease;}
-    .card:hover img{transform:scale(1.06);}
-    .quote{position:absolute;bottom:6px;left:6px;right:6px;padding:8px;background:rgba(0,0,0,.45);font-size:13px;text-align:center;border-radius:6px;color:#ffe4e1;}
-    .heart{position:fixed;bottom:-20px;color:rgba(255,90,140,.85);font-size:18px;animation:rise 6.5s linear infinite;pointer-events:none;}
-    @keyframes rise{0%{transform:translateY(0) scale(1);}100%{transform:translateY(-110vh) scale(.5);opacity:0;}}
-    #logout-btn{position:fixed;top:16px;right:16px;padding:6px 12px;border:none;border-radius:6px;background:#f76ca2;color:#fff;cursor:pointer;z-index:1000;}
-    #protected{display:none;}
-    .placeholder{display:flex;align-items:center;justify-content:center;height:100%;background:linear-gradient(135deg,rgba(0,0,0,0.15),rgba(255,255,255,0.02));color:#ddd}
-    .small-note{font-size:13px;color:#ffe4e1;text-align:center;margin-top:6px}
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f2f7f2;
+      color: #333;
+      overflow-x: hidden;
+    }
+    h1 {
+      text-align: center;
+      margin: 24px 0;
+      color: #355e3b;
+      font-size: 28px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+      position: relative;
+      text-align: center;
+      cursor: pointer;
+    }
+    .card img {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+      display: block;
+    }
+    .card:hover img {
+      transform: scale(1.08);
+    }
+    .quote {
+      padding: 10px;
+      font-size: 14px;
+      color: #444;
+    }
+    /* hearts */
+    .heart {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: red;
+      transform: rotate(45deg);
+      animation: floatUp 2s linear forwards;
+      opacity: 0.8;
+    }
+    .heart::before,
+    .heart::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: red;
+      border-radius: 50%;
+    }
+    .heart::before {
+      top: -8px;
+      left: 0;
+    }
+    .heart::after {
+      left: -8px;
+      top: 0;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(1) rotate(45deg); opacity: 1; }
+      100% { transform: translateY(-120px) scale(1.4) rotate(45deg); opacity: 0; }
+    }
   </style>
-
-  <!-- Auth0 SDK: prefer local copy if present for offline/fallback -->
-  <script src="/auth0-spa-js.production.js" defer></script>
-
-  <!-- Guard & Auth helpers -->
-  <script defer>
-  (function(){
-    const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
-    const AUTH0_CLIENT_ID = "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR";
-    const AUTH0_AUDIENCE = "https://shree-drive.onrender.com";
-
-    // Expose a small auth helper on window
-    window.__AUTH_READY__ = (async function init(){
-      // createAuth0Client will be available after SDK loads (defer). Use cacheLocation localstorage for stability.
-      const auth0 = await createAuth0Client({
-        domain: AUTH0_DOMAIN,
-        client_id: AUTH0_CLIENT_ID,
-        audience: AUTH0_AUDIENCE,
-        cacheLocation: 'localstorage',
-        useRefreshTokens: true,
-        // redirect back to same page so we stay on life.html after login flow
-        redirect_uri: window.location.origin + window.location.pathname
-      });
-
-      // helper wrapper
-      const wrapper = {
-        _auth0: auth0,
-        isAuthenticated: () => auth0.isAuthenticated(),
-        login: (opts) => auth0.loginWithRedirect(opts || {}),
-        logout: () => auth0.logout({ returnTo: window.location.origin }),
-        getUser: () => auth0.getUser(),
-        getToken: (opts) => auth0.getTokenSilently(opts || {}),
-        // secure fetch: attaches bearer token for backend API calls
-        authFetch: async function(url, opts = {}) {
-          try {
-            const token = await auth0.getTokenSilently({ audience: AUTH0_AUDIENCE });
-            const headers = new Headers(opts.headers || {});
-            if (token) headers.set('Authorization', 'Bearer ' + token);
-            // do not send credentials unless you intentionally set cookie auth
-            return fetch(url, { ...opts, headers });
-          } catch (err) {
-            // token acquisition failed — probably user not logged in; re-login
-            console.warn('authFetch: token error', err);
-            // fallback: perform unauthenticated fetch
-            return fetch(url, opts);
-          }
-        }
-      };
-
-      // handle redirect callback (if present)
-      if (window.location.search.includes('code=') && window.location.search.includes('state=')) {
-        try {
-          await auth0.handleRedirectCallback();
-          // Remove query params and continue
-          window.history.replaceState({}, document.title, window.location.pathname);
-        } catch (e) {
-          console.error('Auth0 callback error', e);
-        }
-      }
-
-      return wrapper;
-    })();
-  })();
-  </script>
 </head>
 <body>
-  <div id="protected">
-    <h1>Sweet Memories of Shreshtha 💖</h1>
+  <h1>Sweet Memories of Shreshtha's Life</h1>
 
-    <div class="gallery" id="gallery">
-      <!-- placeholders until real images load -->
-      <div class="card"><div class="placeholder">Loading…</div></div>
-      <div class="card"><div class="placeholder">Loading…</div></div>
-      <div class="card"><div class="placeholder">Loading…</div></div>
-      <div class="card"><div class="placeholder">Loading…</div></div>
-      <div class="card"><div class="placeholder">Loading…</div></div>
-      <div class="card"><div class="placeholder">Loading…</div></div>
-      <div class="card"><div class="placeholder">Loading…</div></div>
-      <div class="card"><div class="placeholder">Loading…</div></div>
-      <div class="card"><div class="placeholder">Loading…</div></div>
+  <div class="grid">
+    <div class="card">
+      <img src="photo1.jpg" alt="Memory 1" />
+      <div class="quote">"A smile that lights up the day."</div>
     </div>
-
-    <div style="text-align:center" class="small-note">Only invited users can view these photos.</div>
-    <button id="logout-btn" style="display:none">Logout</button>
+    <div class="card">
+      <img src="photo2.jpg" alt="Memory 2" />
+      <div class="quote">"Joy in the little moments."</div>
+    </div>
+    <div class="card">
+      <img src="photo3.jpg" alt="Memory 3" />
+      <div class="quote">"Everyday magic with you."</div>
+    </div>
+    <div class="card">
+      <img src="photo4.jpg" alt="Memory 4" />
+      <div class="quote">"Laughter is our language."</div>
+    </div>
+    <div class="card">
+      <img src="photo5.jpg" alt="Memory 5" />
+      <div class="quote">"Together in every season."</div>
+    </div>
+    <div class="card">
+      <img src="photo6.jpg" alt="Memory 6" />
+      <div class="quote">"Love in every heartbeat."</div>
+    </div>
+    <div class="card">
+      <img src="photo7.jpg" alt="Memory 7" />
+      <div class="quote">"Dreams weaved together."</div>
+    </div>
+    <div class="card">
+      <img src="photo8.jpg" alt="Memory 8" />
+      <div class="quote">"Holding on to happiness."</div>
+    </div>
+    <div class="card">
+      <img src="photo9.jpg" alt="Memory 9" />
+      <div class="quote">"Forever in these memories."</div>
+    </div>
   </div>
 
-  <!-- floating hearts -->
   <script>
-  function createHeart(){
-    const heart=document.createElement('div');
-    heart.className='heart';
-    heart.style.left=(Math.random()*92)+'vw';
-    heart.style.fontSize=(14+Math.random()*12)+'px';
-    heart.innerHTML='❤';
-    document.body.appendChild(heart);
-    setTimeout(()=>heart.remove(),7000);
-  }
-  const heartInterval = setInterval(createHeart,900);
-  </script>
-
-  <!-- Auth + gallery loader -->
-  <script>
-  (async function(){
-    const auth = await window.__AUTH_READY__;
-    // check logged-in
-    const logged = await auth.isAuthenticated();
-    if (!logged) {
-      // trigger redirect login; upon return user will hit this same page
-      await auth.login({ redirect_uri: window.location.origin + window.location.pathname });
-      return;
-    }
-
-    // show protected UI
-    document.getElementById('protected').style.display='block';
-    const logoutBtn = document.getElementById('logout-btn');
-    logoutBtn.style.display = 'inline-block';
-    logoutBtn.onclick = () => auth.logout();
-
-    // fetch list (use correct backend route /api/list)
-    let listRes;
-    try {
-      listRes = await auth.authFetch('https://shree-drive.onrender.com/api/list');
-    } catch (e) {
-      console.error('List request failed', e);
-      return;
-    }
-    if (!listRes.ok) {
-      console.error('List returned', listRes.status);
-      // optional: show message to user
-      return;
-    }
-
-    const data = await listRes.json();
-    const files = Array.isArray(data.files) ? data.files : (data.files || []);
-    if (!files.length) {
-      const galleryEl = document.getElementById('gallery');
-      galleryEl.innerHTML = '<div class="card"><div class="placeholder">No photos yet</div></div>';
-      return;
-    }
-
-    // sort by modifiedTime desc if present, else keep order; then take first 9
-    files.sort((a,b)=>{
-      const ta = a.modifiedTime ? Date.parse(a.modifiedTime) : 0;
-      const tb = b.modifiedTime ? Date.parse(b.modifiedTime) : 0;
-      return tb - ta;
-    });
-    const showList = files.slice(0,9);
-
-    const galleryEl = document.getElementById('gallery');
-    galleryEl.innerHTML = ''; // clear placeholders
-
-    for (const f of showList) {
-      try {
-        // fetch blob via backend streaming endpoint
-        const fileRes = await auth.authFetch(`https://shree-drive.onrender.com/api/file/${f.id}`);
-        if (!fileRes.ok) {
-          console.warn('file fetch failed', f.id, fileRes.status);
-          // fallback placeholder card
-          const c = document.createElement('div');
-          c.className = 'card';
-          c.innerHTML = '<div class="placeholder">Could not load</div>';
-          galleryEl.appendChild(c);
-          continue;
-        }
-        const blob = await fileRes.blob();
-        const url = URL.createObjectURL(blob);
-
-        const card = document.createElement('div');
-        card.className = 'card';
-        const img = document.createElement('img');
-        img.src = url;
-        img.alt = f.name || '';
-        const q = document.createElement('div');
-        q.className = 'quote';
-        q.textContent = f.name || '';
-
-        card.appendChild(img);
-        card.appendChild(q);
-        galleryEl.appendChild(card);
-
-        // release objectURL after image loads
-        img.onload = () => URL.revokeObjectURL(url);
-      } catch (e) {
-        console.error('file blob err', e);
-        const c = document.createElement('div');
-        c.className = 'card';
-        c.innerHTML = '<div class="placeholder">Error</div>';
-        galleryEl.appendChild(c);
+    // Auth guard
+    function onAuthReady(cb) {
+      if (window.__AUTH_READY__) {
+        window.__AUTH_READY__.then(cb).catch(err => {
+          document.body.innerHTML = '<p>Auth failed: ' + (err.message||err) + '</p>';
+        });
+      } else {
+        setTimeout(() => onAuthReady(cb), 100);
       }
     }
-  })();
+    onAuthReady(async () => {
+      const authed = await window.__AUTH__.isAuthenticated();
+      if (!authed) {
+        window.__AUTH__.login({ redirect_uri: window.location.origin + '/life.html' });
+      }
+    });
+
+    // floating hearts on hover
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        for (let i = 0; i < 4; i++) {
+          const heart = document.createElement('div');
+          heart.className = 'heart';
+          heart.style.left = (50 + Math.random()*40 - 20) + '%';
+          heart.style.bottom = '30px';
+          heart.style.background = ['#ff4d6d','#ff6b81','#ff3b3f'][Math.floor(Math.random()*3)];
+          card.appendChild(heart);
+          setTimeout(() => heart.remove(), 2000);
+        }
+      });
+    });
   </script>
 </body>
 </html>
