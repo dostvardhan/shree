@@ -5,17 +5,41 @@
   <title>Shree • Photo 1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <!-- AUTH GUARD (Auth0-based) -->
   <script>
-    const API_URL = "https://shreshthapushkar.com/.netlify/identity";
-    function requireLogin() {
-      if (!window.netlifyIdentity) { alert("Identity not loaded"); return; }
-      window.netlifyIdentity.init({ APIUrl: API_URL });
-      window.netlifyIdentity.on("init", u => { if (!u) location.replace("/"); });
+    /**
+     * Simple guard for protected pages.
+     * - Expects a valid Auth0 access token to be stored at localStorage.getItem('access_token')
+     * - If missing, redirect to index.html (login page)
+     *
+     * NOTE: This is intentionally minimal so it works immediately with your backend JWT flow:
+     * your login flow should store the Auth0 access_token in localStorage after successful login.
+     * For stronger client-side checks use the Auth0 SPA SDK (auth0-spa-js) and validate tokens.
+     */
+    (function guardAuth(){
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        // not logged in — go to login page
+        location.replace('/index.html');
+        return;
+      }
+      // Optional: quick expiry check if you store expiry
+      // const exp = localStorage.getItem('access_token_exp');
+      // if (exp && Date.now() > Number(exp)) { location.replace('/index.html'); return; }
+      // If you want, you can also call /api/diag or /api/verify-token to confirm server-side.
+    })();
+
+    // Logout: clear tokens and redirect to login (also call Auth0 logout endpoint if you prefer)
+    function logout(){
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('id_token');
+      localStorage.removeItem('access_token_exp');
+      // Optionally call Auth0 logout endpoint (uncomment and set your domain)
+      // location.replace('https://YOUR_AUTH0_DOMAIN/v2/logout?returnTo=' + encodeURIComponent(location.origin + '/index.html'));
+      location.replace('/index.html');
     }
-    function logout(){ window.netlifyIdentity.logout(); location.replace("/"); }
-    document.addEventListener("DOMContentLoaded", requireLogin);
   </script>
+
   <style>
     body{text-align:center;font-family:'Segoe UI',sans-serif;margin:0;background:#fafafa;}
     header{padding:16px;background:#fff;border-bottom:1px solid #eee;}
