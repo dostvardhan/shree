@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload</title>
+  <script src="/auth0-spa-js.production.js"></script>
+  <script>
+    let auth0Client;
+
+    async function initAuth0() {
+      auth0Client = await createAuth0Client({
+        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
+        client_id: "0glcwUr7ZZ9sbBTBPiUPahEqqwUcuzfR",
+        audience: "https://shree-drive.onrender.com",
+        cacheLocation: "localstorage",
+        useRefreshTokens: true,
+        redirect_uri: window.location.origin + "/welcome.html"
+      });
+
+      const isAuthenticated = await auth0Client.isAuthenticated();
+      if (!isAuthenticated) return window.location.href = "/index.html";
+    }
+
+    async function doUpload() {
+      const fileInput = document.getElementById("file");
+      if (!fileInput.files.length) return alert("Select a file first!");
+
+      const token = await auth0Client.getTokenSilently({ audience: "https://shree-drive.onrender.com" });
+      const fd = new FormData();
+      fd.append("file", fileInput.files[0]);
+
+      const resp = await fetch("https://shree-drive.onrender.com/api/upload", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token },
+        body: fd
+      });
+      const data = await resp.json();
+      alert("Upload response: " + JSON.stringify(data));
+    }
+
+    window.onload = initAuth0;
+  </script>
+</head>
+<body>
+  <h1>Upload a Photo</h1>
+  <input type="file" id="file">
+  <button onclick="doUpload()">Upload</button>
+</body>
+</html>

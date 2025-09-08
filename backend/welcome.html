@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Welcome</title>
+  <script src="/auth0-spa-js.production.js"></script>
+  <script>
+    let auth0Client;
+    async function initAuth0() {
+      auth0Client = await createAuth0Client({
+        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
+        client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT",
+        audience: "https://shree-drive.onrender.com",
+        cacheLocation: "localstorage",
+        useRefreshTokens: true,
+        redirect_uri: window.location.origin + "/welcome.html"
+      });
+
+      if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
+        await auth0Client.handleRedirectCallback();
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      const isAuthenticated = await auth0Client.isAuthenticated();
+      if (!isAuthenticated) {
+        return window.location.href = "/index.html";
+      }
+
+      const user = await auth0Client.getUser();
+      document.getElementById("user").innerText = `Hello, ${user.name || user.email}`;
+    }
+
+    window.onload = initAuth0;
+  </script>
+</head>
+<body>
+  <h1 id="user">Loading...</h1>
+  <ul>
+    <li><a href="life.html">Life</a></li>
+    <li><a href="gallery.html">Gallery</a></li>
+    <li><a href="upload.html">Upload</a></li>
+  </ul>
+</body>
+</html>

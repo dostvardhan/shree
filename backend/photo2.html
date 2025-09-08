@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Shree • Photo 2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Netlify Identity -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <script>
+    const API_URL = "https://shreshthapushkar.com/.netlify/identity";
+    function requireLogin() {
+      if (!window.netlifyIdentity) { alert("Identity not loaded"); return; }
+      window.netlifyIdentity.init({ APIUrl: API_URL });
+      window.netlifyIdentity.on("init", u => { if (!u) location.replace("/"); });
+    }
+    function logout(){ window.netlifyIdentity.logout(); location.replace("/"); }
+    document.addEventListener("DOMContentLoaded", requireLogin);
+  </script>
+
+  <style>
+    body{text-align:center;font-family:'Segoe UI',sans-serif;margin:0;background:#fafafa;}
+    header{padding:16px;background:#fff;border-bottom:1px solid #eee;}
+    header h2{margin:0;color:olive;}
+    header a, header button{padding:6px 12px;margin:0 6px;border:1px solid #ccc;border-radius:8px;text-decoration:none;color:#111;background:#fff;cursor:pointer;}
+    img{max-width:85%;margin:20px auto;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,0.15);}
+    .quote{margin-top:10px;font-size:16px;color:olive;font-style:italic;}
+    nav{margin:20px;}
+    nav a{margin:0 10px;text-decoration:none;color:#006600;font-weight:bold;}
+  </style>
+</head>
+<body>
+  <header>
+    <h2>🌿 Life Moments</h2>
+    <a href="/life.html">Life</a>
+    <a href="/gallery.html">Gallery</a>
+    <button onclick="logout()">Logout</button>
+  </header>
+
+  <img src="/photo2.jpg" alt="Photo 2" />
+  <div class="quote">“Smiles are contagious.”</div>
+
+  <nav>
+    <a href="/photo1.html">⬅ Prev</a>
+    <a href="/photo3.html">Next ➡</a>
+  </nav>
+</body>
+</html>
