@@ -1,24 +1,21 @@
 // backend/auth-mw.js
-// ESM module: exports named `checkJwt`
+import { expressjwt as jwt } from "express-jwt";
+import jwksRsa from "jwks-rsa";
 
-import jwksRsa from 'jwks-rsa';
-import jwt from 'express-jwt';
-import dotenv from 'dotenv';
-dotenv.config();
-
-const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN;
-const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE;
-
-export const checkJwt = jwt({
-  // Dynamically provide a signing key based on the kid in the header and the signing keys provided by the JWKS endpoint.
+// Middleware: verifies JWT from Auth0
+const checkJwt = jwt({
+  // fetch signing keys from Auth0 JWKS endpoint
   secret: jwksRsa.expressJwtSecret({
     cache: true,
     rateLimit: true,
     jwksRequestsPerMinute: 5,
-    jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`
+    jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`
   }),
-  // Validate the audience and the issuer.
-  audience: AUTH0_AUDIENCE,
-  issuer: `https://${AUTH0_DOMAIN}/`,
-  algorithms: ['RS256']
+
+  // verify audience + issuer
+  audience: process.env.AUTH0_AUDIENCE,             // e.g. "https://shree-drive.onrender.com"
+  issuer: `https://${process.env.AUTH0_DOMAIN}/`,   // e.g. "dev-zzhjbmtzoxtgoz31.us.auth0.com/"
+  algorithms: ["RS256"]
 });
+
+export default checkJwt;
