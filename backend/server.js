@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 import fs from "fs/promises";
 import path from "path";
 
-import checkJwt from "./auth-mw.js"; // default import (Auth0 middleware)
+import checkJwt from "./auth-mw.js"; // Auth0 middleware
 import { uploadBufferToDrive, streamFileFromDrive } from "./drive.js";
 
 dotenv.config();
@@ -18,7 +18,7 @@ app.use(express.json());
 
 const PHOTOS_DB = path.join(process.cwd(), "backend", "photos.json");
 
-// ensure photos.json exists
+// Ensure photos.json exists
 async function ensurePhotosDb() {
   try {
     await fs.access(PHOTOS_DB);
@@ -37,13 +37,15 @@ async function writePhotos(arr) {
   await fs.writeFile(PHOTOS_DB, JSON.stringify(arr, null, 2));
 }
 
-// ✅ Root route (fix for Render splash/health check)
+// ✅ Root route (fix for Render splash / browser)
 app.get("/", (req, res) => {
   res.json({ status: "ok", message: "Backend alive — use /api/diag" });
 });
 
 // Health check
-app.get("/api/diag", (req, res) => res.json({ status: "ok", time: new Date().toISOString() }));
+app.get("/api/diag", (req, res) =>
+  res.json({ status: "ok", time: new Date().toISOString() })
+);
 
 // Upload (protected)
 app.post("/api/upload", checkJwt, upload.single("file"), async (req, res) => {
@@ -66,7 +68,7 @@ app.post("/api/upload", checkJwt, upload.single("file"), async (req, res) => {
       folderId
     );
 
-    // Add metadata
+    // Save metadata
     const photos = await readPhotos();
     const entry = {
       id: uploadRes.id,
@@ -76,7 +78,7 @@ app.post("/api/upload", checkJwt, upload.single("file"), async (req, res) => {
       uploader,
       createdAt: new Date().toISOString(),
     };
-    photos.unshift(entry); // newest first
+    photos.unshift(entry);
     await writePhotos(photos);
 
     res.json({ ok: true, file: entry });
@@ -104,8 +106,9 @@ app.get("/api/file/:id", checkJwt, async (req, res) => {
     await streamFileFromDrive(res, fileId);
   } catch (err) {
     console.error("file stream error:", err);
-    if (!res.headersSent)
+    if (!res.headersSent) {
       res.status(500).json({ error: "Failed to stream file", details: err.message });
+    }
   }
 });
 
