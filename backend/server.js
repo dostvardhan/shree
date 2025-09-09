@@ -2,7 +2,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import jwt from "express-jwt";
+import { expressjwt } from "express-jwt";
 import jwksRsa from "jwks-rsa";
 import fs from "fs/promises";
 import path from "path";
@@ -13,12 +13,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Auth0 config
-const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN; // e.g. dev-xxxxxx.us.auth0.com (no https)
+// ----------------------
+// Auth0 Config
+// ----------------------
+const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN; // e.g. dev-xxxxxx.us.auth0.com (no https://)
 const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE || "https://shree-drive.onrender.com";
 
-// ✅ Auth0 JWT middleware
-const checkJwt = jwt({
+if (!AUTH0_DOMAIN) {
+  console.warn("⚠️ AUTH0_DOMAIN not set in environment variables!");
+}
+
+const checkJwt = expressjwt({
   secret: jwksRsa.expressJwtSecret({
     cache: true,
     rateLimit: true,
@@ -30,18 +35,21 @@ const checkJwt = jwt({
   algorithms: ["RS256"],
 });
 
-// Health check
+// ----------------------
+// Routes
+// ----------------------
+
+// Public: health check
 app.get("/api/diag", (req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
 
-// ✅ Protected routes start here
+// All routes under /api/* require JWT
 app.use("/api", checkJwt);
 
-// /api/list route
+// GET /api/list → return photo metadata
 app.get("/api/list", async (req, res) => {
   try {
-    // photos.json file ka path
     const filePath = path.join(process.cwd(), "backend", "photos.json");
 
     let items = [];
@@ -61,7 +69,9 @@ app.get("/api/list", async (req, res) => {
   }
 });
 
-// Global error handler for auth
+// ----------------------
+// Error handler
+// ----------------------
 app.use(function (err, req, res, next) {
   if (err.name === "UnauthorizedError") {
     console.error("Auth error:", err.message);
@@ -70,7 +80,9 @@ app.use(function (err, req, res, next) {
   next(err);
 });
 
+// ----------------------
 // Start server
+// ----------------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Backend running on port ${PORT}`);
