@@ -3,7 +3,6 @@
 *.env
 server/.env
 *.pem
-*.json
 credentials*.json
 
 # Dependencies / build
@@ -36,3 +35,6 @@ Thumbs.db
 *.tar.gz
 *.zip
 *.bak
+
+# Allow our photos DB to be tracked
+!backend/photos.json
