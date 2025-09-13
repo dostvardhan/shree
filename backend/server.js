@@ -19,7 +19,7 @@ app.use(express.json());
 // ----------------------
 // Auth0 Config
 // ----------------------
-const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN; // e.g. dev-xxxx.us.auth0.com
+const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN; 
 const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE || "https://shree-drive.onrender.com";
 const ALLOWED_USERS = (process.env.ALLOWED_USERS || "")
   .split(",")
@@ -62,7 +62,8 @@ async function getOauth2Client() {
   }
   const oauth2Client = new google.auth.OAuth2(
     GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET
+    GOOGLE_CLIENT_SECRET,
+    "http://localhost:3000/oauth2callback"
   );
   oauth2Client.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
   await oauth2Client.getAccessToken(); // ensure refresh works
@@ -73,9 +74,23 @@ async function getOauth2Client() {
 // Routes
 // ----------------------
 
-// Public: health check
-app.get("/api/diag", (req, res) => {
-  res.json({ status: "ok", time: new Date().toISOString() });
+// Public: health + drive check
+app.get("/api/diag", async (req, res) => {
+  let driveStatus = "not_checked";
+  try {
+    const oauth2Client = await getOauth2Client();
+    const drive = google.drive({ version: "v3", auth: oauth2Client });
+    const about = await drive.about.get({ fields: "user" });
+    if (about.data && about.data.user) {
+      driveStatus = "ok";
+    } else {
+      driveStatus = "no_user";
+    }
+  } catch (err) {
+    console.error("Drive diag error:", err.message);
+    driveStatus = "error";
+  }
+  res.json({ status: "ok", time: new Date().toISOString(), drive: driveStatus });
 });
 
 // All protected routes
@@ -85,7 +100,6 @@ app.use("/api", checkJwt, checkAllowedUsers);
 app.get("/api/list", async (req, res) => {
   try {
     const filePath = path.join(process.cwd(), "backend", "photos.json");
-
     let items = [];
     try {
       const raw = await fs.readFile(filePath, "utf8");
@@ -95,7 +109,6 @@ app.get("/api/list", async (req, res) => {
       console.warn("[WARN] Could not read photos.json:", err.message);
       items = [];
     }
-
     return res.json({ ok: true, items });
   } catch (err) {
     console.error("Error in /api/list:", err.message);
@@ -133,7 +146,7 @@ app.post("/api/upload", upload.single("photo"), async (req, res) => {
 
     const gfile = driveRes.data;
 
-    // Save metadata in photos.json
+    // Save metadata
     const photosPath = path.join(process.cwd(), "backend", "photos.json");
     let arr = [];
     try {
@@ -197,20 +210,3 @@ app.get("/api/file/:id", async (req, res) => {
 });
 
 // ----------------------
-// Error handler
-// ----------------------
-app.use(function (err, req, res, next) {
-  if (err.name === "UnauthorizedError") {
-    console.error("Auth error:", err.message);
-    return res.status(401).json({ message: "Invalid token", error: err.message });
-  }
-  next(err);
-});
-
-// ----------------------
-// Start server
-// ----------------------
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`✅ Backend running on port ${PORT}`);
-});
