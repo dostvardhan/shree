@@ -1,173 +1,57 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shreshthapushkar — Upload</title>
-  <style>
-    body { font-family: system-ui, Arial; padding: 20px; max-width:900px; }
-    h1 { margin-top: 0; }
-    .small { color:#666; font-size:0.95rem; margin-top:6px; }
-    form { margin-top:16px; }
-    pre { background:#f6f8fa; padding:12px; border-radius:6px; margin-top:12px; white-space:pre-wrap; }
-    button { margin-right:8px; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload</title>
 
-  <!-- Auth0 SPA SDK from official CDN (reliable) -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.26.0/auth0-spa-js.production.js"></script>
+  <!-- ✅ Correct Auth0 SDK from CDN -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13.6/auth0-spa-js.production.js"></script>
+
+  <!-- ✅ Our guard + init -->
+  <script src="auth-init.js" defer></script>
+  <script src="guard-auth.js" defer></script>
 </head>
 <body>
-  <h1>Welcome to Shreshthapushkar</h1>
+  <h1>Upload a Photo</h1>
 
-  <div id="auth-ui">
-    <button id="btn-login">Login</button>
-    <button id="btn-logout" style="display:none">Logout</button>
-    <div id="who" class="small">Not signed in</div>
-  </div>
+  <button onclick="login()">Login</button>
+  <button onclick="logout()">Logout</button>
 
-  <form id="upload-form" style="display:none" enctype="multipart/form-data">
-    <label>Photo: <input name="photo" type="file" accept="image/*" required></label><br>
-    <label>Caption: <input name="caption" type="text"></label><br>
-    <button type="submit">Upload to Drive</button>
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="file" accept="image/*" required />
+    <input type="text" name="caption" placeholder="Enter caption" required />
+    <button type="submit">Upload</button>
   </form>
 
-  <pre id="out">Console output will appear here.</pre>
+  <script>
+    let auth0Client;
 
-<script>
-/*
-  Replace below values if needed.
-  AUTH0_DOMAIN: your Auth0 tenant
-  AUTH0_CLIENT_ID: SPA client id (Auth0 Application -> Single Page Application)
-  BACKEND_BASE: your backend API (render) — used for upload & audience
-*/
-const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
-const AUTH0_CLIENT_ID = "6sf0ckf0BFVhsuzFPJCHoLDfZSNJjzT";
-const BACKEND_BASE = "https://shree-drive.onrender.com"; // your deployed backend
+    async function initAuth0() {
+      auth0Client = await createAuth0Client({
+        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",   // ✅ replace with your Auth0 domain
+        client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT", // ✅ replace with your Client ID
+        audience: "https://shree-drive.onrender.com"   // ✅ API identifier
+      });
 
-const outEl = document.getElementById("out");
-const whoEl = document.getElementById("who");
-const btnLogin = document.getElementById("btn-login");
-const btnLogout = document.getElementById("btn-logout");
-const uploadForm = document.getElementById("upload-form");
-
-function log(v) {
-  if (typeof v === "string") outEl.textContent = v;
-  else outEl.textContent = JSON.stringify(v, null, 2);
-}
-
-let auth0 = null;
-
-async function initAuth() {
-  try {
-    if (!window.createAuth0Client) {
-      log("Auth0 SDK not loaded.");
-      return;
+      console.log("Auth0 initialized");
     }
 
-    auth0 = await createAuth0Client({
-      domain: AUTH0_DOMAIN,
-      client_id: AUTH0_CLIENT_ID,
-      cacheLocation: "localstorage",
-      useRefreshTokens: true,
-      authorizationParams: {
-        audience: BACKEND_BASE
-      }
-    });
-
-    // handle callback if present
-    if (window.location.search.includes("code=") && window.location.search.includes("state=")) {
-      try {
-        await auth0.handleRedirectCallback();
-      } catch (err) {
-        log("Callback error: " + (err && err.message ? err.message : err));
-      }
-      // remove query params (keeps URL clean)
-      history.replaceState({}, document.title, window.location.pathname);
-    }
-
-    await updateUi();
-    log("Auth ready ✅");
-  } catch (err) {
-    log("initAuth error: " + (err && err.message ? err.message : err));
-  }
-}
-
-async function updateUi() {
-  if (!auth0) return;
-  try {
-    const isAuth = await auth0.isAuthenticated();
-    if (isAuth) {
-      const user = await auth0.getUser();
-      whoEl.textContent = `Signed in: ${user.email || user.name || user.sub}`;
-      btnLogin.style.display = "none";
-      btnLogout.style.display = "";
-      uploadForm.style.display = "";
-    } else {
-      whoEl.textContent = "Not signed in";
-      btnLogin.style.display = "";
-      btnLogout.style.display = "none";
-      uploadForm.style.display = "none";
-    }
-  } catch (err) {
-    log("updateUi error: " + (err && err.message ? err.message : err));
-  }
-}
-
-async function login() {
-  if (!auth0) return log("Auth client not ready");
-  try {
-    await auth0.loginWithRedirect({
-      authorizationParams: {
+    async function login() {
+      if (!auth0Client) await initAuth0();
+      await auth0Client.loginWithRedirect({
         redirect_uri: window.location.origin + "/upload.html"
-      }
-    });
-  } catch (err) {
-    log("Login error: " + (err && err.message ? err.message : err));
-  }
-}
-
-async function logout() {
-  if (!auth0) return;
-  auth0.logout({ logoutParams: { returnTo: window.location.origin + "/upload.html" } });
-}
-
-// upload handler
-uploadForm.addEventListener("submit", async (ev) => {
-  ev.preventDefault();
-  const file = uploadForm.photo.files[0];
-  if (!file) return log("Choose file first.");
-  const caption = uploadForm.caption.value || "";
-
-  try {
-    const token = await auth0.getTokenSilently();
-    const fd = new FormData();
-    fd.append("photo", file);
-    fd.append("caption", caption);
-
-    log("Uploading...");
-    const resp = await fetch(BACKEND_BASE + "/api/upload", {
-      method: "POST",
-      headers: { Authorization: "Bearer " + token },
-      body: fd
-    });
-
-    const data = await resp.json().catch(() => ({ status: resp.status }));
-    if (!resp.ok) {
-      log("Upload failed: " + JSON.stringify(data));
-    } else {
-      log("Upload success: " + JSON.stringify(data, null, 2));
+      });
     }
-  } catch (err) {
-    log("Upload error: " + (err && err.message ? err.message : err));
-  }
-});
 
-// wire buttons
-btnLogin.addEventListener("click", login);
-btnLogout.addEventListener("click", logout);
+    async function logout() {
+      if (!auth0Client) await initAuth0();
+      await auth0Client.logout({
+        returnTo: window.location.origin
+      });
+    }
 
-// init on load
-window.addEventListener("load", initAuth);
-</script>
+    window.onload = initAuth0;
+  </script>
 </body>
 </html>
