@@ -1,3 +1,13 @@
+﻿/* DEBUG: env-presence (SAFE — prints only true/false, never secrets) */
+try {
+  const required = ["GOOGLE_CLIENT_ID","GOOGLE_CLIENT_SECRET","GOOGLE_REFRESH_TOKEN","GOOGLE_DRIVE_FOLDER_ID","AUTH0_DOMAIN","AUTH0_AUDIENCE"];
+  const present = {};
+  required.forEach(k => present[k] = !!process.env[k]);
+  console.log("ENV PRESENCE:", present);
+} catch (e) {
+  console.error("DEBUG ENV CHECK FAILED:", e && e.message ? e.message : e);
+}
+/* END DEBUG */
 // backend/server.js
 import express from "express";
 import cors from "cors";
@@ -27,7 +37,7 @@ const ALLOWED_USERS = (process.env.ALLOWED_USERS || "")
   .filter(Boolean);
 
 if (!AUTH0_DOMAIN) {
-  console.warn("⚠️ AUTH0_DOMAIN not set!");
+  console.warn("âš ï¸ AUTH0_DOMAIN not set!");
 }
 
 const checkJwt = expressjwt({
@@ -46,7 +56,7 @@ const checkJwt = expressjwt({
 function checkAllowedUsers(req, res, next) {
   const email = req.auth && (req.auth.email || req.auth["https://shree/email"]);
   if (ALLOWED_USERS.length > 0 && email && !ALLOWED_USERS.includes(email)) {
-    console.warn("🚫 Unauthorized email:", email);
+    console.warn("ðŸš« Unauthorized email:", email);
     return res.status(403).json({ error: "forbidden" });
   }
   next();
@@ -210,3 +220,4 @@ app.get("/api/file/:id", async (req, res) => {
 });
 
 // ----------------------
+
