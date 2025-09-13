@@ -1,95 +1,172 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8" />
-  <title>Upload Photo — Shreshthapushkar</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-
-  <script src="/auth-init.js" defer></script>
-
+  <title>Shreshthapushkar — Upload</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 18px; }
-    form { max-width: 400px; margin-top: 20px; }
-    input[type="text"], input[type="file"] {
-      margin-bottom: 12px; width: 100%; padding: 6px;
-    }
-    button { padding: 6px 12px; }
-    #result { margin-top: 12px; font-size: 14px; }
+    body { font-family: system-ui, Arial; margin: 24px; }
+    label { display:block; margin-top:12px; }
   </style>
 </head>
 <body>
-  <h2>Upload a New Photo</h2>
-  <div id="loginNote">Checking authentication...</div>
+  <h1>Welcome to Shreshthapushkar</h1>
 
-  <form id="uploadForm" style="display:none">
-    <input id="photoFile" type="file" accept="image/*" required />
-    <input id="caption" type="text" placeholder="Caption (optional)" />
+  <div id="auth">
+    <button id="btn-login">Login</button>
+    <button id="btn-logout" style="display:none">Logout</button>
+    <div id="who" style="margin-top:8px"></div>
+  </div>
+
+  <form id="frm" style="margin-top:20px; display:none">
+    <label>
+      Image:
+      <input name="photo" type="file" accept="image/*" required>
+    </label>
+    <label>
+      Caption:
+      <input name="caption" type="text" />
+    </label>
     <button type="submit">Upload</button>
   </form>
 
-  <div id="result"></div>
-  <p><a href="/gallery.html">Back to Gallery</a></p>
+  <pre id="out" style="margin-top:20px; white-space:pre-wrap"></pre>
+
+  <!-- Auth0 SPA SDK from CDN (use official CDN) -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.26.0/auth0-spa-js.production.js"></script>
 
   <script>
-    function onAuthReady(cb) {
-      if (window.__AUTH_READY__) {
-        window.__AUTH_READY__.then(cb).catch(err => {
-          document.getElementById('loginNote').innerText = "Auth failed: " + (err.message||err);
-          console.error("Auth init failed:", err);
-        });
+    // ====== CONFIG: change these to your values if different ======
+    // these should match the Auth0 Single Page App you edited
+    const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
+    const AUTH0_CLIENT_ID = "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT"; // your SPA client id
+    const BACKEND_BASE = "https://shree-drive.onrender.com"; // Render backend
+    // =============================================================
+
+    const out = (s) => {
+      document.getElementById("out").textContent = typeof s === "string" ? s : JSON.stringify(s, null, 2);
+    };
+
+    let auth0 = null;
+    async function initAuth0() {
+      // create the client (available because we loaded CDN script above)
+      auth0 = await createAuth0Client({
+        domain: AUTH0_DOMAIN,
+        client_id: AUTH0_CLIENT_ID,
+        cacheLocation: "localstorage",
+        useRefreshTokens: true
+      });
+
+      // handle redirect callback (if any)
+      if (location.search.includes("code=") && location.search.includes("state=")) {
+        try {
+          await auth0.handleRedirectCallback();
+          // remove query params
+          history.replaceState({}, document.title, location.pathname);
+        } catch (err) {
+          out("Callback error: " + (err.message || err));
+        }
+      }
+
+      updateUi();
+    }
+
+    async function updateUi() {
+      const isAuthenticated = await auth0.isAuthenticated();
+      const btnLogin = document.getElementById("btn-login");
+      const btnLogout = document.getElementById("btn-logout");
+      const who = document.getElementById("who");
+      const form = document.getElementById("frm");
+
+      if (isAuthenticated) {
+        btnLogin.style.display = "none";
+        btnLogout.style.display = "";
+        form.style.display = "";
+        const user = await auth0.getUser();
+        who.textContent = `Signed in as: ${user.email || user.name || JSON.stringify(user)}`;
       } else {
-        setTimeout(() => onAuthReady(cb), 100);
+        btnLogin.style.display = "";
+        btnLogout.style.display = "none";
+        form.style.display = "none";
+        who.textContent = "Not signed in";
       }
     }
 
-    onAuthReady(async () => {
-      const authed = await window.__AUTH__.isAuthenticated();
-      const loginNote = document.getElementById('loginNote');
-      const form = document.getElementById('uploadForm');
-      const result = document.getElementById('result');
-
-      if (!authed) {
-        loginNote.innerHTML = 'You must log in first. <button id="doLogin">Login</button>';
-        document.getElementById('doLogin').onclick = () =>
-          window.__AUTH__.login({ redirect_uri: window.location.origin + '/upload.html' });
-        return;
-      }
-
-      loginNote.innerText = "Logged in — you can upload now.";
-      form.style.display = "block";
-
-      form.addEventListener('submit', async ev => {
-        ev.preventDefault();
-        result.innerText = "Uploading...";
-
-        const fileInput = document.getElementById('photoFile');
-        if (!fileInput.files.length) {
-          result.innerText = "Please select a file.";
-          return;
-        }
-
-        const fd = new FormData();
-        fd.append('file', fileInput.files[0]);
-        fd.append('caption', document.getElementById('caption').value || '');
-
-        try {
-          const res = await window.__AUTH__.authFetch("https://shree-drive.onrender.com/api/upload", {
-            method: "POST",
-            body: fd
-          });
-          if (!res.ok) {
-            result.innerText = "Upload failed: " + res.status + " " + (await res.text());
-          } else {
-            const json = await res.json();
-            result.innerText = "Upload successful! ID: " + (json.id || "unknown");
-            form.reset();
+    async function login() {
+      try {
+        // Use a redirect login (safe) — you can switch to popup if you allow popups
+        await auth0.loginWithRedirect({
+          authorizationParams: {
+            redirect_uri: window.location.origin + window.location.pathname
           }
-        } catch (err) {
-          result.innerText = "Error: " + err;
-          console.error("Upload error:", err);
+        });
+      } catch (err) {
+        out("Login error: " + (err.message || err));
+      }
+    }
+
+    async function logout() {
+      await auth0.logout({
+        logoutParams: {
+          returnTo: window.location.origin
         }
       });
-    });
+    }
+
+    // Upload handler
+    async function handleUpload(ev) {
+      ev.preventDefault();
+      const f = ev.target.photo.files[0];
+      const caption = ev.target.caption.value || "";
+
+      if (!f) return out("Choose a file first.");
+
+      // Get token
+      const token = await auth0.getTokenSilently().catch(e => {
+        out("Token error: " + (e && e.message ? e.message : e));
+        throw e;
+      });
+
+      const fd = new FormData();
+      fd.append("photo", f);
+      fd.append("caption", caption);
+
+      try {
+        out("Uploading...");
+        const resp = await fetch(BACKEND_BASE + "/api/upload", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + token
+          },
+          body: fd
+        });
+
+        const json = await resp.json().catch(() => ({ ok:false, status: resp.status, text: "non-json response" }));
+        if (!resp.ok) {
+          out("Upload failed: " + JSON.stringify(json));
+        } else {
+          out("Upload success: " + JSON.stringify(json, null, 2));
+        }
+      } catch (err) {
+        out("Upload exception: " + (err.message || err));
+      }
+    }
+
+    // wire events
+    document.getElementById("btn-login").onclick = login;
+    document.getElementById("btn-logout").onclick = logout;
+    document.getElementById("frm").addEventListener("submit", handleUpload);
+
+    // init
+    (async () => {
+      try {
+        await initAuth0();
+        // also poll to update UI after returning from redirect
+        window.addEventListener("focus", updateUi);
+      } catch (e) {
+        out("Init failed: " + (e && e.message ? e.message : e));
+      }
+    })();
   </script>
 </body>
 </html>
