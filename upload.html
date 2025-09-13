@@ -1,57 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Upload</title>
-
-  <!-- ✅ Correct Auth0 SDK from CDN -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13.6/auth0-spa-js.production.js"></script>
-
-  <!-- ✅ Our guard + init -->
-  <script src="auth-init.js" defer></script>
-  <script src="guard-auth.js" defer></script>
+  <meta charset="UTF-8">
+  <title>Upload Memories</title>
+  <script src="/auth0-spa-js.production.js"></script>
+  <script src="auth-init.js"></script>
+  <script src="guard-auth.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f3f3;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    h1 { text-align: center; }
+    label { display: block; margin-top: 10px; }
+    input, textarea, button {
+      width: 100%;
+      margin-top: 6px;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #4caf50;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+  </style>
 </head>
 <body>
-  <h1>Upload a Photo</h1>
+  <div class="container">
+    <h1>Upload a New Memory</h1>
 
-  <button onclick="login()">Login</button>
-  <button onclick="logout()">Logout</button>
+    <button onclick="login()">Login</button>
+    <button onclick="logout()">Logout</button>
 
-  <form id="uploadForm" enctype="multipart/form-data">
-    <input type="file" name="file" accept="image/*" required />
-    <input type="text" name="caption" placeholder="Enter caption" required />
-    <button type="submit">Upload</button>
-  </form>
+    <form id="uploadForm">
+      <label>Choose Photo:</label>
+      <input type="file" id="fileInput" name="file" required />
+
+      <label>Quote / Caption:</label>
+      <textarea id="captionInput" name="caption" required></textarea>
+
+      <button type="submit">Upload</button>
+    </form>
+
+    <div id="status"></div>
+  </div>
 
   <script>
     let auth0Client;
 
     async function initAuth0() {
       auth0Client = await createAuth0Client({
-        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",   // ✅ replace with your Auth0 domain
-        client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT", // ✅ replace with your Client ID
-        audience: "https://shree-drive.onrender.com"   // ✅ API identifier
+        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
+        client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT",
+        audience: "https://shree-drive.onrender.com",
+        cacheLocation: "localstorage"
       });
 
-      console.log("Auth0 initialized");
+      try {
+        if (window.location.search.includes("code=") &&
+            window.location.search.includes("state=")) {
+          await auth0Client.handleRedirectCallback();
+
+          // force back to .html page
+          if (!window.location.pathname.endsWith(".html")) {
+            window.location.replace("/upload.html");
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Auth0 callback error:", e);
+      }
+
+      const isAuth = await auth0Client.isAuthenticated();
+      console.log("Authenticated:", isAuth);
     }
 
     async function login() {
-      if (!auth0Client) await initAuth0();
       await auth0Client.loginWithRedirect({
         redirect_uri: window.location.origin + "/upload.html"
       });
     }
 
     async function logout() {
-      if (!auth0Client) await initAuth0();
       await auth0Client.logout({
-        returnTo: window.location.origin
+        returnTo: window.location.origin + "/upload.html"
       });
     }
 
-    window.onload = initAuth0;
+    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const token = await auth0Client.getTokenSilently();
+
+      const file = document.getElementById("fileInput").files[0];
+      const caption = document.getElementById("captionInput").value;
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("caption", caption);
+
+      const res = await fetch("https://shree-drive.onrender.com/api/upload", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token },
+        body: formData
+      });
+
+      const data = await res.json();
+      document.getElementById("status").innerText = "Uploaded: " + JSON.stringify(data);
+    });
+
+    initAuth0();
   </script>
 </body>
 </html>
