@@ -1,14 +1,39 @@
-﻿/* DEBUG: env-presence (SAFE — prints only true/false, never secrets) */
+// ==========================
+// Debug startup hooks
+// ==========================
+console.log("🚀 SERVER STARTING...");
+
+process.on("uncaughtException", (err) => {
+  console.error("💥 UNCAUGHT EXCEPTION:", err.stack || err);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("💥 UNHANDLED REJECTION:", reason);
+  process.exit(1);
+});
+
+/* DEBUG: env-presence (SAFE — prints only true/false, never secrets) */
 try {
-  const required = ["GOOGLE_CLIENT_ID","GOOGLE_CLIENT_SECRET","GOOGLE_REFRESH_TOKEN","GOOGLE_DRIVE_FOLDER_ID","AUTH0_DOMAIN","AUTH0_AUDIENCE"];
+  const required = [
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "GOOGLE_REFRESH_TOKEN",
+    "GOOGLE_DRIVE_FOLDER_ID",
+    "AUTH0_DOMAIN",
+    "AUTH0_AUDIENCE"
+  ];
   const present = {};
-  required.forEach(k => present[k] = !!process.env[k]);
+  required.forEach((k) => (present[k] = !!process.env[k]));
   console.log("ENV PRESENCE:", present);
 } catch (e) {
   console.error("DEBUG ENV CHECK FAILED:", e && e.message ? e.message : e);
 }
 /* END DEBUG */
-// backend/server.js
+
+// ==========================
+// Imports & setup
+// ==========================
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -29,15 +54,16 @@ app.use(express.json());
 // ----------------------
 // Auth0 Config
 // ----------------------
-const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN; 
-const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE || "https://shree-drive.onrender.com";
+const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN; // e.g. dev-xxxx.us.auth0.com
+const AUTH0_AUDIENCE =
+  process.env.AUTH0_AUDIENCE || "https://shree-drive.onrender.com";
 const ALLOWED_USERS = (process.env.ALLOWED_USERS || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 
 if (!AUTH0_DOMAIN) {
-  console.warn("âš ï¸ AUTH0_DOMAIN not set!");
+  console.warn("⚠️ AUTH0_DOMAIN not set!");
 }
 
 const checkJwt = expressjwt({
@@ -45,18 +71,18 @@ const checkJwt = expressjwt({
     cache: true,
     rateLimit: true,
     jwksRequestsPerMinute: 5,
-    jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`,
+    jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`
   }),
   audience: AUTH0_AUDIENCE,
   issuer: `https://${AUTH0_DOMAIN}/`,
-  algorithms: ["RS256"],
+  algorithms: ["RS256"]
 });
 
 // middleware: invite-only users
 function checkAllowedUsers(req, res, next) {
   const email = req.auth && (req.auth.email || req.auth["https://shree/email"]);
   if (ALLOWED_USERS.length > 0 && email && !ALLOWED_USERS.includes(email)) {
-    console.warn("ðŸš« Unauthorized email:", email);
+    console.warn("🚫 Unauthorized email:", email);
     return res.status(403).json({ error: "forbidden" });
   }
   next();
@@ -66,14 +92,14 @@ function checkAllowedUsers(req, res, next) {
 // Google OAuth helper
 // ----------------------
 async function getOauth2Client() {
-  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
+  const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } =
+    process.env;
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
     throw new Error("Missing Google OAuth env vars");
   }
   const oauth2Client = new google.auth.OAuth2(
     GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET,
-    "http://localhost:3000/oauth2callback"
+    GOOGLE_CLIENT_SECRET
   );
   oauth2Client.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
   await oauth2Client.getAccessToken(); // ensure refresh works
@@ -84,23 +110,9 @@ async function getOauth2Client() {
 // Routes
 // ----------------------
 
-// Public: health + drive check
-app.get("/api/diag", async (req, res) => {
-  let driveStatus = "not_checked";
-  try {
-    const oauth2Client = await getOauth2Client();
-    const drive = google.drive({ version: "v3", auth: oauth2Client });
-    const about = await drive.about.get({ fields: "user" });
-    if (about.data && about.data.user) {
-      driveStatus = "ok";
-    } else {
-      driveStatus = "no_user";
-    }
-  } catch (err) {
-    console.error("Drive diag error:", err.message);
-    driveStatus = "error";
-  }
-  res.json({ status: "ok", time: new Date().toISOString(), drive: driveStatus });
+// Public: health check
+app.get("/api/diag", (req, res) => {
+  res.json({ status: "ok", time: new Date().toISOString() });
 });
 
 // All protected routes
@@ -110,6 +122,7 @@ app.use("/api", checkJwt, checkAllowedUsers);
 app.get("/api/list", async (req, res) => {
   try {
     const filePath = path.join(process.cwd(), "backend", "photos.json");
+
     let items = [];
     try {
       const raw = await fs.readFile(filePath, "utf8");
@@ -119,6 +132,7 @@ app.get("/api/list", async (req, res) => {
       console.warn("[WARN] Could not read photos.json:", err.message);
       items = [];
     }
+
     return res.json({ ok: true, items });
   } catch (err) {
     console.error("Error in /api/list:", err.message);
@@ -145,18 +159,18 @@ app.post("/api/upload", upload.single("photo"), async (req, res) => {
         name: fileName,
         parents: process.env.GOOGLE_DRIVE_FOLDER_ID
           ? [process.env.GOOGLE_DRIVE_FOLDER_ID]
-          : undefined,
+          : undefined
       },
       media: {
         mimeType,
-        body: Buffer.from(req.file.buffer),
+        body: Buffer.from(req.file.buffer)
       },
-      fields: "id, name, mimeType, size",
+      fields: "id, name, mimeType, size"
     });
 
     const gfile = driveRes.data;
 
-    // Save metadata
+    // Save metadata in photos.json
     const photosPath = path.join(process.cwd(), "backend", "photos.json");
     let arr = [];
     try {
@@ -174,7 +188,7 @@ app.post("/api/upload", upload.single("photo"), async (req, res) => {
       filename: gfile.name,
       createdAt: new Date().toISOString(),
       mimeType: gfile.mimeType,
-      size: gfile.size,
+      size: gfile.size
     };
 
     arr.unshift(entry);
@@ -215,16 +229,29 @@ app.get("/api/file/:id", async (req, res) => {
     driveStream.data.pipe(res);
   } catch (err) {
     console.error("Error in /api/file/:id:", err.message);
-    return res.status(500).json({ error: "file_stream_failed", message: err.message });
+    return res
+      .status(500)
+      .json({ error: "file_stream_failed", message: err.message });
   }
 });
 
 // ----------------------
-
-
-process.on("uncaughtException", (err) => {
-  console.error("UNCAUGHT EXCEPTION:", err);
+// Error handler
+// ----------------------
+app.use(function (err, req, res, next) {
+  if (err.name === "UnauthorizedError") {
+    console.error("Auth error:", err.message);
+    return res
+      .status(401)
+      .json({ message: "Invalid token", error: err.message });
+  }
+  next(err);
 });
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("UNHANDLED REJECTION:", reason);
+
+// ----------------------
+// Start server
+// ----------------------
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`✅ Backend running on port ${PORT}`);
 });
