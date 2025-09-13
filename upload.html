@@ -1,161 +1,50 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Upload — Shree Drive</title>
-  <style>
-    body { font-family: system-ui, Arial; margin: 24px; max-width:800px; }
-    label { display:block; margin-top:12px; }
-    button { margin-top:8px; }
-    pre { background:#f6f8fa; padding:12px; border-radius:6px; margin-top:12px; }
-    .small { font-size:0.9rem; color:#666; }
-  </style>
+  <meta charset="UTF-8">
+  <title>Shreshthapushkar — Upload</title>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js"></script>
 </head>
 <body>
-  <h1>Upload (test)</h1>
-
-  <div id="auth">
-    <button id="btn-login">Login</button>
-    <button id="btn-logout" style="display:none">Logout</button>
-    <div id="who" class="small" style="margin-top:8px">Not signed in</div>
-  </div>
-
-  <form id="frm" style="margin-top:20px; display:none">
-    <label>
-      Image:
-      <input name="photo" type="file" accept="image/*" required>
-    </label>
-    <label>
-      Caption:
-      <input name="caption" type="text" />
-    </label>
-    <button type="submit">Upload</button>
-  </form>
-
-  <pre id="out" style="white-space:pre-wrap"></pre>
-
-  <!-- Auth0 SPA SDK via official CDN -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.26.0/auth0-spa-js.production.js"></script>
+  <h1>Welcome to Shreshthapushkar</h1>
+  <button onclick="login()">Login</button>
+  <div id="status"></div>
 
   <script>
-    // ======= EDIT THESE BEFORE TESTING =======
-    const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com"; // your tenant
-    const AUTH0_CLIENT_ID = "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT"; // <-- REPLACE this
-    const BACKEND_BASE = "https://shree-drive.onrender.com"; // your deployed backend
-    // ========================================
-
-    const outEl = document.getElementById("out");
-    const out = (v) => { outEl.textContent = typeof v === "string" ? v : JSON.stringify(v, null, 2); };
-
-    let auth0 = null;
+    let auth0Client = null;
 
     async function initAuth0() {
       try {
-        if (!window.createAuth0Client) {
-          out("Auth0 SDK not loaded (createAuth0Client undefined). Check CDN script.");
-          return;
-        }
-
-        auth0 = await createAuth0Client({
-          domain: AUTH0_DOMAIN,
-          client_id: AUTH0_CLIENT_ID,
+        auth0Client = await createAuth0Client({
+          domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
+          client_id: "6sf0ckf0BFVhsuzFPJCHoLDfZSNJjzT",
+          audience: "https://shree-drive.onrender.com",
           cacheLocation: "localstorage",
-          useRefreshTokens: true,
-          authorizationParams: {
-            // audience should match your API identifier if you set one
-            audience: "https://shree-drive.onrender.com"
-          }
+          useRefreshTokens: true
         });
 
-        // handle redirect callback (if coming back from Auth0)
-        if (location.search.includes("code=") && location.search.includes("state=")) {
-          try {
-            await auth0.handleRedirectCallback();
-            history.replaceState({}, document.title, location.pathname);
-          } catch (err) {
-            out("Callback error: " + (err && err.message ? err.message : err));
-          }
-        }
-
-        updateUi();
+        document.getElementById("status").innerText = "Auth0 ready ✅";
       } catch (err) {
-        out("initAuth0 failed: " + (err && err.message ? err.message : err));
-      }
-    }
-
-    async function updateUi() {
-      try {
-        const isAuthenticated = auth0 ? await auth0.isAuthenticated() : false;
-        document.getElementById("frm").style.display = isAuthenticated ? "" : "none";
-        document.getElementById("btn-login").style.display = isAuthenticated ? "none" : "";
-        document.getElementById("btn-logout").style.display = isAuthenticated ? "" : "none";
-        if (isAuthenticated) {
-          const user = await auth0.getUser();
-          document.getElementById("who").textContent = `Signed in as: ${user.email || user.name || JSON.stringify(user)}`;
-        } else {
-          document.getElementById("who").textContent = "Not signed in";
-        }
-      } catch (e) {
-        out("updateUi error: " + (e && e.message ? e.message : e));
+        document.getElementById("status").innerText = "Init error: " + err.message;
       }
     }
 
     async function login() {
       try {
-        await auth0.loginWithRedirect({
-          authorizationParams: { redirect_uri: window.location.origin + window.location.pathname }
-        });
-      } catch (err) {
-        out("Login error: " + (err && err.message ? err.message : err));
-      }
-    }
-
-    async function logout() {
-      try {
-        await auth0.logout({ logoutParams: { returnTo: window.location.origin } });
-      } catch (e) {
-        out("Logout error: " + (e && e.message ? e.message : e));
-      }
-    }
-
-    async function handleUpload(ev) {
-      ev.preventDefault();
-      const file = ev.target.photo.files[0];
-      const caption = ev.target.caption.value || "";
-      if (!file) return out("Choose a file first.");
-
-      try {
-        const token = await auth0.getTokenSilently();
-        const fd = new FormData();
-        fd.append("photo", file);
-        fd.append("caption", caption);
-
-        out("Uploading...");
-        const resp = await fetch(BACKEND_BASE + "/api/upload", {
-          method: "POST",
-          headers: { Authorization: "Bearer " + token },
-          body: fd
-        });
-
-        const json = await resp.json().catch(() => ({ status: resp.status, text: "non-json response" }));
-        if (!resp.ok) {
-          out("Upload failed: " + JSON.stringify(json));
-        } else {
-          out("Upload success: " + JSON.stringify(json, null, 2));
+        if (!auth0Client) {
+          document.getElementById("status").innerText = "Auth0 client not ready ❌";
+          return;
         }
+
+        await auth0Client.loginWithRedirect({
+          redirect_uri: window.location.origin + "/upload"
+        });
       } catch (err) {
-        out("Upload exception: " + (err && err.message ? err.message : err));
+        document.getElementById("status").innerText = "Login error: " + err.message;
       }
     }
 
-    // wire up
-    document.getElementById("btn-login").onclick = login;
-    document.getElementById("btn-logout").onclick = logout;
-    document.getElementById("frm").addEventListener("submit", handleUpload);
-
-    // init on load
-    window.addEventListener("load", () => { initAuth0(); window.addEventListener("focus", updateUi); });
+    window.onload = initAuth0;
   </script>
 </body>
 </html>
