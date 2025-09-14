@@ -1,124 +1,120 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Upload — Shreshtha</title>
-  <style>#app{display:none;} .loading {text-align:center;padding:40px;}</style>
-  <script>
-    window.__PAGE_GUARD = true;
-  </script>
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shree Drive — Upload</title>
+
+  <!-- Auth0 SPA SDK (CDN) -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.26.0/auth0-spa-js.production.js"></script>
+
+  <!-- load module helpers -->
+  <script type="module" src="auth-init.js"></script>
+  <script type="module" src="guard-auth.js"></script>
+
+  <style>
+    body { font-family: system-ui, Arial; padding: 20px; max-width:900px; margin:auto; }
+    h1 { margin-top: 0; }
+    .small { color:#666; font-size:0.95rem; margin-top:6px; }
+    form { margin-top:16px; }
+    pre { background:#f6f8fa; padding:12px; border-radius:6px; margin-top:12px; white-space:pre-wrap; }
+    button { margin-right:8px; padding:8px 12px; }
+  </style>
 </head>
 <body>
-  <div id="app">
-    <h1>Upload daily photo</h1>
-    <form id="uploadForm">
-      <label>Photo (jpg/png)</label><br>
-      <input type="file" id="photo" name="photo" accept="image/*" required><br><br>
-      <label>Caption / Quote</label><br>
-      <input type="text" id="caption" name="caption" maxlength="240" required><br><br>
-      <button type="submit">Upload</button>
-      <div id="status" style="margin-top:12px;"></div>
-    </form>
+  <h1>Shree Drive — Upload</h1>
+
+  <div id="auth-ui">
+    <button id="btn-login">Login</button>
+    <button id="btn-logout" style="display:none">Logout</button>
+    <div id="who" class="small">Not signed in</div>
   </div>
 
-  <script>
-    const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
-    const AUTH0_CLIENT_ID = "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT";
-    const AUTH0_AUDIENCE = "https://shree-drive.onrender.com";
+  <form id="upload-form" style="display:none" enctype="multipart/form-data">
+    <label>Photo: <input name="photo" type="file" accept="image/*" required></label><br>
+    <label>Caption: <input name="caption" type="text"></label><br>
+    <button type="submit">Upload to Drive</button>
+  </form>
 
-    // Auto-switch API base
-    const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-      ? 'http://localhost:4000'
-      : 'https://shree-drive.onrender.com';
+  <pre id="out">Console output will appear here.</pre>
 
-    let auth0 = null;
+  <script type="module">
+    import { getAuth0Client, ensureHtmlPath } from './auth-init.js';
+    import { requireAuthAndRun } from './guard-auth.js';
 
-    async function initAuth() {
-      auth0 = await createAuth0Client({
-        domain: AUTH0_DOMAIN,
-        client_id: AUTH0_CLIENT_ID,
-        audience: AUTH0_AUDIENCE,
-        cacheLocation: 'localstorage',
-        useRefreshTokens: true
+    const outEl = document.getElementById("out");
+    const whoEl = document.getElementById("who");
+    const btnLogin = document.getElementById("btn-login");
+    const btnLogout = document.getElementById("btn-logout");
+    const uploadForm = document.getElementById("upload-form");
+
+    function log(v) {
+      if (typeof v === "string") outEl.textContent = v;
+      else outEl.textContent = JSON.stringify(v, null, 2);
+    }
+
+    async function updateUi(auth0) {
+      const isAuth = await auth0.isAuthenticated();
+      if (isAuth) {
+        const user = await auth0.getUser();
+        whoEl.textContent = `Signed in: ${user.email || user.name || user.sub}`;
+        btnLogin.style.display = "none";
+        btnLogout.style.display = "";
+        uploadForm.style.display = "";
+      } else {
+        whoEl.textContent = "Not signed in";
+        btnLogin.style.display = "";
+        btnLogout.style.display = "none";
+        uploadForm.style.display = "none";
+      }
+    }
+
+    // wire up the guarded init
+    requireAuthAndRun(async ({ auth0, isAuthenticated }) => {
+      // ensure UI updated
+      await updateUi(auth0);
+
+      // login: pass appState.returnTo so we restore exact path after login
+      btnLogin.addEventListener("click", async () => {
+        const current = ensureHtmlPath(location.pathname);
+        await auth0.loginWithRedirect({
+          authorizationParams: { redirect_uri: window.location.origin + "/upload.html" },
+          appState: { returnTo: current }
+        });
       });
 
-      if (window.location.search.includes('code=') && window.location.search.includes('state=')) {
-        try { await auth0.handleRedirectCallback(); }
-        catch (e) { console.error("handleRedirectCallback failed", e); }
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
+      btnLogout.addEventListener("click", () => {
+        auth0.logout({ logoutParams: { returnTo: window.location.origin + "/upload.html" } });
+      });
 
-      const isAuthenticated = await auth0.isAuthenticated();
-      if (!isAuthenticated) {
-        await auth0.loginWithRedirect({ redirect_uri: window.location.origin + '/life.html' });
-        return;
-      }
-      document.getElementById('app').style.display = 'block';
-    }
-
-    async function getAccessToken() {
-      try {
-        const token = await auth0.getTokenSilently({
-          audience: AUTH0_AUDIENCE,
-          scope: 'openid profile email'
-        });
-        return token;
-      } catch (err) {
-        console.error("getTokenSilently error", err);
-        await auth0.loginWithRedirect({ redirect_uri: window.location.origin + '/life.html' });
-        return null;
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      initAuth();
-
-      const form = document.getElementById('uploadForm');
-      form.addEventListener('submit', async (ev) => {
+      // upload handler
+      uploadForm.addEventListener("submit", async (ev) => {
         ev.preventDefault();
-        const status = document.getElementById('status');
-        status.textContent = 'Uploading...';
-
-        const fileInput = document.getElementById('photo');
-        if (!fileInput.files || fileInput.files.length === 0) {
-          status.textContent = 'Please choose a photo.';
-          return;
-        }
-
-        const token = await getAccessToken();
-        if (!token) {
-          status.textContent = 'Unable to get access token.';
-          return;
-        }
-
-        const fd = new FormData();
-        fd.append('photo', fileInput.files[0]);
-        fd.append('caption', document.getElementById('caption').value);
+        const file = uploadForm.photo.files[0];
+        if (!file) return log("Choose file first.");
+        const caption = uploadForm.caption.value || "";
 
         try {
-          const resp = await fetch(API_BASE + '/api/upload', {
-            method: 'POST',
-            body: fd,
-            headers: {
-              'Authorization': 'Bearer ' + token
-            }
+          const token = await auth0.getTokenSilently();
+          const fd = new FormData();
+          fd.append("photo", file);
+          fd.append("caption", caption);
+
+          log("Uploading...");
+          const resp = await fetch("https://shree-drive.onrender.com/api/upload", {
+            method: "POST",
+            headers: { Authorization: "Bearer " + token },
+            body: fd
           });
 
-          if (resp.ok) {
-            const body = await resp.json();
-            status.textContent = 'Uploaded! ' + (body.message || '');
-            setTimeout(()=> window.location.href = '/life.html', 700);
-          } else if (resp.status === 401) {
-            status.textContent = 'Unauthorized — re-login.';
-            await auth0.loginWithRedirect({ redirect_uri: window.location.origin + '/life.html' });
+          const data = await resp.json().catch(() => ({ status: resp.status }));
+          if (!resp.ok) {
+            log("Upload failed: " + JSON.stringify(data));
           } else {
-            const errText = await resp.text();
-            status.textContent = 'Upload failed: ' + errText;
+            log("Upload success: " + JSON.stringify(data, null, 2));
           }
         } catch (err) {
-          console.error(err);
-          status.textContent = 'Network or server error: ' + (err.message || err);
+          log("Upload error: " + (err && err.message ? err.message : err));
         }
       });
     });
