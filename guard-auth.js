@@ -1,6 +1,5 @@
 // guard-auth.js
 // Include in <head> of protected pages AFTER auth-init.js:
-// <script src="/auth0-spa-js.production.js"></script>
 // <script src="/auth-init.js"></script>
 // <script src="/guard-auth.js"></script>
 
