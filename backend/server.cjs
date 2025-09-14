@@ -30,7 +30,7 @@ app.use(express.json());
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
-// JWKS client
+// JWKS client for Auth0
 const client = jwksClient({
   jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`,
   cache: true,
@@ -38,7 +38,7 @@ const client = jwksClient({
 });
 
 function getKey(header, callback) {
-  client.getSigningKey(header.kid, function(err, key) {
+  client.getSigningKey(header.kid, function (err, key) {
     if (err) return callback(err);
     const signingKey = key.getPublicKey();
     callback(null, signingKey);
