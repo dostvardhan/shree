@@ -1,31 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Shreshthapushkar</title>
-  <script src="/auth0-spa-js.production.js"></script>
-  <script>
-    let auth0Client;
-    async function initAuth0() {
-      auth0Client = await createAuth0Client({
-        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
-        client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT",
-        audience: "https://shree-drive.onrender.com",
-        cacheLocation: "localstorage",
-        useRefreshTokens: true,
-        redirect_uri: window.location.origin + "/welcome.html"
-      });
-    }
-
-    async function login() {
-      await auth0Client.loginWithRedirect();
-    }
-
-    window.onload = initAuth0;
-  </script>
+  <meta charset="utf-8">
+  <title>Shree Drive</title>
 </head>
 <body>
-  <h1>Welcome to Shreshthapushkar</h1>
-  <button onclick="login()">Login</button>
+  <h1>Shree Drive</h1>
+  <p><a href="upload.html">Go to Upload</a> · <a href="life.html">Go to Life</a></p>
 </body>
 </html>
