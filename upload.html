@@ -1,129 +1,127 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Upload Memories</title>
-  <script src="/auth0-spa-js.production.js"></script>
-  <script src="auth-init.js"></script>
-  <script src="guard-auth.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f3f3f3;
-      padding: 20px;
-    }
-    .container {
-      max-width: 500px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    h1 { text-align: center; }
-    label { display: block; margin-top: 10px; }
-    input, textarea, button {
-      width: 100%;
-      margin-top: 6px;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background: #4caf50;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #45a049;
-    }
-  </style>
+  <meta charset="utf-8" />
+  <title>Upload — Shreshtha</title>
+  <style>#app{display:none;} .loading {text-align:center;padding:40px;}</style>
+  <script>
+    window.__PAGE_GUARD = true;
+  </script>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>Upload a New Memory</h1>
-
-    <button onclick="login()">Login</button>
-    <button onclick="logout()">Logout</button>
-
+  <div id="app">
+    <h1>Upload daily photo</h1>
     <form id="uploadForm">
-      <label>Choose Photo:</label>
-      <input type="file" id="fileInput" name="file" required />
-
-      <label>Quote / Caption:</label>
-      <textarea id="captionInput" name="caption" required></textarea>
-
+      <label>Photo (jpg/png)</label><br>
+      <input type="file" id="photo" name="photo" accept="image/*" required><br><br>
+      <label>Caption / Quote</label><br>
+      <input type="text" id="caption" name="caption" maxlength="240" required><br><br>
       <button type="submit">Upload</button>
+      <div id="status" style="margin-top:12px;"></div>
     </form>
-
-    <div id="status"></div>
   </div>
 
   <script>
-    let auth0Client;
+    const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
+    const AUTH0_CLIENT_ID = "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT";
+    const AUTH0_AUDIENCE = "https://shree-drive.onrender.com";
 
-    async function initAuth0() {
-      auth0Client = await createAuth0Client({
-        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
-        client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT",
-        audience: "https://shree-drive.onrender.com",
-        cacheLocation: "localstorage"
+    // Auto-switch API base
+    const API_BASE = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? 'http://localhost:4000'
+      : 'https://shree-drive.onrender.com';
+
+    let auth0 = null;
+
+    async function initAuth() {
+      auth0 = await createAuth0Client({
+        domain: AUTH0_DOMAIN,
+        client_id: AUTH0_CLIENT_ID,
+        audience: AUTH0_AUDIENCE,
+        cacheLocation: 'localstorage',
+        useRefreshTokens: true
       });
 
-      try {
-        if (window.location.search.includes("code=") &&
-            window.location.search.includes("state=")) {
-          await auth0Client.handleRedirectCallback();
-
-          // force back to .html page
-          if (!window.location.pathname.endsWith(".html")) {
-            window.location.replace("/upload.html");
-            return;
-          }
-        }
-      } catch (e) {
-        console.error("Auth0 callback error:", e);
+      if (window.location.search.includes('code=') && window.location.search.includes('state=')) {
+        try { await auth0.handleRedirectCallback(); }
+        catch (e) { console.error("handleRedirectCallback failed", e); }
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
 
-      const isAuth = await auth0Client.isAuthenticated();
-      console.log("Authenticated:", isAuth);
+      const isAuthenticated = await auth0.isAuthenticated();
+      if (!isAuthenticated) {
+        await auth0.loginWithRedirect({ redirect_uri: window.location.origin + '/life.html' });
+        return;
+      }
+      document.getElementById('app').style.display = 'block';
     }
 
-    async function login() {
-      await auth0Client.loginWithRedirect({
-        redirect_uri: window.location.origin + "/upload.html"
-      });
+    async function getAccessToken() {
+      try {
+        const token = await auth0.getTokenSilently({
+          audience: AUTH0_AUDIENCE,
+          scope: 'openid profile email'
+        });
+        return token;
+      } catch (err) {
+        console.error("getTokenSilently error", err);
+        await auth0.loginWithRedirect({ redirect_uri: window.location.origin + '/life.html' });
+        return null;
+      }
     }
 
-    async function logout() {
-      await auth0Client.logout({
-        returnTo: window.location.origin + "/upload.html"
+    document.addEventListener('DOMContentLoaded', () => {
+      initAuth();
+
+      const form = document.getElementById('uploadForm');
+      form.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const status = document.getElementById('status');
+        status.textContent = 'Uploading...';
+
+        const fileInput = document.getElementById('photo');
+        if (!fileInput.files || fileInput.files.length === 0) {
+          status.textContent = 'Please choose a photo.';
+          return;
+        }
+
+        const token = await getAccessToken();
+        if (!token) {
+          status.textContent = 'Unable to get access token.';
+          return;
+        }
+
+        const fd = new FormData();
+        fd.append('photo', fileInput.files[0]);
+        fd.append('caption', document.getElementById('caption').value);
+
+        try {
+          const resp = await fetch(API_BASE + '/api/upload', {
+            method: 'POST',
+            body: fd,
+            headers: {
+              'Authorization': 'Bearer ' + token
+            }
+          });
+
+          if (resp.ok) {
+            const body = await resp.json();
+            status.textContent = 'Uploaded! ' + (body.message || '');
+            setTimeout(()=> window.location.href = '/life.html', 700);
+          } else if (resp.status === 401) {
+            status.textContent = 'Unauthorized — re-login.';
+            await auth0.loginWithRedirect({ redirect_uri: window.location.origin + '/life.html' });
+          } else {
+            const errText = await resp.text();
+            status.textContent = 'Upload failed: ' + errText;
+          }
+        } catch (err) {
+          console.error(err);
+          status.textContent = 'Network or server error: ' + (err.message || err);
+        }
       });
-    }
-
-    document.getElementById("uploadForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const token = await auth0Client.getTokenSilently();
-
-      const file = document.getElementById("fileInput").files[0];
-      const caption = document.getElementById("captionInput").value;
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("caption", caption);
-
-      const res = await fetch("https://shree-drive.onrender.com/api/upload", {
-        method: "POST",
-        headers: { Authorization: "Bearer " + token },
-        body: formData
-      });
-
-      const data = await res.json();
-      document.getElementById("status").innerText = "Uploaded: " + JSON.stringify(data);
     });
-
-    initAuth0();
   </script>
 </body>
 </html>
