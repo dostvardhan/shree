@@ -1,4 +1,4 @@
-// server.cjs
+// server.js (CommonJS)
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -8,6 +8,7 @@ const path = require('path');
 const jwksClient = require('jwks-rsa');
 const jwt = require('jsonwebtoken');
 const { google } = require('googleapis');
+const stream = require('stream');
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -15,7 +16,7 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 
 const PORT = process.env.PORT || 4000;
 const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN;
 const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE;
-const ALLOWED_USERS = (process.env.ALLOWED_USERS || '').split(',').map(x=>x.trim()).filter(Boolean);
+const ALLOWED_USERS = (process.env.ALLOWED_USERS || '').split(',').map(x => x.trim()).filter(Boolean);
 const FRONTEND_ORIGIN = (process.env.FRONTEND_ORIGIN || 'http://localhost:3000').split(',');
 
 if (!AUTH0_DOMAIN || !AUTH0_AUDIENCE) {
@@ -29,6 +30,7 @@ app.use(express.json());
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
+// JWKS client
 const client = jwksClient({
   jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`,
   cache: true,
@@ -70,26 +72,27 @@ function verifyJWT(req, res, next) {
   });
 }
 
+// Health check
 app.get('/api/diag', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
-// LIST
+// List uploaded photos metadata
 app.get('/api/list', verifyJWT, (req, res) => {
   const metaPath = path.join(UPLOAD_DIR, 'photos.json');
   try {
-    const arr = JSON.parse(fs.readFileSync(metaPath,'utf8') || '[]');
+    const arr = JSON.parse(fs.readFileSync(metaPath, 'utf8') || '[]');
     res.json(arr);
   } catch (e) {
     res.json([]);
   }
 });
 
-// UPLOAD -> Google Drive
+// Upload photo + caption → Google Drive
 app.post('/api/upload', verifyJWT, upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).send('No file uploaded');
     const caption = req.body.caption || '';
 
-    // Setup Google OAuth2 client with refresh token
+    // Google OAuth2 client with refresh token
     const oAuth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET
@@ -100,7 +103,7 @@ app.post('/api/upload', verifyJWT, upload.single('photo'), async (req, res) => {
 
     const ext = (req.file.originalname.match(/\.[^/.]+$/) || ['.jpg'])[0];
     const filename = `photo_${Date.now()}${ext}`;
-    const stream = require('stream');
+
     const bufferStream = new stream.PassThrough();
     bufferStream.end(req.file.buffer);
 
@@ -123,7 +126,7 @@ app.post('/api/upload', verifyJWT, upload.single('photo'), async (req, res) => {
     // Save metadata locally
     const metaPath = path.join(UPLOAD_DIR, 'photos.json');
     let arr = [];
-    try { arr = JSON.parse(fs.readFileSync(metaPath,'utf8') || '[]'); } catch(e){ arr = []; }
+    try { arr = JSON.parse(fs.readFileSync(metaPath, 'utf8') || '[]'); } catch (e) { arr = []; }
     const metadata = {
       id: fileId,
       name: created.data.name,
@@ -141,11 +144,14 @@ app.post('/api/upload', verifyJWT, upload.single('photo'), async (req, res) => {
   }
 });
 
-// Stream file through backend
+// Stream file securely
 app.get('/api/file/:id', verifyJWT, async (req, res) => {
   const fileId = req.params.id;
   try {
-    const oAuth2Client = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
+    const oAuth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET
+    );
     oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
     const drive = google.drive({ version: 'v3', auth: oAuth2Client });
 
