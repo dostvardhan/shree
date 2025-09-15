@@ -3,91 +3,101 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gallery — Shree</title>
+  <title>Gallery — Shreshtha</title>
 
   <script src="/auth-init.js"></script>
   <script src="/guard-auth.js"></script>
 
   <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Arial;background:#f5f7f6;padding:20px;color:#21331f}
-    h1{text-align:center;color:#2e4d34}
-    #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:16px}
-    .card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,0.06)}
-    .card img{width:100%;height:160px;object-fit:cover;display:block}
-    .cap{padding:10px;font-size:14px}
-    .time{padding:0 10px 12px 10px;font-size:12px;color:#666}
-    #status{text-align:center;margin-top:8px;font-weight:600}
-    .controls{display:flex;justify-content:space-between;align-items:center}
-    .controls button{background:#eee;border:0;padding:6px 10px;border-radius:8px}
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;background:#fbfbfb;color:#222}
+    header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+    .btn{background:#2e7d32;color:#fff;padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+    main{max-width:1100px;margin:24px auto;padding:18px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+    .tile{border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 8px 18px rgba(0,0,0,0.04);cursor:pointer;height:160px;position:relative}
+    .tile img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+    .tile:hover img{transform:scale(1.08)}
+    .meta{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,0.45);color:#fff;padding:6px 8px;border-radius:8px;font-size:13px}
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:9999}
+    .modal.open{display:flex}
+    .modal img{max-width:80vw;max-height:80vh;object-fit:contain;border-radius:8px}
   </style>
 </head>
 <body>
-  <div id="top" class="controls">
-    <h1>Gallery</h1>
-    <div>
-      <button id="refresh">Refresh</button>
+  <header>
+    <div><strong>Gallery</strong><div style="font-size:13px;color:#666">All uploads</div></div>
+    <nav>
+      <button class="btn" id="btnBack">Back</button>
+    </nav>
+  </header>
+
+  <main>
+    <div data-guard>
+      <h2>All Photos</h2>
+      <div id="grid" class="grid"></div>
+      <div id="note" style="margin-top:12px;color:#666"></div>
     </div>
+  </main>
+
+  <div id="modal" class="modal" onclick="if(event.target===this) closeModal()">
+    <img id="modalImg" src="" alt="">
   </div>
 
-  <div id="status">Loading…</div>
-  <div id="grid" aria-live="polite"></div>
-
   <script>
-    const API = "https://shree-drive.onrender.com";
+    const grid = document.getElementById("grid");
+    const note = document.getElementById("note");
+    const btnBack = document.getElementById("btnBack");
 
-    async function loadGallery() {
+    async function fetchList() {
       try {
-        document.getElementById("status").innerText = "Loading…";
-        let res;
-        if (typeof authFetch === "function") {
-          res = await authFetch(API + "/api/list");
-        } else {
-          if (!window.auth || !window.auth.getToken) throw new Error("No auth available");
-          const token = await window.auth.getToken();
-          res = await fetch(API + "/api/list", { headers: { Authorization: "Bearer " + token }});
-        }
-
-        if (!res.ok) throw new Error("Failed to load list");
-        const photos = await res.json();
-        const grid = document.getElementById("grid");
-        grid.innerHTML = "";
-        if (!photos || photos.length === 0) {
-          document.getElementById("status").innerText = "No photos yet.";
+        const token = await window.auth.getToken();
+        const res = await fetch("https://shree-drive.onrender.com/api/list", {
+          headers: { Authorization: "Bearer " + token }
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          note.textContent = "Failed to load: " + txt;
           return;
         }
-        document.getElementById("status").innerText = "";
-
-        photos.forEach(p => {
-          const c = document.createElement("div");
-          c.className = "card";
-          const img = document.createElement("img");
-          // Use backend streaming route to keep Drive private
-          img.src = API + "/api/file/" + encodeURIComponent(p.id);
-          img.alt = p.caption || p.filename || "photo";
-
-          const cap = document.createElement("div");
-          cap.className = "cap";
-          cap.innerText = p.caption || p.filename || "";
-
-          const time = document.createElement("div");
-          time.className = "time";
-          time.innerText = new Date(p.uploadedAt).toLocaleString();
-
-          c.appendChild(img);
-          c.appendChild(cap);
-          c.appendChild(time);
-          grid.appendChild(c);
-        });
-      } catch (e) {
-        console.error(e);
-        document.getElementById("status").innerText = "Error loading gallery: " + (e.message || e);
+        const list = await res.json();
+        if (!Array.isArray(list) || list.length === 0) {
+          note.textContent = "No uploads yet.";
+          return;
+        }
+        render(list);
+      } catch (err) {
+        note.textContent = "Error fetching list: " + err.message;
       }
     }
 
-    document.getElementById("refresh").addEventListener("click", () => loadGallery());
+    function render(list) {
+      grid.innerHTML = "";
+      list.forEach(item => {
+        const t = document.createElement("div");
+        t.className = "tile";
+        // thumbnail via backend streaming -- use /api/file/:id
+        const thumbUrl = `https://shree-drive.onrender.com/api/file/${item.id}`;
+        t.innerHTML = `<img src="${thumbUrl}" alt="${item.filename}"><div class="meta">${item.caption || item.filename}</div>`;
+        t.addEventListener("click", () => openModal(thumbUrl));
+        grid.appendChild(t);
+      });
+    }
 
-    // initial load - guard-auth.js should allow showing content only if logged in
-    loadGallery();
+    function openModal(src) {
+      document.getElementById("modalImg").src = src;
+      document.getElementById("modal").classList.add("open");
+    }
+    function closeModal() {
+      document.getElementById("modal").classList.remove("open");
+      document.getElementById("modalImg").src = "";
+    }
+
+    btnBack.addEventListener("click", () => window.location.href = "/life.html");
+
+    // init
+    (async () => {
+      await fetchList();
+    })();
   </script>
 </body>
 </html>
