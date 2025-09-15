@@ -2,124 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Gallery — Shreshthapushkar</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gallery — Shree</title>
 
-  <script src="/auth-init.js" defer></script>
+  <script src="/auth-init.js"></script>
+  <script src="/guard-auth.js"></script>
 
   <style>
-    body { font-family: Arial, sans-serif; padding: 18px; }
-    #grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      max-width: 900px;
-      margin-top: 20px;
-    }
-    .card {
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 6px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      background: #fafafa;
-    }
-    .card img {
-      max-width: 100%;
-      height: 160px;
-      object-fit: cover;
-      border-radius: 4px;
-    }
-    .caption {
-      font-size: 13px;
-      margin-top: 6px;
-      text-align: center;
-      color: #333;
-    }
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;background:#f5f7f6;padding:20px;color:#21331f}
+    h1{text-align:center;color:#2e4d34}
+    #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:16px}
+    .card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,0.06)}
+    .card img{width:100%;height:160px;object-fit:cover;display:block}
+    .cap{padding:10px;font-size:14px}
+    .time{padding:0 10px 12px 10px;font-size:12px;color:#666}
+    #status{text-align:center;margin-top:8px;font-weight:600}
+    .controls{display:flex;justify-content:space-between;align-items:center}
+    .controls button{background:#eee;border:0;padding:6px 10px;border-radius:8px}
   </style>
 </head>
 <body>
-  <h2>Photo Gallery</h2>
-  <div id="info">Loading...</div>
-  <div id="grid"></div>
-  <p><a href="/upload.html">Upload a photo</a> | <a href="/index.html">Home</a></p>
+  <div id="top" class="controls">
+    <h1>Gallery</h1>
+    <div>
+      <button id="refresh">Refresh</button>
+    </div>
+  </div>
+
+  <div id="status">Loading…</div>
+  <div id="grid" aria-live="polite"></div>
 
   <script>
-    function onAuthReady(cb) {
-      if (window.__AUTH_READY__) {
-        window.__AUTH_READY__.then(cb).catch(err => {
-          document.getElementById('info').innerText = "Auth failed: " + (err.message||err);
-          console.error("Auth init failed:", err);
+    const API = "https://shree-drive.onrender.com";
+
+    async function loadGallery() {
+      try {
+        document.getElementById("status").innerText = "Loading…";
+        let res;
+        if (typeof authFetch === "function") {
+          res = await authFetch(API + "/api/list");
+        } else {
+          if (!window.auth || !window.auth.getToken) throw new Error("No auth available");
+          const token = await window.auth.getToken();
+          res = await fetch(API + "/api/list", { headers: { Authorization: "Bearer " + token }});
+        }
+
+        if (!res.ok) throw new Error("Failed to load list");
+        const photos = await res.json();
+        const grid = document.getElementById("grid");
+        grid.innerHTML = "";
+        if (!photos || photos.length === 0) {
+          document.getElementById("status").innerText = "No photos yet.";
+          return;
+        }
+        document.getElementById("status").innerText = "";
+
+        photos.forEach(p => {
+          const c = document.createElement("div");
+          c.className = "card";
+          const img = document.createElement("img");
+          // Use backend streaming route to keep Drive private
+          img.src = API + "/api/file/" + encodeURIComponent(p.id);
+          img.alt = p.caption || p.filename || "photo";
+
+          const cap = document.createElement("div");
+          cap.className = "cap";
+          cap.innerText = p.caption || p.filename || "";
+
+          const time = document.createElement("div");
+          time.className = "time";
+          time.innerText = new Date(p.uploadedAt).toLocaleString();
+
+          c.appendChild(img);
+          c.appendChild(cap);
+          c.appendChild(time);
+          grid.appendChild(c);
         });
-      } else {
-        setTimeout(() => onAuthReady(cb), 100);
+      } catch (e) {
+        console.error(e);
+        document.getElementById("status").innerText = "Error loading gallery: " + (e.message || e);
       }
     }
 
-    onAuthReady(async () => {
-      const authed = await window.__AUTH__.isAuthenticated();
-      if (!authed) {
-        document.getElementById('info').innerHTML =
-          'You must log in first. <button id="doLogin">Login</button>';
-        document.getElementById('doLogin').onclick = () =>
-          window.__AUTH__.login({ redirect_uri: window.location.origin + '/gallery.html' });
-        return;
-      }
+    document.getElementById("refresh").addEventListener("click", () => loadGallery());
 
-      document.getElementById('info').innerText = "Fetching photos...";
-
-      try {
-        const res = await window.__AUTH__.authFetch("https://shree-drive.onrender.com/api/list");
-        if (!res.ok) {
-          document.getElementById('info').innerText = "List failed: " + res.status;
-          return;
-        }
-        const items = await res.json();
-        const grid = document.getElementById('grid');
-        grid.innerHTML = "";
-        if (!items.length) {
-          document.getElementById('info').innerText = "No photos yet.";
-          return;
-        }
-        document.getElementById('info').innerText = "";
-
-        for (const it of items) {
-          const card = document.createElement('div');
-          card.className = "card";
-
-          const img = document.createElement('img');
-          img.alt = it.caption || "photo";
-
-          // fetch each photo blob
-          (async (id, el) => {
-            try {
-              const r = await window.__AUTH__.authFetch("https://shree-drive.onrender.com/api/file/" + id);
-              if (!r.ok) {
-                el.alt = "load error";
-                return;
-              }
-              const blob = await r.blob();
-              el.src = URL.createObjectURL(blob);
-            } catch (e) {
-              el.alt = "error";
-            }
-          })(it.id, img);
-
-          const cap = document.createElement('div');
-          cap.className = "caption";
-          cap.innerText = it.caption || "";
-
-          card.appendChild(img);
-          card.appendChild(cap);
-          grid.appendChild(card);
-        }
-      } catch (err) {
-        document.getElementById('info').innerText = "Error: " + err;
-        console.error("Gallery error:", err);
-      }
-    });
+    // initial load - guard-auth.js should allow showing content only if logged in
+    loadGallery();
   </script>
 </body>
 </html>
