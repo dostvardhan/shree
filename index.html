@@ -3,54 +3,40 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shreshthapushkar — Private Login</title>
-
-  <!-- Auth scripts -->
+  <title>Shreshthapushkar — Login</title>
+  <link rel="icon" href="/photo1.jpg">
   <script src="/auth-init.js"></script>
-  <script src="/guard-auth.js"></script>
-
   <style>
-    body {
-      margin:0; height:100vh; display:flex; align-items:center; justify-content:center;
-      font-family: system-ui, Segoe UI, Roboto, Arial;
-      background: linear-gradient(135deg,#d1e8d3,#f5f7f6);
-    }
-    .card {
-      background:white; padding:32px; border-radius:16px;
-      box-shadow:0 12px 32px rgba(0,0,0,0.12); text-align:center;
-      max-width:380px; width:100%;
-    }
-    h1 { margin:0 0 16px; color:#2e4d34; }
-    button {
-      background:#2e7d32; color:white; border:none; border-radius:8px;
-      padding:12px 20px; font-size:16px; cursor:pointer;
-    }
-    .note { font-size:13px; margin-top:12px; color:#666; }
+    body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fdeff9,#f5f7ff);font-family:system-ui,Segoe UI,Roboto,Arial}
+    .card{background:#fff;padding:28px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.08);max-width:420px;text-align:center}
+    h1{margin:0 0 8px;font-size:20px;color:#2b3b2b}
+    p{color:#556;font-size:14px}
+    button{margin-top:14px;padding:10px 16px;border-radius:8px;border:0;background:#2e7d32;color:white;font-weight:600;cursor:pointer}
+    .small{font-size:12px;color:#999;margin-top:10px}
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>Welcome ✨</h1>
+    <h1>Shreshtha — Private memories</h1>
     <p>This site is private. Please login to continue.</p>
     <button id="btnLogin">Login with Auth0</button>
-    <div class="note">Only invited users can access Shreshtha’s memories.</div>
+    <div class="small">Only invited people can access the site.</div>
   </div>
 
   <script>
-    // Login button → redirect login
     document.getElementById("btnLogin").addEventListener("click", () => {
       if (window.auth && window.auth.login) {
         window.auth.login({ redirect_uri: window.location.origin + "/life.html" });
       } else {
-        alert("Auth not ready. Check auth-init.js");
+        alert("Auth not ready yet. Refresh in a moment.");
       }
     });
 
-    // Auto redirect to life.html if already logged in
+    // If already logged in, go to life.html
     (async () => {
       let tries = 0;
-      while (!window.auth && tries < 50) { await new Promise(r=>setTimeout(r,100)); tries++; }
-      if (window.auth && window.auth.getUser) {
+      while (!window.auth && tries < 40) { await new Promise(r => setTimeout(r, 100)); tries++; }
+      if (window.auth) {
         const u = await window.auth.getUser();
         if (u) window.location.href = "/life.html";
       }
