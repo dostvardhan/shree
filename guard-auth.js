@@ -1,41 +1,53 @@
-/* guard-auth.js - hides protected elements until auth status known.
-   It expects auth-init.js to define window.auth.getUser() and window.auth.login()
-*/
-(function(){
-  const protectedSelector = "[data-guard]";
-  async function initGuard(){
-    // wait for auth-init to boot
-    let tries = 0;
-    while (!window.auth && tries < 40) { await new Promise(r=>setTimeout(r,150)); tries++; }
-    const protectedEls = document.querySelectorAll(protectedSelector);
-    if (!window.auth) {
-      // show login prompt in each guarded element
-      protectedEls.forEach(el => {
-        el.style.display = "block";
-        const html = '<div style="padding:18px"><strong>Login required</strong><div style="margin-top:8px"><button id="guardLoginBtn">Login</button></div></div>';
-        el.innerHTML = html;
-        const btn = document.getElementById("guardLoginBtn");
-        if (btn) btn.addEventListener("click", ()=> window.auth && window.auth.login && window.auth.login());
-      });
-      return;
-    }
+// guard-auth.js
+// include in <head>, wrap content in <div data-guard>...</div>
+(function () {
+  const GUARD_ATTR = "data-guard";
 
-    const user = await window.auth.getUser();
-    if (!user) {
-      // not logged in — show login button
-      protectedEls.forEach(el => {
-        el.style.display = "block";
-        const btn = document.createElement("button");
-        btn.innerText = "Login to continue";
-        btn.addEventListener("click", ()=> window.auth.login());
-        el.prepend(btn);
-      });
-      return;
-    }
-
-    // logged in — reveal content (do nothing if content already present)
-    protectedEls.forEach(el => { el.style.display = ""; });
+  function hideGuards() {
+    document.querySelectorAll("[" + GUARD_ATTR + "]").forEach(el => {
+      el.dataset._savedDisplay = el.style.display || "";
+      el.style.display = "none";
+    });
   }
-  // run
-  initGuard().catch(e=>console.warn("guard error", e));
+  function showGuards() {
+    document.querySelectorAll("[" + GUARD_ATTR + "]").forEach(el => {
+      el.style.display = el.dataset._savedDisplay || "";
+    });
+  }
+
+  hideGuards();
+
+  async function initGuard() {
+    // wait for auth to initialize
+    let tries = 0;
+    while (!window.auth && tries < 60) { await new Promise(r => setTimeout(r, 100)); tries++; }
+    if (!window.auth || !window.auth.getUser) {
+      // if auth not available, redirect to login page
+      console.warn("guard: auth not loaded");
+      window.location.href = "/";
+      return;
+    }
+
+    try {
+      const user = await window.auth.getUser();
+      if (!user) {
+        // not logged in -> redirect to login page (index)
+        // but keep a small UI first: show login button inside first guard section
+        const guards = document.querySelectorAll("[" + GUARD_ATTR + "]");
+        guards.forEach(g => {
+          g.innerHTML = '<div style="padding:28px;text-align:center"><h3>Login required</h3><p><button id="guardLogin">Login</button></p></div>';
+        });
+        const b = document.getElementById("guardLogin");
+        if (b) b.addEventListener("click", () => window.auth.login({ redirect_uri: window.location.origin + "/life.html" }));
+        return;
+      }
+      // logged in — reveal
+      showGuards();
+    } catch (err) {
+      console.warn("guard: error checking auth", err);
+      window.location.href = "/";
+    }
+  }
+
+  initGuard();
 })();
