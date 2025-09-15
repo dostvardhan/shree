@@ -1,11 +1,60 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Shree Drive</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shreshthapushkar — Private Login</title>
+
+  <!-- Auth scripts -->
+  <script src="/auth-init.js"></script>
+  <script src="/guard-auth.js"></script>
+
+  <style>
+    body {
+      margin:0; height:100vh; display:flex; align-items:center; justify-content:center;
+      font-family: system-ui, Segoe UI, Roboto, Arial;
+      background: linear-gradient(135deg,#d1e8d3,#f5f7f6);
+    }
+    .card {
+      background:white; padding:32px; border-radius:16px;
+      box-shadow:0 12px 32px rgba(0,0,0,0.12); text-align:center;
+      max-width:380px; width:100%;
+    }
+    h1 { margin:0 0 16px; color:#2e4d34; }
+    button {
+      background:#2e7d32; color:white; border:none; border-radius:8px;
+      padding:12px 20px; font-size:16px; cursor:pointer;
+    }
+    .note { font-size:13px; margin-top:12px; color:#666; }
+  </style>
 </head>
 <body>
-  <h1>Shree Drive</h1>
-  <p><a href="upload.html">Go to Upload</a> · <a href="life.html">Go to Life</a></p>
+  <div class="card">
+    <h1>Welcome ✨</h1>
+    <p>This site is private. Please login to continue.</p>
+    <button id="btnLogin">Login with Auth0</button>
+    <div class="note">INDIA.</div>
+  </div>
+
+  <script>
+    // Login button → redirect login
+    document.getElementById("btnLogin").addEventListener("click", () => {
+      if (window.auth && window.auth.login) {
+        window.auth.login({ redirect_uri: window.location.origin + "/life.html" });
+      } else {
+        alert("Auth not ready. Check auth-init.js");
+      }
+    });
+
+    // Auto redirect to life.html if already logged in
+    (async () => {
+      let tries = 0;
+      while (!window.auth && tries < 50) { await new Promise(r=>setTimeout(r,100)); tries++; }
+      if (window.auth && window.auth.getUser) {
+        const u = await window.auth.getUser();
+        if (u) window.location.href = "/life.html";
+      }
+    })();
+  </script>
 </body>
 </html>
