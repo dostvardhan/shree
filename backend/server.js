@@ -1,166 +1,196 @@
-// server.js (CommonJS)
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
-const jwksClient = require('jwks-rsa');
-const jwt = require('jsonwebtoken');
-const { google } = require('googleapis');
-const stream = require('stream');
+// backend/server.js (CommonJS) - Drive upload + Auth0 JWT + list + stream
+const express = require("express");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const { google } = require("googleapis");
+const jwksClient = require("jwks-rsa");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
-
 const PORT = process.env.PORT || 4000;
-const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN;
-const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE;
-const ALLOWED_USERS = (process.env.ALLOWED_USERS || '').split(',').map(x => x.trim()).filter(Boolean);
-const FRONTEND_ORIGIN = (process.env.FRONTEND_ORIGIN || 'http://localhost:3000').split(',');
+
+// ---------- Config ----------
+const PHOTOS_FILE = path.join(__dirname, "photos.json");
+if (!fs.existsSync(PHOTOS_FILE)) fs.writeFileSync(PHOTOS_FILE, "[]", "utf8");
+
+const ALLOWED_USERS = (process.env.ALLOWED_USERS || "").split(",").map(s => s.trim()).filter(Boolean);
+const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN; // e.g. dev-zzhjbmtzoxtgoz31.us.auth0.com
+const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE; // e.g. https://shree-drive.onrender.com
+const MAKE_PUBLIC = String(process.env.MAKE_PUBLIC || "false").toLowerCase() === "true";
 
 if (!AUTH0_DOMAIN || !AUTH0_AUDIENCE) {
-  console.error("AUTH0_DOMAIN and AUTH0_AUDIENCE are required");
-  process.exit(1);
+  console.warn("AUTH0_DOMAIN or AUTH0_AUDIENCE not set — JWT verification will fail until set.");
 }
 
-app.use(cors({ origin: FRONTEND_ORIGIN, credentials: true }));
-app.use(express.json());
+// ---------- Google Drive setup ----------
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  process.env.GOOGLE_REDIRECT_URI || "urn:ietf:wg:oauth:2.0:oob"
+);
+oauth2Client.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
+const drive = google.drive({ version: "v3", auth: oauth2Client });
 
-const UPLOAD_DIR = path.join(__dirname, 'uploads');
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-
-// JWKS client for Auth0
-const client = jwksClient({
-  jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`,
-  cache: true,
-  rateLimit: true
-});
-
-function getKey(header, callback) {
-  client.getSigningKey(header.kid, function (err, key) {
-    if (err) return callback(err);
-    const signingKey = key.getPublicKey();
-    callback(null, signingKey);
-  });
-}
-
-function isAllowedUser(decoded) {
-  const email = decoded && (decoded.email || decoded['email']);
-  const sub = decoded && decoded.sub;
-  if (ALLOWED_USERS.length === 0) return true;
-  return (email && ALLOWED_USERS.includes(email)) || (sub && ALLOWED_USERS.includes(sub));
-}
-
-function verifyJWT(req, res, next) {
-  const auth = req.headers.authorization;
-  if (!auth || !auth.startsWith('Bearer ')) return res.status(401).send('Missing token');
-  const token = auth.split(' ')[1];
-
-  jwt.verify(token, getKey, {
-    audience: AUTH0_AUDIENCE,
-    issuer: `https://${AUTH0_DOMAIN}/`,
-    algorithms: ['RS256']
-  }, (err, decoded) => {
-    if (err) {
-      console.error("JWT verify error:", err);
-      return res.status(401).send('Invalid token');
-    }
-    if (!isAllowedUser(decoded)) return res.status(403).send('User not allowed');
-    req.user = decoded;
-    next();
-  });
-}
-
-// Health check
-app.get('/api/diag', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
-
-// List uploaded photos metadata
-app.get('/api/list', verifyJWT, (req, res) => {
-  const metaPath = path.join(UPLOAD_DIR, 'photos.json');
+// ---------- Helpers for photos.json ----------
+function readPhotos() {
   try {
-    const arr = JSON.parse(fs.readFileSync(metaPath, 'utf8') || '[]');
-    res.json(arr);
+    const raw = fs.readFileSync(PHOTOS_FILE, "utf8");
+    return JSON.parse(raw || "[]");
   } catch (e) {
-    res.json([]);
+    console.error("readPhotos error:", e);
+    return [];
   }
-});
-
-// Upload photo + caption → Google Drive
-app.post('/api/upload', verifyJWT, upload.single('photo'), async (req, res) => {
+}
+function appendPhoto(entry) {
   try {
-    if (!req.file) return res.status(400).send('No file uploaded');
-    const caption = req.body.caption || '';
+    const arr = readPhotos();
+    arr.unshift(entry); // newest first
+    fs.writeFileSync(PHOTOS_FILE, JSON.stringify(arr, null, 2), "utf8");
+  } catch (e) {
+    console.error("appendPhoto error:", e);
+  }
+}
 
-    // Google OAuth2 client with refresh token
-    const oAuth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET
-    );
-    oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+// ---------- Multer (memory) for Drive uploads ----------
+const upload = multer({ storage: multer.memoryStorage() });
 
-    const drive = google.drive({ version: 'v3', auth: oAuth2Client });
+// ---------- Auth0 JWT middleware ----------
+let jwks;
+if (AUTH0_DOMAIN) {
+  jwks = jwksClient({
+    jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`,
+    cache: true,
+    rateLimit: true
+  });
+}
 
-    const ext = (req.file.originalname.match(/\.[^/.]+$/) || ['.jpg'])[0];
-    const filename = `photo_${Date.now()}${ext}`;
+async function verifyJWTMiddleware(req, res, next) {
+  try {
+    const auth = (req.headers.authorization || "").split(" ");
+    if (auth.length !== 2 || auth[0] !== "Bearer") {
+      return res.status(401).json({ error: "Missing or invalid Authorization header" });
+    }
+    const token = auth[1];
 
-    const bufferStream = new stream.PassThrough();
-    bufferStream.end(req.file.buffer);
+    if (!jwks) return res.status(500).json({ error: "Auth config not set" });
 
-    const fileMetadata = {
-      name: filename,
-      parents: process.env.DRIVE_FOLDER_ID ? [process.env.DRIVE_FOLDER_ID] : undefined
-    };
+    // get kid from token header
+    const decodedHeader = jwt.decode(token, { complete: true });
+    if (!decodedHeader || !decodedHeader.header || !decodedHeader.header.kid) {
+      return res.status(401).json({ error: "Invalid token (no kid)" });
+    }
 
-    const created = await drive.files.create({
-      requestBody: fileMetadata,
-      media: {
-        mimeType: req.file.mimetype,
-        body: bufferStream
-      },
-      fields: 'id, name, mimeType'
+    const key = await jwks.getSigningKey(decodedHeader.header.kid);
+    const publicKey = key.getPublicKey ? key.getPublicKey() : key.publicKey || key.rsaPublicKey;
+
+    // verify
+    const payload = jwt.verify(token, publicKey, {
+      algorithms: ["RS256"],
+      audience: AUTH0_AUDIENCE,
+      issuer: `https://${AUTH0_DOMAIN}/`
     });
 
-    const fileId = created.data.id;
+    // ALLOWED_USERS check (if configured)
+    if (ALLOWED_USERS.length > 0) {
+      const email = payload.email || (payload["https://example.com/email"]) || payload["sub"];
+      // allow if email is present and in ALLOWED_USERS, otherwise block
+      if (!email || !ALLOWED_USERS.includes(email)) {
+        return res.status(403).json({ error: "User not allowed" });
+      }
+    }
 
-    // Save metadata locally
-    const metaPath = path.join(UPLOAD_DIR, 'photos.json');
-    let arr = [];
-    try { arr = JSON.parse(fs.readFileSync(metaPath, 'utf8') || '[]'); } catch (e) { arr = []; }
-    const metadata = {
+    // attach user info
+    req.user = payload;
+    next();
+  } catch (err) {
+    console.error("verifyJWT error:", err && err.message);
+    return res.status(401).json({ error: "Invalid token" });
+  }
+}
+
+// ---------- Routes ----------
+
+// Health
+app.get("/api/diag", (req, res) => res.json({ status: "ok" }));
+
+// Upload -> Google Drive
+app.post("/api/upload", verifyJWTMiddleware, upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+
+    const caption = (req.body.caption || "").toString();
+    const name = Date.now() + "-" + req.file.originalname;
+    const parents = process.env.GOOGLE_DRIVE_FOLDER_ID ? [process.env.GOOGLE_DRIVE_FOLDER_ID] : [];
+
+    const fileMetadata = { name, parents };
+    const media = { mimeType: req.file.mimetype, body: Buffer.from(req.file.buffer) };
+
+    // Upload
+    const driveRes = await drive.files.create({
+      resource: fileMetadata,
+      media,
+      fields: "id,mimeType"
+    });
+
+    const fileId = driveRes.data.id;
+    // optionally make public (if MAKE_PUBLIC true)
+    if (MAKE_PUBLIC) {
+      try {
+        await drive.permissions.create({
+          fileId,
+          requestBody: { role: "reader", type: "anyone" }
+        });
+      } catch (permErr) {
+        console.warn("Could not make file public:", permErr && permErr.message);
+      }
+    }
+
+    const entry = {
       id: fileId,
-      name: created.data.name,
+      filename: req.file.originalname,
       caption,
-      uploadedBy: req.user.email || req.user.sub,
       uploadedAt: new Date().toISOString()
     };
-    arr.push(metadata);
-    fs.writeFileSync(metaPath, JSON.stringify(arr, null, 2));
+    appendPhoto(entry);
 
-    res.json({ message: 'Uploaded to Google Drive', id: fileId, metadata });
+    res.json({ success: true, ...entry });
   } catch (err) {
-    console.error('Upload error', err);
-    res.status(500).send('Upload failed: ' + (err.message || String(err)));
+    console.error("Upload error:", err && (err.message || err));
+    res.status(500).json({ error: "Upload failed" });
   }
 });
 
-// Stream file securely
-app.get('/api/file/:id', verifyJWT, async (req, res) => {
-  const fileId = req.params.id;
-  try {
-    const oAuth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET
-    );
-    oAuth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
-    const drive = google.drive({ version: 'v3', auth: oAuth2Client });
+// List
+app.get("/api/list", verifyJWTMiddleware, (req, res) => {
+  const arr = readPhotos();
+  res.json(arr);
+});
 
-    const driveRes = await drive.files.get({ fileId, alt: 'media' }, { responseType: 'stream' });
+// Stream file from Drive securely
+app.get("/api/file/:id", verifyJWTMiddleware, async (req, res) => {
+  try {
+    const fileId = req.params.id;
+    // get file metadata for content-type
+    const meta = await drive.files.get({ fileId, fields: "mimeType" });
+    const mime = meta.data.mimeType || "application/octet-stream";
+    res.setHeader("Content-Type", mime);
+
+    const driveRes = await drive.files.get({ fileId, alt: "media" }, { responseType: "stream" });
     driveRes.data.pipe(res);
   } catch (err) {
-    console.error('File fetch error', err);
-    res.status(500).send('File fetch error');
+    console.error("File stream error:", err && err.message);
+    res.status(500).json({ error: "Could not fetch file" });
   }
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Serve a simple root message
+app.get("/", (req, res) => {
+  res.send("shree backend - /api/upload (POST), /api/list, /api/file/:id, /api/diag");
+});
+
+// ---------- Start ----------
+app.listen(PORT, () => {
+  console.log(`✅ Backend running on http://localhost:${PORT}`);
+});
