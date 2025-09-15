@@ -2,208 +2,144 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Sweet Memories of Shreshtha's Life</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="/auth-init.js" defer></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Life — Shreshtha</title>
+
+  <script src="/auth-init.js"></script>
+  <script src="/guard-auth.js"></script>
 
   <style>
-    :root{
-      --bg:#f2f7f2;
-      --accent:#355e3b; /* olive header */
-      --card:#ffffff;
-      --muted:#6b6b6b;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family: "Segoe UI", Roboto, Arial, sans-serif;
-      background: linear-gradient(180deg,#f6faf4 0%,var(--bg) 100%);
-      color:#222;
-      -webkit-font-smoothing:antialiased;
-    }
-    header{
-      background: var(--accent);
-      color:#fff;
-      padding:20px 10px;
-      text-align:center;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-    }
-    header h1{ margin:0; font-size:22px; letter-spacing:0.2px; }
-    main{ max-width:1100px; margin:22px auto; padding:0 18px 60px; }
-
-    /* Responsive grid but natural image heights */
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap:18px;
-      align-items:start;
-    }
-
-    .card{
-      background: var(--card);
-      border-radius:14px;
-      box-shadow: 0 6px 18px rgba(19,19,19,0.06);
-      overflow: visible;
-      position:relative;
-      transform-origin:center;
-      transition: transform 220ms ease;
-      cursor:pointer;
-      padding-bottom:10px;
-    }
-
-    /* Image preserves natural aspect */
-    .card img{
-      display:block;
-      width:100%;
-      height:auto; /* important: no forced crop */
-      border-top-left-radius:14px;
-      border-top-right-radius:14px;
-      transition: transform 300ms cubic-bezier(.2,.9,.2,1);
-      will-change: transform;
-    }
-    /* gentle zoom on hover */
-    .card:hover img{ transform: scale(1.06); }
-
-    .quote{
-      padding:10px 12px 16px;
-      color:var(--muted);
-      font-size:14px;
-      line-height:1.3;
-      text-align:center;
-    }
-
-    /* Heart style (pyara & soft) */
-    .heart{
-      position:absolute;
-      width:16px;
-      height:16px;
-      transform: rotate(45deg);
-      pointer-events:none;
-      opacity:0.98;
-      z-index:5;
-      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.08));
-      animation: pop 240ms ease-out, floatUp 1400ms ease-in forwards;
-      border-radius:2px;
-      overflow:visible;
-    }
-    .heart::before, .heart::after{
-      content:"";
-      position:absolute;
-      width:16px;
-      height:16px;
-      border-radius:50%;
-      background:inherit;
-      left:0;
-      top:-8px;
-    }
-    .heart::after{
-      left:-8px;
-      top:0;
-    }
-
-    @keyframes pop{
-      0%{ transform: rotate(45deg) scale(0); opacity:0; }
-      65%{ transform: rotate(45deg) scale(1.12); opacity:1; }
-      100%{ transform: rotate(45deg) scale(1); opacity:1; }
-    }
-    @keyframes floatUp{
-      0%{ transform: translateY(0) rotate(45deg); opacity:1; }
-      100%{ transform: translateY(-100px) rotate(-10deg); opacity:0; }
-    }
-
-    /* small screens spacing */
-    @media (max-width:520px){
-      header h1{ font-size:18px; }
-      main{ padding:0 12px 40px; }
-      .quote{ font-size:13px; padding:8px 10px 12px; }
+    :root { --bg: #fafaf9; --card: #fff; --accent: #e84c88; --muted:#666; }
+    body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:var(--bg); color:#222; }
+    header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; background:linear-gradient(90deg,#fff,#f7f8fb); box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .brand img { width:48px; height:48px; border-radius:8px; object-fit:cover }
+    h1 { margin:0; font-size:18px; }
+    nav { display:flex; gap:10px; }
+    .btn { background:#2e7d32;color:white;padding:8px 12px;border-radius:8px;border:0;cursor:pointer;font-weight:600 }
+    .btn.alt { background:transparent;color:#2e7d32;border:1px solid #dbe; }
+    main { padding:20px 24px; max-width:1100px; margin:0 auto; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:14px; }
+    .tile { position:relative; overflow:hidden; border-radius:12px; background:#fff; box-shadow:0 6px 18px rgba(20,20,20,0.04); cursor:pointer; height:160px; display:flex; align-items:center; justify-content:center; }
+    .tile img { width:100%; height:100%; object-fit:cover; transition: transform .35s ease; display:block; }
+    .tile:hover img { transform: scale(1.12); }
+    .caption { position:absolute; left:8px; bottom:8px; background:rgba(0,0,0,0.45); color:#fff; padding:6px 8px; border-radius:8px; font-size:13px; backdrop-filter: blur(4px); }
+    /* modal */
+    .modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:9999; }
+    .modal.open { display:flex; }
+    .modal .card { max-width:90vw; max-height:90vh; border-radius:12px; overflow:hidden; background:#111; padding:12px; display:flex; gap:12px; align-items:center }
+    .modal img { max-width:75vw; max-height:80vh; object-fit:contain; display:block; border-radius:8px }
+    .modal .meta { color:#fff; max-width:38vw; overflow:auto }
+    .close { position:absolute; right:22px; top:18px; background:transparent; border:0; color:#fff; font-size:22px; cursor:pointer; }
+    footer { text-align:center; padding:18px; color:var(--muted); font-size:13px }
+    @media (max-width:640px) {
+      .modal img { max-width:85vw }
+      .modal .meta { display:none }
     }
   </style>
 </head>
 <body>
-  <header><h1>Sweet Memories of Shreshtha's Life</h1></header>
+  <header>
+    <div class="brand">
+      <img src="/photo1.jpg" alt="logo">
+      <div>
+        <h1>Shreshtha — Life</h1>
+        <div style="font-size:13px;color:#666">Memories & Moments</div>
+      </div>
+    </div>
+
+    <nav>
+      <button class="btn" id="btnUpload">Upload</button>
+      <button class="btn alt" id="btnGallery">Gallery</button>
+      <button class="btn alt" id="btnLogout">Logout</button>
+    </nav>
+  </header>
 
   <main>
-    <section class="grid" id="grid">
-      <!-- Example cards: replace src with your real photos -->
-      <article class="card"><img src="photo1.jpg" alt="Memory 1"><div class="quote">A smile that lights up the day.</div></article>
-      <article class="card"><img src="photo2.jpg" alt="Memory 2"><div class="quote">Joy in the little moments.</div></article>
-      <article class="card"><img src="photo3.jpg" alt="Memory 3"><div class="quote">Everyday magic with you.</div></article>
-      <article class="card"><img src="photo4.jpg" alt="Memory 4"><div class="quote">Laughter is our language.</div></article>
-      <article class="card"><img src="photo5.jpg" alt="Memory 5"><div class="quote">Together in every season.</div></article>
-      <article class="card"><img src="photo6.jpg" alt="Memory 6"><div class="quote">Love in every heartbeat.</div></article>
-      <article class="card"><img src="photo7.jpg" alt="Memory 7"><div class="quote">Dreams weaved together.</div></article>
-      <article class="card"><img src="photo8.jpg" alt="Memory 8"><div class="quote">Holding on to happiness.</div></article>
-      <article class="card"><img src="photo9.jpg" alt="Memory 9"><div class="quote">Forever in these memories.</div></article>
-    </section>
+    <div data-guard>
+      <section style="margin-bottom:18px">
+        <h2 style="margin:0 0 10px">Latest Photos</h2>
+        <p style="margin:0 0 12px;color:#666">Hover to zoom. Click to open full view.</p>
+      </section>
+
+      <section class="grid" id="photoGrid">
+        <!-- tiles injected by JS -->
+      </section>
+    </div>
   </main>
 
+  <div class="modal" id="modal">
+    <button class="close" id="closeBtn">✕</button>
+    <div class="card" style="background:transparent;border:none;">
+      <img id="modalImg" src="" alt="photo">
+      <div class="meta" id="modalMeta" style="padding:8px;">
+        <h3 id="modalTitle" style="margin-top:0;color:#fff"></h3>
+        <p id="modalCaption" style="color:#ddd"></p>
+        <div style="margin-top:12px"><a id="downloadLink" href="#" target="_blank" style="color:#fff;text-decoration:underline">Open in new tab</a></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Shreshtha — Protected. Only invited users may view.</footer>
+
   <script>
-    // Auth guard (same pattern as other pages)
-    function onAuthReady(cb) {
-      if (window.__AUTH_READY__) {
-        window.__AUTH_READY__.then(cb).catch(err => {
-          document.body.innerHTML = '<p style="padding:20px">Auth failed: ' + (err.message||err) + '</p>';
-        });
-      } else {
-        setTimeout(()=>onAuthReady(cb),100);
-      }
+    // photo list: uses local static photo files (photo1.jpg..photo9.jpg)
+    const photos = [
+      { id: "photo1", src: "/photo1.jpg", title: "Photo 1", caption: "Memorable day 1" },
+      { id: "photo2", src: "/photo2.jpg", title: "Photo 2", caption: "Memorable day 2" },
+      { id: "photo3", src: "/photo3.jpg", title: "Photo 3", caption: "Memorable day 3" },
+      { id: "photo4", src: "/photo4.jpg", title: "Photo 4", caption: "Memorable day 4" },
+      { id: "photo5", src: "/photo5.jpg", title: "Photo 5", caption: "Memorable day 5" },
+      { id: "photo6", src: "/photo6.jpg", title: "Photo 6", caption: "Memorable day 6" },
+      { id: "photo7", src: "/photo7.jpg", title: "Photo 7", caption: "Memorable day 7" },
+      { id: "photo8", src: "/photo8.jpg", title: "Photo 8", caption: "Memorable day 8" },
+      { id: "photo9", src: "/photo9.jpg", title: "Photo 9", caption: "Memorable day 9" }
+    ];
+
+    const grid = document.getElementById("photoGrid");
+
+    function buildGrid() {
+      grid.innerHTML = "";
+      photos.forEach((p, i) => {
+        const t = document.createElement("div");
+        t.className = "tile";
+        t.dataset.index = i;
+        t.innerHTML = `<img src="${p.src}" alt="${p.title}"><div class="caption">${p.title}</div>`;
+        t.addEventListener("click", () => openModal(i));
+        grid.appendChild(t);
+      });
     }
 
-    onAuthReady(async () => {
-      const authed = await window.__AUTH__.isAuthenticated();
-      if (!authed) {
-        // redirect to login page if not authed
-        window.__AUTH__.login({ redirect_uri: window.location.origin + '/life.html' });
-        return;
-      }
+    function openModal(i) {
+      const p = photos[i];
+      document.getElementById("modalImg").src = p.src;
+      document.getElementById("modalTitle").textContent = p.title;
+      document.getElementById("modalCaption").textContent = p.caption;
+      document.getElementById("downloadLink").href = p.src;
+      document.getElementById("modal").classList.add("open");
+    }
+    function closeModal() {
+      document.getElementById("modal").classList.remove("open");
+      document.getElementById("modalImg").src = "";
+    }
+
+    document.getElementById("closeBtn").addEventListener("click", closeModal);
+    document.getElementById("modal").addEventListener("click", (e) => {
+      if (e.target === document.getElementById("modal")) closeModal();
     });
 
-    // Hearts spawn only when user hovers a card
-    (function(){
-      const colors = ['#ff7b9b','#ff9fb0','#ffd1d9','#ff6b81','#ff8fa3'];
-      function spawnHearts(card){
-        const rect = card.getBoundingClientRect();
-        // create several hearts with slight delays
-        for(let i=0;i<6;i++){
-          setTimeout(()=>{
-            const heart = document.createElement('div');
-            heart.className = 'heart';
-            const size = 12 + Math.round(Math.random()*12);
-            heart.style.width = size+'px';
-            heart.style.height = size+'px';
-            const color = colors[Math.floor(Math.random()*colors.length)];
-            heart.style.background = color;
-            // position - random within lower half of the card
-            const left = (10 + Math.random()*80); // percent
-            heart.style.left = left+'%';
-            // place near bottom inside card
-            heart.style.bottom = '18px';
-            // reduce opacity for small hearts
-            heart.style.opacity = (0.7 + Math.random()*0.3).toString();
-            // add to card
-            card.appendChild(heart);
-            // remove after animation done (~1500-1800ms)
-            setTimeout(()=>{ heart.remove(); },1800 + Math.random()*300);
-          }, i*80);
-        }
-      }
+    buildGrid();
 
-      // attach listeners
-      document.querySelectorAll('.card').forEach(card=>{
-        let hoverTimer = null;
-        card.addEventListener('mouseenter', ()=> {
-          // spawn immediately and every 900ms while hovered
-          spawnHearts(card);
-          hoverTimer = setInterval(()=> spawnHearts(card), 900);
-        });
-        card.addEventListener('mouseleave', ()=> {
-          if(hoverTimer) clearInterval(hoverTimer);
-          hoverTimer = null;
-        });
-        // optional: also spawn on click/tap for mobile
-        card.addEventListener('click', ()=> spawnHearts(card));
-      });
-    })();
+    // nav actions
+    document.getElementById("btnUpload").addEventListener("click", () => window.location.href = "/upload.html");
+    document.getElementById("btnGallery").addEventListener("click", () => window.location.href = "/gallery.html");
+    document.getElementById("btnLogout").addEventListener("click", async () => {
+      if (window.auth && window.auth.logout) {
+        window.auth.logout();
+      } else {
+        window.location.href = "/";
+      }
+    });
   </script>
 </body>
 </html>
