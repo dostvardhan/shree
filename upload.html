@@ -3,122 +3,130 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shree Drive — Upload</title>
+  <title>Upload — Shree</title>
 
-  <!-- Auth0 SPA SDK (CDN) -->
-    <script src="/auth-init.js"></script>
-    <script src="/guard-auth.js"></script>
-
-  <!-- load module helpers -->
-  <script type="module" src="auth-init.js"></script>
-  <script type="module" src="guard-auth.js"></script>
+  <!-- Auth0 init + guard (ensure these files exist in your repo) -->
+  <script src="/auth-init.js"></script>
+  <script src="/guard-auth.js"></script>
 
   <style>
-    body { font-family: system-ui, Arial; padding: 20px; max-width:900px; margin:auto; }
-    h1 { margin-top: 0; }
-    .small { color:#666; font-size:0.95rem; margin-top:6px; }
-    form { margin-top:16px; }
-    pre { background:#f6f8fa; padding:12px; border-radius:6px; margin-top:12px; white-space:pre-wrap; }
-    button { margin-right:8px; padding:8px 12px; }
+    body{font-family:system-ui,Segoe UI,Roboto,Arial; background:#f5f7f6; color:#21331f; padding:28px; display:flex; flex-direction:column; align-items:center}
+    .card{width:360px;background:#fff;border-radius:12px;padding:18px;box-shadow:0 8px 24px rgba(0,0,0,0.06)}
+    h1{margin:0 0 12px;color:#2e4d34;text-align:center}
+    form{display:flex;flex-direction:column;gap:10px}
+    input[type="file"]{padding:6px}
+    input[type="text"]{padding:8px;border-radius:6px;border:1px solid #ddd}
+    button{background:#2e7d32;color:#fff;padding:10px;border:0;border-radius:8px;cursor:pointer}
+    #status{margin-top:12px;text-align:center;font-weight:600}
+    .small{font-size:13px;color:#666;text-align:center;margin-top:10px}
+    .top-actions{display:flex;justify-content:space-between;margin-bottom:10px;gap:10px}
+    .top-actions button{background:#eee;color:#111;padding:6px 10px}
   </style>
 </head>
 <body>
-  <h1>Shree Drive — Upload</h1>
+  <div class="card" id="protected-content" data-guard>
+    <div class="top-actions">
+      <div id="userEmail">Not signed in</div>
+      <div>
+        <button id="btnLogout" style="display:none">Logout</button>
+        <button id="btnLogin" style="display:none">Login</button>
+      </div>
+    </div>
 
-  <div id="auth-ui">
-    <button id="btn-login">Login</button>
-    <button id="btn-logout" style="display:none">Logout</button>
-    <div id="who" class="small">Not signed in</div>
+    <h1>📸 Upload a Memory</h1>
+
+    <form id="uploadForm">
+      <input type="file" id="fileInput" accept="image/*" required />
+      <input type="text" id="captionInput" placeholder="Short caption (optional)" />
+      <button id="btnUpload" type="submit">Upload to Private Drive</button>
+    </form>
+
+    <div id="status" aria-live="polite"></div>
+    <div class="small">Uploads are stored privately on Google Drive (only invited users can view).</div>
   </div>
 
-  <form id="upload-form" style="display:none" enctype="multipart/form-data">
-    <label>Photo: <input name="photo" type="file" accept="image/*" required></label><br>
-    <label>Caption: <input name="caption" type="text"></label><br>
-    <button type="submit">Upload to Drive</button>
-  </form>
+  <script>
+    // guard-auth.js should hide #protected-content until auth validated.
+    // We rely on authFetch(url, opts) returning a fetch-like Response and
+    // a global 'auth' object with login/logout/getUser methods (provided by auth-init.js).
 
-  <pre id="out">Console output will appear here.</pre>
+    const API = "https://shree-drive.onrender.com";
 
-  <script type="module">
-    import { getAuth0Client, ensureHtmlPath } from './auth-init.js';
-    import { requireAuthAndRun } from './guard-auth.js';
-
-    const outEl = document.getElementById("out");
-    const whoEl = document.getElementById("who");
-    const btnLogin = document.getElementById("btn-login");
-    const btnLogout = document.getElementById("btn-logout");
-    const uploadForm = document.getElementById("upload-form");
-
-    function log(v) {
-      if (typeof v === "string") outEl.textContent = v;
-      else outEl.textContent = JSON.stringify(v, null, 2);
+    function showStatus(msg, isError=false){
+      const el = document.getElementById("status");
+      el.textContent = msg;
+      el.style.color = isError ? "#c62828" : "#2e7d32";
     }
 
-    async function updateUi(auth0) {
-      const isAuth = await auth0.isAuthenticated();
-      if (isAuth) {
-        const user = await auth0.getUser();
-        whoEl.textContent = `Signed in: ${user.email || user.name || user.sub}`;
-        btnLogin.style.display = "none";
-        btnLogout.style.display = "";
-        uploadForm.style.display = "";
+    async function initUI(){
+      // auth-init.js should set window.auth with helpers
+      if (window.auth && typeof window.auth.getUser === "function") {
+        const user = await window.auth.getUser();
+        if (user && user.email) {
+          document.getElementById("userEmail").innerText = user.email;
+          document.getElementById("btnLogout").style.display = "inline-block";
+        } else {
+          document.getElementById("btnLogin").style.display = "inline-block";
+        }
       } else {
-        whoEl.textContent = "Not signed in";
-        btnLogin.style.display = "";
-        btnLogout.style.display = "none";
-        uploadForm.style.display = "none";
+        // fallback: show login button that calls window.login() if available
+        const btn = document.getElementById("btnLogin");
+        btn.style.display = "inline-block";
       }
     }
 
-    // wire up the guarded init
-    requireAuthAndRun(async ({ auth0, isAuthenticated }) => {
-      // ensure UI updated
-      await updateUi(auth0);
-
-      // login: pass appState.returnTo so we restore exact path after login
-      btnLogin.addEventListener("click", async () => {
-        const current = ensureHtmlPath(location.pathname);
-        await auth0.loginWithRedirect({
-          authorizationParams: { redirect_uri: window.location.origin + "/upload.html" },
-          appState: { returnTo: current }
-        });
-      });
-
-      btnLogout.addEventListener("click", () => {
-        auth0.logout({ logoutParams: { returnTo: window.location.origin + "/upload.html" } });
-      });
-
-      // upload handler
-      uploadForm.addEventListener("submit", async (ev) => {
-        ev.preventDefault();
-        const file = uploadForm.photo.files[0];
-        if (!file) return log("Choose file first.");
-        const caption = uploadForm.caption.value || "";
-
-        try {
-          const token = await auth0.getTokenSilently();
-          const fd = new FormData();
-          fd.append("photo", file);
-          fd.append("caption", caption);
-
-          log("Uploading...");
-          const resp = await fetch("https://shree-drive.onrender.com/api/upload", {
-            method: "POST",
-            headers: { Authorization: "Bearer " + token },
-            body: fd
-          });
-
-          const data = await resp.json().catch(() => ({ status: resp.status }));
-          if (!resp.ok) {
-            log("Upload failed: " + JSON.stringify(data));
-          } else {
-            log("Upload success: " + JSON.stringify(data, null, 2));
-          }
-        } catch (err) {
-          log("Upload error: " + (err && err.message ? err.message : err));
-        }
-      });
+    document.getElementById("btnLogin").addEventListener("click", async () => {
+      if (window.auth && window.auth.login) return window.auth.login();
+      alert("Login function not available. Check auth-init.js");
     });
+    document.getElementById("btnLogout").addEventListener("click", async () => {
+      if (window.auth && window.auth.logout) return window.auth.logout();
+      alert("Logout function not available.");
+    });
+
+    document.getElementById("uploadForm").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      showStatus("⏳ Preparing upload...");
+
+      const file = document.getElementById("fileInput").files[0];
+      const caption = document.getElementById("captionInput").value || "";
+
+      if (!file) { showStatus("Please choose a file.", true); return; }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("caption", caption);
+
+      try {
+        // Use authFetch if available (it should attach Authorization header)
+        let res;
+        if (typeof authFetch === "function") {
+          res = await authFetch(API + "/api/upload", { method: "POST", body: formData });
+        } else {
+          // fallback: try to get token from auth helper
+          if (!window.auth || !window.auth.getToken) throw new Error("No auth available");
+          const token = await window.auth.getToken();
+          res = await fetch(API + "/api/upload", { method: "POST", body: formData, headers: { Authorization: "Bearer " + token }});
+        }
+
+        if (!res.ok) {
+          const err = await res.json().catch(()=>null);
+          showStatus("Upload failed: " + (err && err.error ? err.error : res.statusText), true);
+          return;
+        }
+
+        const data = await res.json();
+        showStatus("✅ Uploaded: " + data.filename);
+        // reset form
+        document.getElementById("uploadForm").reset();
+      } catch (e) {
+        console.error(e);
+        showStatus("Upload error: " + (e.message || e), true);
+      }
+    });
+
+    // initialize UI (display user email, login/logout)
+    initUI().catch(e=>console.warn("initUI error", e));
   </script>
 </body>
 </html>
