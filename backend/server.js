@@ -1,196 +1,155 @@
-// backend/server.js (CommonJS) - Drive upload + Auth0 JWT + list + stream
-const express = require("express");
-const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
-const { google } = require("googleapis");
-const jwksClient = require("jwks-rsa");
-const jwt = require("jsonwebtoken");
-require("dotenv").config();
+// backend/server.js
+import express from "express";
+import multer from "multer";
+import cors from "cors";
+import jwt from "jsonwebtoken";
+import jwksClient from "jwks-rsa";
+import { google } from "googleapis";
+import fs from "fs";
+import path from "path";
+import dotenv from "dotenv";
 
+dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// ---------- Config ----------
-const PHOTOS_FILE = path.join(__dirname, "photos.json");
-if (!fs.existsSync(PHOTOS_FILE)) fs.writeFileSync(PHOTOS_FILE, "[]", "utf8");
+// ===== Allowed Users (only these emails can access) =====
+const ALLOWED_USERS = [
+  "mitravardhan@gmail.com",
+  "dostvardhan@gmail.com",
+  "jhilmilsiyaadein@gmail.com"
+];
 
-const ALLOWED_USERS = (process.env.ALLOWED_USERS || "").split(",").map(s => s.trim()).filter(Boolean);
-const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN; // e.g. dev-zzhjbmtzoxtgoz31.us.auth0.com
-const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE; // e.g. https://shree-drive.onrender.com
-const MAKE_PUBLIC = String(process.env.MAKE_PUBLIC || "false").toLowerCase() === "true";
+// ===== Auth0 JWT Verification =====
+const client = jwksClient({
+  jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`
+});
 
-if (!AUTH0_DOMAIN || !AUTH0_AUDIENCE) {
-  console.warn("AUTH0_DOMAIN or AUTH0_AUDIENCE not set — JWT verification will fail until set.");
-}
-
-// ---------- Google Drive setup ----------
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI || "urn:ietf:wg:oauth:2.0:oob"
-);
-oauth2Client.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
-const drive = google.drive({ version: "v3", auth: oauth2Client });
-
-// ---------- Helpers for photos.json ----------
-function readPhotos() {
-  try {
-    const raw = fs.readFileSync(PHOTOS_FILE, "utf8");
-    return JSON.parse(raw || "[]");
-  } catch (e) {
-    console.error("readPhotos error:", e);
-    return [];
-  }
-}
-function appendPhoto(entry) {
-  try {
-    const arr = readPhotos();
-    arr.unshift(entry); // newest first
-    fs.writeFileSync(PHOTOS_FILE, JSON.stringify(arr, null, 2), "utf8");
-  } catch (e) {
-    console.error("appendPhoto error:", e);
-  }
-}
-
-// ---------- Multer (memory) for Drive uploads ----------
-const upload = multer({ storage: multer.memoryStorage() });
-
-// ---------- Auth0 JWT middleware ----------
-let jwks;
-if (AUTH0_DOMAIN) {
-  jwks = jwksClient({
-    jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`,
-    cache: true,
-    rateLimit: true
+function getKey(header, callback) {
+  client.getSigningKey(header.kid, function (err, key) {
+    const signingKey = key.getPublicKey();
+    callback(null, signingKey);
   });
 }
 
-async function verifyJWTMiddleware(req, res, next) {
-  try {
-    const auth = (req.headers.authorization || "").split(" ");
-    if (auth.length !== 2 || auth[0] !== "Bearer") {
-      return res.status(401).json({ error: "Missing or invalid Authorization header" });
-    }
-    const token = auth[1];
+function verifyJWTMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "No token provided" });
 
-    if (!jwks) return res.status(500).json({ error: "Auth config not set" });
+  const token = authHeader.split(" ")[1];
+  jwt.verify(
+    token,
+    getKey,
+    {
+      audience: process.env.AUTH0_AUDIENCE,
+      issuer: `https://${process.env.AUTH0_DOMAIN}/`,
+      algorithms: ["RS256"]
+    },
+    (err, payload) => {
+      if (err) return res.status(401).json({ error: "Invalid token" });
 
-    // get kid from token header
-    const decodedHeader = jwt.decode(token, { complete: true });
-    if (!decodedHeader || !decodedHeader.header || !decodedHeader.header.kid) {
-      return res.status(401).json({ error: "Invalid token (no kid)" });
-    }
-
-    const key = await jwks.getSigningKey(decodedHeader.header.kid);
-    const publicKey = key.getPublicKey ? key.getPublicKey() : key.publicKey || key.rsaPublicKey;
-
-    // verify
-    const payload = jwt.verify(token, publicKey, {
-      algorithms: ["RS256"],
-      audience: AUTH0_AUDIENCE,
-      issuer: `https://${AUTH0_DOMAIN}/`
-    });
-
-    // ALLOWED_USERS check (if configured)
-    if (ALLOWED_USERS.length > 0) {
-      const email = payload.email || (payload["https://example.com/email"]) || payload["sub"];
-      // allow if email is present and in ALLOWED_USERS, otherwise block
-      if (!email || !ALLOWED_USERS.includes(email)) {
-        return res.status(403).json({ error: "User not allowed" });
+      // ✅ Only allow invited users
+      if (!ALLOWED_USERS.includes(payload.email)) {
+        return res.status(403).json({ error: "Access denied: not invited" });
       }
-    }
 
-    // attach user info
-    req.user = payload;
-    next();
-  } catch (err) {
-    console.error("verifyJWT error:", err && err.message);
-    return res.status(401).json({ error: "Invalid token" });
-  }
+      req.user = payload;
+      next();
+    }
+  );
 }
 
-// ---------- Routes ----------
+// ===== Multer (local temp upload before sending to Drive) =====
+const upload = multer({ dest: "uploads/" });
 
-// Health
-app.get("/api/diag", (req, res) => res.json({ status: "ok" }));
+// ===== Google Drive Setup =====
+const oauth2Client = new google.auth.OAuth2(
+  process.env.CLIENT_ID,
+  process.env.CLIENT_SECRET,
+  process.env.REDIRECT_URI
+);
+oauth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+const drive = google.drive({ version: "v3", auth: oauth2Client });
 
-// Upload -> Google Drive
+const METADATA_FILE = path.join(process.cwd(), "backend", "photos.json");
+if (!fs.existsSync(METADATA_FILE)) fs.writeFileSync(METADATA_FILE, "[]");
+
+// ===== Routes =====
+
+// Health check
+app.get("/api/diag", (req, res) => {
+  res.json({ status: "ok" });
+});
+
+// Upload photo + caption
 app.post("/api/upload", verifyJWTMiddleware, upload.single("file"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-    const caption = (req.body.caption || "").toString();
-    const name = Date.now() + "-" + req.file.originalname;
-    const parents = process.env.GOOGLE_DRIVE_FOLDER_ID ? [process.env.GOOGLE_DRIVE_FOLDER_ID] : [];
+    const caption = req.body.caption || "";
+    const fileMetadata = { name: req.file.originalname, parents: [process.env.DRIVE_FOLDER_ID] };
+    const media = { mimeType: req.file.mimetype, body: fs.createReadStream(req.file.path) };
 
-    const fileMetadata = { name, parents };
-    const media = { mimeType: req.file.mimetype, body: Buffer.from(req.file.buffer) };
-
-    // Upload
     const driveRes = await drive.files.create({
       resource: fileMetadata,
       media,
-      fields: "id,mimeType"
+      fields: "id"
     });
 
-    const fileId = driveRes.data.id;
-    // optionally make public (if MAKE_PUBLIC true)
-    if (MAKE_PUBLIC) {
-      try {
-        await drive.permissions.create({
-          fileId,
-          requestBody: { role: "reader", type: "anyone" }
-        });
-      } catch (permErr) {
-        console.warn("Could not make file public:", permErr && permErr.message);
-      }
-    }
-
-    const entry = {
-      id: fileId,
+    // Save metadata
+    const photos = JSON.parse(fs.readFileSync(METADATA_FILE));
+    const newEntry = {
+      id: driveRes.data.id,
       filename: req.file.originalname,
       caption,
       uploadedAt: new Date().toISOString()
     };
-    appendPhoto(entry);
+    photos.push(newEntry);
+    fs.writeFileSync(METADATA_FILE, JSON.stringify(photos, null, 2));
 
-    res.json({ success: true, ...entry });
-  } catch (err) {
-    console.error("Upload error:", err && (err.message || err));
+    // cleanup local temp
+    fs.unlinkSync(req.file.path);
+
+    res.json({ success: true, ...newEntry });
+  } catch (e) {
+    console.error("Upload error:", e);
     res.status(500).json({ error: "Upload failed" });
   }
 });
 
-// List
+// List photos
 app.get("/api/list", verifyJWTMiddleware, (req, res) => {
-  const arr = readPhotos();
-  res.json(arr);
-});
-
-// Stream file from Drive securely
-app.get("/api/file/:id", verifyJWTMiddleware, async (req, res) => {
   try {
-    const fileId = req.params.id;
-    // get file metadata for content-type
-    const meta = await drive.files.get({ fileId, fields: "mimeType" });
-    const mime = meta.data.mimeType || "application/octet-stream";
-    res.setHeader("Content-Type", mime);
-
-    const driveRes = await drive.files.get({ fileId, alt: "media" }, { responseType: "stream" });
-    driveRes.data.pipe(res);
-  } catch (err) {
-    console.error("File stream error:", err && err.message);
-    res.status(500).json({ error: "Could not fetch file" });
+    const photos = JSON.parse(fs.readFileSync(METADATA_FILE));
+    res.json(photos);
+  } catch (e) {
+    res.status(500).json({ error: "List failed" });
   }
 });
 
-// Serve a simple root message
-app.get("/", (req, res) => {
-  res.send("shree backend - /api/upload (POST), /api/list, /api/file/:id, /api/diag");
+// Stream a file securely from Google Drive
+app.get("/api/file/:id", verifyJWTMiddleware, async (req, res) => {
+  try {
+    const fileId = req.params.id;
+    const driveRes = await drive.files.get(
+      { fileId, alt: "media" },
+      { responseType: "stream" }
+    );
+    driveRes.data
+      .on("end", () => console.log("File streamed:", fileId))
+      .on("error", (err) => {
+        console.error("Stream error:", err);
+        res.status(500).end();
+      })
+      .pipe(res);
+  } catch (e) {
+    console.error("File stream error:", e);
+    res.status(500).json({ error: "File fetch failed" });
+  }
 });
 
-// ---------- Start ----------
+// ===== Start server =====
+app.use(cors());
 app.listen(PORT, () => {
-  console.log(`✅ Backend running on http://localhost:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
