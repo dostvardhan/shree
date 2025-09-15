@@ -3,130 +3,130 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Upload — Shree</title>
+  <title>Upload — Shreshtha</title>
 
-  <!-- Auth0 init + guard (ensure these files exist in your repo) -->
   <script src="/auth-init.js"></script>
   <script src="/guard-auth.js"></script>
 
   <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Arial; background:#f5f7f6; color:#21331f; padding:28px; display:flex; flex-direction:column; align-items:center}
-    .card{width:360px;background:#fff;border-radius:12px;padding:18px;box-shadow:0 8px 24px rgba(0,0,0,0.06)}
-    h1{margin:0 0 12px;color:#2e4d34;text-align:center}
-    form{display:flex;flex-direction:column;gap:10px}
-    input[type="file"]{padding:6px}
-    input[type="text"]{padding:8px;border-radius:6px;border:1px solid #ddd}
-    button{background:#2e7d32;color:#fff;padding:10px;border:0;border-radius:8px;cursor:pointer}
-    #status{margin-top:12px;text-align:center;font-weight:600}
-    .small{font-size:13px;color:#666;text-align:center;margin-top:10px}
-    .top-actions{display:flex;justify-content:space-between;margin-bottom:10px;gap:10px}
-    .top-actions button{background:#eee;color:#111;padding:6px 10px}
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;background:#fafafa;color:#222}
+    header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+    .btn{background:#2e7d32;color:#fff;padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+    main{max-width:880px;margin:24px auto;padding:18px}
+    .drop{border:2px dashed #dcdcdc;border-radius:12px;padding:28px;text-align:center;background:#fff}
+    .drop.drag{border-color:#2e7d32;background:#f0fff0}
+    input[type="file"]{display:none}
+    .row{display:flex;gap:12px;align-items:center;margin-top:12px}
+    .progress{height:10px;background:#eee;border-radius:6px;overflow:hidden;width:100%}
+    .progress > i{display:block;height:100%;width:0;background:#2e7d32;transition:width .2s}
+    .note{color:#666;font-size:13px;margin-top:8px}
   </style>
 </head>
 <body>
-  <div class="card" id="protected-content" data-guard>
-    <div class="top-actions">
-      <div id="userEmail">Not signed in</div>
-      <div>
-        <button id="btnLogout" style="display:none">Logout</button>
-        <button id="btnLogin" style="display:none">Login</button>
+  <header>
+    <div style="display:flex;gap:12px;align-items:center">
+      <img src="/photo1.jpg" style="width:44px;height:44px;border-radius:8px;object-fit:cover" alt="">
+      <div><strong>Upload</strong><div style="font-size:13px;color:#666">Add a memory</div></div>
+    </div>
+    <nav>
+      <button class="btn" id="btnBack">Back</button>
+    </nav>
+  </header>
+
+  <main>
+    <div data-guard>
+      <h2>Upload a photo</h2>
+      <div id="drop" class="drop">
+        <p style="margin:0">Drag & drop an image here or <button id="chooseBtn" style="color:#2e7d32;background:transparent;border:0;cursor:pointer">Choose file</button></p>
+        <input id="fileInput" type="file" accept="image/*" />
+        <div class="note">Max file size should be reasonable. Uploads are private to invited users.</div>
+      </div>
+
+      <div class="row">
+        <input id="caption" placeholder="Caption (optional)" style="flex:1;padding:10px;border-radius:8px;border:1px solid #ddd" />
+        <button id="uploadBtn" class="btn">Upload</button>
+      </div>
+
+      <div style="margin-top:12px">
+        <div class="progress" id="progress"><i></i></div>
+        <div id="status" class="note"></div>
       </div>
     </div>
-
-    <h1>📸 Upload a Memory</h1>
-
-    <form id="uploadForm">
-      <input type="file" id="fileInput" accept="image/*" required />
-      <input type="text" id="captionInput" placeholder="Short caption (optional)" />
-      <button id="btnUpload" type="submit">Upload to Private Drive</button>
-    </form>
-
-    <div id="status" aria-live="polite"></div>
-    <div class="small">Uploads are stored privately on Google Drive (only invited users can view).</div>
-  </div>
+  </main>
 
   <script>
-    // guard-auth.js should hide #protected-content until auth validated.
-    // We rely on authFetch(url, opts) returning a fetch-like Response and
-    // a global 'auth' object with login/logout/getUser methods (provided by auth-init.js).
+    const drop = document.getElementById("drop");
+    const fileInput = document.getElementById("fileInput");
+    const chooseBtn = document.getElementById("chooseBtn");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const captionEl = document.getElementById("caption");
+    const progBar = document.querySelector("#progress > i");
+    const status = document.getElementById("status");
+    const btnBack = document.getElementById("btnBack");
 
-    const API = "https://shree-drive.onrender.com";
+    let currentFile = null;
 
-    function showStatus(msg, isError=false){
-      const el = document.getElementById("status");
-      el.textContent = msg;
-      el.style.color = isError ? "#c62828" : "#2e7d32";
-    }
-
-    async function initUI(){
-      // auth-init.js should set window.auth with helpers
-      if (window.auth && typeof window.auth.getUser === "function") {
-        const user = await window.auth.getUser();
-        if (user && user.email) {
-          document.getElementById("userEmail").innerText = user.email;
-          document.getElementById("btnLogout").style.display = "inline-block";
-        } else {
-          document.getElementById("btnLogin").style.display = "inline-block";
-        }
-      } else {
-        // fallback: show login button that calls window.login() if available
-        const btn = document.getElementById("btnLogin");
-        btn.style.display = "inline-block";
-      }
-    }
-
-    document.getElementById("btnLogin").addEventListener("click", async () => {
-      if (window.auth && window.auth.login) return window.auth.login();
-      alert("Login function not available. Check auth-init.js");
-    });
-    document.getElementById("btnLogout").addEventListener("click", async () => {
-      if (window.auth && window.auth.logout) return window.auth.logout();
-      alert("Logout function not available.");
-    });
-
-    document.getElementById("uploadForm").addEventListener("submit", async (ev) => {
-      ev.preventDefault();
-      showStatus("⏳ Preparing upload...");
-
-      const file = document.getElementById("fileInput").files[0];
-      const caption = document.getElementById("captionInput").value || "";
-
-      if (!file) { showStatus("Please choose a file.", true); return; }
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("caption", caption);
-
-      try {
-        // Use authFetch if available (it should attach Authorization header)
-        let res;
-        if (typeof authFetch === "function") {
-          res = await authFetch(API + "/api/upload", { method: "POST", body: formData });
-        } else {
-          // fallback: try to get token from auth helper
-          if (!window.auth || !window.auth.getToken) throw new Error("No auth available");
-          const token = await window.auth.getToken();
-          res = await fetch(API + "/api/upload", { method: "POST", body: formData, headers: { Authorization: "Bearer " + token }});
-        }
-
-        if (!res.ok) {
-          const err = await res.json().catch(()=>null);
-          showStatus("Upload failed: " + (err && err.error ? err.error : res.statusText), true);
-          return;
-        }
-
-        const data = await res.json();
-        showStatus("✅ Uploaded: " + data.filename);
-        // reset form
-        document.getElementById("uploadForm").reset();
-      } catch (e) {
-        console.error(e);
-        showStatus("Upload error: " + (e.message || e), true);
+    chooseBtn.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", (e) => {
+      if (e.target.files && e.target.files[0]) {
+        currentFile = e.target.files[0];
+        status.textContent = "Selected: " + currentFile.name;
       }
     });
 
-    // initialize UI (display user email, login/logout)
-    initUI().catch(e=>console.warn("initUI error", e));
+    ;["dragenter","dragover"].forEach(ev => {
+      drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("drag"); });
+    });
+    ;["dragleave","drop"].forEach(ev => {
+      drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("drag"); });
+    });
+    drop.addEventListener("drop", (e) => {
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) { currentFile = f; status.textContent = "Selected: " + f.name; }
+    });
+
+    async function uploadFile() {
+      if (!currentFile) return alert("Choose a file first");
+      uploadBtn.disabled = true;
+      status.textContent = "Preparing upload...";
+      progBar.style.width = "0%";
+
+      const token = await window.auth.getToken();
+      if (!token) return alert("Not authenticated");
+
+      const fd = new FormData();
+      fd.append("file", currentFile);
+      fd.append("caption", captionEl.value || "");
+
+      // fetch with progress using XHR
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${window.location.origin.replace(window.location.hostname, "shree-drive.onrender.com")}/api/upload`); // use Render backend host via origin's host swap if needed
+      xhr.setRequestHeader("Authorization", "Bearer " + token);
+      xhr.upload.onprogress = (evt) => {
+        if (evt.lengthComputable) {
+          const pct = Math.round(evt.loaded / evt.total * 100);
+          progBar.style.width = pct + "%";
+          status.textContent = `Uploading: ${pct}%`;
+        }
+      };
+      xhr.onload = () => {
+        uploadBtn.disabled = false;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          status.textContent = "Upload successful!";
+          setTimeout(() => window.location.href = "/life.html", 900);
+        } else {
+          status.textContent = "Upload failed: " + xhr.responseText;
+        }
+      };
+      xhr.onerror = () => {
+        uploadBtn.disabled = false;
+        status.textContent = "Upload failed (network)";
+      };
+      xhr.send(fd);
+    }
+
+    uploadBtn.addEventListener("click", uploadFile);
+    btnBack.addEventListener("click", () => window.location.href = "/life.html");
   </script>
 </body>
 </html>
