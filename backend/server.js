@@ -1,38 +1,40 @@
 // backend/server.js
+// Complete Express server for Shree site — protected static + Auth0 + Google Drive
 require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const multer = require('multer');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
+const multer = require('multer');
 const { Readable } = require('stream');
-const fetch = require('node-fetch'); // if using Node 18+ you can switch to global fetch
-const { google } = require('googleapis');
 
+const { google } = require('googleapis');
 const jwksRsa = require('jwks-rsa');
 const { expressjwt: jwt } = require('express-jwt');
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
-/* ---------- Config (from env) ---------- */
+// -------------------- Config / env --------------------
 const PORT = process.env.PORT || 4000;
-const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN;
-const AUTH0_CLIENT_ID = process.env.AUTH0_CLIENT_ID;
-const AUTH0_CLIENT_SECRET = process.env.AUTH0_CLIENT_SECRET;
+const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN || '';
+const AUTH0_CLIENT_ID = process.env.AUTH0_CLIENT_ID || '';
+const AUTH0_CLIENT_SECRET = process.env.AUTH0_CLIENT_SECRET || '';
 const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE || `https://${AUTH0_DOMAIN}/api/v2/`;
+const COOKIE_SECRET = process.env.COOKIE_SECRET || 'change_me';
 const ALLOWED_USERS = (process.env.ALLOWED_USERS || '').split(',').map(s => s.trim()).filter(Boolean);
-const COOKIE_SECRET = process.env.COOKIE_SECRET || 'change_this_cookie_secret';
 const DRIVE_FOLDER_ID = process.env.DRIVE_FOLDER_ID || null;
 const MAKE_PUBLIC = (process.env.MAKE_PUBLIC || 'false') === 'true';
+const STATIC_DIR = process.env.STATIC_DIR || 'private';
 
-/* ---------- Middleware ---------- */
+// -------------------- Basic middleware --------------------
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser(COOKIE_SECRET));
+app.use(cookieParser(COOKIE_SECRET)); // signed cookies
 
-/* ---------- JWT helper that reads token from Authorization header OR signed cookie ---------- */
+// -------------------- JWT helper (reads token from header or signed cookie) --------------------
 const checkJwtFromToken = jwt({
   secret: jwksRsa.expressJwtSecret({
     cache: true,
@@ -44,16 +46,18 @@ const checkJwtFromToken = jwt({
   issuer: `https://${AUTH0_DOMAIN}/`,
   algorithms: ['RS256'],
   getToken: (req) => {
+    // Authorization header Bearer token preferred
     if (req.headers && req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
       return req.headers.authorization.split(' ')[1];
     }
+    // fallback to signed cookies set by /auth/callback
     if (req.signedCookies && req.signedCookies.access_token) return req.signedCookies.access_token;
     if (req.signedCookies && req.signedCookies.id_token) return req.signedCookies.id_token;
     return null;
   }
 });
 
-/* ---------- Auth0 Authorization Code flow (server-side) ---------- */
+// -------------------- Auth0 Authorization Code flow (server-side) --------------------
 function randomString(len = 24) {
   return crypto.randomBytes(Math.ceil(len / 2)).toString('hex').slice(0, len);
 }
@@ -71,7 +75,7 @@ app.get('/auth/login', (req, res) => {
     state
   });
   const url = `https://${AUTH0_DOMAIN}/authorize?${params.toString()}`;
-  res.redirect(url);
+  return res.redirect(url);
 });
 
 app.get('/auth/callback', async (req, res) => {
@@ -79,12 +83,13 @@ app.get('/auth/callback', async (req, res) => {
     const { code, state } = req.query;
     const savedState = req.signedCookies && req.signedCookies.auth_state;
     if (!state || !savedState || state !== savedState) {
-      console.error('Invalid state', { state, savedState });
-      return res.status(400).send('Invalid state. Try again.');
+      console.error('Invalid auth state', { state, savedState });
+      return res.status(400).send('Invalid state');
     }
 
     const tokenUrl = `https://${AUTH0_DOMAIN}/oauth/token`;
     const redirectUri = `${req.protocol}://${req.get('host')}/auth/callback`;
+
     const body = {
       grant_type: 'authorization_code',
       client_id: AUTH0_CLIENT_ID,
@@ -93,6 +98,7 @@ app.get('/auth/callback', async (req, res) => {
       redirect_uri: redirectUri
     };
 
+    const fetch = global.fetch || (await import('node-fetch')).default;
     const tokenResp = await fetch(tokenUrl, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -104,15 +110,17 @@ app.get('/auth/callback', async (req, res) => {
       return res.status(500).send('Token exchange failed');
     }
 
+    // store signed httpOnly cookies (access_token, id_token)
     res.cookie('access_token', tokenJson.access_token, { httpOnly: true, secure: true, signed: true, sameSite: 'lax', maxAge: 24 * 60 * 60 * 1000 });
     if (tokenJson.id_token) {
       res.cookie('id_token', tokenJson.id_token, { httpOnly: true, secure: true, signed: true, sameSite: 'lax', maxAge: 24 * 60 * 60 * 1000 });
     }
+
     res.clearCookie('auth_state');
-    res.redirect('/life.html');
+    return res.redirect('/life.html');
   } catch (err) {
-    console.error('callback error', err);
-    res.status(500).send('Auth callback error');
+    console.error('auth callback error', err);
+    return res.status(500).send('Auth callback error');
   }
 });
 
@@ -121,42 +129,51 @@ app.get('/auth/logout', (req, res) => {
   res.clearCookie('id_token');
   const returnTo = `${req.protocol}://${req.get('host')}/index.html`;
   const logoutUrl = `https://${AUTH0_DOMAIN}/v2/logout?client_id=${AUTH0_CLIENT_ID}&returnTo=${encodeURIComponent(returnTo)}`;
-  res.redirect(logoutUrl);
+  return res.redirect(logoutUrl);
 });
 
-/* ---------- Protect static files middleware (before static serve) ---------- */
-function protectStatic(req, res, next) {
-  const protectedExt = /\.(html|jpg|jpeg|png|gif|webp)$/i;
-  if (req.method !== 'GET' || !protectedExt.test(req.path)) return next();
-
+// -------------------- Protected middleware & static protection --------------------
+function ensureAuthenticatedAndAllowed(req, res, next) {
   checkJwtFromToken(req, res, (err) => {
     if (err) {
+      // API -> return 401; Page -> redirect to login
+      if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'unauthenticated' });
       return res.redirect('/index.html');
     }
     const email = req.auth && req.auth.email;
     if (ALLOWED_USERS.length && (!email || !ALLOWED_USERS.includes(email))) {
-      return res.status(403).send('Access denied');
+      if (req.path.startsWith('/api/')) return res.status(403).json({ error: 'forbidden' });
+      return res.status(403).send('Access denied (invite-only)');
     }
     next();
   });
 }
+
+// protect static assets before express.static
+function protectStatic(req, res, next) {
+  const protectedExt = /\.(html|htm|jpg|jpeg|png|gif|webp|svg|css|js)$/i;
+  if (req.method !== 'GET' || !protectedExt.test(req.path)) return next();
+  return ensureAuthenticatedAndAllowed(req, res, next);
+}
+
 app.use(protectStatic);
 
-/* ---------- Static files: expect frontend inside backend/public ---------- */
-const publicPath = path.join(__dirname, 'public');
-app.use(express.static(publicPath));
+// serve static from backend/<STATIC_DIR>
+const staticPath = path.join(__dirname, STATIC_DIR);
+if (!fs.existsSync(staticPath)) {
+  console.warn(`Static directory "${STATIC_DIR}" not found at ${staticPath}`);
+}
+app.use(express.static(staticPath));
+console.log(`Static files served from: ${staticPath}`);
 
-/* ---------- Google Drive setup ---------- */
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET
-);
+// -------------------- Google Drive setup --------------------
+const oauth2Client = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
 if (process.env.GOOGLE_REFRESH_TOKEN) {
   oauth2Client.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
 }
 const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
-/* ---------- Helpers ---------- */
+// helper to write metadata locally (photos.json)
 function saveMetadataEntry(entry) {
   const metaPath = path.join(__dirname, 'photos.json');
   let arr = [];
@@ -170,38 +187,28 @@ function saveMetadataEntry(entry) {
   fs.writeFileSync(metaPath, JSON.stringify(arr, null, 2));
 }
 
-/* ---------- API endpoints (protected) ---------- */
+// -------------------- API endpoints --------------------
 
-// diag
-app.get('/api/diag', checkJwtFromToken, (req, res) => {
-  const email = req.auth && req.auth.email;
-  if (!email) return res.status(403).json({ error: 'no-email' });
-  if (ALLOWED_USERS.length && !ALLOWED_USERS.includes(email)) return res.status(403).json({ error: 'not-allowed' });
-  res.json({ status: 'ok', email });
+// health/diag
+app.get('/api/diag', ensureAuthenticatedAndAllowed, (req, res) => {
+  res.json({ status: 'ok', email: req.auth && req.auth.email });
 });
 
-// list
-app.get('/api/list', checkJwtFromToken, (req, res) => {
-  const email = req.auth && req.auth.email;
-  if (!email) return res.status(403).json({ error: 'no-email' });
-  if (ALLOWED_USERS.length && !ALLOWED_USERS.includes(email)) return res.status(403).json({ error: 'not-allowed' });
+// list photos
+app.get('/api/list', ensureAuthenticatedAndAllowed, (req, res) => {
   const metaPath = path.join(__dirname, 'photos.json');
   try {
     const arr = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
-    const out = (arr || []).map(a => ({ id: a.id, caption: a.caption, created: a.created }));
-    return res.json(out);
+    return res.json((arr || []).map(a => ({ id: a.id, caption: a.caption, created: a.created })));
   } catch (e) {
     return res.json([]);
   }
 });
 
-// upload
-app.post('/api/upload', checkJwtFromToken, upload.single('photo'), async (req, res) => {
+// upload photo -> Google Drive
+app.post('/api/upload', ensureAuthenticatedAndAllowed, upload.single('photo'), async (req, res) => {
   try {
     const email = req.auth && req.auth.email;
-    if (!email) return res.status(403).send('no-email');
-    if (ALLOWED_USERS.length && !ALLOWED_USERS.includes(email)) return res.status(403).send('not-allowed');
-
     if (!req.file) return res.status(400).send('no-file');
     const caption = req.body.caption || '';
     const fileName = `${Date.now()}_${req.file.originalname}`;
@@ -230,28 +237,25 @@ app.post('/api/upload', checkJwtFromToken, upload.single('photo'), async (req, r
           requestBody: { role: 'reader', type: 'anyone' }
         });
       } catch (e) {
-        console.warn('make public failed', e.message || e);
+        console.warn('make public failed', e && e.message);
       }
     }
 
     const entry = { id: fileId, name: fileName, caption, uploader: email, created: Date.now() };
     saveMetadataEntry(entry);
 
-    res.json({ ok: true, id: fileId });
+    return res.json({ ok: true, id: fileId });
   } catch (err) {
     console.error('upload error', err);
-    res.status(500).send('upload error');
+    return res.status(500).send('upload error');
   }
 });
 
-// stream file
-app.get('/api/file/:id', checkJwtFromToken, async (req, res) => {
+// stream file via Drive (protected)
+app.get('/api/file/:id', ensureAuthenticatedAndAllowed, async (req, res) => {
   try {
-    const email = req.auth && req.auth.email;
-    if (!email) return res.status(403).send('no-email');
-    if (ALLOWED_USERS.length && !ALLOWED_USERS.includes(email)) return res.status(403).send('not-allowed');
-
     const fileId = req.params.id;
+    // try to set content-type
     try {
       const meta = await drive.files.get({ fileId, fields: 'mimeType' });
       if (meta && meta.data && meta.data.mimeType) res.set('Content-Type', meta.data.mimeType);
@@ -261,15 +265,21 @@ app.get('/api/file/:id', checkJwtFromToken, async (req, res) => {
     resp.data.pipe(res);
   } catch (err) {
     console.error('file stream error', err);
-    res.status(404).send('not found');
+    return res.status(404).send('not found');
   }
 });
 
-/* ---------- Fallbacks ---------- */
-app.get('/', (req, res) => res.sendFile(path.join(publicPath, 'index.html')));
-app.use((req, res) => res.status(404).send('Not found'));
+// root -> index.html
+app.get('/', (req, res) => {
+  return res.sendFile(path.join(staticPath, 'index.html'));
+});
 
-/* ---------- Start ---------- */
+// basic 404
+app.use((req, res) => {
+  res.status(404).send('Not found');
+});
+
+// -------------------- start server --------------------
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
