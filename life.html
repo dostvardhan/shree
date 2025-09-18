@@ -2,144 +2,90 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <title>Sweet Memories — Shreshtha</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Life — Shreshtha</title>
-
-  <script src="/auth-init.js"></script>
-  <script src="/guard-auth.js"></script>
-
   <style>
-    :root { --bg: #fafaf9; --card: #fff; --accent: #e84c88; --muted:#666; }
-    body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:var(--bg); color:#222; }
-    header { display:flex; align-items:center; justify-content:space-between; padding:16px 24px; background:linear-gradient(90deg,#fff,#f7f8fb); box-shadow:0 2px 8px rgba(0,0,0,0.04); }
-    .brand { display:flex; align-items:center; gap:12px; }
-    .brand img { width:48px; height:48px; border-radius:8px; object-fit:cover }
-    h1 { margin:0; font-size:18px; }
-    nav { display:flex; gap:10px; }
-    .btn { background:#2e7d32;color:white;padding:8px 12px;border-radius:8px;border:0;cursor:pointer;font-weight:600 }
-    .btn.alt { background:transparent;color:#2e7d32;border:1px solid #dbe; }
-    main { padding:20px 24px; max-width:1100px; margin:0 auto; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:14px; }
-    .tile { position:relative; overflow:hidden; border-radius:12px; background:#fff; box-shadow:0 6px 18px rgba(20,20,20,0.04); cursor:pointer; height:160px; display:flex; align-items:center; justify-content:center; }
-    .tile img { width:100%; height:100%; object-fit:cover; transition: transform .35s ease; display:block; }
-    .tile:hover img { transform: scale(1.12); }
-    .caption { position:absolute; left:8px; bottom:8px; background:rgba(0,0,0,0.45); color:#fff; padding:6px 8px; border-radius:8px; font-size:13px; backdrop-filter: blur(4px); }
-    /* modal */
-    .modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:9999; }
-    .modal.open { display:flex; }
-    .modal .card { max-width:90vw; max-height:90vh; border-radius:12px; overflow:hidden; background:#111; padding:12px; display:flex; gap:12px; align-items:center }
-    .modal img { max-width:75vw; max-height:80vh; object-fit:contain; display:block; border-radius:8px }
-    .modal .meta { color:#fff; max-width:38vw; overflow:auto }
-    .close { position:absolute; right:22px; top:18px; background:transparent; border:0; color:#fff; font-size:22px; cursor:pointer; }
-    footer { text-align:center; padding:18px; color:var(--muted); font-size:13px }
-    @media (max-width:640px) {
-      .modal img { max-width:85vw }
-      .modal .meta { display:none }
-    }
+    :root{--bg:#eef5ea;--card:#fff;--accent:#c75b7d;--green:#6a8b5a}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,-apple-system,Arial;background:var(--bg);color:#243;}
+    header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;max-width:1100px;margin:0 auto}
+    h1{margin:0;font-size:1.4rem;color:#2b3}
+    .actions{display:flex;gap:10px}
+    .btn{padding:8px 12px;border-radius:8px;border:0;cursor:pointer;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.06)}
+    .primary{background:var(--green);color:#fff;font-weight:600}
+    .grid-wrap{max-width:1100px;margin:14px auto;padding:18px}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .slot{background:var(--card);border-radius:14px;min-height:220px;position:relative;overflow:hidden;box-shadow:0 8px 18px rgba(12,20,6,0.06);display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .slot img{width:100%;height:100%;object-fit:cover;transform:scale(1);transition:transform .35s}
+    .slot:hover img{transform:scale(1.06)}
+    .caption{position:absolute;left:10px;right:10px;bottom:10px;background:rgba(255,255,255,0.8);padding:8px;border-radius:10px;font-size:0.95rem;text-align:center}
+    .floating{position:fixed;right:22px;bottom:22px;border-radius:50%;width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;font-weight:700;box-shadow:0 12px 30px rgba(199,91,125,0.18);cursor:pointer}
+    @media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:480px){.grid{grid-template-columns:1fr}.slot{min-height:180px}}
   </style>
 </head>
 <body>
   <header>
-    <div class="brand">
-      <img src="/photo1.jpg" alt="logo">
-      <div>
-        <h1>Shreshtha — Life</h1>
-        <div style="font-size:13px;color:#666">Memories & Moments</div>
-      </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" style="border-radius:8px;background:#fff;padding:6px"><path d="M12 2l2 5h5l-4 3 1 5-4-3-4 3 1-5L5 7h5z" fill="#f6c" /></svg>
+      <h1>Sweet Memories — Shreshtha</h1>
     </div>
-
-    <nav>
-      <button class="btn" id="btnUpload">Upload</button>
-      <button class="btn alt" id="btnGallery">Gallery</button>
-      <button class="btn alt" id="btnLogout">Logout</button>
-    </nav>
+    <div class="actions">
+      <button class="btn primary" onclick="location.href='/upload.html'">Upload Memory</button>
+      <button class="btn" onclick="location.href='/auth/logout'">Logout</button>
+    </div>
   </header>
 
-  <main>
-    <div data-guard>
-      <section style="margin-bottom:18px">
-        <h2 style="margin:0 0 10px">Latest Photos</h2>
-        <p style="margin:0 0 12px;color:#666">Hover to zoom. Click to open full view.</p>
-      </section>
-
-      <section class="grid" id="photoGrid">
-        <!-- tiles injected by JS -->
-      </section>
-    </div>
-  </main>
-
-  <div class="modal" id="modal">
-    <button class="close" id="closeBtn">✕</button>
-    <div class="card" style="background:transparent;border:none;">
-      <img id="modalImg" src="" alt="photo">
-      <div class="meta" id="modalMeta" style="padding:8px;">
-        <h3 id="modalTitle" style="margin-top:0;color:#fff"></h3>
-        <p id="modalCaption" style="color:#ddd"></p>
-        <div style="margin-top:12px"><a id="downloadLink" href="#" target="_blank" style="color:#fff;text-decoration:underline">Open in new tab</a></div>
-      </div>
+  <div class="grid-wrap">
+    <div id="grid" class="grid">
+      <!-- 9 slots -->
+      <div class="slot" data-idx="0"><div class="caption">Loading…</div></div>
+      <div class="slot" data-idx="1"><div class="caption">Loading…</div></div>
+      <div class="slot" data-idx="2"><div class="caption">Loading…</div></div>
+      <div class="slot" data-idx="3"><div class="caption">Loading…</div></div>
+      <div class="slot" data-idx="4"><div class="caption">Loading…</div></div>
+      <div class="slot" data-idx="5"><div class="caption">Loading…</div></div>
+      <div class="slot" data-idx="6"><div class="caption">Loading…</div></div>
+      <div class="slot" data-idx="7"><div class="caption">Loading…</div></div>
+      <div class="slot" data-idx="8"><div class="caption">Loading…</div></div>
     </div>
   </div>
 
-  <footer>Shreshtha — Protected. Only invited users may view.</footer>
+  <div class="floating" title="Open gallery" onclick="location.href='/gallery.html'">G</div>
 
   <script>
-    // photo list: uses local static photo files (photo1.jpg..photo9.jpg)
-    const photos = [
-      { id: "photo1", src: "/photo1.jpg", title: "Photo 1", caption: "Memorable day 1" },
-      { id: "photo2", src: "/photo2.jpg", title: "Photo 2", caption: "Memorable day 2" },
-      { id: "photo3", src: "/photo3.jpg", title: "Photo 3", caption: "Memorable day 3" },
-      { id: "photo4", src: "/photo4.jpg", title: "Photo 4", caption: "Memorable day 4" },
-      { id: "photo5", src: "/photo5.jpg", title: "Photo 5", caption: "Memorable day 5" },
-      { id: "photo6", src: "/photo6.jpg", title: "Photo 6", caption: "Memorable day 6" },
-      { id: "photo7", src: "/photo7.jpg", title: "Photo 7", caption: "Memorable day 7" },
-      { id: "photo8", src: "/photo8.jpg", title: "Photo 8", caption: "Memorable day 8" },
-      { id: "photo9", src: "/photo9.jpg", title: "Photo 9", caption: "Memorable day 9" }
-    ];
+    (async function(){
+      try {
+        // guard check
+        const r = await fetch('/api/diag', { credentials: 'same-origin' });
+        if (!r.ok) return window.location.href = '/index.html';
 
-    const grid = document.getElementById("photoGrid");
+        // fetch list
+        const listRes = await fetch('/api/list', { credentials: 'same-origin' });
+        if (!listRes.ok) return;
+        const list = await listRes.json();
 
-    function buildGrid() {
-      grid.innerHTML = "";
-      photos.forEach((p, i) => {
-        const t = document.createElement("div");
-        t.className = "tile";
-        t.dataset.index = i;
-        t.innerHTML = `<img src="${p.src}" alt="${p.title}"><div class="caption">${p.title}</div>`;
-        t.addEventListener("click", () => openModal(i));
-        grid.appendChild(t);
-      });
-    }
+        const slots = document.querySelectorAll('.slot');
+        for (let i=0;i<slots.length;i++){
+          const item = list[i];
+          const capEl = slots[i].querySelector('.caption');
+          if (!item) { capEl.textContent = ''; continue; }
+          const img = document.createElement('img');
+          img.src = `/api/file/${item.id}`;
+          img.alt = item.caption || 'memory';
+          slots[i].appendChild(img);
+          capEl.textContent = item.caption || '';
 
-    function openModal(i) {
-      const p = photos[i];
-      document.getElementById("modalImg").src = p.src;
-      document.getElementById("modalTitle").textContent = p.title;
-      document.getElementById("modalCaption").textContent = p.caption;
-      document.getElementById("downloadLink").href = p.src;
-      document.getElementById("modal").classList.add("open");
-    }
-    function closeModal() {
-      document.getElementById("modal").classList.remove("open");
-      document.getElementById("modalImg").src = "";
-    }
-
-    document.getElementById("closeBtn").addEventListener("click", closeModal);
-    document.getElementById("modal").addEventListener("click", (e) => {
-      if (e.target === document.getElementById("modal")) closeModal();
-    });
-
-    buildGrid();
-
-    // nav actions
-    document.getElementById("btnUpload").addEventListener("click", () => window.location.href = "/upload.html");
-    document.getElementById("btnGallery").addEventListener("click", () => window.location.href = "/gallery.html");
-    document.getElementById("btnLogout").addEventListener("click", async () => {
-      if (window.auth && window.auth.logout) {
-        window.auth.logout();
-      } else {
-        window.location.href = "/";
+          // click opens correct photo page
+          slots[i].addEventListener('click', ()=> {
+            location.href = `/photo${i+1}.html`;
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        window.location.href = '/index.html';
       }
-    });
+    })();
   </script>
 </body>
 </html>
