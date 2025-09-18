@@ -1,63 +1,17 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>Shree • Photo 6</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- AUTH GUARD (Auth0-based) -->
-  <script>
-    /**
-     * Guard for protected pages.
-     * Checks if Auth0 access_token exists in localStorage.
-     * Redirects to /index.html if not logged in.
-     */
-    (function guardAuth(){
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        location.replace('/index.html');
-        return;
-      }
-      // Optional expiry check:
-      // const exp = localStorage.getItem('access_token_exp');
-      // if (exp && Date.now() > Number(exp)) { location.replace('/index.html'); return; }
-    })();
-
-    function logout(){
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('id_token');
-      localStorage.removeItem('access_token_exp');
-      // Optional full Auth0 logout:
-      // location.replace('https://YOUR_AUTH0_DOMAIN/v2/logout?returnTo=' + encodeURIComponent(location.origin + '/index.html') + '&client_id=YOUR_CLIENT_ID');
-      location.replace('/index.html');
-    }
-  </script>
-
-  <style>
-    body{text-align:center;font-family:'Segoe UI',sans-serif;margin:0;background:#fafafa;}
-    header{padding:16px;background:#fff;border-bottom:1px solid #eee;}
-    header h2{margin:0;color:olive;}
-    header a, header button{padding:6px 12px;margin:0 6px;border:1px solid #ccc;border-radius:8px;text-decoration:none;color:#111;background:#fff;cursor:pointer;}
-    img{max-width:85%;margin:20px auto;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,0.15);}
-    .quote{margin-top:10px;font-size:16px;color:olive;font-style:italic;}
-    nav{margin:20px;}
-    nav a{margin:0 10px;text-decoration:none;color:#006600;font-weight:bold;}
-  </style>
-</head>
-<body>
-  <header>
-    <h2>🌿 Life Moments</h2>
-    <a href="/life.html">Life</a>
-    <a href="/gallery.html">Gallery</a>
-    <button onclick="logout()">Logout</button>
-  </header>
-
-  <img src="/photo6.jpg" alt="Photo 6" />
-  <div class="quote">“Memories are timeless treasures.”</div>
-
-  <nav>
-    <a href="/photo5.html">⬅ Prev</a>
-    <a href="/photo7.html">Next ➡</a>
-  </nav>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Memory 6 — Shreshtha</title>
+<style>body{margin:0;font-family:Inter,system-ui;background:#f7f7f7;color:#222;text-align:center}header{padding:12px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.05)}header button{padding:8px 14px;border:0;border-radius:8px;background:#6a8b5a;color:#fff;cursor:pointer}.photo{max-width:92vw;max-height:72vh;margin:20px auto;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.12)}.caption{font-size:1.15rem;margin:12px auto;color:#444;max-width:760px}nav{margin:18px}nav a{margin:0 10px;color:#6a8b5a;text-decoration:none;font-weight:600}</style>
+</head><body>
+<header><button onclick="location.href='/life.html'">← Back to Memories</button></header>
+<main>
+  <img id="photo" class="photo" alt="memory photo"/>
+  <div id="caption" class="caption">Loading…</div>
+  <nav><a href="/photo5.html">⟵ Prev</a><a href="/photo7.html">Next ⟶</a></nav>
+</main>
+<script>
+(async()=>{try{
+  const ok=await fetch('/api/diag',{credentials:'same-origin'}); if(!ok.ok) return location.href='/index.html';
+  const res=await fetch('/api/list',{credentials:'same-origin'}); const list=await res.json();
+  const item=list[5]; if(item){ photo.src='/api/file/'+item.id; caption.textContent=item.caption||''; }
+}catch(e){location.href='/index.html';}})();
+</script></body></html>
