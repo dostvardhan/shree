@@ -2,10 +2,11 @@ services:
   - type: web
     name: shree-drive
     env: node
+    region: singapore
     plan: free
     branch: main
-    buildCommand: "cd backend && npm ci"
-    startCommand: "node backend/server.js"
-    envVars:
-      - key: STATIC_DIR
-        value: "private"
+    rootDir: backend
+    buildCommand: "npm ci"
+    startCommand: "node server.js"
+    healthCheckPath: "/health"
+    autoDeploy: true
