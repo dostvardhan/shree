@@ -1,4 +1,4 @@
-// backend/server.js (corrected import for express-jwt)
+// backend/server.js (final with https redirect fix)
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
@@ -6,6 +6,9 @@ const { expressjwt: jwt } = require('express-jwt'); // <-- correct import
 const jwksRsa = require('jwks-rsa');
 
 const app = express();
+
+// Ensure req.protocol reflects original scheme behind Render/Cloudflare
+app.set('trust proxy', true);
 
 const PORT = process.env.PORT || 4000;
 const STATIC_DIR = path.join(__dirname, process.env.STATIC_DIR || 'private');
@@ -21,7 +24,7 @@ app.get('/health', (req, res) => {
   res.json({ ok: true, ts: Date.now() });
 });
 
-// Serve public static assets (index & auth scripts). express.static will serve files from STATIC_DIR
+// Serve public static assets
 app.use(express.static(STATIC_DIR, {
   extensions: ['html'],
   setHeaders: (res, filePath) => {
@@ -39,12 +42,12 @@ app.use(express.static(STATIC_DIR, {
   }
 }));
 
-// Simple function to check for a session cookie
+// Helper to check cookie session
 function hasSessionCookie(req) {
   return !!(req.cookies && (req.cookies.shree_session || req.cookies.shree_session === '1'));
 }
 
-// Configure express-jwt middleware (but mount only on /api)
+// JWT middleware
 let jwtMiddleware;
 if (AUTH0_DOMAIN && AUTH0_AUDIENCE) {
   jwtMiddleware = jwt({
@@ -59,64 +62,51 @@ if (AUTH0_DOMAIN && AUTH0_AUDIENCE) {
     algorithms: ['RS256']
   });
 } else {
-  console.warn('AUTH0_DOMAIN or AUTH0_AUDIENCE missing — /api routes will not validate tokens until configured.');
+  console.warn('⚠️ AUTH0_DOMAIN or AUTH0_AUDIENCE missing — /api routes will not validate tokens.');
 }
 
-// Mount JWT logic for /api routes only
+// Protect /api routes
 app.use('/api', (req, res, next) => {
-  // allow /api/diag public
   if (req.path === '/diag') return next();
 
-  const hasAuthHeader = typeof req.headers.authorization === 'string' && req.headers.authorization.startsWith('Bearer ');
+  const hasAuthHeader = typeof req.headers.authorization === 'string' &&
+                        req.headers.authorization.startsWith('Bearer ');
   const session = hasSessionCookie(req);
 
   if (!hasAuthHeader && !session) {
     return res.status(401).json({ error: 'No authorization token was found' });
   }
-
   if (session && !hasAuthHeader) {
     req.isSession = true;
     return next();
   }
-
-  // validate access token
   if (jwtMiddleware) return jwtMiddleware(req, res, next);
   return res.status(500).json({ error: 'JWT middleware not configured' });
 });
 
-// Public diag endpoint — client uses this to check auth status
+// Public diag endpoint
 app.get('/api/diag', (req, res) => {
-  try {
-    if (hasSessionCookie(req)) return res.json({ ok: true, session: true });
-    // If jwt middleware ran earlier it would have attached req.auth/user, but for diag we kept it public
-    return res.status(401).json({ ok: false, error: 'Not authenticated' });
-  } catch (e) {
-    return res.status(500).json({ ok: false, error: 'Server error' });
-  }
+  if (hasSessionCookie(req)) return res.json({ ok: true, session: true });
+  return res.status(401).json({ ok: false, error: 'Not authenticated' });
 });
 
-// Example protected API endpoints
+// Example protected endpoints
 app.get('/api/list', (req, res) => {
-  // If using session-based auth, req.isSession will be true; if token-based, req.auth will exist.
   if (!req.isSession && !req.auth) return res.status(401).json({ error: 'Unauthorized' });
-
-  // TODO: implement list logic using drive or photos.json
   return res.json({ ok: true, items: [] });
 });
 
 app.post('/api/upload', (req, res) => {
   if (!req.isSession && !req.auth) return res.status(401).json({ error: 'Unauthorized' });
-
-  // TODO: implement upload logic
   return res.json({ ok: true, message: 'upload endpoint placeholder' });
 });
 
-// Minimal /auth endpoints (if you have your own implementation, keep that instead)
+// Auth routes
 app.get('/auth/login', (req, res) => {
   if (!AUTH0_DOMAIN || !process.env.AUTH0_CLIENT_ID) {
     return res.status(500).send('Auth0 not configured');
   }
-  const redirectUri = `${req.protocol}://${req.get('host')}/auth/callback`;
+  const redirectUri = `https://shree-drive.onrender.com/auth/callback`; // force https
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: process.env.AUTH0_CLIENT_ID,
@@ -128,13 +118,12 @@ app.get('/auth/login', (req, res) => {
 });
 
 app.get('/auth/callback', (req, res) => {
-  // Keep your existing token-exchange logic here — set a secure HttpOnly cookie (shree_session) after successful auth.
-  // Placeholder: set a cookie and redirect inside the demo
-  res.cookie('shree_session', '1', { httpOnly: true, sameSite: 'lax' });
+  // TODO: implement token exchange; for now just set cookie
+  res.cookie('shree_session', '1', { httpOnly: true, sameSite: 'lax', secure: true });
   return res.redirect('/life.html');
 });
 
-// Default handler for unknown routes - if accepts html send index
+// Fallback
 app.use((req, res) => {
   if (req.accepts('html')) {
     return res.sendFile(path.join(STATIC_DIR, 'index.html'));
@@ -145,7 +134,6 @@ app.use((req, res) => {
 // Error handler
 app.use((err, req, res, next) => {
   if (err && err.name === 'UnauthorizedError') {
-    // short error JSON for auth failures
     return res.status(err.status || 401).json({ error: err.message || 'Unauthorized' });
   }
   console.error(err && err.stack ? err.stack : err);
