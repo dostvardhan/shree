@@ -3,47 +3,39 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shreshthapushkar — Login</title>
-  <link rel="icon" href="favicon.ico" />
-
-  <script src="auth0-spa-js.production.js"></script>
-  <script src="auth-init.js" defer></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f8f8f0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .card {
-      background: white;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      text-align: center;
-    }
-    button {
-      padding: 10px 20px;
-      background: #4CAF50;
-      color: white;
-      font-size: 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #45a049;
-    }
-  </style>
+  <title>Shreshtha — Login</title>
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div class="card">
-    <h2>Welcome</h2>
-    <p>Please login to continue</p>
-    <button id="btn-login">Login</button>
-  </div>
+  <main style="max-width:700px;margin:60px auto;text-align:center;">
+    <h1>Shreshtha — Private Memories</h1>
+    <p>Only invited people can view & upload memories.</p>
+
+    <div style="margin:30px;">
+      <a id="loginBtn" href="/auth/login" class="btn">Login to continue</a>
+    </div>
+
+    <div id="status" style="margin-top:20px;color:#666;font-size:14px;">
+      Loading...
+    </div>
+  </main>
+
+  <script src="/guard-auth.js"></script>
+  <script>
+    // If already logged in (session cookie exists), redirect to life.html
+    (async () => {
+      try {
+        const r = await fetch('/api/diag', { credentials: 'include' });
+        if (r.ok) {
+          // already authenticated -> go inside
+          window.location = '/life.html';
+          return;
+        }
+      } catch (e) {
+        // not authenticated
+      }
+      document.getElementById('status').textContent = 'Please login using the button above.';
+    })();
+  </script>
 </body>
 </html>

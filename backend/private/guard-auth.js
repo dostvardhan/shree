@@ -1,30 +1,19 @@
-let auth0Client = null;
+// Very small client helper used on index.html.
+// It doesn't perform login (server handles Auth0 redirect at /auth/login).
+// It simply optionally shows login status by calling /api/diag.
 
-async function guardAuth() {
-  auth0Client = await createAuth0Client({
-    domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
-    client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT",
-    audience: "https://shree-drive.onrender.com",
-    cacheLocation: "localstorage",
-    useRefreshTokens: true
-  });
-
-  const isAuthenticated = await auth0Client.isAuthenticated();
-
-  if (!isAuthenticated) {
-    await auth0Client.loginWithRedirect({
-      redirect_uri: window.location.origin + "/index.html"
-    });
-    return;
+async function checkAuthStatus() {
+  try {
+    const resp = await fetch('/api/diag', { credentials: 'include' });
+    if (resp.ok) {
+      // logged in
+      return await resp.json();
+    }
+    return null;
+  } catch (e) {
+    return null;
   }
-
-  // Attach token to window for API requests
-  const token = await auth0Client.getTokenSilently();
-  window.authFetch = async (url, options = {}) => {
-    options.headers = options.headers || {};
-    options.headers["Authorization"] = `Bearer ${token}`;
-    return fetch(url, options);
-  };
 }
 
-window.onload = guardAuth;
+// expose for debugging
+window.checkAuthStatus = checkAuthStatus;
