@@ -25,7 +25,7 @@ async function initAuth() {
   if (loginBtn) {
     loginBtn.addEventListener("click", async () => {
       await auth0Client.loginWithRedirect({
-        redirect_uri: window.location.origin + "/auth/callback"
+        redirect_uri: window.location.origin + "/auth/login"
       });
     });
   }
