@@ -1,146 +1,209 @@
-// backend/server.js (final with https redirect fix)
+// server.js
 const express = require('express');
-const path = require('path');
 const cookieParser = require('cookie-parser');
-const { expressjwt: jwt } = require('express-jwt'); // <-- correct import
-const jwksRsa = require('jwks-rsa');
+const session = require('express-session');
+const axios = require('axios');
+const jwt = require('jsonwebtoken');
+const path = require('path');
 
 const app = express();
-
-// Ensure req.protocol reflects original scheme behind Render/Cloudflare
-app.set('trust proxy', true);
-
-const PORT = process.env.PORT || 4000;
-const STATIC_DIR = path.join(__dirname, process.env.STATIC_DIR || 'private');
-const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN;
-const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE;
-
-// Middleware
-app.use(cookieParser());
 app.use(express.json());
+app.use(cookieParser());
 
-// Health check (for Render)
-app.get('/health', (req, res) => {
-  res.json({ ok: true, ts: Date.now() });
-});
+// ---- ENV VARS ----
+const {
+  PORT = 4000,
+  AUTH0_DOMAIN,
+  AUTH0_CLIENT_ID,
+  AUTH0_CLIENT_SECRET,
+  AUTH0_REDIRECT_URI,
+  AUTH0_AUDIENCE,
+  SESSION_SECRET,
+  FRONTEND_ORIGIN,
+  ALLOWED_USERS = ''
+} = process.env;
 
-// Serve public static assets
-app.use(express.static(STATIC_DIR, {
-  extensions: ['html'],
-  setHeaders: (res, filePath) => {
-    const publicFiles = [
-      'index.html',
-      'auth-init.js',
-      'guard-auth.js',
-      'auth0-spa-js.production.js',
-      'style.css'
-    ];
-    const rel = path.basename(filePath);
-    if (publicFiles.includes(rel)) {
-      res.setHeader('Cache-Control', 'public, max-age=300');
+if (
+  !AUTH0_DOMAIN ||
+  !AUTH0_CLIENT_ID ||
+  !AUTH0_CLIENT_SECRET ||
+  !AUTH0_REDIRECT_URI ||
+  !AUTH0_AUDIENCE ||
+  !SESSION_SECRET
+) {
+  console.error('❌ Missing required env vars');
+  process.exit(1);
+}
+
+// ---- EXPRESS SESSION ----
+app.use(
+  session({
+    name: 'shree_session',
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: true, // must be true in production (HTTPS)
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000
     }
-  }
-}));
+  })
+);
 
-// Helper to check cookie session
-function hasSessionCookie(req) {
-  return !!(req.cookies && (req.cookies.shree_session || req.cookies.shree_session === '1'));
-}
+// ---- STATIC FILES ----
+app.use(express.static(path.join(__dirname, 'public')));
 
-// JWT middleware
-let jwtMiddleware;
-if (AUTH0_DOMAIN && AUTH0_AUDIENCE) {
-  jwtMiddleware = jwt({
-    secret: jwksRsa.expressJwtSecret({
-      cache: true,
-      rateLimit: true,
-      jwksRequestsPerMinute: 5,
-      jwksUri: `https://${AUTH0_DOMAIN}/.well-known/jwks.json`
-    }),
-    audience: AUTH0_AUDIENCE,
-    issuer: `https://${AUTH0_DOMAIN}/`,
-    algorithms: ['RS256']
+// ---- HELPERS ----
+const allowedSet = new Set(
+  ALLOWED_USERS.split(',').map((s) => s.trim()).filter(Boolean)
+);
+
+function createSessionToken(payload) {
+  return jwt.sign(payload, SESSION_SECRET, {
+    algorithm: 'HS256',
+    expiresIn: '12h'
   });
-} else {
-  console.warn('⚠️ AUTH0_DOMAIN or AUTH0_AUDIENCE missing — /api routes will not validate tokens.');
+}
+function verifySessionToken(token) {
+  try {
+    return jwt.verify(token, SESSION_SECRET);
+  } catch (err) {
+    return null;
+  }
+}
+function requireAuth(req, res, next) {
+  const token = req.cookies['shree_session'];
+  if (!token) return res.redirect('/index.html');
+  const user = verifySessionToken(token);
+  if (!user) {
+    res.clearCookie('shree_session');
+    return res.redirect('/index.html');
+  }
+  req.user = user;
+  next();
 }
 
-// Protect /api routes
-app.use('/api', (req, res, next) => {
-  if (req.path === '/diag') return next();
-
-  const hasAuthHeader = typeof req.headers.authorization === 'string' &&
-                        req.headers.authorization.startsWith('Bearer ');
-  const session = hasSessionCookie(req);
-
-  if (!hasAuthHeader && !session) {
-    return res.status(401).json({ error: 'No authorization token was found' });
-  }
-  if (session && !hasAuthHeader) {
-    req.isSession = true;
-    return next();
-  }
-  if (jwtMiddleware) return jwtMiddleware(req, res, next);
-  return res.status(500).json({ error: 'JWT middleware not configured' });
-});
-
-// Public diag endpoint
-app.get('/api/diag', (req, res) => {
-  if (hasSessionCookie(req)) return res.json({ ok: true, session: true });
-  return res.status(401).json({ ok: false, error: 'Not authenticated' });
-});
-
-// Example protected endpoints
-app.get('/api/list', (req, res) => {
-  if (!req.isSession && !req.auth) return res.status(401).json({ error: 'Unauthorized' });
-  return res.json({ ok: true, items: [] });
-});
-
-app.post('/api/upload', (req, res) => {
-  if (!req.isSession && !req.auth) return res.status(401).json({ error: 'Unauthorized' });
-  return res.json({ ok: true, message: 'upload endpoint placeholder' });
-});
-
-// Auth routes
+// ---- AUTH ROUTES ----
 app.get('/auth/login', (req, res) => {
-  if (!AUTH0_DOMAIN || !process.env.AUTH0_CLIENT_ID) {
-    return res.status(500).send('Auth0 not configured');
-  }
-  const redirectUri = `https://shree-drive.onrender.com/auth/callback`; // force https
+  const state = Math.random().toString(36).slice(2);
   const params = new URLSearchParams({
     response_type: 'code',
-    client_id: process.env.AUTH0_CLIENT_ID,
-    redirect_uri: redirectUri,
+    client_id: AUTH0_CLIENT_ID,
+    redirect_uri: AUTH0_REDIRECT_URI,
     scope: 'openid profile email',
-    audience: AUTH0_AUDIENCE || ''
+    audience: AUTH0_AUDIENCE,
+    state
   });
-  return res.redirect(`https://${AUTH0_DOMAIN}/authorize?${params.toString()}`);
+  const url = `https://${AUTH0_DOMAIN}/authorize?${params.toString()}`;
+  res.redirect(url);
 });
 
-app.get('/auth/callback', (req, res) => {
-  // TODO: implement token exchange; for now just set cookie
-  res.cookie('shree_session', '1', { httpOnly: true, sameSite: 'lax', secure: true });
-  return res.redirect('/life.html');
-});
+app.get('/auth/callback', async (req, res) => {
+  try {
+    const { code } = req.query;
+    if (!code) return res.status(400).send('Missing code');
 
-// Fallback
-app.use((req, res) => {
-  if (req.accepts('html')) {
-    return res.sendFile(path.join(STATIC_DIR, 'index.html'));
+    const tokenResp = await axios.post(
+      `https://${AUTH0_DOMAIN}/oauth/token`,
+      {
+        grant_type: 'authorization_code',
+        client_id: AUTH0_CLIENT_ID,
+        client_secret: AUTH0_CLIENT_SECRET,
+        code,
+        redirect_uri: AUTH0_REDIRECT_URI
+      },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+
+    const { id_token } = tokenResp.data;
+    const decoded = jwt.decode(id_token);
+    const userEmail = decoded && decoded.email;
+    if (!userEmail) return res.status(400).send('No email in token');
+
+    if (allowedSet.size > 0 && !allowedSet.has(userEmail)) {
+      return res.status(403).send('User not allowed');
+    }
+
+    const sessionToken = createSessionToken({
+      email: userEmail,
+      name: decoded.name || '',
+      sub: decoded.sub
+    });
+
+    res.cookie('shree_session', sessionToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
+    res.redirect('/life.html');
+  } catch (err) {
+    console.error('Auth callback error:', err.response ? err.response.data : err.message);
+    res.status(500).send('Authentication failed');
   }
-  return res.status(404).json({ error: 'Not found' });
 });
 
-// Error handler
-app.use((err, req, res, next) => {
-  if (err && err.name === 'UnauthorizedError') {
-    return res.status(err.status || 401).json({ error: err.message || 'Unauthorized' });
+app.get('/auth/logout', (req, res) => {
+  res.clearCookie('shree_session');
+  const returnTo = encodeURIComponent(FRONTEND_ORIGIN || '/');
+  const logoutUrl = `https://${AUTH0_DOMAIN}/v2/logout?client_id=${AUTH0_CLIENT_ID}&returnTo=${returnTo}`;
+  res.redirect(logoutUrl);
+});
+
+// ---- PROTECTED STATIC PAGES ----
+app.get(
+  ['/life.html', '/upload.html', '/gallery.html', '/photo1.html', '/photo2.html', '/photo3.html', '/photo4.html', '/photo5.html', '/photo6.html', '/photo7.html', '/photo8.html', '/photo9.html'],
+  requireAuth,
+  (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', req.path));
   }
-  console.error(err && err.stack ? err.stack : err);
-  return res.status(500).json({ error: 'Server error' });
+);
+
+// ---- API STUBS ----
+app.post('/api/upload', requireAuth, async (req, res) => {
+  res.json({ ok: true, message: 'Upload endpoint stub' });
 });
 
-console.log(`Static files served from: ${STATIC_DIR}`);
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+app.get('/api/list', requireAuth, async (req, res) => {
+  res.json([]); // stub
 });
+
+app.get('/api/file/:id', requireAuth, async (req, res) => {
+  res.status(501).send('Not implemented');
+});
+
+app.get('/api/diag', (req, res) =>
+  res.json({ status: 'ok', ts: Date.now() })
+);
+
+// ---- HEALTH CHECK ----
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    uptime: process.uptime(),
+    ts: Date.now()
+  });
+});
+
+// ---- START SERVER ----
+const port = process.env.PORT || PORT;
+const server = app.listen(port, () => {
+  console.log(`✅ Server listening on port ${port}`);
+});
+
+// Graceful shutdown
+function shutdown(signal) {
+  console.log(`Received ${signal}. Closing server...`);
+  server.close(() => {
+    console.log('HTTP server closed.');
+    process.exit(0);
+  });
+  setTimeout(() => {
+    console.error('Force exit.');
+    process.exit(1);
+  }, 10000).unref();
+}
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
