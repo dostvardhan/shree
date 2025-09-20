@@ -1,16 +1,26 @@
-// server.js
+// server.js (FULL) - CommonJS - paste into backend/server.js
+// Requires: express, cookie-parser, express-session, axios, jsonwebtoken, multer, googleapis
+// Make sure package.json contains these deps and Render env vars are set.
+
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
+const util = require('util');
+const multer = require('multer');
+const { google } = require('googleapis');
+
+const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
+const unlink = util.promisify(fs.unlink);
 
 const app = express();
-app.use(express.json());
-app.use(cookieParser());
 
-// ---- ENV VARS ----
+// ----------------- ENV/CONFIG -----------------
 const {
   PORT = 4000,
   AUTH0_DOMAIN,
@@ -19,8 +29,15 @@ const {
   AUTH0_REDIRECT_URI,
   AUTH0_AUDIENCE,
   SESSION_SECRET,
-  FRONTEND_ORIGIN,
-  ALLOWED_USERS = ''
+  FRONTEND_ORIGIN = '',
+  ALLOWED_USERS = '',
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_REFRESH_TOKEN,
+  GOOGLE_DRIVE_FOLDER_ID,
+  MAKE_PUBLIC = 'false',
+  NODE_ENV = 'production',
+  STATIC_DIR = 'private' // folder name where your static html lives
 } = process.env;
 
 if (
@@ -31,11 +48,15 @@ if (
   !AUTH0_AUDIENCE ||
   !SESSION_SECRET
 ) {
-  console.error('❌ Missing required env vars');
+  console.error('❌ Missing required env vars (Auth0 + SESSION_SECRET). Exiting.');
   process.exit(1);
 }
 
-// ---- EXPRESS SESSION ----
+// ----------------- MIDDLEWARE -----------------
+app.use(express.json());
+app.use(cookieParser());
+
+// session config (used to sign cookies server-side)
 app.use(
   session({
     name: 'shree_session',
@@ -44,26 +65,27 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true, // must be true in production (HTTPS)
+      secure: NODE_ENV === 'production', // in dev you may set false
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000
     }
   })
 );
 
-// ---- STATIC FILES ----
-app.use(express.static(path.join(__dirname, 'public')));
+// ----------------- HEALTH (very fast) -----------------
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', uptime: process.uptime(), ts: Date.now() });
+});
 
-// ---- HELPERS ----
-const allowedSet = new Set(
-  ALLOWED_USERS.split(',').map((s) => s.trim()).filter(Boolean)
-);
+// ----------------- STATIC FILES -----------------
+const publicDir = path.join(__dirname, STATIC_DIR); // defaults to backend/private
+app.use(express.static(publicDir));
+
+// ----------------- HELPERS / AUTH -----------------
+const allowedSet = new Set(ALLOWED_USERS.split(',').map(s => s.trim()).filter(Boolean));
 
 function createSessionToken(payload) {
-  return jwt.sign(payload, SESSION_SECRET, {
-    algorithm: 'HS256',
-    expiresIn: '12h'
-  });
+  return jwt.sign(payload, SESSION_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
 }
 function verifySessionToken(token) {
   try {
@@ -84,7 +106,7 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// ---- AUTH ROUTES ----
+// ----------------- AUTH0 Regular Web App Flow -----------------
 app.get('/auth/login', (req, res) => {
   const state = Math.random().toString(36).slice(2);
   const params = new URLSearchParams({
@@ -104,17 +126,13 @@ app.get('/auth/callback', async (req, res) => {
     const { code } = req.query;
     if (!code) return res.status(400).send('Missing code');
 
-    const tokenResp = await axios.post(
-      `https://${AUTH0_DOMAIN}/oauth/token`,
-      {
-        grant_type: 'authorization_code',
-        client_id: AUTH0_CLIENT_ID,
-        client_secret: AUTH0_CLIENT_SECRET,
-        code,
-        redirect_uri: AUTH0_REDIRECT_URI
-      },
-      { headers: { 'Content-Type': 'application/json' } }
-    );
+    const tokenResp = await axios.post(`https://${AUTH0_DOMAIN}/oauth/token`, {
+      grant_type: 'authorization_code',
+      client_id: AUTH0_CLIENT_ID,
+      client_secret: AUTH0_CLIENT_SECRET,
+      code,
+      redirect_uri: AUTH0_REDIRECT_URI
+    }, { headers: { 'Content-Type': 'application/json' }});
 
     const { id_token } = tokenResp.data;
     const decoded = jwt.decode(id_token);
@@ -133,7 +151,7 @@ app.get('/auth/callback', async (req, res) => {
 
     res.cookie('shree_session', sessionToken, {
       httpOnly: true,
-      secure: true,
+      secure: NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000
     });
@@ -152,45 +170,163 @@ app.get('/auth/logout', (req, res) => {
   res.redirect(logoutUrl);
 });
 
-// ---- PROTECTED STATIC PAGES ----
-app.get(
-  ['/life.html', '/upload.html', '/gallery.html', '/photo1.html', '/photo2.html', '/photo3.html', '/photo4.html', '/photo5.html', '/photo6.html', '/photo7.html', '/photo8.html', '/photo9.html'],
-  requireAuth,
-  (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', req.path));
+// ----------------- PROTECTED PAGES -----------------
+const protectedPages = [
+  '/life.html','/upload.html','/gallery.html',
+  '/photo1.html','/photo2.html','/photo3.html','/photo4.html','/photo5.html','/photo6.html','/photo7.html','/photo8.html','/photo9.html'
+];
+app.get(protectedPages, requireAuth, (req, res) => {
+  res.sendFile(path.join(publicDir, req.path));
+});
+
+// ----------------- GOOGLE DRIVE & MULTER SETUP -----------------
+const PHOTOS_JSON = path.join(__dirname, 'photos.json'); // metadata file
+const uploadDir = os.tmpdir();
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const name = `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`;
+    cb(null, name);
   }
-);
-
-// ---- API STUBS ----
-app.post('/api/upload', requireAuth, async (req, res) => {
-  res.json({ ok: true, message: 'Upload endpoint stub' });
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 15 * 1024 * 1024 } // 15 MB (adjust if required)
 });
 
+// Drive OAuth client using refresh token
+if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {
+  console.warn('⚠️ Google Drive env vars missing - uploads will fail until provided.');
+}
+const oauth2Client = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
+oauth2Client.setCredentials({ refresh_token: GOOGLE_REFRESH_TOKEN });
+const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
+// ----------------- PHOTOS.JSON UTILITIES -----------------
+async function ensurePhotosJson() {
+  try {
+    await readFile(PHOTOS_JSON, 'utf8');
+  } catch (err) {
+    await writeFile(PHOTOS_JSON, JSON.stringify([]), 'utf8');
+  }
+}
+async function readPhotos() {
+  await ensurePhotosJson();
+  const raw = await readFile(PHOTOS_JSON, 'utf8');
+  return JSON.parse(raw || '[]');
+}
+async function writePhotos(arr) {
+  await writeFile(PHOTOS_JSON, JSON.stringify(arr, null, 2), 'utf8');
+}
+
+// ----------------- API: UPLOAD -----------------
+app.post('/api/upload', requireAuth, upload.single('photo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded (field name must be "photo")' });
+    }
+
+    const caption = (req.body.caption || '').trim();
+    const uploader = req.user && req.user.email ? req.user.email : 'unknown';
+    const tmpPath = req.file.path;
+    const mimeType = req.file.mimetype;
+    const originalName = req.file.originalname;
+
+    const fileMetadata = { name: originalName };
+    if (GOOGLE_DRIVE_FOLDER_ID) fileMetadata.parents = [GOOGLE_DRIVE_FOLDER_ID];
+
+    const media = {
+      mimeType,
+      body: fs.createReadStream(tmpPath)
+    };
+
+    const createRes = await drive.files.create({
+      requestBody: fileMetadata,
+      media,
+      fields: 'id, name, mimeType'
+    });
+
+    const fileId = createRes.data.id;
+
+    if ((MAKE_PUBLIC + '').toLowerCase() === 'true') {
+      try {
+        await drive.permissions.create({
+          fileId,
+          requestBody: { role: 'reader', type: 'anyone' }
+        });
+      } catch (permErr) {
+        console.warn('Could not set public permission:', permErr && permErr.message ? permErr.message : permErr);
+      }
+    }
+
+    const photos = await readPhotos();
+    const entry = {
+      id: fileId,
+      name: createRes.data.name || originalName,
+      mimeType: createRes.data.mimeType || mimeType,
+      caption,
+      uploadedBy: uploader,
+      uploadedAt: new Date().toISOString()
+    };
+    photos.unshift(entry);
+    await writePhotos(photos);
+
+    try { await unlink(tmpPath); } catch (e) { /* ignore cleanup errors */ }
+
+    return res.json({ ok: true, entry });
+  } catch (err) {
+    console.error('Upload error:', err && err.message ? err.message : err);
+    return res.status(500).json({ error: 'Upload failed', details: err && err.message });
+  }
+});
+
+// ----------------- API: LIST -----------------
 app.get('/api/list', requireAuth, async (req, res) => {
-  res.json([]); // stub
+  try {
+    const photos = await readPhotos();
+    return res.json(photos);
+  } catch (err) {
+    console.error('/api/list error:', err);
+    return res.status(500).json({ error: 'Failed to read photos' });
+  }
 });
 
+// ----------------- API: STREAM FILE -----------------
 app.get('/api/file/:id', requireAuth, async (req, res) => {
-  res.status(501).send('Not implemented');
+  const { id } = req.params;
+  if (!id) return res.status(400).send('Missing file id');
+
+  try {
+    const meta = await drive.files.get({ fileId: id, fields: 'id, name, mimeType, size' });
+    const mimeType = meta.data.mimeType || 'application/octet-stream';
+    res.setHeader('Content-Type', mimeType);
+    // res.setHeader('Content-Disposition', `inline; filename="${meta.data.name}"`);
+
+    const driveRes = await drive.files.get({ fileId: id, alt: 'media' }, { responseType: 'stream' });
+
+    driveRes.data
+      .on('end', () => {
+        // stream finished
+      })
+      .on('error', (err) => {
+        console.error('Stream error from Drive:', err);
+        if (!res.headersSent) res.status(500).send('Stream error');
+      })
+      .pipe(res);
+  } catch (err) {
+    console.error('/api/file/:id error:', err && err.message ? err.message : err);
+    return res.status(500).send('Failed to stream file');
+  }
 });
 
-app.get('/api/diag', (req, res) =>
-  res.json({ status: 'ok', ts: Date.now() })
-);
+// ----------------- SIMPLE DIAG -----------------
+app.get('/api/diag', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
 
-// ---- HEALTH CHECK ----
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    uptime: process.uptime(),
-    ts: Date.now()
-  });
-});
-
-// ---- START SERVER ----
-const port = process.env.PORT || PORT;
-const server = app.listen(port, () => {
-  console.log(`✅ Server listening on port ${port}`);
+// ----------------- START SERVER -----------------
+const listenPort = process.env.PORT ? Number(process.env.PORT) : Number(PORT || 4000);
+const server = app.listen(listenPort, () => {
+  console.log(`✅ Server listening on port ${listenPort} - NODE_ENV=${NODE_ENV}`);
+  console.log(`Static dir: ${publicDir}`);
 });
 
 // Graceful shutdown
