@@ -1,4 +1,4 @@
-// server.js (FULL) - CommonJS - paste into backend/server.js
+// server.js (FULL) - CommonJS
 // Requires: express, cookie-parser, express-session, axios, jsonwebtoken, multer, googleapis
 // Make sure package.json contains these deps and Render env vars are set.
 
@@ -21,6 +21,7 @@ const unlink = util.promisify(fs.unlink);
 const app = express();
 
 // ----------------- ENV/CONFIG -----------------
+// Destructure most envs but handle SESSION_SECRET fallback to COOKIE_SECRET
 const {
   PORT = 4000,
   AUTH0_DOMAIN,
@@ -28,7 +29,6 @@ const {
   AUTH0_CLIENT_SECRET,
   AUTH0_REDIRECT_URI,
   AUTH0_AUDIENCE,
-  SESSION_SECRET,
   FRONTEND_ORIGIN = '',
   ALLOWED_USERS = '',
   GOOGLE_CLIENT_ID,
@@ -40,15 +40,38 @@ const {
   STATIC_DIR = 'private' // folder name where your static html lives
 } = process.env;
 
-if (
-  !AUTH0_DOMAIN ||
-  !AUTH0_CLIENT_ID ||
-  !AUTH0_CLIENT_SECRET ||
-  !AUTH0_REDIRECT_URI ||
-  !AUTH0_AUDIENCE ||
-  !SESSION_SECRET
-) {
-  console.error('❌ Missing required env vars (Auth0 + SESSION_SECRET). Exiting.');
+// SESSION secret: prefer SESSION_SECRET, fallback to COOKIE_SECRET (if present)
+let SESSION_SECRET = process.env.SESSION_SECRET || process.env.COOKIE_SECRET || '';
+
+// ----------------- DEBUG-FRIENDLY ENV CHECK -----------------
+const requiredEnvs = [
+  'AUTH0_DOMAIN',
+  'AUTH0_CLIENT_ID',
+  'AUTH0_CLIENT_SECRET',
+  'AUTH0_REDIRECT_URI',
+  'AUTH0_AUDIENCE',
+  'SESSION_SECRET'
+];
+
+const missing = requiredEnvs.filter(name => {
+  if (name === 'SESSION_SECRET') {
+    return !SESSION_SECRET || String(SESSION_SECRET).trim() === '';
+  }
+  const v = process.env[name];
+  return !v || String(v).trim() === '';
+});
+
+if (missing.length > 0) {
+  console.error('❌ Missing required env vars:', missing.join(', '));
+  console.error('Env presence map:');
+  requiredEnvs.forEach(name => {
+    if (name === 'SESSION_SECRET') {
+      console.error(`  ${name}:`, !!SESSION_SECRET);
+    } else {
+      console.error(`  ${name}:`, !!process.env[name]);
+    }
+  });
+  // exit so Render logs show the exact missing names
   process.exit(1);
 }
 
@@ -56,7 +79,6 @@ if (
 app.use(express.json());
 app.use(cookieParser());
 
-// session config (used to sign cookies server-side)
 app.use(
   session({
     name: 'shree_session',
@@ -65,7 +87,7 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: NODE_ENV === 'production', // in dev you may set false
+      secure: NODE_ENV === 'production', // true on Render (HTTPS)
       sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000
     }
