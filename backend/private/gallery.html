@@ -2,102 +2,115 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <title>Gallery — Shreshtha's Memories</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gallery — Shreshtha</title>
-
-  <script src="/auth-init.js"></script>
-  <script src="/guard-auth.js"></script>
-
   <style>
-    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;background:#fbfbfb;color:#222}
-    header{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.04)}
-    .btn{background:#2e7d32;color:#fff;padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
-    main{max-width:1100px;margin:24px auto;padding:18px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-    .tile{border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 8px 18px rgba(0,0,0,0.04);cursor:pointer;height:160px;position:relative}
-    .tile img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
-    .tile:hover img{transform:scale(1.08)}
-    .meta{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,0.45);color:#fff;padding:6px 8px;border-radius:8px;font-size:13px}
-    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:9999}
-    .modal.open{display:flex}
-    .modal img{max-width:80vw;max-height:80vh;object-fit:contain;border-radius:8px}
+    :root{--bg:#f6faf4;--accent:#2b8a62;--muted:#6b6b6b}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:#163b2a}
+    header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;max-width:1200px;margin:0 auto}
+    .nav a{margin-left:12px;text-decoration:none;color:var(--accent);font-weight:700}
+    main{max-width:1100px;margin:18px auto;padding:18px}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .item{background:#fff;border-radius:12px;box-shadow:0 8px 26px rgba(0,0,0,0.06);overflow:hidden;display:flex;flex-direction:column}
+    .thumb{height:200px;overflow:hidden}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s}
+    .item:hover .thumb img{transform:scale(1.06)}
+    .meta{padding:10px 12px;font-size:14px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+    .meta .by{font-weight:600;color:#2b5b2b}
+    .empty{padding:40px;text-align:center;color:#7a7a7a;border-radius:10px;background:#fff}
+    .controls{display:flex;gap:8px}
+    .btn{background:var(--accent);color:#fff;border:0;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:700}
+    @media (max-width:900px){ .grid{grid-template-columns:repeat(2,1fr)} }
+    @media (max-width:520px){ .grid{grid-template-columns:1fr} header{padding:12px} }
   </style>
 </head>
 <body>
   <header>
-    <div><strong>Gallery</strong><div style="font-size:13px;color:#666">All uploads</div></div>
-    <nav>
-      <button class="btn" id="btnBack">Back</button>
+    <h2>Gallery</h2>
+    <nav class="nav">
+      <a href="/life.html">Back to Life</a>
+      <a href="/upload.html">Go to Upload</a>
+      <a href="/auth/logout">Logout</a>
     </nav>
   </header>
 
   <main>
-    <div data-guard>
-      <h2>All Photos</h2>
-      <div id="grid" class="grid"></div>
-      <div id="note" style="margin-top:12px;color:#666"></div>
+    <div id="gridWrap">
+      <div class="empty">Loading photos…</div>
     </div>
   </main>
 
-  <div id="modal" class="modal" onclick="if(event.target===this) closeModal()">
-    <img id="modalImg" src="" alt="">
-  </div>
-
-  <script>
-    const grid = document.getElementById("grid");
-    const note = document.getElementById("note");
-    const btnBack = document.getElementById("btnBack");
-
-    async function fetchList() {
-      try {
-        const token = await window.auth.getToken();
-        const res = await fetch("https://shree-drive.onrender.com/api/list", {
-          headers: { Authorization: "Bearer " + token }
-        });
-        if (!res.ok) {
-          const txt = await res.text();
-          note.textContent = "Failed to load: " + txt;
-          return;
-        }
-        const list = await res.json();
-        if (!Array.isArray(list) || list.length === 0) {
-          note.textContent = "No uploads yet.";
-          return;
-        }
-        render(list);
-      } catch (err) {
-        note.textContent = "Error fetching list: " + err.message;
+<script>
+  async function fetchPhotos() {
+    try {
+      const resp = await fetch('/api/list', { credentials: 'include' });
+      if (!resp.ok) {
+        if (resp.status === 401) return window.location.href = '/index.html';
+        throw new Error('Failed to fetch list');
       }
+      const photos = await resp.json();
+      renderGrid(photos);
+    } catch (err) {
+      console.error('fetchPhotos error', err);
+      document.getElementById('gridWrap').innerHTML = `<div class="empty">Could not load photos. Try again later.</div>`;
+    }
+  }
+
+  function renderGrid(photos) {
+    const wrap = document.getElementById('gridWrap');
+    if (!Array.isArray(photos) || photos.length === 0) {
+      wrap.innerHTML = `<div class="empty">No photos yet. Use <a href="/upload.html">Upload</a> to add memories.</div>`;
+      return;
     }
 
-    function render(list) {
-      grid.innerHTML = "";
-      list.forEach(item => {
-        const t = document.createElement("div");
-        t.className = "tile";
-        // thumbnail via backend streaming -- use /api/file/:id
-        const thumbUrl = `https://shree-drive.onrender.com/api/file/${item.id}`;
-        t.innerHTML = `<img src="${thumbUrl}" alt="${item.filename}"><div class="meta">${item.caption || item.filename}</div>`;
-        t.addEventListener("click", () => openModal(thumbUrl));
-        grid.appendChild(t);
-      });
-    }
+    const grid = document.createElement('div');
+    grid.className = 'grid';
 
-    function openModal(src) {
-      document.getElementById("modalImg").src = src;
-      document.getElementById("modal").classList.add("open");
-    }
-    function closeModal() {
-      document.getElementById("modal").classList.remove("open");
-      document.getElementById("modalImg").src = "";
-    }
+    photos.forEach((p, idx) => {
+      const item = document.createElement('div');
+      item.className = 'item';
+      const thumb = document.createElement('div');
+      thumb.className = 'thumb';
+      const img = document.createElement('img');
 
-    btnBack.addEventListener("click", () => window.location.href = "/life.html");
+      // If stored locally, server writes localPath. Try it first.
+      if (p.localPath) {
+        img.src = p.localPath;
+      } else {
+        img.src = '/api/file/' + encodeURIComponent(p.id);
+      }
+      img.alt = p.caption || p.name || `Photo ${idx+1}`;
+      thumb.appendChild(img);
 
-    // init
-    (async () => {
-      await fetchList();
-    })();
-  </script>
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      const left = document.createElement('div');
+      left.innerHTML = `<div class="by">${p.uploadedBy || 'You'}</div><div class="small">${new Date(p.uploadedAt).toLocaleString()}</div>`;
+      const right = document.createElement('div');
+      right.className = 'controls';
+      const openBtn = document.createElement('a');
+      openBtn.className = 'btn';
+      // If a corresponding photo page (photo1..photo9) exists, point to it; otherwise open direct file stream
+      const page = `/photo${idx+1}.html?id=${encodeURIComponent(p.id)}`;
+      openBtn.href = page;
+      openBtn.textContent = 'View';
+      right.appendChild(openBtn);
+
+      meta.appendChild(left);
+      meta.appendChild(right);
+
+      item.appendChild(thumb);
+      item.appendChild(meta);
+
+      grid.appendChild(item);
+    });
+
+    wrap.innerHTML = '';
+    wrap.appendChild(grid);
+  }
+
+  // run
+  (function(){ fetchPhotos(); })();
+</script>
 </body>
 </html>
