@@ -1,231 +1,317 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Life Moments — Shreshtha</title>
+  <title>Sweet Memories — Shreshtha</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
     :root{
-      --bg:#556b2f;   /* olive */
-      --card-bg: rgba(255,255,255,0.06);
-      --accent:#ffe4e1; /* light pink for quotes */
-      --text:#ffffff;
-      --maxw:1000px;
+      --bg:#eaf0e2;
+      --accent:#7fb26b;
+      --card:#ffffff;
+      --muted:#6b6b6b;
+      --quote:#7a9b6a;
+      --heart: #ff9db3;
     }
-    html,body{height:100%;margin:0;padding:0;font-family: Arial, system-ui, -apple-system; background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased}
+
+    body{
+      margin:0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg,#f3f7ee 0%, #e6efe0 100%);
+      color:#24301a;
+    }
+
     header{
       display:flex;
-      justify-content:space-between;
       align-items:center;
-      padding:18px 24px;
-      max-width:var(--maxw);
-      margin:0 auto;
+      justify-content:space-between;
+      padding:20px 28px;
+      background:transparent;
     }
-    header h1{margin:0;font-size:20px;letter-spacing:0.2px}
-    .nav{display:flex;gap:14px}
-    .nav a{color:var(--text); text-decoration:none; font-weight:600; opacity:0.95}
-    .container{max-width:var(--maxw);margin:18px auto;padding:0 18px}
+    header h1{
+      margin:0;
+      font-size:28px;
+      color:var(--accent);
+      font-weight:700;
+    }
+    .nav{
+      display:flex;
+      gap:18px;
+      align-items:center;
+    }
+    .nav a{
+      color:#2b5b2b;
+      text-decoration:none;
+      font-weight:600;
+    }
+    .nav a.logout{ color:#c13b3b; }
+
+    .container{
+      max-width:1100px;
+      margin:28px auto;
+      padding:0 18px 40px;
+    }
+
+    /* grid 3x3 */
     .photo-grid{
       display:grid;
-      grid-template-columns:repeat(3,1fr);
+      grid-template-columns:repeat(3, 1fr);
       gap:18px;
     }
-    .photo-card{
-      background:var(--card-bg);
+
+    .card{
+      background:var(--card);
       border-radius:14px;
+      box-shadow:0 6px 18px rgba(34,50,34,0.08);
       overflow:hidden;
-      box-shadow:0 6px 16px rgba(0,0,0,0.25);
       position:relative;
       min-height:260px;
       display:flex;
       flex-direction:column;
+      justify-content:flex-end;
     }
-    .photo-wrap{flex:1;display:block;overflow:hidden;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02))}
+
+    .photo-wrap{
+      position:relative;
+      flex:1 1 auto;
+      background:#f0f3ec;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+
     .photo-wrap img{
       width:100%;
-      height:220px;
+      height:100%;
       object-fit:cover;
+      transition: transform .45s ease;
       display:block;
-      transition: transform .35s cubic-bezier(.2,.9,.2,1);
     }
-    .photo-card:hover img{ transform:scale(1.08) }
+    .card:hover .photo-wrap img{
+      transform:scale(1.08);
+    }
+
     .quote{
-      padding:10px 12px;
+      padding:12px 14px;
       font-size:14px;
-      color:var(--accent);
-      font-style:italic;
+      color:var(--muted);
       background:transparent;
-      border-top:1px solid rgba(255,255,255,0.03);
-    }
-    .empty{
-      display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.6);font-weight:700;height:220px;
     }
 
-    /* hearts */
+    /* floating hearts */
     .heart{
-      position:fixed;
-      bottom:-40px;
+      position:absolute;
       pointer-events:none;
-      font-size:18px;
-      opacity:0.85;
-      transform-origin:center;
-      filter:drop-shadow(0 6px 10px rgba(0,0,0,0.25));
+      opacity:0.9;
+      transform-origin:center center;
+      font-size:14px;
+      color:var(--heart);
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12));
+      animation: floatUp 6s linear infinite;
     }
-    @keyframes floatUp {
-      0% { transform: translateY(0) rotate(0deg) scale(1); opacity:0.9; }
-      50% { transform: translateY(-45vh) rotate(12deg) scale(1.05); opacity:0.7; }
-      100% { transform: translateY(-95vh) rotate(-10deg) scale(0.9); opacity:0; }
+    @keyframes floatUp{
+      0% { transform: translateY(0) scale(0.9); opacity:0.9; }
+      80% { opacity:0.6; }
+      100% { transform: translateY(-420px) scale(1.3); opacity:0; }
     }
 
-    /* small responsive tweaks */
-    @media (max-width:860px){
-      .photo-grid{grid-template-columns:repeat(2,1fr);gap:14px}
-      .photo-wrap img{height:200px}
+    /* small responsive */
+    @media (max-width:900px){
+      .photo-grid{ grid-template-columns:repeat(2, 1fr); }
     }
     @media (max-width:520px){
-      .photo-grid{grid-template-columns:1fr;gap:12px}
-      .photo-wrap img{height:260px}
-      header{padding:12px}
+      .photo-grid{ grid-template-columns: repeat(1,1fr); }
+      header h1{ font-size:20px; }
     }
 
-    /* subtle footer spacing */
-    footer{height:40px}
+    .loadingBox{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      height:100%;
+      color:#9aa38f;
+      font-weight:600;
+    }
+
+    .card a.view{
+      position:absolute;
+      right:10px;
+      top:10px;
+      background:rgba(255,255,255,0.85);
+      padding:6px 9px;
+      border-radius:8px;
+      text-decoration:none;
+      color:#2b5b2b;
+      font-weight:600;
+      font-size:13px;
+      box-shadow:0 6px 14px rgba(0,0,0,0.06);
+    }
   </style>
+
+  <!-- Auth0 SDK (CDN) and our auth-init -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.28/auth0-spa-js.production.js"></script>
+  <script src="/auth-init.js"></script>
 </head>
 <body>
   <header>
-    <h1>Sweet Memories of Shreshtha’s Life</h1>
+    <h1>Sweet Memories of Shreshtha's Life</h1>
     <nav class="nav">
       <a href="/gallery.html">Go to Gallery</a>
       <a href="/upload.html">Go to Upload</a>
-      <a href="/auth/logout">Logout</a>
+      <a class="logout" href="/auth/logout">Logout</a>
     </nav>
   </header>
 
-  <div class="container">
-    <div id="grid" class="photo-grid" aria-live="polite">
-      <!-- JS will populate 9 fixed slots -->
-    </div>
-  </div>
+  <main class="container">
+    <section class="photo-grid" id="grid">
+      <!-- 9 placeholders (will be filled by JS) -->
+      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">A smile is the beauty of the soul.</div></div>
+      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">Memories are timeless treasures of the heart.</div></div>
+      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">Happiness looks good on you.</div></div>
 
-  <footer></footer>
+      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">Collect moments, not things.</div></div>
+      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">Every picture tells a story.</div></div>
+      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">Smiles are contagious.</div></div>
+
+      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">Joy is the best makeup.</div></div>
+      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">A moment lasts all of a second, but the memory lives on forever.</div></div>
+      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">Keep smiling; it makes people wonder what you're up to.</div></div>
+    </section>
+  </main>
 
   <script>
-    // Default quotes (fallbacks in case server photos don't have captions)
-    const defaultQuotes = [
-      "A smile is the beauty of the soul.",
-      "Memories are timeless treasures of the heart.",
-      "Happiness looks good on you.",
-      "Collect moments, not things.",
-      "Every picture tells a story.",
-      "Smiles are contagious.",
-      "Joy is the best makeup.",
-      "A moment lasts all of a second, but the memory lives on forever.",
-      "Keep smiling, it makes people wonder what you're up to."
-    ];
-
-    // create 9 placeholder slots initially for instant UI (improves perceived speed)
-    const grid = document.getElementById('grid');
-    function makePlaceholderSlots(){
-      grid.innerHTML = '';
-      for(let i=0;i<9;i++){
-        const c = document.createElement('div');
-        c.className = 'photo-card';
-        c.innerHTML = `
-          <div class="photo-wrap"><div class="empty">Loading...</div></div>
-          <div class="quote">${defaultQuotes[i] || ''}</div>
-        `;
-        grid.appendChild(c);
+    // Defensive: wait for auth init to finish (auth-init.js sets window.auth0Client)
+    async function ensureAuthClient() {
+      if (window.auth0Client) return;
+      // wait up to ~4s
+      for(let i=0;i<80;i++){
+        if (window.auth0Client) return;
+        await new Promise(r=>setTimeout(r,50));
       }
     }
-    makePlaceholderSlots();
 
-    // Fetch photos list from server and populate slots
-    async function loadPhotos(){
+    // If server enforces auth by cookie, this client-check is just UX: redirect to /index.html if not authenticated.
+    async function checkAuthAndRedirect() {
+      await ensureAuthClient();
       try {
-        const resp = await fetch('/api/list', { credentials: 'include' });
-        if (!resp.ok) {
-          if (resp.status === 401) {
-            // not logged in — redirect to login page
-            return window.location.href = '/index.html';
+        if (window.auth0Client) {
+          const isAuth = await window.auth0Client.isAuthenticated();
+          if (!isAuth) {
+            // not logged in — redirect to index/login page
+            window.location.href = "/index.html";
           }
-          throw new Error('Failed to fetch photos list');
         }
-        const photos = await resp.json();
-
-        grid.innerHTML = ''; // clear placeholders
-        for(let i=0;i<9;i++){
-          const slot = document.createElement('div');
-          slot.className = 'photo-card';
-
-          if (photos[i]) {
-            const p = photos[i];
-            // anchor goes to photo page with id query param
-            const a = document.createElement('a');
-            a.href = `/photo${i+1}.html?id=${encodeURIComponent(p.id)}`;
-            a.style = 'display:block;color:inherit;text-decoration:none';
-
-            const wrap = document.createElement('div');
-            wrap.className = 'photo-wrap';
-            const img = document.createElement('img');
-            // stream through server endpoint
-            img.src = '/api/file/' + encodeURIComponent(p.id);
-            img.alt = p.caption || p.name || `Photo ${i+1}`;
-
-            // fallback if image fails to load
-            img.onerror = function(){ this.onerror=null; this.src='/assets/placeholder.png'; };
-
-            wrap.appendChild(img);
-
-            const quote = document.createElement('div');
-            quote.className = 'quote';
-            quote.textContent = p.caption || defaultQuotes[i] || '';
-
-            a.appendChild(wrap);
-            a.appendChild(quote);
-            slot.appendChild(a);
-          } else {
-            // empty slot (no photo)
-            slot.innerHTML = `
-              <div class="photo-wrap"><div class="empty">Empty slot</div></div>
-              <div class="quote">${defaultQuotes[i] || ''}</div>
-            `;
-          }
-
-          grid.appendChild(slot);
-        }
-      } catch(err){
-        console.error('loadPhotos error', err);
+        // if auth0 not present, we still continue (server may protect)
+      } catch(e){
+        console.warn('Auth check failed', e);
       }
     }
 
-    // hearts generator (keeps the original vibe)
-    function spawnHeart(){
+    // Create floating hearts periodically
+    function spawnHeart() {
       const heart = document.createElement('div');
       heart.className = 'heart';
-      heart.style.left = (5 + Math.random()*90) + 'vw';
-      heart.style.fontSize = (14 + Math.random()*18) + 'px';
-      heart.style.color = ['#ff7aa2','#ffd1d9','#ffb3c6'][Math.floor(Math.random()*3)];
-      heart.style.animationDuration = (4 + Math.random()*6) + 's';
-      heart.innerText = '♥';
+      heart.textContent = '♥';
+      const left = Math.random()*90 + '%';
+      heart.style.left = left;
+      heart.style.bottom = Math.random()*10 + 10 + 'px';
+      heart.style.fontSize = (10 + Math.random()*18) + 'px';
+      heart.style.animationDuration = (4 + Math.random()*5) + 's';
       document.body.appendChild(heart);
-      // start animation
-      heart.style.animationName = 'floatUp';
-      // cleanup after animation
-      setTimeout(()=> heart.remove(), 10500);
+      setTimeout(()=> heart.remove(), 7000);
     }
 
-    // Run on load
-    (function(){
-      // spawn a few hearts initially for effect
-      for(let i=0;i<6;i++){
-        setTimeout(spawnHeart, i*350);
-      }
-      // then keep spawning
-      setInterval(spawnHeart, 1200);
+    // Fill grid with photos fetched from /api/list (preferred) or fallback to static photos
+    async function loadPhotosIntoGrid() {
+      const grid = document.getElementById('grid');
+      // initial static fallback list (9)
+      const fallback = [
+        '/photos/photo1.jpg','/photos/photo2.jpg','/photos/photo3.jpg',
+        '/photos/photo4.jpg','/photos/photo5.jpg','/photos/photo6.jpg',
+        '/photos/photo7.jpg','/photos/photo8.jpg','/photos/photo9.jpg'
+      ];
 
-      // load photos
-      loadPhotos();
+      // try API list (authenticated). If it returns JSON array with entries, use those (first 9)
+      try {
+        const resp = await fetch('/api/list', { credentials: 'include' });
+        if (resp.ok) {
+          const json = await resp.json();
+          if (Array.isArray(json) && json.length > 0) {
+            // map to image srcs — if MAKE_PUBLIC true, we might have public links; else we use /api/file/:id stream
+            const items = json.slice(0,9).map(it => {
+              // prefer direct public thumbnail/url if present (we store id/name). Construct streaming URL.
+              return { src: `/api/file/${encodeURIComponent(it.id)}`, caption: it.caption || it.name || '' };
+            });
+
+            // fill cards
+            const cards = grid.querySelectorAll('.card');
+            cards.forEach((card, idx) => {
+              const imgSrc = items[idx] ? items[idx].src : fallback[idx];
+              fillCard(card, imgSrc);
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('loadPhotos: API list failed', err);
+      }
+
+      // fallback: use static files in /photos/
+      const cards = grid.querySelectorAll('.card');
+      cards.forEach((card, idx) => {
+        const imgSrc = fallback[idx % fallback.length];
+        fillCard(card, imgSrc);
+      });
+    }
+
+    function fillCard(card, imgSrc){
+      const wrap = card.querySelector('.photo-wrap');
+      wrap.innerHTML = ''; // clear loading
+      const a = document.createElement('a');
+      // clicking opens a dedicated photo page (photo1..9 pages exist), try to map from static name
+      // if /api/file/.. used, open same path in new tab
+      a.href = imgSrc.includes('/photos/') ? imgSrc.replace('/photos/','/photo').replace('.jpg','.html') : imgSrc;
+      a.className = 'view';
+      a.textContent = 'Open';
+      a.target = '_blank';
+      const img = document.createElement('img');
+      img.src = imgSrc;
+      img.alt = 'Memory photo';
+      img.onerror = function(){ wrap.innerHTML = '<div class="loadingBox">Image not available</div>'; };
+      wrap.appendChild(img);
+      // append view link in top-right
+      // remove existing if any
+      const existing = card.querySelector('a.view');
+      if (existing) existing.remove();
+      // only append if imgSrc is a static photo mapping to a page
+      if (imgSrc.indexOf('/photos/') === 0) {
+        const pageLink = imgSrc.replace('/photos/','/').replace('.jpg','.html'); // photos/photo1.jpg -> /photo1.html
+        const v = document.createElement('a');
+        v.href = pageLink;
+        v.target = '_blank';
+        v.className = 'view';
+        v.textContent = 'View';
+        card.appendChild(v);
+      } else {
+        // for streamed file URL, allow open in new tab
+        const v = document.createElement('a');
+        v.href = imgSrc;
+        v.target = '_blank';
+        v.className = 'view';
+        v.textContent = 'Open';
+        card.appendChild(v);
+      }
+    }
+
+    // run on load
+    (async function(){
+      // start small UI tasks
+      checkAuthAndRedirect();
+      setInterval(spawnHeart, 700);
+
+      // load photos to grid
+      await loadPhotosIntoGrid();
     })();
   </script>
 </body>
