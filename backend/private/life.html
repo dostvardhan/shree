@@ -1,116 +1,232 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Sweet Memories of Shreshtha’s Life</title>
+  <title>Life Moments — Shreshtha</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: #f5faf6;
-      margin: 0;
-      padding: 0;
-      color: #163b2a;
-      overflow-x: hidden;
+    :root{
+      --bg:#556b2f;   /* olive */
+      --card-bg: rgba(255,255,255,0.06);
+      --accent:#ffe4e1; /* light pink for quotes */
+      --text:#ffffff;
+      --maxw:1000px;
     }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 28px;
-      background: rgba(255,255,255,0.9);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      position: sticky;
-      top: 0;
-      z-index: 20;
+    html,body{height:100%;margin:0;padding:0;font-family: Arial, system-ui, -apple-system; background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased}
+    header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:18px 24px;
+      max-width:var(--maxw);
+      margin:0 auto;
     }
-    header h1 {
-      margin: 0;
-      font-size: 22px;
-      color: #2b8a62;
+    header h1{margin:0;font-size:20px;letter-spacing:0.2px}
+    .nav{display:flex;gap:14px}
+    .nav a{color:var(--text); text-decoration:none; font-weight:600; opacity:0.95}
+    .container{max-width:var(--maxw);margin:18px auto;padding:0 18px}
+    .photo-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:18px;
     }
-    nav a {
-      margin-left: 16px;
-      color: #2b8a62;
-      text-decoration: none;
-      font-weight: 600;
+    .photo-card{
+      background:var(--card-bg);
+      border-radius:14px;
+      overflow:hidden;
+      box-shadow:0 6px 16px rgba(0,0,0,0.25);
+      position:relative;
+      min-height:260px;
+      display:flex;
+      flex-direction:column;
     }
-
-    /* scrapbook grid */
-    #grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 22px;
-      max-width: 1100px;
-      margin: 40px auto;
-      padding: 0 20px;
+    .photo-wrap{flex:1;display:block;overflow:hidden;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02))}
+    .photo-wrap img{
+      width:100%;
+      height:220px;
+      object-fit:cover;
+      display:block;
+      transition: transform .35s cubic-bezier(.2,.9,.2,1);
     }
-    .slot {
-      background: #fff;
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-      position: relative;
-      text-align: center;
+    .photo-card:hover img{ transform:scale(1.08) }
+    .quote{
+      padding:10px 12px;
+      font-size:14px;
+      color:var(--accent);
+      font-style:italic;
+      background:transparent;
+      border-top:1px solid rgba(255,255,255,0.03);
     }
-    .slot img {
-      width: 100%;
-      height: 240px;
-      object-fit: cover;
-      transition: transform .25s ease;
-      display: block;
-    }
-    .slot:hover img {
-      transform: scale(1.05);
-    }
-    .caption {
-      padding: 10px;
-      font-size: 14px;
-      color: #333;
-      background: #fafafa;
-      border-top: 1px solid #eee;
+    .empty{
+      display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.6);font-weight:700;height:220px;
     }
 
-    /* floating hearts */
-    .heart {
-      position: fixed;
-      bottom: -40px;
-      animation: floatUp 8s linear infinite;
-      opacity: 0.7;
-      z-index: 5;
+    /* hearts */
+    .heart{
+      position:fixed;
+      bottom:-40px;
+      pointer-events:none;
+      font-size:18px;
+      opacity:0.85;
+      transform-origin:center;
+      filter:drop-shadow(0 6px 10px rgba(0,0,0,0.25));
     }
     @keyframes floatUp {
-      0% { transform: translateY(0) scale(1); opacity: 0.9; }
-      100% { transform: translateY(-120vh) scale(0.8); opacity: 0; }
+      0% { transform: translateY(0) rotate(0deg) scale(1); opacity:0.9; }
+      50% { transform: translateY(-45vh) rotate(12deg) scale(1.05); opacity:0.7; }
+      100% { transform: translateY(-95vh) rotate(-10deg) scale(0.9); opacity:0; }
     }
+
+    /* small responsive tweaks */
+    @media (max-width:860px){
+      .photo-grid{grid-template-columns:repeat(2,1fr);gap:14px}
+      .photo-wrap img{height:200px}
+    }
+    @media (max-width:520px){
+      .photo-grid{grid-template-columns:1fr;gap:12px}
+      .photo-wrap img{height:260px}
+      header{padding:12px}
+    }
+
+    /* subtle footer spacing */
+    footer{height:40px}
   </style>
 </head>
 <body>
   <header>
     <h1>Sweet Memories of Shreshtha’s Life</h1>
-    <nav>
+    <nav class="nav">
       <a href="/gallery.html">Go to Gallery</a>
       <a href="/upload.html">Go to Upload</a>
       <a href="/auth/logout">Logout</a>
     </nav>
   </header>
 
-  <div id="grid">
-    <!-- 9 fixed photo slots -->
-    <div class="slot"><a href="/photo1.html"><img src="/api/file/photo1" alt=""><div class="caption">Quote for Photo 1</div></a></div>
-    <div class="slot"><a href="/photo2.html"><img src="/api/file/photo2" alt=""><div class="caption">Quote for Photo 2</div></a></div>
-    <div class="slot"><a href="/photo3.html"><img src="/api/file/photo3" alt=""><div class="caption">Quote for Photo 3</div></a></div>
-    <div class="slot"><a href="/photo4.html"><img src="/api/file/photo4" alt=""><div class="caption">Quote for Photo 4</div></a></div>
-    <div class="slot"><a href="/photo5.html"><img src="/api/file/photo5" alt=""><div class="caption">Quote for Photo 5</div></a></div>
-    <div class="slot"><a href="/photo6.html"><img src="/api/file/photo6" alt=""><div class="caption">Quote for Photo 6</div></a></div>
-    <div class="slot"><a href="/photo7.html"><img src="/api/file/photo7" alt=""><div class="caption">Quote for Photo 7</div></a></div>
-    <div class="slot"><a href="/photo8.html"><img src="/api/file/photo8" alt=""><div class="caption">Quote for Photo 8</div></a></div>
-    <div class="slot"><a href="/photo9.html"><img src="/api/file/photo9" alt=""><div class="caption">Quote for Photo 9</div></a></div>
+  <div class="container">
+    <div id="grid" class="photo-grid" aria-live="polite">
+      <!-- JS will populate 9 fixed slots -->
+    </div>
   </div>
 
-  <!-- floating hearts -->
-  <img src="/assets/heart1.png" class="heart" style="left:10%;width:32px;animation-duration:7s">
-  <img src="/assets/heart2.png" class="heart" style="left:40%;width:26px;animation-duration:9s">
-  <img src="/assets/heart3.png" class="heart" style="left:70%;width:30px;animation-duration:8s">
+  <footer></footer>
+
+  <script>
+    // Default quotes (fallbacks in case server photos don't have captions)
+    const defaultQuotes = [
+      "A smile is the beauty of the soul.",
+      "Memories are timeless treasures of the heart.",
+      "Happiness looks good on you.",
+      "Collect moments, not things.",
+      "Every picture tells a story.",
+      "Smiles are contagious.",
+      "Joy is the best makeup.",
+      "A moment lasts all of a second, but the memory lives on forever.",
+      "Keep smiling, it makes people wonder what you're up to."
+    ];
+
+    // create 9 placeholder slots initially for instant UI (improves perceived speed)
+    const grid = document.getElementById('grid');
+    function makePlaceholderSlots(){
+      grid.innerHTML = '';
+      for(let i=0;i<9;i++){
+        const c = document.createElement('div');
+        c.className = 'photo-card';
+        c.innerHTML = `
+          <div class="photo-wrap"><div class="empty">Loading...</div></div>
+          <div class="quote">${defaultQuotes[i] || ''}</div>
+        `;
+        grid.appendChild(c);
+      }
+    }
+    makePlaceholderSlots();
+
+    // Fetch photos list from server and populate slots
+    async function loadPhotos(){
+      try {
+        const resp = await fetch('/api/list', { credentials: 'include' });
+        if (!resp.ok) {
+          if (resp.status === 401) {
+            // not logged in — redirect to login page
+            return window.location.href = '/index.html';
+          }
+          throw new Error('Failed to fetch photos list');
+        }
+        const photos = await resp.json();
+
+        grid.innerHTML = ''; // clear placeholders
+        for(let i=0;i<9;i++){
+          const slot = document.createElement('div');
+          slot.className = 'photo-card';
+
+          if (photos[i]) {
+            const p = photos[i];
+            // anchor goes to photo page with id query param
+            const a = document.createElement('a');
+            a.href = `/photo${i+1}.html?id=${encodeURIComponent(p.id)}`;
+            a.style = 'display:block;color:inherit;text-decoration:none';
+
+            const wrap = document.createElement('div');
+            wrap.className = 'photo-wrap';
+            const img = document.createElement('img');
+            // stream through server endpoint
+            img.src = '/api/file/' + encodeURIComponent(p.id);
+            img.alt = p.caption || p.name || `Photo ${i+1}`;
+
+            // fallback if image fails to load
+            img.onerror = function(){ this.onerror=null; this.src='/assets/placeholder.png'; };
+
+            wrap.appendChild(img);
+
+            const quote = document.createElement('div');
+            quote.className = 'quote';
+            quote.textContent = p.caption || defaultQuotes[i] || '';
+
+            a.appendChild(wrap);
+            a.appendChild(quote);
+            slot.appendChild(a);
+          } else {
+            // empty slot (no photo)
+            slot.innerHTML = `
+              <div class="photo-wrap"><div class="empty">Empty slot</div></div>
+              <div class="quote">${defaultQuotes[i] || ''}</div>
+            `;
+          }
+
+          grid.appendChild(slot);
+        }
+      } catch(err){
+        console.error('loadPhotos error', err);
+      }
+    }
+
+    // hearts generator (keeps the original vibe)
+    function spawnHeart(){
+      const heart = document.createElement('div');
+      heart.className = 'heart';
+      heart.style.left = (5 + Math.random()*90) + 'vw';
+      heart.style.fontSize = (14 + Math.random()*18) + 'px';
+      heart.style.color = ['#ff7aa2','#ffd1d9','#ffb3c6'][Math.floor(Math.random()*3)];
+      heart.style.animationDuration = (4 + Math.random()*6) + 's';
+      heart.innerText = '♥';
+      document.body.appendChild(heart);
+      // start animation
+      heart.style.animationName = 'floatUp';
+      // cleanup after animation
+      setTimeout(()=> heart.remove(), 10500);
+    }
+
+    // Run on load
+    (function(){
+      // spawn a few hearts initially for effect
+      for(let i=0;i<6;i++){
+        setTimeout(spawnHeart, i*350);
+      }
+      // then keep spawning
+      setInterval(spawnHeart, 1200);
+
+      // load photos
+      loadPhotos();
+    })();
+  </script>
 </body>
 </html>
