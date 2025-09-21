@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Welcome — Shreshtha's Life</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root { --bg:#556b2f; --panel: rgba(255,255,255,0.06); --accent:#ff69b4; --muted:#f0efe8; }
+    body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--bg); font-family:Inter,system-ui,Arial; color:var(--muted); }
+    .card { width:92%; max-width:720px; border-radius:16px; background:var(--panel); padding:34px; box-shadow: 0 8px 30px rgba(0,0,0,0.35); text-align:center; }
+    h1 { margin:0 0 12px 0; font-size:28px; color:#fff; letter-spacing:0.2px; }
+    p.lead { margin:0 0 22px 0; color:#efe7e7; opacity:0.95; }
+    .enter-btn { display:inline-block; background:var(--accent); color:#fff; padding:12px 20px; border-radius:10px; text-decoration:none; font-weight:600; box-shadow: 0 6px 18px rgba(0,0,0,0.25); transition: transform .12s ease, box-shadow .12s ease;}
+    .enter-btn:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(0,0,0,0.35); }
+    .foot { margin-top:18px; font-size:13px; color:#f6eaea; opacity:0.9; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Welcome to Shreshtha's Life</h1>
+    <p class="lead">So glad you're here — these are memories, small joys and photos wrapped with quotes. Click enter to see the scrapbook.</p>
+    <a class="enter-btn" id="enterBtn" href="/life.html">Enter</a>
+    <div class="foot">If you were just redirected here after login, click Enter to continue.</div>
+  </div>
+</body>
+</html>
