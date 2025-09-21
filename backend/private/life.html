@@ -1,91 +1,116 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8" />
-  <title>Sweet Memories — Shreshtha</title>
+  <title>Sweet Memories of Shreshtha’s Life</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    :root{--bg:#eef5ea;--card:#fff;--accent:#c75b7d;--green:#6a8b5a}
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,-apple-system,Arial;background:var(--bg);color:#243;}
-    header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;max-width:1100px;margin:0 auto}
-    h1{margin:0;font-size:1.4rem;color:#2b3}
-    .actions{display:flex;gap:10px}
-    .btn{padding:8px 12px;border-radius:8px;border:0;cursor:pointer;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.06)}
-    .primary{background:var(--green);color:#fff;font-weight:600}
-    .grid-wrap{max-width:1100px;margin:14px auto;padding:18px}
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-    .slot{background:var(--card);border-radius:14px;min-height:220px;position:relative;overflow:hidden;box-shadow:0 8px 18px rgba(12,20,6,0.06);display:flex;align-items:center;justify-content:center;cursor:pointer}
-    .slot img{width:100%;height:100%;object-fit:cover;transform:scale(1);transition:transform .35s}
-    .slot:hover img{transform:scale(1.06)}
-    .caption{position:absolute;left:10px;right:10px;bottom:10px;background:rgba(255,255,255,0.8);padding:8px;border-radius:10px;font-size:0.95rem;text-align:center}
-    .floating{position:fixed;right:22px;bottom:22px;border-radius:50%;width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;font-weight:700;box-shadow:0 12px 30px rgba(199,91,125,0.18);cursor:pointer}
-    @media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:480px){.grid{grid-template-columns:1fr}.slot{min-height:180px}}
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #f5faf6;
+      margin: 0;
+      padding: 0;
+      color: #163b2a;
+      overflow-x: hidden;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+      color: #2b8a62;
+    }
+    nav a {
+      margin-left: 16px;
+      color: #2b8a62;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* scrapbook grid */
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    .slot {
+      background: #fff;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      position: relative;
+      text-align: center;
+    }
+    .slot img {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+      transition: transform .25s ease;
+      display: block;
+    }
+    .slot:hover img {
+      transform: scale(1.05);
+    }
+    .caption {
+      padding: 10px;
+      font-size: 14px;
+      color: #333;
+      background: #fafafa;
+      border-top: 1px solid #eee;
+    }
+
+    /* floating hearts */
+    .heart {
+      position: fixed;
+      bottom: -40px;
+      animation: floatUp 8s linear infinite;
+      opacity: 0.7;
+      z-index: 5;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(1); opacity: 0.9; }
+      100% { transform: translateY(-120vh) scale(0.8); opacity: 0; }
+    }
   </style>
 </head>
 <body>
   <header>
-    <div style="display:flex;align-items:center;gap:12px">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" style="border-radius:8px;background:#fff;padding:6px"><path d="M12 2l2 5h5l-4 3 1 5-4-3-4 3 1-5L5 7h5z" fill="#f6c" /></svg>
-      <h1>Sweet Memories — Shreshtha</h1>
-    </div>
-    <div class="actions">
-      <button class="btn primary" onclick="location.href='/upload.html'">Upload Memory</button>
-      <button class="btn" onclick="location.href='/auth/logout'">Logout</button>
-    </div>
+    <h1>Sweet Memories of Shreshtha’s Life</h1>
+    <nav>
+      <a href="/gallery.html">Go to Gallery</a>
+      <a href="/upload.html">Go to Upload</a>
+      <a href="/auth/logout">Logout</a>
+    </nav>
   </header>
 
-  <div class="grid-wrap">
-    <div id="grid" class="grid">
-      <!-- 9 slots -->
-      <div class="slot" data-idx="0"><div class="caption">Loading…</div></div>
-      <div class="slot" data-idx="1"><div class="caption">Loading…</div></div>
-      <div class="slot" data-idx="2"><div class="caption">Loading…</div></div>
-      <div class="slot" data-idx="3"><div class="caption">Loading…</div></div>
-      <div class="slot" data-idx="4"><div class="caption">Loading…</div></div>
-      <div class="slot" data-idx="5"><div class="caption">Loading…</div></div>
-      <div class="slot" data-idx="6"><div class="caption">Loading…</div></div>
-      <div class="slot" data-idx="7"><div class="caption">Loading…</div></div>
-      <div class="slot" data-idx="8"><div class="caption">Loading…</div></div>
-    </div>
+  <div id="grid">
+    <!-- 9 fixed photo slots -->
+    <div class="slot"><a href="/photo1.html"><img src="/api/file/photo1" alt=""><div class="caption">Quote for Photo 1</div></a></div>
+    <div class="slot"><a href="/photo2.html"><img src="/api/file/photo2" alt=""><div class="caption">Quote for Photo 2</div></a></div>
+    <div class="slot"><a href="/photo3.html"><img src="/api/file/photo3" alt=""><div class="caption">Quote for Photo 3</div></a></div>
+    <div class="slot"><a href="/photo4.html"><img src="/api/file/photo4" alt=""><div class="caption">Quote for Photo 4</div></a></div>
+    <div class="slot"><a href="/photo5.html"><img src="/api/file/photo5" alt=""><div class="caption">Quote for Photo 5</div></a></div>
+    <div class="slot"><a href="/photo6.html"><img src="/api/file/photo6" alt=""><div class="caption">Quote for Photo 6</div></a></div>
+    <div class="slot"><a href="/photo7.html"><img src="/api/file/photo7" alt=""><div class="caption">Quote for Photo 7</div></a></div>
+    <div class="slot"><a href="/photo8.html"><img src="/api/file/photo8" alt=""><div class="caption">Quote for Photo 8</div></a></div>
+    <div class="slot"><a href="/photo9.html"><img src="/api/file/photo9" alt=""><div class="caption">Quote for Photo 9</div></a></div>
   </div>
 
-  <div class="floating" title="Open gallery" onclick="location.href='/gallery.html'">G</div>
-
-  <script>
-    (async function(){
-      try {
-        // guard check
-        const r = await fetch('/api/diag', { credentials: 'same-origin' });
-        if (!r.ok) return window.location.href = '/index.html';
-
-        // fetch list
-        const listRes = await fetch('/api/list', { credentials: 'same-origin' });
-        if (!listRes.ok) return;
-        const list = await listRes.json();
-
-        const slots = document.querySelectorAll('.slot');
-        for (let i=0;i<slots.length;i++){
-          const item = list[i];
-          const capEl = slots[i].querySelector('.caption');
-          if (!item) { capEl.textContent = ''; continue; }
-          const img = document.createElement('img');
-          img.src = `/api/file/${item.id}`;
-          img.alt = item.caption || 'memory';
-          slots[i].appendChild(img);
-          capEl.textContent = item.caption || '';
-
-          // click opens correct photo page
-          slots[i].addEventListener('click', ()=> {
-            location.href = `/photo${i+1}.html`;
-          });
-        }
-      } catch (e) {
-        console.error(e);
-        window.location.href = '/index.html';
-      }
-    })();
-  </script>
+  <!-- floating hearts -->
+  <img src="/assets/heart1.png" class="heart" style="left:10%;width:32px;animation-duration:7s">
+  <img src="/assets/heart2.png" class="heart" style="left:40%;width:26px;animation-duration:9s">
+  <img src="/assets/heart3.png" class="heart" style="left:70%;width:30px;animation-duration:8s">
 </body>
 </html>
