@@ -1,41 +1,67 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shreshtha — Login</title>
-  <link rel="stylesheet" href="/style.css">
+  <meta charset="UTF-8">
+  <title>Welcome - Shreshtha's Memories</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #556b2f; /* olive green */
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+    }
+
+    .login-container {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 28px;
+      color: #ffe4e1;
+    }
+
+    .btn-login {
+      display: inline-block;
+      padding: 12px 24px;
+      font-size: 16px;
+      background: #ff69b4;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      text-decoration: none;
+    }
+
+    .btn-login:hover {
+      background: #ff1493;
+    }
+
+    .footer {
+      margin-top: 20px;
+      font-size: 13px;
+      color: #ddd;
+    }
+  </style>
 </head>
 <body>
-  <main style="max-width:700px;margin:60px auto;text-align:center;">
-    <h1>Shreshtha — Private Memories</h1>
-    <p>Only invited people can view & upload memories.</p>
-
-    <div style="margin:30px;">
-      <a id="loginBtn" href="/auth/login" class="btn">Login to continue</a>
+  <div class="login-container">
+    <h1>Welcome to Shreshtha's Memories</h1>
+    <p>Please log in to continue</p>
+    <a href="/auth/login" class="btn-login">Login with Auth0</a>
+    <div class="footer">
+      Private & Invite Only ✨
     </div>
-
-    <div id="status" style="margin-top:20px;color:#666;font-size:14px;">
-      Loading...
-    </div>
-  </main>
-
-  <script src="/guard-auth.js"></script>
-  <script>
-    // If already logged in (session cookie exists), redirect to life.html
-    (async () => {
-      try {
-        const r = await fetch('/api/diag', { credentials: 'include' });
-        if (r.ok) {
-          // already authenticated -> go inside
-          window.location = '/life.html';
-          return;
-        }
-      } catch (e) {
-        // not authenticated
-      }
-      document.getElementById('status').textContent = 'Please login using the button above.';
-    })();
-  </script>
+  </div>
 </body>
 </html>
