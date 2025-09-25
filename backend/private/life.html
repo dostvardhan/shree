@@ -2,317 +2,371 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Sweet Memories — Shreshtha</title>
+  <title>Shreshtha — Life Moments</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg:#eaf0e2;
-      --accent:#7fb26b;
-      --card:#ffffff;
-      --muted:#6b6b6b;
-      --quote:#7a9b6a;
-      --heart: #ff9db3;
+      --bg:#fffaf6;
+      --panel:#ffffff;
+      --accent:#6b8e23;
+      --muted:#5b6a53;
+      --soft:#f3efe8;
+      --rose:#ff7aa2;
+      --shadow: 0 12px 30px rgba(8,10,8,0.08);
     }
-
+    *{box-sizing:border-box}
     body{
       margin:0;
-      font-family: "Segoe UI", Roboto, Arial, sans-serif;
-      background: linear-gradient(180deg,#f3f7ee 0%, #e6efe0 100%);
-      color:#24301a;
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg, #f7fbf6 0%, #fffefc 100%);
+      color: #23322a;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      min-height:100vh;
     }
 
+    /* Header */
     header{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      padding:20px 28px;
-      background:transparent;
+      gap:16px;
+      padding:18px 28px;
+      background: linear-gradient(90deg, rgba(107,142,35,0.98), rgba(53,85,30,0.98));
+      color:white;
+      box-shadow: 0 6px 18px rgba(6,10,6,0.12);
+      position:sticky;
+      top:0;
+      z-index:20;
     }
-    header h1{
-      margin:0;
-      font-size:28px;
-      color:var(--accent);
-      font-weight:700;
-    }
-    .nav{
+    .brand {
       display:flex;
-      gap:18px;
+      gap:12px;
       align-items:center;
     }
-    .nav a{
-      color:#2b5b2b;
+    .logo {
+      width:56px; height:56px; border-radius:12px;
+      background:linear-gradient(135deg,#f97316,#ef4444);
+      display:flex; align-items:center; justify-content:center; font-weight:700; color:white;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      font-size:18px;
+    }
+    .title {
+      line-height:1;
+    }
+    .title h1 { margin:0; font-size:18px; font-weight:700; }
+    .title p { margin:0; font-size:12px; opacity:0.92; }
+
+    nav a {
+      color: rgba(255,255,255,0.95);
       text-decoration:none;
+      margin-left:14px;
       font-weight:600;
     }
-    .nav a.logout{ color:#c13b3b; }
+    nav a.button {
+      background: rgba(255,255,255,0.12);
+      padding:8px 12px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.06);
+    }
 
-    .container{
-      max-width:1100px;
+    /* Main container */
+    .container {
+      max-width:1160px;
       margin:28px auto;
-      padding:0 18px 40px;
+      padding:0 20px 80px;
     }
 
-    /* grid 3x3 */
-    .photo-grid{
+    /* Page header */
+    .page-head {
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:12px;
+      margin-bottom:18px;
+    }
+    .page-head h2 { margin:0; font-size:28px; color:#243a21; }
+    .page-desc { color:var(--muted); font-size:14px; margin-top:6px; }
+
+    /* Grid */
+    .photo-grid {
       display:grid;
-      grid-template-columns:repeat(3, 1fr);
-      gap:18px;
+      grid-template-columns: repeat(3, 1fr);
+      gap:20px;
     }
 
-    .card{
-      background:var(--card);
+    /* Card */
+    .photo-card {
+      background:var(--panel);
       border-radius:14px;
-      box-shadow:0 6px 18px rgba(34,50,34,0.08);
       overflow:hidden;
       position:relative;
-      min-height:260px;
-      display:flex;
-      flex-direction:column;
-      justify-content:flex-end;
+      box-shadow: var(--shadow);
+      transition: transform 300ms ease, box-shadow 300ms ease;
+      border: 1px solid rgba(10,12,10,0.03);
     }
-
-    .photo-wrap{
-      position:relative;
-      flex:1 1 auto;
-      background:#f0f3ec;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
+    .photo-card::after {
+      content:'';
+      position:absolute; inset:0; pointer-events:none;
+      background: linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,0.04) 100%);
     }
+    .photo-card a { display:block; text-decoration:none; color:inherit; }
 
-    .photo-wrap img{
+    .photo-thumb {
       width:100%;
-      height:100%;
-      object-fit:cover;
-      transition: transform .45s ease;
+      height:220px;
       display:block;
-    }
-    .card:hover .photo-wrap img{
-      transform:scale(1.08);
-    }
-
-    .quote{
-      padding:12px 14px;
-      font-size:14px;
-      color:var(--muted);
-      background:transparent;
-    }
-
-    /* floating hearts */
-    .heart{
-      position:absolute;
-      pointer-events:none;
-      opacity:0.9;
+      object-fit:cover;
+      transition: transform 450ms cubic-bezier(.2,.9,.3,1), filter 300ms;
       transform-origin:center center;
-      font-size:14px;
-      color:var(--heart);
-      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12));
-      animation: floatUp 6s linear infinite;
-    }
-    @keyframes floatUp{
-      0% { transform: translateY(0) scale(0.9); opacity:0.9; }
-      80% { opacity:0.6; }
-      100% { transform: translateY(-420px) scale(1.3); opacity:0; }
+      will-change: transform;
     }
 
-    /* small responsive */
-    @media (max-width:900px){
-      .photo-grid{ grid-template-columns:repeat(2, 1fr); }
+    .photo-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(10,18,8,0.12);
     }
-    @media (max-width:520px){
-      .photo-grid{ grid-template-columns: repeat(1,1fr); }
-      header h1{ font-size:20px; }
+    .photo-card:hover .photo-thumb {
+      transform: scale(1.08);
+      filter: saturate(1.06) contrast(1.02);
+      cursor:pointer;
     }
 
-    .loadingBox{
+    .meta {
+      padding:14px 16px 18px;
       display:flex;
+      justify-content:space-between;
+      gap:12px;
       align-items:center;
-      justify-content:center;
-      height:100%;
-      color:#9aa38f;
-      font-weight:600;
+    }
+    .quote {
+      font-style:italic;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.3;
+    }
+    .byline {
+      font-size:12px;
+      color:#97a38f;
+      text-align:right;
     }
 
-    .card a.view{
-      position:absolute;
-      right:10px;
-      top:10px;
-      background:rgba(255,255,255,0.85);
-      padding:6px 9px;
-      border-radius:8px;
-      text-decoration:none;
-      color:#2b5b2b;
-      font-weight:600;
-      font-size:13px;
-      box-shadow:0 6px 14px rgba(0,0,0,0.06);
+    /* hearts animation */
+    .floating-heart {
+      position:fixed;
+      pointer-events:none;
+      font-size:18px;
+      opacity:0.85;
+      animation: floatUp linear forwards;
+      transform-origin:center;
+      z-index:5;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.12));
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(1); opacity:1; }
+      100% { transform: translateY(-720px) scale(1.4); opacity:0; }
+    }
+
+    /* small screens */
+    @media (max-width:980px) {
+      .photo-grid { grid-template-columns: repeat(2, 1fr); }
+      .photo-thumb { height:200px; }
+    }
+    @media (max-width:560px) {
+      .photo-grid { grid-template-columns: 1fr; }
+      header { padding:14px 16px; }
+      .photo-thumb { height:180px; }
+      .page-head { flex-direction:column; align-items:flex-start; gap:8px; }
+    }
+
+    /* subtle footer */
+    footer.site-foot {
+      max-width:1160px; margin:36px auto 80px; text-align:center; color:#7f8b7b; font-size:13px;
     }
   </style>
-
-  <!-- Auth0 SDK (CDN) and our auth-init -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/1.28/auth0-spa-js.production.js"></script>
-  <script src="/auth-init.js"></script>
 </head>
 <body>
   <header>
-    <h1>Sweet Memories of Shreshtha's Life</h1>
-    <nav class="nav">
-      <a href="/gallery.html">Go to Gallery</a>
-      <a href="/upload.html">Go to Upload</a>
-      <a class="logout" href="/auth/logout">Logout</a>
+    <div class="brand">
+      <div class="logo">SP</div>
+      <div class="title">
+        <h1>Shreshtha's Memories</h1>
+        <p>Curated scrapbook — private & loved</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="gallery.html" class="button">Gallery</a>
+      <a href="upload.html" class="button">Upload</a>
+      <a href="#" id="logout">Logout</a>
     </nav>
   </header>
 
-  <main class="container">
-    <section class="photo-grid" id="grid">
-      <!-- 9 placeholders (will be filled by JS) -->
-      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">A smile is the beauty of the soul.</div></div>
-      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">Memories are timeless treasures of the heart.</div></div>
-      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">Happiness looks good on you.</div></div>
+  <main class="container" role="main">
+    <div class="page-head">
+      <div>
+        <h2>Life — a 3 × 3 scrapbook</h2>
+        <div class="page-desc">Click any photo to open a larger view. The nine original memories stay here; daily uploads appear in the Gallery.</div>
+      </div>
+      <div style="text-align:right;color:var(--muted);font-size:13px">Logged in as <strong id="userEmail">you</strong></div>
+    </div>
 
-      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">Collect moments, not things.</div></div>
-      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">Every picture tells a story.</div></div>
-      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">Smiles are contagious.</div></div>
+    <section class="photo-grid" aria-label="Scrapbook photos">
+      <!-- Photo 1 -->
+      <article class="photo-card">
+        <a href="photo1.html" aria-label="Open photo 1">
+          <img class="photo-thumb" src="photos/photo1.jpg" alt="Photo 1">
+        </a>
+        <div class="meta">
+          <div class="quote">"A smile is the beauty of the soul."</div>
+          <div class="byline">Photo 1</div>
+        </div>
+      </article>
 
-      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">Joy is the best makeup.</div></div>
-      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">A moment lasts all of a second, but the memory lives on forever.</div></div>
-      <div class="card"><div class="photo-wrap"><div class="loadingBox">Loading...</div></div><div class="quote">Keep smiling; it makes people wonder what you're up to.</div></div>
+      <!-- Photo 2 -->
+      <article class="photo-card">
+        <a href="photo2.html" aria-label="Open photo 2">
+          <img class="photo-thumb" src="photos/photo2.jpg" alt="Photo 2">
+        </a>
+        <div class="meta">
+          <div class="quote">"Memories are timeless treasures of the heart."</div>
+          <div class="byline">Photo 2</div>
+        </div>
+      </article>
+
+      <!-- Photo 3 -->
+      <article class="photo-card">
+        <a href="photo3.html" aria-label="Open photo 3">
+          <img class="photo-thumb" src="photos/photo3.jpg" alt="Photo 3">
+        </a>
+        <div class="meta">
+          <div class="quote">"Happiness looks good on you."</div>
+          <div class="byline">Photo 3</div>
+        </div>
+      </article>
+
+      <!-- Photo 4 -->
+      <article class="photo-card">
+        <a href="photo4.html" aria-label="Open photo 4">
+          <img class="photo-thumb" src="photos/photo4.jpg" alt="Photo 4">
+        </a>
+        <div class="meta">
+          <div class="quote">"Collect moments, not things."</div>
+          <div class="byline">Photo 4</div>
+        </div>
+      </article>
+
+      <!-- Photo 5 -->
+      <article class="photo-card">
+        <a href="photo5.html" aria-label="Open photo 5">
+          <img class="photo-thumb" src="photos/photo5.jpg" alt="Photo 5">
+        </a>
+        <div class="meta">
+          <div class="quote">"Every picture tells a story."</div>
+          <div class="byline">Photo 5</div>
+        </div>
+      </article>
+
+      <!-- Photo 6 -->
+      <article class="photo-card">
+        <a href="photo6.html" aria-label="Open photo 6">
+          <img class="photo-thumb" src="photos/photo6.jpg" alt="Photo 6">
+        </a>
+        <div class="meta">
+          <div class="quote">"Smiles are contagious."</div>
+          <div class="byline">Photo 6</div>
+        </div>
+      </article>
+
+      <!-- Photo 7 -->
+      <article class="photo-card">
+        <a href="photo7.html" aria-label="Open photo 7">
+          <img class="photo-thumb" src="photos/photo7.jpg" alt="Photo 7">
+        </a>
+        <div class="meta">
+          <div class="quote">"Joy is the best makeup."</div>
+          <div class="byline">Photo 7</div>
+        </div>
+      </article>
+
+      <!-- Photo 8 -->
+      <article class="photo-card">
+        <a href="photo8.html" aria-label="Open photo 8">
+          <img class="photo-thumb" src="photos/photo8.jpg" alt="Photo 8">
+        </a>
+        <div class="meta">
+          <div class="quote">"A moment lasts all of a second, but the memory lives on forever."</div>
+          <div class="byline">Photo 8</div>
+        </div>
+      </article>
+
+      <!-- Photo 9 -->
+      <article class="photo-card">
+        <a href="photo9.html" aria-label="Open photo 9">
+          <img class="photo-thumb" src="photos/photo9.jpg" alt="Photo 9">
+        </a>
+        <div class="meta">
+          <div class="quote">"Keep smiling, it makes people wonder what you're up to."</div>
+          <div class="byline">Photo 9</div>
+        </div>
+      </article>
     </section>
+
+    <footer class="site-foot">
+      Crafted with ❤️ · Private memories · <small style="display:block;margin-top:8px;color:#9aa698">Only invited users can access this site</small>
+    </footer>
   </main>
 
   <script>
-    // Defensive: wait for auth init to finish (auth-init.js sets window.auth0Client)
-    async function ensureAuthClient() {
-      if (window.auth0Client) return;
-      // wait up to ~4s
-      for(let i=0;i<80;i++){
-        if (window.auth0Client) return;
-        await new Promise(r=>setTimeout(r,50));
-      }
-    }
-
-    // If server enforces auth by cookie, this client-check is just UX: redirect to /index.html if not authenticated.
-    async function checkAuthAndRedirect() {
-      await ensureAuthClient();
-      try {
-        if (window.auth0Client) {
-          const isAuth = await window.auth0Client.isAuthenticated();
-          if (!isAuth) {
-            // not logged in — redirect to index/login page
-            window.location.href = "/index.html";
-          }
-        }
-        // if auth0 not present, we still continue (server may protect)
-      } catch(e){
-        console.warn('Auth check failed', e);
-      }
-    }
-
-    // Create floating hearts periodically
+    // Floating hearts generator (subtle)
     function spawnHeart() {
       const heart = document.createElement('div');
-      heart.className = 'heart';
-      heart.textContent = '♥';
-      const left = Math.random()*90 + '%';
-      heart.style.left = left;
-      heart.style.bottom = Math.random()*10 + 10 + 'px';
-      heart.style.fontSize = (10 + Math.random()*18) + 'px';
-      heart.style.animationDuration = (4 + Math.random()*5) + 's';
+      heart.className = 'floating-heart';
+      heart.textContent = '❤';
+      heart.style.left = Math.random() * 92 + '%';
+      heart.style.bottom = '-20px';
+      heart.style.fontSize = (12 + Math.random() * 18) + 'px';
+      heart.style.color = ['#ff6b9a','#ff9fb3','#ffd1e0','#ff7aa2'][Math.floor(Math.random()*4)];
+      heart.style.animationDuration = (5 + Math.random()*4) + 's';
       document.body.appendChild(heart);
-      setTimeout(()=> heart.remove(), 7000);
+      setTimeout(()=> heart.remove(), 9000);
     }
+    // spawn occasionally, not too many
+    setInterval(()=> {
+      if (Math.random() < 0.28) spawnHeart();
+    }, 700);
 
-    // Fill grid with photos fetched from /api/list (preferred) or fallback to static photos
-    async function loadPhotosIntoGrid() {
-      const grid = document.getElementById('grid');
-      // initial static fallback list (9)
-      const fallback = [
-        '/photos/photo1.jpg','/photos/photo2.jpg','/photos/photo3.jpg',
-        '/photos/photo4.jpg','/photos/photo5.jpg','/photos/photo6.jpg',
-        '/photos/photo7.jpg','/photos/photo8.jpg','/photos/photo9.jpg'
-      ];
-
-      // try API list (authenticated). If it returns JSON array with entries, use those (first 9)
+    // Show logged in user email if available from cookie / global auth object
+    (function showEmail() {
+      // If server injects user info or you have auth0 client on window, prefer that
       try {
-        const resp = await fetch('/api/list', { credentials: 'include' });
-        if (resp.ok) {
-          const json = await resp.json();
-          if (Array.isArray(json) && json.length > 0) {
-            // map to image srcs — if MAKE_PUBLIC true, we might have public links; else we use /api/file/:id stream
-            const items = json.slice(0,9).map(it => {
-              // prefer direct public thumbnail/url if present (we store id/name). Construct streaming URL.
-              return { src: `/api/file/${encodeURIComponent(it.id)}`, caption: it.caption || it.name || '' };
-            });
-
-            // fill cards
-            const cards = grid.querySelectorAll('.card');
-            cards.forEach((card, idx) => {
-              const imgSrc = items[idx] ? items[idx].src : fallback[idx];
-              fillCard(card, imgSrc);
-            });
-            return;
+        if (window.auth0Client && auth0Client.getUser) {
+          auth0Client.getUser().then(u => {
+            if (u && u.email) document.getElementById('userEmail').textContent = u.email;
+          }).catch(()=>{});
+        } else {
+          // fallback: try read from cookie 'shree_session' jwt payload (not ideal from client)
+          const match = document.cookie.match(/shree_session=([^;]+)/);
+          if (match) {
+            try {
+              const token = match[1];
+              // decode JWT payload
+              const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+              if (payload && payload.email) document.getElementById('userEmail').textContent = payload.email;
+            } catch(e){}
           }
         }
-      } catch (err) {
-        console.warn('loadPhotos: API list failed', err);
-      }
-
-      // fallback: use static files in /photos/
-      const cards = grid.querySelectorAll('.card');
-      cards.forEach((card, idx) => {
-        const imgSrc = fallback[idx % fallback.length];
-        fillCard(card, imgSrc);
-      });
-    }
-
-    function fillCard(card, imgSrc){
-      const wrap = card.querySelector('.photo-wrap');
-      wrap.innerHTML = ''; // clear loading
-      const a = document.createElement('a');
-      // clicking opens a dedicated photo page (photo1..9 pages exist), try to map from static name
-      // if /api/file/.. used, open same path in new tab
-      a.href = imgSrc.includes('/photos/') ? imgSrc.replace('/photos/','/photo').replace('.jpg','.html') : imgSrc;
-      a.className = 'view';
-      a.textContent = 'Open';
-      a.target = '_blank';
-      const img = document.createElement('img');
-      img.src = imgSrc;
-      img.alt = 'Memory photo';
-      img.onerror = function(){ wrap.innerHTML = '<div class="loadingBox">Image not available</div>'; };
-      wrap.appendChild(img);
-      // append view link in top-right
-      // remove existing if any
-      const existing = card.querySelector('a.view');
-      if (existing) existing.remove();
-      // only append if imgSrc is a static photo mapping to a page
-      if (imgSrc.indexOf('/photos/') === 0) {
-        const pageLink = imgSrc.replace('/photos/','/').replace('.jpg','.html'); // photos/photo1.jpg -> /photo1.html
-        const v = document.createElement('a');
-        v.href = pageLink;
-        v.target = '_blank';
-        v.className = 'view';
-        v.textContent = 'View';
-        card.appendChild(v);
-      } else {
-        // for streamed file URL, allow open in new tab
-        const v = document.createElement('a');
-        v.href = imgSrc;
-        v.target = '_blank';
-        v.className = 'view';
-        v.textContent = 'Open';
-        card.appendChild(v);
-      }
-    }
-
-    // run on load
-    (async function(){
-      // start small UI tasks
-      checkAuthAndRedirect();
-      setInterval(spawnHeart, 700);
-
-      // load photos to grid
-      await loadPhotosIntoGrid();
+      } catch(e){}
     })();
+
+    // logout handler
+    document.getElementById('logout').addEventListener('click', function(e){
+      e.preventDefault();
+      // call server logout which clears cookie and redirects to Auth0 logout
+      // fallback: server route /auth/logout already exists in server.js
+      location.href = '/auth/logout';
+    });
   </script>
 </body>
 </html>
