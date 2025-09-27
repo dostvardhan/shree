@@ -66,6 +66,9 @@
 </main>
 
 <script>
+/* ----- local constants (don’t depend on globals) ----- */
+const REDIRECT_URI = location.origin + '/auth/callback';
+
 /* floating hearts background */
 const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffffaa"];
 function spawnHeart(){
@@ -85,6 +88,7 @@ setInterval(spawnHeart,800);
 
 /* secure guard + gallery loader */
 async function requireAuth(){
+  // wait for auth0Client created by auth-init.js
   while (!window.auth0Client) { await new Promise(r=>setTimeout(r,50)); }
   const ok = await auth0Client.isAuthenticated();
   if (!ok) {
@@ -119,8 +123,9 @@ async function loadGallery(){
     });
   }catch(err){
     console.error(err);
-    document.getElementById("empty").textContent="Error loading gallery 💔";
-    document.getElementById("empty").style.display="block";
+    const e=document.getElementById("empty");
+    e.textContent="Error loading gallery 💔";
+    e.style.display="block";
   }
 }
 
