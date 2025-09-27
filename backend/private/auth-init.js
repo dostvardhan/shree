@@ -1,51 +1,58 @@
-// Choose the right Audience per hostname (must match Auth0 API Identifier)
-const AUDIENCE =
-  (location.hostname === "shreshthapushkar.com")
-    ? "https://shreshthapushkar.com"
-    : "https://shree-drive.onrender.com";
+<!-- keep this script BEFORE guard-auth.js on every page -->
+<script src="/auth0-spa-js.production.js"></script>
+<script>
+(() => {
+  // Private scope — nothing leaks except window.auth
+  const AUDIENCE =
+    (location.hostname === "shreshthapushkar.com")
+      ? "https://shreshthapushkar.com"
+      : "https://shree-drive.onrender.com";
 
-// Single callback path we'll register in Auth0
-const REDIRECT_URI = `${location.origin}/auth/callback`;
+  const REDIRECT_URI = `${location.origin}/auth/callback`;
 
-let auth0Client = null;
+  let _client;                 // the Auth0 client
+  let _initPromise = null;     // one-time initializer
 
-// A promise so other scripts can await auth init
-window.authReady = (async () => {
-  // Load the SPA client (auth0-spa-js.production.js must be loaded BEFORE this file)
-  auth0Client = await createAuth0Client({
-    domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
-    client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT",
-    audience: AUDIENCE,
-    cacheLocation: "localstorage",
-    useRefreshTokens: true
-  });
+  async function initOnce() {
+    if (_initPromise) return _initPromise;
+    _initPromise = (async () => {
+      _client = await createAuth0Client({
+        domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
+        client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT",
+        audience: AUDIENCE,
+        cacheLocation: "localstorage",
+        useRefreshTokens: true,
+      });
 
-  // Handle Auth0 redirect callback (if present)
-  if (location.search.includes("code=") && location.search.includes("state=")) {
-    try {
-      await auth0Client.handleRedirectCallback();
-    } catch (e) {
-      console.error("Auth0 callback error:", e);
-    } finally {
-      history.replaceState({}, document.title, "/life.html");
-    }
+      // handle the Auth0 redirect callback (if any)
+      if (location.search.includes("code=") && location.search.includes("state=")) {
+        try {
+          await _client.handleRedirectCallback();
+        } catch (e) {
+          console.error("Auth0 callback error:", e);
+        } finally {
+          history.replaceState({}, document.title, "/life.html");
+        }
+      }
+
+      return _client;
+    })();
+
+    return _initPromise;
   }
 
-  return true;
+  // Tiny public API under a single global
+  window.auth = {
+    init: initOnce,                                // await auth.init()
+    getClient: async () => await initOnce(),       // returns the Auth0 client
+    getToken: async () => (await initOnce()).getTokenSilently(),
+    login: async () => (await initOnce()).loginWithRedirect({ redirect_uri: REDIRECT_URI }),
+    logout: async () => (await initOnce()).logout({
+      logoutParams: { returnTo: location.origin },
+    }),
+  };
+
+  // Kick off initialization immediately (but pages can still await auth.init())
+  initOnce();
 })();
-
-// Helpers (usable in pages)
-async function getAuthToken() {
-  await window.authReady;
-  return auth0Client.getTokenSilently();
-}
-async function logoutToHome() {
-  await window.authReady;
-  await auth0Client.logout({ logoutParams: { returnTo: location.origin } });
-}
-
-// Make available globally
-window.getAuthToken = getAuthToken;
-window.logoutToHome = logoutToHome;
-window.auth0Client = () => auth0Client;
-window.REDIRECT_URI = REDIRECT_URI;
+</script>
