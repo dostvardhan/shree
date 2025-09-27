@@ -158,7 +158,7 @@ app.get('/auth/callback', async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000
     });
 
-    return res.redirect('/life.html');
+    return res.redirect('/welcome.html');
   } catch (err) {
     console.error('Auth callback error:', err.response ? err.response.data : err.message);
     return res.status(500).send('Authentication failed');
