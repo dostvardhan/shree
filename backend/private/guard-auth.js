@@ -1,19 +1,21 @@
-// Very small client helper used on index.html.
-// It doesn't perform login (server handles Auth0 redirect at /auth/login).
-// It simply optionally shows login status by calling /api/diag.
+// Hard guard for any page that includes this file
+(async () => {
+  // Wait until auth client is ready
+  await window.authReady;
+  const client = window.auth0Client();
 
-async function checkAuthStatus() {
-  try {
-    const resp = await fetch('/api/diag', { credentials: 'include' });
-    if (resp.ok) {
-      // logged in
-      return await resp.json();
-    }
-    return null;
-  } catch (e) {
-    return null;
+  // If not authenticated -> redirect to login
+  const isAuth = await client.isAuthenticated();
+  if (!isAuth) {
+    await client.loginWithRedirect({ redirect_uri: window.REDIRECT_URI });
+    return;
   }
-}
 
-// expose for debugging
-window.checkAuthStatus = checkAuthStatus;
+  // Authenticated: create a helper fetch that auto-adds bearer token
+  window.authFetch = async (url, opts = {}) => {
+    const token = await client.getTokenSilently();
+    const headers = new Headers(opts.headers || {});
+    headers.set("Authorization", `Bearer ${token}`);
+    return fetch(url, { ...opts, headers });
+  };
+})();
