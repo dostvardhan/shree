@@ -1,116 +1,119 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Gallery — Shreshtha's Memories</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    :root{--bg:#f6faf4;--accent:#2b8a62;--muted:#6b6b6b}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:#163b2a}
-    header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;max-width:1200px;margin:0 auto}
-    .nav a{margin-left:12px;text-decoration:none;color:var(--accent);font-weight:700}
-    main{max-width:1100px;margin:18px auto;padding:18px}
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-    .item{background:#fff;border-radius:12px;box-shadow:0 8px 26px rgba(0,0,0,0.06);overflow:hidden;display:flex;flex-direction:column}
-    .thumb{height:200px;overflow:hidden}
-    .thumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s}
-    .item:hover .thumb img{transform:scale(1.06)}
-    .meta{padding:10px 12px;font-size:14px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
-    .meta .by{font-weight:600;color:#2b5b2b}
-    .empty{padding:40px;text-align:center;color:#7a7a7a;border-radius:10px;background:#fff}
-    .controls{display:flex;gap:8px}
-    .btn{background:var(--accent);color:#fff;border:0;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:700}
-    @media (max-width:900px){ .grid{grid-template-columns:repeat(2,1fr)} }
-    @media (max-width:520px){ .grid{grid-template-columns:1fr} header{padding:12px} }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Shreshtha – Gallery</title>
+
+<!-- Auth & guards -->
+<script src="/auth0-spa-js.production.js"></script>
+<script src="auth-init.js" defer></script>
+<script src="guard-auth.js" defer></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FFE7DA; --peach:#FFB59E; --red:#FF6B6B;
+    --text:#6e2430; --panel:rgba(255,255,255,.05);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:"Playfair Display",serif;
+    color:var(--text);
+    background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red));
+    overflow-x:hidden;
+  }
+  header{text-align:center;padding:24px 12px;}
+  .logo{font-family:"Italianno",cursive;font-size:46px;text-shadow:0 2px 10px rgba(0,0,0,.25);}
+  nav{margin-top:8px;}
+  nav a{margin:0 12px;padding:8px 18px;background:rgba(255,255,255,.15);
+        border-radius:999px;text-decoration:none;color:var(--text);
+        box-shadow:0 4px 8px rgba(0,0,0,.18);}
+  nav a:hover{background:rgba(255,255,255,.3);}
+  main{max-width:1200px;margin:30px auto;padding:0 18px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px;}
+  .card{background:var(--panel);border-radius:16px;overflow:hidden;
+        box-shadow:0 18px 40px rgba(0,0,0,.25);position:relative;
+        transition:transform .3s cubic-bezier(.2,.9,.3,1);}
+  .card:hover{transform:translateY(-6px);}
+  .card img{width:100%;height:240px;object-fit:cover;display:block;}
+  .meta{padding:12px 14px 16px;text-align:center;font-style:italic;font-size:15px;}
+  .empty{text-align:center;font-size:18px;margin-top:80px;opacity:.8;}
+
+  /* Floating hearts */
+  .heart{position:fixed;font-size:18px;opacity:.75;
+         animation:floatUp linear infinite;pointer-events:none;}
+  @keyframes floatUp{
+    0%{transform:translateY(0) scale(1);opacity:.9;}
+    100%{transform:translateY(-120vh) scale(1.4);opacity:0;}
+  }
+</style>
 </head>
 <body>
-  <header>
-    <h2>Gallery</h2>
-    <nav class="nav">
-      <a href="/life.html">Back to Life</a>
-      <a href="/upload.html">Go to Upload</a>
-      <a href="/auth/logout">Logout</a>
-    </nav>
-  </header>
+<header>
+  <div class="logo">Gallery of Sweet Memories</div>
+  <nav>
+    <a href="life.html">Back to Life</a>
+    <a href="upload.html">Upload</a>
+    <a href="/auth/logout">Logout</a>
+  </nav>
+</header>
 
-  <main>
-    <div id="gridWrap">
-      <div class="empty">Loading photos…</div>
-    </div>
-  </main>
+<main>
+  <section id="grid" class="grid"></section>
+  <div id="empty" class="empty" style="display:none;">No photos uploaded yet 🌸</div>
+</main>
 
 <script>
-  async function fetchPhotos() {
-    try {
-      const resp = await fetch('/api/list', { credentials: 'include' });
-      if (!resp.ok) {
-        if (resp.status === 401) return window.location.href = '/index.html';
-        throw new Error('Failed to fetch list');
-      }
-      const photos = await resp.json();
-      renderGrid(photos);
-    } catch (err) {
-      console.error('fetchPhotos error', err);
-      document.getElementById('gridWrap').innerHTML = `<div class="empty">Could not load photos. Try again later.</div>`;
-    }
-  }
+/* floating hearts background */
+const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffffaa"];
+function spawnHeart(){
+  const h=document.createElement("div");
+  h.className="heart";
+  h.textContent=Math.random()>0.5?"❤":"♡";
+  h.style.left=(2+Math.random()*96)+"vw";
+  h.style.bottom="-24px";
+  h.style.fontSize=(10+Math.random()*22)+"px";
+  h.style.color=colors[(Math.random()*colors.length)|0];
+  h.style.animationDuration=(10+Math.random()*10)+"s";
+  document.body.appendChild(h);
+  setTimeout(()=>h.remove(),20000);
+}
+for(let i=0;i<25;i++) setTimeout(spawnHeart,i*180);
+setInterval(spawnHeart,800);
 
-  function renderGrid(photos) {
-    const wrap = document.getElementById('gridWrap');
-    if (!Array.isArray(photos) || photos.length === 0) {
-      wrap.innerHTML = `<div class="empty">No photos yet. Use <a href="/upload.html">Upload</a> to add memories.</div>`;
+/* fetch photo list from backend */
+async function loadGallery(){
+  try{
+    const res = await authFetch("/api/list");
+    if(!res.ok) throw new Error("Failed to list photos");
+    const data = await res.json();
+    const grid = document.getElementById("grid");
+    if(!data || !data.length){
+      document.getElementById("empty").style.display="block";
       return;
     }
-
-    const grid = document.createElement('div');
-    grid.className = 'grid';
-
-    photos.forEach((p, idx) => {
-      const item = document.createElement('div');
-      item.className = 'item';
-      const thumb = document.createElement('div');
-      thumb.className = 'thumb';
-      const img = document.createElement('img');
-
-      // If stored locally, server writes localPath. Try it first.
-      if (p.localPath) {
-        img.src = p.localPath;
-      } else {
-        img.src = '/api/file/' + encodeURIComponent(p.id);
-      }
-      img.alt = p.caption || p.name || `Photo ${idx+1}`;
-      thumb.appendChild(img);
-
-      const meta = document.createElement('div');
-      meta.className = 'meta';
-      const left = document.createElement('div');
-      left.innerHTML = `<div class="by">${p.uploadedBy || 'You'}</div><div class="small">${new Date(p.uploadedAt).toLocaleString()}</div>`;
-      const right = document.createElement('div');
-      right.className = 'controls';
-      const openBtn = document.createElement('a');
-      openBtn.className = 'btn';
-      // If a corresponding photo page (photo1..photo9) exists, point to it; otherwise open direct file stream
-      const page = `/photo${idx+1}.html?id=${encodeURIComponent(p.id)}`;
-      openBtn.href = page;
-      openBtn.textContent = 'View';
-      right.appendChild(openBtn);
-
-      meta.appendChild(left);
-      meta.appendChild(right);
-
-      item.appendChild(thumb);
-      item.appendChild(meta);
-
-      grid.appendChild(item);
+    data.forEach(item=>{
+      const card=document.createElement("article");
+      card.className="card";
+      const img=document.createElement("img");
+      img.src=`/api/file/${item.id}`;
+      img.alt=item.caption||"memory";
+      const meta=document.createElement("div");
+      meta.className="meta";
+      meta.textContent=item.caption||"";
+      card.appendChild(img);
+      card.appendChild(meta);
+      grid.appendChild(card);
     });
-
-    wrap.innerHTML = '';
-    wrap.appendChild(grid);
+  }catch(err){
+    console.error(err);
+    document.getElementById("empty").textContent="Error loading gallery 💔";
+    document.getElementById("empty").style.display="block";
   }
-
-  // run
-  (function(){ fetchPhotos(); })();
+}
+document.addEventListener("DOMContentLoaded",loadGallery);
 </script>
 </body>
 </html>
