@@ -1,100 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shreshtha • Home</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
-
-  <style>
-    :root{
-      --cream:#FFE7DA; --peach:#FFB59E; --red:#FF6B6B; --ink:#6e2430;
-      --glass: rgba(255,255,255,.16);
-      --shadow: 0 18px 40px rgba(0,0,0,.28);
-      --radius: 22px;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; color:var(--ink);
-      font-family:"Playfair Display",serif;
-      background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red));
-      overflow:hidden; /* hearts float cleanly */
-    }
-
-    /* soft film to avoid color banding */
-    .dither{
-      position:fixed; inset:0; mix-blend-mode:overlay; opacity:.10; pointer-events:none;
-      background:
-        repeating-linear-gradient(
-          0deg,
-          rgba(255,255,255,.04) 0px,
-          rgba(255,255,255,.04) 2px,
-          rgba(0,0,0,.03) 2px,
-          rgba(0,0,0,.03) 4px
-        );
-    }
-
-    /* floating hearts bg */
-    .bg { position:fixed; inset:0; pointer-events:none; }
-    .heart{
-      position:absolute; font-size:14px; opacity:.7;
-      text-shadow:0 2px 8px rgba(0,0,0,.25);
-      animation:rise linear forwards;
-    }
-    @keyframes rise{
-      0%   { transform:translateY(0) scale(1); opacity:.8; }
-      100% { transform:translateY(-110vh) scale(1.25); opacity:0; }
-    }
-
-    .wrap{
-      height:100%; display:grid; place-items:center; padding:18px;
-    }
-    .card{
-      width:min(920px,92vw);
-      background:var(--glass);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      padding: clamp(22px, 6vw, 48px);
-      text-align:center;
-    }
-    .logo{
-      font-family:"Italianno",cursive;
-      font-size: clamp(48px, 8vw, 86px);
-      line-height:1; margin:0 0 8px;
-      text-shadow:0 3px 12px rgba(0,0,0,.25);
-    }
-    .tag{
-      margin:0 auto 26px; max-width:48ch; opacity:.9; font-size: clamp(16px, 2.4vw, 20px);
-    }
-
-    .cta-row{
-      display:flex; flex-wrap:wrap; gap:14px; justify-content:center; margin-top:8px;
-    }
-    .btn{
-      display:inline-flex; align-items:center; gap:10px; justify-content:center;
-      padding:14px 22px; border-radius:999px; text-decoration:none; font-weight:700;
-      letter-spacing:.2px; box-shadow:0 10px 24px rgba(0,0,0,.25); transition:transform .2s ease, opacity .2s ease;
-      user-select:none;
-    }
-    .btn-primary{ background:#6e2430; color:#fff; }
-    .btn-primary:hover{ transform:translateY(-2px); }
-    .btn-ghost{ background:rgba(255,255,255,.28); color:var(--ink); }
-    .btn-ghost:hover{ transform:translateY(-2px); opacity:.95; }
-
-    .mini{
-      margin-top:20px; font-size:14px; opacity:.85;
-    }
-    .mini a{ color:inherit; }
-
-    /* footer credit subtle */
-    footer{
-      position:fixed; inset:auto 0 10px; text-align:center;
-      font-size:12px; color:#3e0f18; opacity:.8; pointer-events:none;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Shreshtha • Home</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#FFE7DA;--peach:#FFB59E;--red:#FF6B6B;--ink:#6e2430;--glass:rgba(255,255,255,.16);--shadow:0 18px 40px rgba(0,0,0,.28);--radius:22px}
+  *{box-sizing:border-box}html,body{height:100%}
+  body{margin:0;color:var(--ink);font-family:"Playfair Display",serif;background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red));overflow:hidden}
+  .dither{position:fixed;inset:0;mix-blend-mode:overlay;opacity:.10;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.04)0px,rgba(255,255,255,.04)2px,rgba(0,0,0,.03)2px,rgba(0,0,0,.03)4px)}
+  .bg{position:fixed;inset:0;pointer-events:none}.heart{position:absolute;font-size:14px;opacity:.7;text-shadow:0 2px 8px rgba(0,0,0,.25);animation:rise linear forwards}
+  @keyframes rise{0%{transform:translateY(0) scale(1);opacity:.8}100%{transform:translateY(-110vh) scale(1.25);opacity:0}}
+  .wrap{height:100%;display:grid;place-items:center;padding:18px}
+  .card{width:min(920px,92vw);background:var(--glass);border-radius:var(--radius);box-shadow:var(--shadow);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:clamp(22px,6vw,48px);text-align:center}
+  .logo{font-family:"Italianno",cursive;font-size:clamp(48px,8vw,86px);line-height:1;margin:0 0 8px;text-shadow:0 3px 12px rgba(0,0,0,.25)}
+  .tag{margin:0 auto 26px;max-width:48ch;opacity:.9;font-size:clamp(16px,2.4vw,20px)}
+  .cta-row{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:8px}
+  .btn{display:inline-flex;align-items:center;gap:10px;justify-content:center;padding:14px 22px;border-radius:999px;text-decoration:none;font-weight:700;letter-spacing:.2px;box-shadow:0 10px 24px rgba(0,0,0,.25);transition:transform .2s ease,opacity .2s ease;user-select:none}
+  .btn-primary{background:#6e2430;color:#fff}.btn-primary:hover{transform:translateY(-2px)}
+  .mini{margin-top:20px;font-size:14px;opacity:.85}.mini a{color:inherit}
+  footer{position:fixed;inset:auto 0 10px;text-align:center;font-size:12px;color:#3e0f18;opacity:.8;pointer-events:none}
+</style>
 </head>
 <body>
   <div class="dither"></div>
@@ -104,14 +31,9 @@
     <section class="card">
       <h1 class="logo">Shreshtha</h1>
       <p class="tag">A little home of smiles, tiny adventures, and the sweetest memories — curated with love.</p>
-
       <div class="cta-row">
-        <!-- Simple + reliable: server-side login route -->
         <a class="btn btn-primary" href="/auth/login" id="btn-login">Login to Enter</a>
-        <!-- Optional: info button to view a public about/notes page (add later if you want) -->
-        <!-- <a class="btn btn-ghost" href="about.html">About this site</a> -->
       </div>
-
       <p class="mini">Already logged in? Go to <a href="welcome.html">Welcome</a> or <a href="life.html">Life</a>.</p>
     </section>
   </div>
@@ -119,24 +41,21 @@
   <footer>© Shreshtha’s Life • crafted with love</footer>
 
   <script>
-    // gentle floating hearts
     (function hearts(){
-      const host = document.getElementById('bg');
-      const colors = ["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffffaa"];
+      const host=document.getElementById('bg');
+      const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffffaa"];
       function spawn(){
-        const el = document.createElement('div');
-        el.className = 'heart';
-        el.textContent = Math.random() > .45 ? "❤" : "♡";
-        el.style.left = (2 + Math.random()*96) + 'vw';
-        el.style.bottom = '-24px';
-        el.style.color = colors[(Math.random()*colors.length)|0];
-        el.style.fontSize = (10 + Math.random()*20) + 'px';
-        el.style.animationDuration = (10 + Math.random()*12) + 's';
-        host.appendChild(el);
-        setTimeout(()=>el.remove(), 24000);
+        const el=document.createElement('div'); el.className='heart';
+        el.textContent=Math.random()>.45?"❤":"♡";
+        el.style.left=(2+Math.random()*96)+'vw';
+        el.style.bottom='-24px';
+        el.style.color=colors[(Math.random()*colors.length)|0];
+        el.style.fontSize=(10+Math.random()*20)+'px';
+        el.style.animationDuration=(10+Math.random()*12)+'s';
+        host.appendChild(el); setTimeout(()=>el.remove(),24000);
       }
-      for(let i=0;i<30;i++) setTimeout(spawn, i*180);
-      setInterval(spawn, 800);
+      for(let i=0;i<30;i++) setTimeout(spawn,i*180);
+      setInterval(spawn,800);
     })();
   </script>
 </body>

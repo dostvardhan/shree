@@ -1,170 +1,65 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Upload — Shreshtha's Memories</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    :root{--bg:#f3f7ee;--panel:#ffffff;--accent:#2b8a62;--muted:#6b6b6b}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:var(--bg);color:#163b2a}
-    header{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;max-width:1100px;margin:0 auto}
-    .nav a{margin-left:12px;text-decoration:none;color:var(--accent);font-weight:700}
-    main{max-width:900px;margin:18px auto;padding:18px}
-    .card{background:var(--panel);padding:18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.06)}
-    label{display:block;margin-bottom:8px;font-weight:600}
-    input[type="file"]{display:block}
-    textarea{width:100%;min-height:80px;border-radius:8px;padding:10px;border:1px solid #e6e6e6}
-    .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
-    button{background:var(--accent);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700}
-    .preview{margin-top:12px;border-radius:10px;overflow:hidden;border:1px solid #eee;max-height:360px}
-    .preview img{width:100%;height:auto;display:block}
-    .status{margin-top:12px;color:var(--muted)}
-    .small{font-size:13px;color:#7a7a7a}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Upload – Shreshtha</title>
+<script src="/auth0-spa-js.production.js"></script>
+<script src="/auth-init.js?v=6" defer></script>
+<script src="/guard-auth.js?v=6" defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#FFE7DA;--peach:#FFB59E;--red:#FF6B6B;--text:#6e2430}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Playfair Display",serif;color:var(--text);background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red))}
+  header{text-align:center;padding:24px 12px}.logo{font-family:"Italianno",cursive;font-size:46px;text-shadow:0 2px 10px rgba(0,0,0,.25)}
+  main{max-width:720px;margin:20px auto;padding:0 18px}
+  form{background:rgba(255,255,255,.14);padding:18px;border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.22)}
+  input[type="file"], input[type="text"]{width:100%;padding:10px 12px;margin:0 0 12px;border:0;border-radius:12px}
+  button{background:#6e2430;color:#fff;border:0;border-radius:999px;padding:12px 18px;font-weight:700;cursor:pointer}
+  .msg{margin-top:14px;font-size:14px}
+  nav{text-align:center;margin-top:12px}nav a{margin:0 12px}
+</style>
 </head>
 <body>
-  <header>
-    <h2>Upload Photo</h2>
-    <nav class="nav">
-      <a href="/life.html">Back to Life</a>
-      <a href="/gallery.html">Go to Gallery</a>
-      <a href="/auth/logout">Logout</a>
-    </nav>
-  </header>
+<header>
+  <div class="logo">Upload a Sweet Memory</div>
+  <nav>
+    <a href="life.html">Back to Life</a>
+    <a href="gallery.html">Gallery</a>
+    <a href="/auth/logout">Logout</a>
+  </nav>
+</header>
 
-  <main>
-    <div class="card">
-      <form id="uploadForm">
-        <label for="photoInput">Choose a photo (max 15 MB)</label>
-        <input id="photoInput" name="photo" type="file" accept="image/*" required />
-
-        <label for="captionInput" style="margin-top:12px">Caption / Quote (optional)</label>
-        <textarea id="captionInput" name="caption" placeholder="Write a short quote or memory..."></textarea>
-
-        <div class="row">
-          <button id="uploadBtn" type="submit">Upload</button>
-          <button id="clearBtn" type="button" style="background:#ddd;color:#333">Clear</button>
-        </div>
-
-        <div id="progressWrap" style="margin-top:12px;display:none">
-          <progress id="progressBar" value="0" max="100" style="width:100%"></progress>
-        </div>
-
-        <div id="uploadStatus" class="status small" aria-live="polite"></div>
-      </form>
-
-      <div id="preview" class="preview" style="display:none"></div>
-    </div>
-  </main>
+<main>
+  <form id="upForm">
+    <input type="file" id="photo" name="photo" accept="image/*" required />
+    <input type="text" id="caption" name="caption" placeholder="Write a short caption…" />
+    <button type="submit">Upload</button>
+    <div id="msg" class="msg"></div>
+  </form>
+</main>
 
 <script>
-  // UI elements
-  const form = document.getElementById('uploadForm');
-  const photoInput = document.getElementById('photoInput');
-  const captionInput = document.getElementById('captionInput');
-  const preview = document.getElementById('preview');
-  const uploadStatus = document.getElementById('uploadStatus');
-  const progressWrap = document.getElementById('progressWrap');
-  const progressBar = document.getElementById('progressBar');
-  const clearBtn = document.getElementById('clearBtn');
-
-  // show preview when user picks an image
-  photoInput.addEventListener('change', () => {
-    const f = photoInput.files && photoInput.files[0];
-    if (!f) { preview.style.display='none'; preview.innerHTML=''; return; }
-    const url = URL.createObjectURL(f);
-    preview.style.display='block';
-    preview.innerHTML = `<img src="${url}" alt="preview">`;
-  });
-
-  clearBtn.addEventListener('click', () => {
-    photoInput.value = '';
-    captionInput.value = '';
-    preview.style.display='none';
-    preview.innerHTML = '';
-    uploadStatus.textContent = '';
-    progressWrap.style.display = 'none';
-  });
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    uploadStatus.textContent = '';
-    if (!photoInput.files || !photoInput.files[0]) {
-      uploadStatus.textContent = 'Please select a photo first.';
-      return;
-    }
-
-    const file = photoInput.files[0];
-    if (file.size > 15 * 1024 * 1024) {
-      uploadStatus.textContent = 'File is too large (max 15 MB).';
-      return;
-    }
-
-    // prepare form data
-    const fd = new FormData();
-    fd.append('photo', file);
-    fd.append('caption', captionInput.value || '');
-
-    // show progress
-    progressWrap.style.display = 'block';
-    progressBar.value = 0;
-    uploadStatus.textContent = 'Uploading...';
-
-    try {
-      // Use fetch with credentials to include server-side session cookie
-      // Use XMLHttpRequest to get upload progress easily
-      await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/api/upload', true);
-        xhr.withCredentials = true;
-        xhr.upload.onprogress = function(ev) {
-          if (ev.lengthComputable) {
-            const pct = Math.round((ev.loaded / ev.total) * 100);
-            progressBar.value = pct;
-          }
-        };
-        xhr.onload = function() {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const json = JSON.parse(xhr.responseText);
-              if (json && json.ok) {
-                uploadStatus.textContent = 'Uploaded successfully!';
-                // small delay then redirect to gallery or life
-                setTimeout(() => {
-                  window.location.href = '/gallery.html';
-                }, 700);
-                resolve();
-              } else {
-                uploadStatus.textContent = 'Upload failed: ' + (json && json.error ? json.error : JSON.stringify(json));
-                reject(new Error('upload failed'));
-              }
-            } catch (err) {
-              uploadStatus.textContent = 'Upload failed (invalid server response).';
-              reject(err);
-            }
-          } else if (xhr.status === 401 || xhr.status === 302) {
-            // not authenticated — redirect to login
-            window.location.href = '/index.html';
-            reject(new Error('not authenticated'));
-          } else {
-            uploadStatus.textContent = 'Upload failed: HTTP ' + xhr.status;
-            reject(new Error('http ' + xhr.status));
-          }
-        };
-        xhr.onerror = function() {
-          uploadStatus.textContent = 'Upload failed (network error).';
-          reject(new Error('network'));
-        };
-        xhr.send(fd);
-      });
-    } catch (err) {
-      console.error('Upload error', err);
-      // keep message already set
-    } finally {
-      // reset progress after small pause
-      setTimeout(() => { progressWrap.style.display = 'none'; progressBar.value = 0; }, 800);
-    }
-  });
+document.getElementById("upForm").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const msg=document.getElementById("msg");
+  try{
+    const fd=new FormData();
+    const f=document.getElementById("photo").files[0];
+    if(!f){ msg.textContent="Please choose a photo first."; return; }
+    fd.append("photo", f);
+    fd.append("caption", document.getElementById("caption").value||"");
+    const r=await fetch("/api/upload",{method:"POST",body:fd,credentials:"include"});
+    const j=await r.json();
+    if(!r.ok || !j.ok){ throw new Error(j.error||"Upload failed"); }
+    msg.textContent="Uploaded! ✓";
+    setTimeout(()=>location.href="gallery.html",800);
+  }catch(err){
+    console.error(err);
+    msg.textContent="Upload failed — please try again.";
+  }
+});
 </script>
 </body>
 </html>

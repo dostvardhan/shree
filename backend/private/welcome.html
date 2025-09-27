@@ -1,46 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Welcome – Shreshtha</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500&display=swap" rel="stylesheet">
-  <style>
-    body{
-      margin:0;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      height:100vh;
-      background:linear-gradient(135deg,#ffe7da,#ffb59e 48%,#ff6b6b);
-      font-family:"Playfair Display",serif;
-      text-align:center;
-      color:#6e2430;
-    }
-    .box{
-      background:rgba(255,255,255,.2);
-      padding:40px 30px;
-      border-radius:18px;
-      box-shadow:0 12px 30px rgba(0,0,0,.25);
-    }
-    a.button{
-      display:inline-block;
-      margin-top:22px;
-      padding:12px 26px;
-      background:#6e2430;
-      color:#fff;
-      border-radius:999px;
-      text-decoration:none;
-      font-weight:bold;
-    }
-    a.button:hover{background:#a03b52;}
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Welcome – Shreshtha</title>
+
+<!-- Auth0 scripts -->
+<script src="/auth0-spa-js.production.js"></script>
+<script src="/auth-init.js?v=6" defer></script>
+<script src="/guard-auth.js?v=6" defer></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Italianno&display=swap" rel="stylesheet">
+
+<style>
+  body{
+    margin:0;
+    background:linear-gradient(135deg,#FFE7DA,#FFB59E 48%,#FF6B6B);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    font-family:"Italianno",cursive;
+    color:#6e2430;
+    text-align:center;
+  }
+  h1{
+    font-size:48px;
+    text-shadow:0 2px 12px rgba(0,0,0,.25);
+    margin-bottom:40px;
+    padding:0 12px;
+  }
+  a.enter-btn{
+    font-family:sans-serif;
+    font-size:20px;
+    background:#6e2430;
+    color:#fff;
+    padding:14px 32px;
+    border-radius:40px;
+    text-decoration:none;
+    box-shadow:0 6px 20px rgba(0,0,0,.25);
+    transition:transform .2s;
+  }
+  a.enter-btn:hover{ transform:scale(1.06); }
+</style>
 </head>
 <body>
-  <div class="box">
-    <h1>So glad you're here — these are memories, small joys and photos wrapped with quotes 🌸</h1>
-    <p>You are successfully logged in.</p>
-    <a class="button" href="life.html">Enter the Memories</a>
-  </div>
+
+  <h1>Welcome to Shreshtha’s Life of Happiness</h1>
+  <a href="life.html" class="enter-btn">Enter Memories</a>
+
 </body>
 </html>
