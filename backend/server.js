@@ -26,6 +26,8 @@ const app = express();
 const {
   PORT = 4000,
   NODE_ENV = 'production',
+
+  // Auth0
   AUTH0_DOMAIN,
   AUTH0_CLIENT_ID,
   AUTH0_CLIENT_SECRET,
@@ -34,13 +36,20 @@ const {
   SESSION_SECRET,
   FRONTEND_ORIGIN = '',
   ALLOWED_USERS = '',
+
+  // Google Drive
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
   GOOGLE_REFRESH_TOKEN,
   GOOGLE_DRIVE_FOLDER_ID,
   MAKE_PUBLIC = 'false',
-  DRIVE_LIST_MODE = 'drive',   // <== NEW: control gallery listing mode
-  STATIC_DIR = 'private'
+
+  // Static & listing
+  STATIC_DIR = 'private',
+  DRIVE_LIST_MODE = 'drive', // 'drive' to list from Drive; anything else falls back to photos.json
+
+  // Fallback JSON path (only used if not listing from Drive)
+  PHOTOS_JSON = path.join(__dirname, 'photos.json')
 } = process.env;
 
 // Validate required envs (Auth0)
@@ -59,7 +68,7 @@ if (missing.length) {
 }
 
 const isDriveConfigured =
-  GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REFRESH_TOKEN && GOOGLE_DRIVE_FOLDER_ID;
+  !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REFRESH_TOKEN && GOOGLE_DRIVE_FOLDER_ID);
 
 // ----------------- MIDDLEWARE -----------------
 app.use(express.json());
@@ -83,6 +92,7 @@ app.use(express.static(publicDir));
 
 // ----------------- AUTH HELPERS -----------------
 const allowedSet = new Set(ALLOWED_USERS.split(',').map(s => s.trim()).filter(Boolean));
+
 function createSessionToken(payload) {
   return jwt.sign(payload, SESSION_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
 }
@@ -101,7 +111,7 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// ----------------- AUTH0 LOGIN FLOW -----------------
+// ----------------- AUTH0 FLOW -----------------
 app.get('/auth/login', (req, res) => {
   const state = Math.random().toString(36).slice(2);
   const params = new URLSearchParams({
@@ -119,6 +129,7 @@ app.get('/auth/callback', async (req, res) => {
   try {
     const { code } = req.query;
     if (!code) return res.status(400).send('Missing code');
+
     const tokenResp = await axios.post(`https://${AUTH0_DOMAIN}/oauth/token`, {
       grant_type: 'authorization_code',
       client_id: AUTH0_CLIENT_ID,
@@ -126,13 +137,15 @@ app.get('/auth/callback', async (req, res) => {
       code,
       redirect_uri: AUTH0_REDIRECT_URI
     }, { headers: { 'Content-Type': 'application/json' } });
+
     const { id_token } = tokenResp.data;
     const decoded = jwt.decode(id_token);
     const userEmail = decoded && decoded.email;
     if (!userEmail) return res.status(400).send('No email in token');
 
-    if (allowedSet.size > 0 && !allowedSet.has(userEmail))
+    if (allowedSet.size > 0 && !allowedSet.has(userEmail)) {
       return res.status(403).send('User not allowed');
+    }
 
     const sessionToken = createSessionToken({
       email: userEmail,
@@ -181,23 +194,21 @@ if (isDriveConfigured) {
   console.warn('⚠️ Google Drive env vars missing — uploads to Drive will not work.');
 }
 
-// ----------------- LOCAL PHOTOS JSON -----------------
-const PHOTOS_JSON = path.join(__dirname, 'photos.json');
-const uploadDir = os.tmpdir();
-
-async function ensurePhotosJson() {
-  try { await access(PHOTOS_JSON, fs.constants.F_OK); }
-  catch { await writeFile(PHOTOS_JSON, JSON.stringify([]), 'utf8'); }
+// ----------------- FALLBACK photos.json (only if not listing from Drive) -----------------
+async function ensurePhotosJson(filePath) {
+  try { await access(filePath, fs.constants.F_OK); }
+  catch { await writeFile(filePath, JSON.stringify([]), 'utf8'); }
 }
-async function readPhotos() {
-  await ensurePhotosJson();
-  return JSON.parse(await readFile(PHOTOS_JSON, 'utf8') || '[]');
+async function readPhotos(filePath) {
+  await ensurePhotosJson(filePath);
+  return JSON.parse(await readFile(filePath, 'utf8') || '[]');
 }
-async function writePhotos(arr) {
-  await writeFile(PHOTOS_JSON, JSON.stringify(arr, null, 2), 'utf8');
+async function writePhotos(filePath, arr) {
+  await writeFile(filePath, JSON.stringify(arr, null, 2), 'utf8');
 }
 
 // ----------------- MULTER UPLOAD -----------------
+const uploadDir = os.tmpdir();
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) =>
@@ -210,93 +221,123 @@ app.post('/api/upload', requireAuth, upload.single('photo'), async (req, res) =>
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-    if (!driveClient) {
-      // fallback: local save
-      const destDir = path.join(publicDir, 'photos');
-      await fs.promises.mkdir(destDir, { recursive: true });
-      const dest = path.join(destDir, path.basename(req.file.path));
-      await fs.promises.copyFile(req.file.path, dest);
-      await unlink(req.file.path).catch(() => {});
-      const photos = await readPhotos();
-      const entry = {
-        id: `local:${path.basename(dest)}`,
-        name: path.basename(dest),
-        caption: req.body.caption || '',
-        uploadedBy: req.user.email,
-        uploadedAt: new Date().toISOString(),
-        url: `/photos/${path.basename(dest)}`
+    const caption = (req.body.caption || '').trim();
+    const uploader = (req.user && req.user.email) || 'unknown';
+
+    if (driveClient) {
+      // Upload to Drive with caption in metadata
+      const fileMetadata = {
+        name: req.file.originalname,
+        description: caption,    // visible in Drive UI
+        appProperties: {         // machine-friendly for our API
+          caption,
+          uploadedBy: uploader
+        }
       };
-      photos.unshift(entry);
-      await writePhotos(photos);
-      return res.json({ ok: true, entry });
-    }
+      if (GOOGLE_DRIVE_FOLDER_ID) fileMetadata.parents = [GOOGLE_DRIVE_FOLDER_ID];
 
-    // upload to Drive
-    const fileMetadata = { name: req.file.originalname };
-    if (GOOGLE_DRIVE_FOLDER_ID) fileMetadata.parents = [GOOGLE_DRIVE_FOLDER_ID];
-    const media = { mimeType: req.file.mimetype, body: fs.createReadStream(req.file.path) };
-    const createRes = await driveClient.files.create({
-      requestBody: fileMetadata,
-      media,
-      fields: 'id,name,mimeType'
-    });
-    const fileId = createRes.data.id;
+      const media = { mimeType: req.file.mimetype, body: fs.createReadStream(req.file.path) };
 
-    if ((MAKE_PUBLIC + '').toLowerCase() === 'true') {
-      try {
-        await driveClient.permissions.create({
-          fileId,
-          requestBody: { role: 'reader', type: 'anyone' }
-        });
-      } catch (e) {
-        console.warn('Could not set public permission:', e.message || e);
+      const createRes = await driveClient.files.create({
+        requestBody: fileMetadata,
+        media,
+        fields: 'id,name,mimeType,description,appProperties,createdTime'
+      });
+
+      const fileId = createRes.data.id;
+
+      if ((MAKE_PUBLIC + '').toLowerCase() === 'true') {
+        try {
+          await driveClient.permissions.create({
+            fileId,
+            requestBody: { role: 'reader', type: 'anyone' }
+          });
+        } catch (e) {
+          console.warn('Could not set public permission:', e.message || e);
+        }
       }
+
+      // cleanup tmp
+      await unlink(req.file.path).catch(() => {});
+
+      // Also write to fallback JSON (optional)
+      const photos = await readPhotos(PHOTOS_JSON);
+      photos.unshift({
+        id: fileId,
+        name: createRes.data.name,
+        mimeType: createRes.data.mimeType,
+        caption,
+        uploadedBy: uploader,
+        uploadedAt: createRes.data.createdTime || new Date().toISOString()
+      });
+      await writePhotos(PHOTOS_JSON, photos);
+
+      return res.json({ ok: true, entry: { id: fileId, caption } });
     }
 
+    // Fallback: save into public/photos when Drive is not configured
+    const destDir = path.join(publicDir, 'photos');
+    await fs.promises.mkdir(destDir, { recursive: true });
+    const dest = path.join(destDir, path.basename(req.file.path));
+    await fs.promises.copyFile(req.file.path, dest);
     await unlink(req.file.path).catch(() => {});
-
-    const photos = await readPhotos();
-    const entry = {
-      id: fileId,
-      name: createRes.data.name,
-      mimeType: createRes.data.mimeType,
-      caption: req.body.caption || '',
-      uploadedBy: req.user.email,
-      uploadedAt: new Date().toISOString()
-    };
-    photos.unshift(entry);
-    await writePhotos(photos);
-
-    return res.json({ ok: true, entry });
+    const photos = await readPhotos(PHOTOS_JSON);
+    photos.unshift({
+      id: `local:${path.basename(dest)}`,
+      name: path.basename(dest),
+      caption,
+      uploadedBy: uploader,
+      uploadedAt: new Date().toISOString(),
+      url: `/photos/${path.basename(dest)}`
+    });
+    await writePhotos(PHOTOS_JSON, photos);
+    return res.json({ ok: true, entry: { id: `local:${path.basename(dest)}`, caption } });
   } catch (err) {
-    console.error('Upload error:', err.message || err);
+    console.error('Upload error:', err && err.response ? err.response.data : err.message || err);
     return res.status(500).json({ error: 'Upload failed' });
   }
 });
 
-// ----------------- API: LIST -----------------
+// ----------------- API: LIST (Drive-first, reads caption) -----------------
 app.get('/api/list', requireAuth, async (req, res) => {
   try {
-    if (DRIVE_LIST_MODE === 'drive' && driveClient) {
-      // Directly list Drive folder
-      const resp = await driveClient.files.list({
-        q: `'${GOOGLE_DRIVE_FOLDER_ID}' in parents and trashed=false`,
-        fields: 'files(id,name,mimeType,createdTime,properties)'
-      });
-      const list = (resp.data.files || []).map(f => ({
+    if (driveClient && (DRIVE_LIST_MODE + '').toLowerCase() === 'drive') {
+      let q = "trashed = false";
+      if (GOOGLE_DRIVE_FOLDER_ID) {
+        q += ` and '${GOOGLE_DRIVE_FOLDER_ID}' in parents`;
+      }
+
+      const files = [];
+      let pageToken;
+      do {
+        const resp = await driveClient.files.list({
+          q,
+          pageSize: 50,
+          fields: 'nextPageToken, files(id,name,mimeType,description,appProperties,createdTime)',
+          orderBy: 'createdTime desc',
+          pageToken
+        });
+        files.push(...(resp.data.files || []));
+        pageToken = resp.data.nextPageToken;
+      } while (pageToken);
+
+      const mapped = files.map(f => ({
         id: f.id,
         name: f.name,
         mimeType: f.mimeType,
-        caption: (f.properties && f.properties.caption) || '',
+        caption: (f.appProperties && f.appProperties.caption) || f.description || '',
+        uploadedBy: (f.appProperties && f.appProperties.uploadedBy) || '',
         uploadedAt: f.createdTime
       }));
-      return res.json(list);
-    } else {
-      const photos = await readPhotos();
-      return res.json(photos);
+
+      return res.json(mapped);
     }
+
+    // Fallback (non-persistent on Render unless using a disk)
+    const photos = await readPhotos(PHOTOS_JSON);
+    return res.json(photos);
   } catch (err) {
-    console.error('/api/list error:', err.message || err);
+    console.error('/api/list error:', err && err.message ? err.message : err);
     res.status(500).json({ error: 'Failed to list photos' });
   }
 });
@@ -306,6 +347,7 @@ app.get('/api/file/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
   if (!id) return res.status(400).send('Missing id');
 
+  // local file
   if (id.startsWith('local:')) {
     const filename = id.replace('local:', '');
     const filePath = path.join(publicDir, 'photos', filename);
@@ -319,16 +361,20 @@ app.get('/api/file/:id', requireAuth, async (req, res) => {
     const meta = await driveClient.files.get({ fileId: id, fields: 'mimeType' });
     res.setHeader('Content-Type', meta.data.mimeType || 'application/octet-stream');
     const driveRes = await driveClient.files.get({ fileId: id, alt: 'media' }, { responseType: 'stream' });
+    driveRes.data.on('error', err => {
+      console.error('Drive stream error:', err);
+      if (!res.headersSent) res.status(500).send('Stream error');
+    });
     driveRes.data.pipe(res);
   } catch (err) {
-    console.error('/api/file error:', err.message || err);
+    console.error('/api/file error:', err && err.message ? err.message : err);
     res.status(500).send('Stream error');
   }
 });
 
-// ----------------- DIAG -----------------
+// ----------------- DIAG & HEALTH -----------------
 app.get('/api/diag', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
-app.get('/health', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok', uptime: process.uptime(), ts: Date.now() }));
 
 // ----------------- ROOT -----------------
 app.get('/', (req, res) => res.redirect('/index.html'));
@@ -337,6 +383,7 @@ app.get('/', (req, res) => res.redirect('/index.html'));
 const listenPort = process.env.PORT ? Number(process.env.PORT) : Number(PORT || 4000);
 const server = app.listen(listenPort, () => {
   console.log(`✅ Server listening on port ${listenPort} - NODE_ENV=${NODE_ENV}`);
+  console.log(`Static dir: ${publicDir}`);
   console.log(`Drive configured: ${isDriveConfigured ? 'yes' : 'no'}`);
   console.log(`DRIVE_LIST_MODE=${DRIVE_LIST_MODE}`);
 });
