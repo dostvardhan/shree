@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Welcome – Shreshtha</title>
 
-<!-- Auth0 scripts (guard to ensure login) -->
+<!-- Auth0 scripts -->
 <script src="/auth0-spa-js.production.js"></script>
 <script src="/auth-init.js?v=7" defer></script>
 <script src="/guard-auth.js?v=7" defer></script>
@@ -24,38 +24,36 @@
     font-family:"Italianno",cursive;
     color:#6e2430;
     text-align:center;
+    overflow:hidden;
   }
   h1{
-    font-size:48px;
-    text-shadow:0 2px 12px rgba(0,0,0,.25);
+    font-size:54px;
+    text-shadow:0 2px 14px rgba(0,0,0,.25);
     margin-bottom:40px;
     padding:0 12px;
+    animation:fadeDown 1.6s ease-out;
   }
   a.enter-btn{
     font-family:sans-serif;
     font-size:20px;
     background:#6e2430;
     color:#fff;
-    padding:14px 32px;
+    padding:14px 36px;
     border-radius:40px;
     text-decoration:none;
     box-shadow:0 6px 20px rgba(0,0,0,.25);
-    transition:transform .2s;
+    transition:transform .25s ease;
+    animation:fadeUp 1.6s ease-out;
   }
-  a.enter-btn:hover{ transform:scale(1.06); }
+  a.enter-btn:hover{ transform:scale(1.08); }
 
-  /* hidden warm-up trigger (optional manual click if needed) */
-  button#warm-btn{
-    display:none;
-    margin-top:20px;
-    padding:10px 22px;
-    font-size:16px;
-    border:none;
-    border-radius:28px;
-    background:#6e2430;
-    color:#fff;
-    box-shadow:0 4px 12px rgba(0,0,0,.2);
-    cursor:pointer;
+  @keyframes fadeDown {
+    0%{opacity:0;transform:translateY(-40px);}
+    100%{opacity:1;transform:translateY(0);}
+  }
+  @keyframes fadeUp {
+    0%{opacity:0;transform:translateY(40px);}
+    100%{opacity:1;transform:translateY(0);}
   }
 </style>
 </head>
@@ -63,28 +61,7 @@
 
   <h1>Welcome to Shreshtha’s Life of Happiness</h1>
   <a href="life.html" class="enter-btn">Enter Memories</a>
-  <button id="warm-btn">Wake Up Server</button>
 
-<script>
-/* Automatically ping the backend to avoid long cold-start delays */
-(async()=>{
-  try {
-    await fetch("/health",{mode:"no-cors"});
-  } catch(e) {
-    console.warn("Warm-up ping failed:",e);
-    // if needed, you can unhide the manual button for retry
-    document.getElementById("warm-btn").style.display="inline-block";
-  }
-})();
-
-/* Manual warm-up if backend was sleeping */
-document.getElementById("warm-btn").addEventListener("click",async()=>{
-  try{
-    await fetch("/health",{mode:"no-cors"});
-    alert("Server warmed up!");
-  }catch(e){alert("Still waking…");}
-});
 </script>
-
 </body>
 </html>
