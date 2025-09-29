@@ -1,63 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Upload – Shreshtha</title>
+<title>Upload — Shreshtha</title>
+
+<!-- Auth -->
 <script src="/auth0-spa-js.production.js"></script>
-<script src="/auth-init.js?v=6" defer></script>
-<script src="/guard-auth.js?v=6" defer></script>
+<script src="/auth-init.js?v=7" defer></script>
+<script src="/guard-auth.js?v=7" defer></script>
+
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="/favicon.png" />
+
 <style>
-  :root{--cream:#FFE7DA;--peach:#FFB59E;--red:#FF6B6B;--text:#6e2430}
+  :root{
+    --cream:#FFE7DA; --peach:#FFB59E; --red:#FF6B6B;
+    --text:#6e2430; --panel:rgba(255,255,255,.08);
+    --radius:16px; --shadow:0 18px 40px rgba(0,0,0,.25);
+  }
   *{box-sizing:border-box}
-  body{margin:0;font-family:"Playfair Display",serif;color:var(--text);background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red))}
-  header{text-align:center;padding:24px 12px}.logo{font-family:"Italianno",cursive;font-size:46px;text-shadow:0 2px 10px rgba(0,0,0,.25)}
-  main{max-width:720px;margin:20px auto;padding:0 18px}
-  form{background:rgba(255,255,255,.14);padding:18px;border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.22)}
-  input[type="file"], input[type="text"]{width:100%;padding:10px 12px;margin:0 0 12px;border:0;border-radius:12px}
-  button{background:#6e2430;color:#fff;border:0;border-radius:999px;padding:12px 18px;font-weight:700;cursor:pointer}
-  .msg{margin-top:14px;font-size:14px}
-  nav{text-align:center;margin-top:12px}nav a{margin:0 12px}
+  body{
+    margin:0; font-family:"Playfair Display",serif; color:var(--text);
+    background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red));
+    min-height:100vh; overflow-x:hidden;
+  }
+
+  /* BG layers */
+  .bg-dither{position:fixed; inset:0; z-index:1; opacity:.12; mix-blend-mode:overlay;
+    background:repeating-linear-gradient(0deg,rgba(255,255,255,.03)0,rgba(255,255,255,.03)2px,rgba(0,0,0,.02)2px,rgba(0,0,0,.02)4px);}
+  .bg-layer{position:fixed; inset:0; z-index:2; pointer-events:none;}
+  .heart{position:absolute; font-size:14px; opacity:.75; animation:floatUp linear forwards;
+    text-shadow:0 1px 6px rgba(0,0,0,.25);}
+  @keyframes floatUp{0%{transform:translateY(0) scale(1);opacity:.9}
+                     100%{transform:translateY(-120vh) scale(1.4);opacity:0}}
+
+  header{text-align:center;padding:28px 14px; position:relative; z-index:3;}
+  .logo{font-family:"Italianno",cursive;font-size:46px;text-shadow:0 2px 10px rgba(0,0,0,.25);}
+  nav{margin-top:10px}
+  nav a{margin:0 10px;padding:8px 18px;border-radius:999px;background:rgba(255,255,255,.18);
+        color:var(--text); text-decoration:none; box-shadow:0 4px 10px rgba(0,0,0,.2)}
+  nav a:hover{background:rgba(255,255,255,.3)}
+
+  main{max-width:920px;margin:0 auto 60px; padding:0 18px; position:relative; z-index:3;}
+  .card{background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;}
+  label{font-weight:600}
+  input[type=file], textarea{width:100%; font-family:inherit; border-radius:12px; border:0;
+    background:rgba(255,255,255,.6); padding:12px; margin-top:8px; color:var(--text)}
+  textarea{min-height:120px; resize:vertical}
+  .actions{display:flex; gap:12px; margin-top:14px}
+  button{background:#6e2430; color:#fff; border:0; padding:12px 18px; border-radius:999px; cursor:pointer}
+  button.secondary{background:#8b5e66}
+  .msg{margin-top:10px; font-style:italic}
+  .preview{margin-top:14px; display:none}
+  .preview img{max-width:100%; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.25)}
 </style>
 </head>
 <body>
-<header>
-  <div class="logo">Upload a Sweet Memory</div>
-  <nav>
-    <a href="life.html">Back to Life</a>
-    <a href="gallery.html">Gallery</a>
-    <a href="/auth/logout">Logout</a>
-  </nav>
-</header>
+  <div class="bg-dither"></div>
+  <div class="bg-layer" id="bgLayer"></div>
 
-<main>
-  <form id="upForm">
-    <input type="file" id="photo" name="photo" accept="image/*" required />
-    <input type="text" id="caption" name="caption" placeholder="Write a short caption…" />
-    <button type="submit">Upload</button>
-    <div id="msg" class="msg"></div>
-  </form>
-</main>
+  <header>
+    <div class="logo">Upload a Sweet Memory</div>
+    <nav>
+      <a href="life.html">Back to Life</a>
+      <a href="gallery.html">Go to Gallery</a>
+      <a href="/auth/logout">Logout</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="card">
+      <div>
+        <label>Choose a photo (max 15 MB)</label>
+        <input id="file" type="file" accept="image/*" />
+      </div>
+
+      <div style="margin-top:14px">
+        <label>Caption / Quote (optional)</label>
+        <textarea id="caption" placeholder="Write a short quote or memory..."></textarea>
+      </div>
+
+      <div class="actions">
+        <button id="btnUpload">Upload</button>
+        <button class="secondary" id="btnClear" type="button">Clear</button>
+      </div>
+
+      <div class="msg" id="msg"></div>
+
+      <div class="preview" id="preview">
+        <img id="previewImg" alt="preview"/>
+      </div>
+    </section>
+  </main>
 
 <script>
-document.getElementById("upForm").addEventListener("submit", async (e)=>{
-  e.preventDefault();
-  const msg=document.getElementById("msg");
+/* Floating hearts */
+(function hearts(){
+  const host=document.getElementById('bgLayer');
+  const colors=['#ffd6e0','#ffb7c5','#ffd27a','#ffc4a3','#ffffffaa'];
+  function spawn(){
+    const h=document.createElement('div');
+    h.className='heart';
+    h.textContent=Math.random()>.5?'❤':'♡';
+    h.style.left=(2+Math.random()*96)+'vw';
+    h.style.bottom='-24px';
+    h.style.color=colors[(Math.random()*colors.length)|0];
+    h.style.fontSize=(10+Math.random()*20)+'px';
+    h.style.animationDuration=(10+Math.random()*10)+'s';
+    host.appendChild(h);
+    setTimeout(()=>h.remove(),20000);
+  }
+  for(let i=0;i<25;i++) setTimeout(spawn,i*180);
+  setInterval(spawn,800);
+})();
+
+/* Upload logic (uses authFetch from guard-auth.js) */
+const fileEl   = document.getElementById('file');
+const capEl    = document.getElementById('caption');
+const btnUp    = document.getElementById('btnUpload');
+const btnClear = document.getElementById('btnClear');
+const msgEl    = document.getElementById('msg');
+const prevBox  = document.getElementById('preview');
+const prevImg  = document.getElementById('previewImg');
+
+fileEl.addEventListener('change', ()=>{
+  const f=fileEl.files[0];
+  if(!f){ prevBox.style.display='none'; return; }
+  const url=URL.createObjectURL(f);
+  prevImg.src=url; prevBox.style.display='block';
+});
+
+btnClear.addEventListener('click', ()=>{
+  fileEl.value=''; capEl.value=''; msgEl.textContent=''; prevBox.style.display='none';
+});
+
+btnUp.addEventListener('click', async ()=>{
+  msgEl.textContent='';
+  const f=fileEl.files && fileEl.files[0];
+  if(!f){ msgEl.textContent='Please choose a photo.'; return; }
+
   try{
     const fd=new FormData();
-    const f=document.getElementById("photo").files[0];
-    if(!f){ msg.textContent="Please choose a photo first."; return; }
-    fd.append("photo", f);
-    fd.append("caption", document.getElementById("caption").value||"");
-    const r=await fetch("/api/upload",{method:"POST",body:fd,credentials:"include"});
-    const j=await r.json();
-    if(!r.ok || !j.ok){ throw new Error(j.error||"Upload failed"); }
-    msg.textContent="Uploaded! ✓";
-    setTimeout(()=>location.href="gallery.html",800);
+    fd.append('photo', f);
+    fd.append('caption', capEl.value || '');
+
+    const res = await authFetch('/api/upload', { method:'POST', body:fd });
+    if(!res.ok){
+      const t=await res.text().catch(()=> '');
+      throw new Error('Upload failed: '+(t||res.status));
+    }
+    msgEl.textContent='✅ Uploaded! Opening gallery…';
+    // little delay then go to gallery
+    setTimeout(()=> location.href='gallery.html', 700);
   }catch(err){
     console.error(err);
-    msg.textContent="Upload failed — please try again.";
+    msgEl.textContent='Upload failed (server error).';
   }
 });
 </script>
