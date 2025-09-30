@@ -37,7 +37,7 @@
         box-shadow:0 18px 40px rgba(0,0,0,.25);position:relative;
         transition:transform .3s cubic-bezier(.2,.9,.3,1);}
   .card:hover{transform:translateY(-6px);}
-  .card img{width:100%;height:240px;object-fit:cover;display:block;}
+  .card img{width:100%;height:240px;object-fit:contain;display:block;background:#fff;}
   .meta{padding:12px 14px 16px;text-align:center;font-style:italic;font-size:15px;}
   .empty{text-align:center;font-size:18px;margin-top:80px;opacity:.8;}
 
@@ -49,30 +49,35 @@
     100%{transform:translateY(-120vh) scale(1.4);opacity:0;}
   }
 
-  /* --- Music control button --- */
-  .music-control{
-    position:fixed;
-    bottom:20px; right:20px;
-    background:#6e2430;
-    color:#fff;
-    padding:10px 14px;
-    border-radius:999px;
-    font-size:14px;
-    font-family:sans-serif;
-    cursor:pointer;
-    box-shadow:0 4px 14px rgba(0,0,0,.3);
-    display:flex; align-items:center; gap:6px;
-    z-index:50;
+  /* Music player button */
+  .music-player {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 12px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.25);
   }
-  .music-control:hover{background:#922f45;}
-  .music-control input[type=range]{
-    width:70px;
+  .music-player button {
+    border: none;
+    background: #6e2430;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .music-player input[type=range] {
+    width: 80px;
   }
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">Gallery of Sweet Memories</div>
+  <div class="logo">A Treasure of Beautiful Memories</div>
   <nav>
     <a href="life.html">Back to Life</a>
     <a href="upload.html">Upload</a>
@@ -85,12 +90,14 @@
   <div id="empty" class="empty" style="display:none;">No photos uploaded yet 🌸</div>
 </main>
 
-<!-- Background music -->
-<audio id="bgMusic" src="gallery-music.mp3" autoplay loop></audio>
-<div id="musicBtn" class="music-control">
-  <span id="musicIcon">⏸</span>
-  <input type="range" id="volumeControl" min="0" max="1" step="0.05" value="1">
+<!-- Music controls -->
+<div class="music-player">
+  <button id="playPause">Play</button>
+  <input type="range" id="volume" min="0" max="1" step="0.05" value="0.4">
 </div>
+<audio id="bgMusic" loop>
+  <source src="gallery-music.mp3" type="audio/mpeg">
+</audio>
 
 <script>
 /* floating hearts background */
@@ -142,27 +149,21 @@ async function loadGallery(){
 }
 document.addEventListener("DOMContentLoaded",loadGallery);
 
-/* ---- Music controls ---- */
-const audio = document.getElementById("bgMusic");
-const btn = document.getElementById("musicBtn");
-const icon = document.getElementById("musicIcon");
-const volume = document.getElementById("volumeControl");
+/* music controls */
+const music = document.getElementById("bgMusic");
+const playPause = document.getElementById("playPause");
+const volume = document.getElementById("volume");
 
-btn.addEventListener("click",()=>{
-  if(audio.paused){
-    audio.play();
-    icon.textContent="⏸";
-  }else{
-    audio.pause();
-    icon.textContent="▶";
+playPause.addEventListener("click",()=>{
+  if(music.paused){
+    music.play();
+    playPause.textContent="Pause";
+  } else {
+    music.pause();
+    playPause.textContent="Play";
   }
 });
-
-// prevent button click from toggling when changing volume
-volume.addEventListener("input",(e)=>{
-  audio.volume = e.target.value;
-  e.stopPropagation();
-});
+volume.addEventListener("input",()=>{ music.volume = volume.value; });
 </script>
 </body>
 </html>
