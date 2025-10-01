@@ -1,162 +1,312 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Upload — Shreshtha</title>
+<title>Upload a Sweet Memory — Shreshtha</title>
 
-<!-- Auth -->
+<!-- Auth scripts (existing in your project) -->
 <script src="/auth0-spa-js.production.js"></script>
-<script src="/auth-init.js?v=7" defer></script>
-<script src="/guard-auth.js?v=7" defer></script>
+<script src="/auth-init.js" defer></script>
+<script src="/guard-auth.js" defer></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
-<link rel="icon" type="image/png" href="/favicon.png" />
 
 <style>
   :root{
-    --cream:#FFE7DA; --peach:#FFB59E; --red:#FF6B6B;
-    --text:#6e2430; --panel:rgba(255,255,255,.08);
-    --radius:16px; --shadow:0 18px 40px rgba(0,0,0,.25);
+    --cream:#FFE7DA; --peach:#FFB59E; --red:#FF6B6B; --text:#6e2430;
+    --panel:rgba(255,255,255,.06); --radius:14px;
   }
   *{box-sizing:border-box}
   body{
-    margin:0; font-family:"Playfair Display",serif; color:var(--text);
+    margin:0; min-height:100vh;
+    font-family:"Playfair Display",serif;
+    color:var(--text);
     background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red));
-    min-height:100vh; overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
   }
 
-  /* BG layers */
-  .bg-dither{position:fixed; inset:0; z-index:1; opacity:.12; mix-blend-mode:overlay;
-    background:repeating-linear-gradient(0deg,rgba(255,255,255,.03)0,rgba(255,255,255,.03)2px,rgba(0,0,0,.02)2px,rgba(0,0,0,.02)4px);}
-  .bg-layer{position:fixed; inset:0; z-index:2; pointer-events:none;}
-  .heart{position:absolute; font-size:14px; opacity:.75; animation:floatUp linear forwards;
-    text-shadow:0 1px 6px rgba(0,0,0,.25);}
-  @keyframes floatUp{0%{transform:translateY(0) scale(1);opacity:.9}
-                     100%{transform:translateY(-120vh) scale(1.4);opacity:0}}
+  header{padding:28px 18px 6px;text-align:center}
+  .title{font-family:"Italianno",cursive;font-size:34px;margin-bottom:8px}
+  nav{margin-top:8px}
+  nav a{margin:0 12px;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.15);text-decoration:none;color:var(--text)}
+  nav a:hover{background:rgba(255,255,255,.28)}
 
-  header{text-align:center;padding:28px 14px; position:relative; z-index:3;}
-  .logo{font-family:"Italianno",cursive;font-size:46px;text-shadow:0 2px 10px rgba(0,0,0,.25);}
-  nav{margin-top:10px}
-  nav a{margin:0 10px;padding:8px 18px;border-radius:999px;background:rgba(255,255,255,.18);
-        color:var(--text); text-decoration:none; box-shadow:0 4px 10px rgba(0,0,0,.2)}
-  nav a:hover{background:rgba(255,255,255,.3)}
+  .wrap{max-width:840px;margin:22px auto;padding:22px;background:var(--panel);border-radius:18px;box-shadow:0 18px 40px rgba(0,0,0,.16)}
+  form.fieldset{display:block}
+  label{display:block;margin-bottom:8px;font-size:14px;color:rgba(0,0,0,.65)}
+  .file-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  input[type=file]{background:#fff;padding:10px;border-radius:10px;border:none}
+  textarea{width:100%;min-height:120px;padding:12px;border-radius:10px;border:none;resize:vertical}
+  .muted{font-size:13px;color:rgba(0,0,0,.45);margin-top:6px}
+  .btn-row{margin-top:14px;display:flex;gap:12px;align-items:center}
+  button.btn{background:#6e2430;color:#fff;padding:10px 14px;border-radius:999px;border:none;cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,.18)}
+  button.btn[disabled]{opacity:.55;cursor:not-allowed}
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,.12);color:var(--text);padding:8px 12px;border-radius:999px}
 
-  main{max-width:920px;margin:0 auto 60px; padding:0 18px; position:relative; z-index:3;}
-  .card{background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;}
-  label{font-weight:600}
-  input[type=file], textarea{width:100%; font-family:inherit; border-radius:12px; border:0;
-    background:rgba(255,255,255,.6); padding:12px; margin-top:8px; color:var(--text)}
-  textarea{min-height:120px; resize:vertical}
-  .actions{display:flex; gap:12px; margin-top:14px}
-  button{background:#6e2430; color:#fff; border:0; padding:12px 18px; border-radius:999px; cursor:pointer}
-  button.secondary{background:#8b5e66}
-  .msg{margin-top:10px; font-style:italic}
-  .preview{margin-top:14px; display:none}
-  .preview img{max-width:100%; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  .note{margin-top:12px;color:#842029;font-style:italic}
+  .preview{margin-top:18px;border-radius:12px;overflow:hidden;background:#fff;padding:8px;display:flex;gap:12px;align-items:center}
+  .preview img{width:120px;height:90px;object-fit:cover;border-radius:8px}
+  .preview .meta{font-size:14px;color:var(--text)}
+
+  .progress{height:8px;background:rgba(0,0,0,.08);border-radius:999px;margin-top:12px;overflow:hidden}
+  .progress > i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffb59e,#ff6b6b);transition:width .12s linear}
+
+  /* floating hearts - subtle */
+  .heart{position:fixed;font-size:14px;opacity:.75;pointer-events:none;animation:floatUp linear infinite}
+  @keyframes floatUp{0%{transform:translateY(0);opacity:.9}100%{transform:translateY(-110vh);opacity:0}}
+  /* small responsive */
+  @media (max-width:640px){
+    .wrap{margin:12px;padding:16px}
+    .title{font-size:30px}
+  }
 </style>
 </head>
 <body>
-  <div class="bg-dither"></div>
-  <div class="bg-layer" id="bgLayer"></div>
+<header>
+  <div class="title">Upload a Sweet Memory</div>
+  <nav>
+    <a href="life.html">Back to Life</a>
+    <a href="gallery.html">Go to Gallery</a>
+    <a href="/auth/logout">Logout</a>
+  </nav>
+</header>
 
-  <header>
-    <div class="logo">Upload a Sweet Memory</div>
-    <nav>
-      <a href="life.html">Back to Life</a>
-      <a href="gallery.html">Go to Gallery</a>
-      <a href="/auth/logout">Logout</a>
-    </nav>
-  </header>
-
-  <main>
-    <section class="card">
-      <div>
-        <label>Choose a photo (max 15 MB)</label>
-        <input id="file" type="file" accept="image/*" />
+<main class="wrap" role="main">
+  <form id="uploadForm" class="fieldset" autocomplete="off">
+    <label for="photo">Choose a photo (max 15 MB)</label>
+    <div class="file-row">
+      <input id="photo" name="photo" type="file" accept="image/*" />
+      <div style="min-width:1px;flex:1">
+        <div class="muted">Tip: square or wide images look best in the gallery.</div>
       </div>
+    </div>
 
-      <div style="margin-top:14px">
-        <label>Caption / Quote (optional)</label>
-        <textarea id="caption" placeholder="Write a short quote or memory..."></textarea>
-      </div>
+    <label for="caption" style="margin-top:14px">Caption / Quote (optional)</label>
+    <textarea id="caption" name="caption" placeholder="Write a short quote or memory..."></textarea>
 
-      <div class="actions">
-        <button id="btnUpload">Upload</button>
-        <button class="secondary" id="btnClear" type="button">Clear</button>
-      </div>
+    <div class="btn-row">
+      <button id="btnUpload" class="btn" type="button" disabled>Upload</button>
+      <button id="btnClear" type="button" class="ghost">Clear</button>
+      <div id="status" style="margin-left:auto;font-size:14px;color:rgba(0,0,0,.6)"></div>
+    </div>
 
-      <div class="msg" id="msg"></div>
+    <div id="progressWrap" style="display:none">
+      <div class="progress"><i id="progressBar"></i></div>
+    </div>
 
-      <div class="preview" id="preview">
-        <img id="previewImg" alt="preview"/>
-      </div>
-    </section>
-  </main>
+    <div id="message" class="note" aria-live="polite"></div>
+  </form>
+
+  <div id="preview" class="preview" style="display:none">
+    <img id="previewImg" src="" alt="preview">
+    <div class="meta">
+      <div id="previewName"></div>
+      <div id="previewSize" class="muted" style="margin-top:6px"></div>
+    </div>
+  </div>
+</main>
 
 <script>
-/* Floating hearts */
-(function hearts(){
-  const host=document.getElementById('bgLayer');
-  const colors=['#ffd6e0','#ffb7c5','#ffd27a','#ffc4a3','#ffffffaa'];
-  function spawn(){
+/* small floating hearts for ambience (non-blocking) */
+(function spawnHearts(){
+  const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3"];
+  function s(){
     const h=document.createElement('div');
     h.className='heart';
     h.textContent=Math.random()>.5?'❤':'♡';
-    h.style.left=(2+Math.random()*96)+'vw';
-    h.style.bottom='-24px';
+    h.style.left=(5+Math.random()*90)+'vw';
+    h.style.bottom='-10px';
     h.style.color=colors[(Math.random()*colors.length)|0];
-    h.style.fontSize=(10+Math.random()*20)+'px';
+    h.style.fontSize=(8+Math.random()*12)+'px';
     h.style.animationDuration=(10+Math.random()*10)+'s';
-    host.appendChild(h);
-    setTimeout(()=>h.remove(),20000);
+    document.body.appendChild(h);
+    setTimeout(()=>h.remove(),23000);
   }
-  for(let i=0;i<25;i++) setTimeout(spawn,i*180);
-  setInterval(spawn,800);
+  for(let i=0;i<18;i++) setTimeout(s, i*220);
+  setInterval(s,900);
 })();
 
-/* Upload logic (uses authFetch from guard-auth.js) */
-const fileEl   = document.getElementById('file');
-const capEl    = document.getElementById('caption');
-const btnUp    = document.getElementById('btnUpload');
+/* form behavior */
+const photo = document.getElementById('photo');
+const caption = document.getElementById('caption');
+const btnUpload = document.getElementById('btnUpload');
 const btnClear = document.getElementById('btnClear');
-const msgEl    = document.getElementById('msg');
-const prevBox  = document.getElementById('preview');
-const prevImg  = document.getElementById('previewImg');
+const message = document.getElementById('message');
+const status = document.getElementById('status');
+const preview = document.getElementById('preview');
+const previewImg = document.getElementById('previewImg');
+const previewName = document.getElementById('previewName');
+const previewSize = document.getElementById('previewSize');
+const progressWrap = document.getElementById('progressWrap');
+const progressBar = document.getElementById('progressBar');
 
-fileEl.addEventListener('change', ()=>{
-  const f=fileEl.files[0];
-  if(!f){ prevBox.style.display='none'; return; }
-  const url=URL.createObjectURL(f);
-  prevImg.src=url; prevBox.style.display='block';
-});
+const MAX_BYTES = 15 * 1024 * 1024; // 15 MB
 
-btnClear.addEventListener('click', ()=>{
-  fileEl.value=''; capEl.value=''; msgEl.textContent=''; prevBox.style.display='none';
-});
-
-btnUp.addEventListener('click', async ()=>{
-  msgEl.textContent='';
-  const f=fileEl.files && fileEl.files[0];
-  if(!f){ msgEl.textContent='Please choose a photo.'; return; }
-
-  try{
-    const fd=new FormData();
-    fd.append('photo', f);
-    fd.append('caption', capEl.value || '');
-
-    const res = await authFetch('/api/upload', { method:'POST', body:fd });
-    if(!res.ok){
-      const t=await res.text().catch(()=> '');
-      throw new Error('Upload failed: '+(t||res.status));
-    }
-    msgEl.textContent='✅ Uploaded! Opening gallery…';
-    // little delay then go to gallery
-    setTimeout(()=> location.href='gallery.html', 700);
-  }catch(err){
-    console.error(err);
-    msgEl.textContent='Upload failed (server error).';
+photo.addEventListener('change', () => {
+  message.textContent = '';
+  const f = photo.files && photo.files[0];
+  if (!f) {
+    btnUpload.disabled = true;
+    preview.style.display = 'none';
+    return;
   }
+  if (f.size > MAX_BYTES) {
+    message.textContent = 'File too large — must be 15 MB or smaller.';
+    btnUpload.disabled = true;
+    preview.style.display = 'none';
+    return;
+  }
+  // show preview
+  const url = URL.createObjectURL(f);
+  previewImg.src = url;
+  previewName.textContent = f.name;
+  previewSize.textContent = (f.size/1024/1024).toFixed(2) + ' MB';
+  preview.style.display = '';
+  btnUpload.disabled = false;
+});
+
+btnClear.addEventListener('click', () => {
+  photo.value = '';
+  caption.value = '';
+  message.textContent = '';
+  status.textContent = '';
+  preview.style.display = 'none';
+  btnUpload.disabled = true;
+  progressBar.style.width = '0%';
+  progressWrap.style.display = 'none';
+});
+
+/* The upload function: posts FormData to /api/upload
+   This assumes the user is authenticated and server cookie (shree_session) is present.
+*/
+async function doUpload() {
+  message.textContent = '';
+  status.textContent = '';
+  const f = photo.files && photo.files[0];
+  if (!f) { message.textContent = 'Pick a photo first.'; return; }
+  if (f.size > MAX_BYTES) { message.textContent = 'File too large — 15 MB max.'; return; }
+
+  btnUpload.disabled = true;
+  progressWrap.style.display = '';
+  progressBar.style.width = '0%';
+  status.textContent = 'Uploading...';
+
+  try {
+    const fd = new FormData();
+    fd.append('photo', f);
+    fd.append('caption', caption.value || '');
+
+    // Use fetch; cookie will be automatically sent for same-origin (server expects cookie auth)
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: fd,
+      // don't set Content-Type — browser will set multipart boundary
+      // credentials: 'same-origin' is default for same-origin fetch, but set explicitly:
+      credentials: 'same-origin'
+    });
+
+    // If server responds with json
+    if (res.ok) {
+      // Some servers (your backend) return JSON with entry; parse if present
+      let data;
+      try { data = await res.json(); } catch(e){ data = null; }
+      status.textContent = 'Upload complete';
+      message.style.color = '#064e3b';
+      message.textContent = 'Uploaded! Redirecting to gallery...';
+      // short delay so user sees confirmation
+      setTimeout(()=>window.location.href = '/gallery.html', 900);
+      return;
+    }
+
+    // On non-2xx responses, try to show server message
+    let text = await res.text();
+    // If it's JSON, parse it
+    try {
+      const j = JSON.parse(text);
+      text = j && (j.error || JSON.stringify(j));
+    } catch(e){ /* keep raw text */ }
+
+    message.style.color = '#6b0217';
+    message.textContent = text || ('Upload failed: ' + res.status);
+    status.textContent = 'Failed';
+
+  } catch (err) {
+    console.error('Upload error:', err);
+    message.style.color = '#6b0217';
+    message.textContent = 'Upload failed (network or server). Check console/logs.';
+    status.textContent = 'Failed';
+  } finally {
+    btnUpload.disabled = false;
+    progressWrap.style.display = 'none';
+  }
+}
+
+/* Attach progress: use XHR for progress events */
+function uploadWithProgress() {
+  const f = photo.files && photo.files[0];
+  if (!f) { message.textContent = 'Pick a photo first.'; return; }
+  if (f.size > MAX_BYTES) { message.textContent = 'File too large — 15 MB max.'; return; }
+
+  btnUpload.disabled = true;
+  progressWrap.style.display = '';
+  progressBar.style.width = '0%';
+  status.textContent = 'Uploading...';
+  message.textContent = '';
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/upload', true);
+  // credentials: cookies will be sent by default for same-origin; ensure it
+  xhr.withCredentials = true;
+
+  xhr.upload.onprogress = function(e) {
+    if (e.lengthComputable) {
+      const pct = Math.round((e.loaded / e.total) * 100);
+      progressBar.style.width = pct + '%';
+      status.textContent = 'Uploading ' + pct + '%';
+    }
+  };
+
+  xhr.onload = function() {
+    btnUpload.disabled = false;
+    progressWrap.style.display = 'none';
+    if (xhr.status >= 200 && xhr.status < 300) {
+      message.style.color = '#064e3b';
+      message.textContent = 'Upload successful! Redirecting...';
+      setTimeout(()=>window.location.href = '/gallery.html', 900);
+    } else {
+      let msg = xhr.responseText || ('Server returned ' + xhr.status);
+      // try parse JSON
+      try {
+        const j = JSON.parse(msg);
+        msg = j.error || JSON.stringify(j);
+      } catch(e){}
+      message.style.color = '#6b0217';
+      message.textContent = 'Upload failed: ' + msg;
+      status.textContent = 'Failed';
+    }
+  };
+
+  xhr.onerror = function() {
+    btnUpload.disabled = false;
+    progressWrap.style.display = 'none';
+    message.style.color = '#6b0217';
+    message.textContent = 'Upload network error.';
+    status.textContent = 'Failed';
+  };
+
+  const fd = new FormData();
+  fd.append('photo', f);
+  fd.append('caption', caption.value || '');
+  xhr.send(fd);
+}
+
+btnUpload.addEventListener('click', uploadWithProgress);
+
+/* small prevention if user presses submit on form accidentally */
+document.getElementById('uploadForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  uploadWithProgress();
 });
 </script>
 </body>
