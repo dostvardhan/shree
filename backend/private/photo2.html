@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -49,5 +49,50 @@
     <a href="gallery.html">Gallery</a>
     <a href="life.html" style="background:#8b1a1a">Back to Life</a>
   </div>
+<!-- START: site-wide background music widget (inserted automatically) -->
+<audio id="bgMusic" src="/gallery-music.mp3" loop preload="metadata"></audio>
+<div id="musicWidget" style="position:fixed;right:18px;bottom:18px;z-index:9999;">
+  <button id="musicPlayBtn" aria-label="Play or Pause" style="background:#6e2430;color:#fff;border:0;border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:700;">▶</button>
+  <input id="musicVol" type="range" min="0" max="1" step="0.05" value="1" title="Volume" style="vertical-align:middle;margin-left:8px;">
+</div>
+<script>
+(function(){
+  const audio = document.getElementById('bgMusic');
+  const btn = document.getElementById('musicPlayBtn');
+  const vol = document.getElementById('musicVol');
+  const KEY = 'shree_bg_music_v1';
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved) {
+      if (typeof saved.currentTime === 'number') {
+        audio.addEventListener('loadedmetadata', () => {
+          if (saved.currentTime < audio.duration - 1) audio.currentTime = saved.currentTime;
+        }, { once: true });
+      }
+      if (typeof saved.volume === 'number') { audio.volume = saved.volume; vol.value = saved.volume; }
+      if (saved.playing) {
+        audio.play().then(()=> btn.textContent='⏸').catch(()=> btn.textContent='▶');
+      } else { btn.textContent='▶'; }
+    } else { btn.textContent='▶'; }
+  } catch(e){ btn.textContent='▶'; }
+  btn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (audio.paused) { try { await audio.play(); btn.textContent='⏸'; saveState(true); } catch(err){ console.warn('Autoplay blocked', err); } }
+    else { audio.pause(); btn.textContent='▶'; saveState(false); }
+  });
+  vol.addEventListener('input', (e)=>{ audio.volume = Number(e.target.value); saveState(!audio.paused); e.stopPropagation(); });
+  let saveTimer = null;
+  function startSaver(){ if(saveTimer) return; saveTimer = setInterval(()=> saveState(!audio.paused),1500); }
+  function stopSaver(){ if(saveTimer){ clearInterval(saveTimer); saveTimer = null; } }
+  function saveState(isPlaying){ try { localStorage.setItem(KEY, JSON.stringify({ currentTime: audio.currentTime||0, volume: audio.volume||1, playing: !!isPlaying, ts: Date.now() })); } catch(e){} }
+  audio.addEventListener('play', startSaver);
+  audio.addEventListener('pause', stopSaver);
+  window.addEventListener('beforeunload', ()=> saveState(!audio.paused));
+  audio.addEventListener('playing', ()=> btn.textContent='⏸');
+  audio.addEventListener('pause', ()=> btn.textContent='▶');
+})();
+</script>
+<!-- END: site-wide background music widget -->
 </body>
 </html>
+
