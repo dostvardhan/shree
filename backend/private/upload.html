@@ -1,29 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Upload – Shreshtha</title>
+<title>Upload Memory – Shreshtha</title>
+
+<!-- Auth & guards -->
 <script src="/auth0-spa-js.production.js"></script>
-<script src="/auth-init.js?v=6" defer></script>
-<script src="/guard-auth.js?v=6" defer></script>
+<script src="auth-init.js" defer></script>
+<script src="guard-auth.js" defer></script>
+
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
+
 <style>
-  :root{--cream:#FFE7DA;--peach:#FFB59E;--red:#FF6B6B;--text:#6e2430}
+  :root{
+    --cream:#FFE7DA; --peach:#FFB59E; --red:#FF6B6B;
+    --text:#6e2430; --panel:rgba(255,255,255,.05);
+  }
   *{box-sizing:border-box}
-  body{margin:0;font-family:"Playfair Display",serif;color:var(--text);background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red))}
-  header{text-align:center;padding:24px 12px}.logo{font-family:"Italianno",cursive;font-size:46px;text-shadow:0 2px 10px rgba(0,0,0,.25)}
-  main{max-width:720px;margin:20px auto;padding:0 18px}
-  form{background:rgba(255,255,255,.14);padding:18px;border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.22)}
-  input[type="file"], input[type="text"]{width:100%;padding:10px 12px;margin:0 0 12px;border:0;border-radius:12px}
-  button{background:#6e2430;color:#fff;border:0;border-radius:999px;padding:12px 18px;font-weight:700;cursor:pointer}
-  .msg{margin-top:14px;font-size:14px}
-  nav{text-align:center;margin-top:12px}nav a{margin:0 12px}
+  body{
+    margin:0;
+    font-family:"Playfair Display",serif;
+    color:var(--text);
+    background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red));
+    overflow-x:hidden;
+  }
+  header{text-align:center;padding:24px 12px;position:relative;z-index:5;}
+  .logo{font-family:"Italianno",cursive;font-size:46px;text-shadow:0 2px 10px rgba(0,0,0,.25);}
+  nav{margin-top:8px;}
+  nav a{margin:0 12px;padding:8px 18px;background:rgba(255,255,255,.15);
+        border-radius:999px;text-decoration:none;color:var(--text);
+        box-shadow:0 4px 8px rgba(0,0,0,.18);}
+  nav a:hover{background:rgba(255,255,255,.3);}
+  main{max-width:600px;margin:50px auto;padding:0 18px;position:relative;z-index:5;}
+
+  form{
+    background:rgba(255,255,255,.15);
+    padding:28px 22px;
+    border-radius:18px;
+    box-shadow:0 8px 28px rgba(0,0,0,.25);
+    backdrop-filter:blur(6px);
+  }
+  label{display:block;margin:14px 0 6px;font-weight:600;}
+  input[type=file],textarea{
+    width:100%;padding:12px;
+    border-radius:10px;border:1px solid #ccc;font-size:15px;
+  }
+  textarea{resize:vertical;min-height:80px;}
+  button{
+    margin-top:20px;padding:14px 28px;
+    background:#6e2430;color:#fff;border:none;
+    border-radius:40px;font-size:16px;
+    cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.25);
+  }
+  button:hover{background:#922f45;}
+
+  .progress{margin-top:16px;width:100%;height:8px;
+    background:#ddd;border-radius:6px;overflow:hidden;display:none;}
+  .progress div{height:100%;width:0;background:#6e2430;}
+
+  .msg{margin-top:18px;font-size:16px;font-weight:600;}
+  .msg.ok{color:green;}
+  .msg.err{color:red;}
+
+  /* Floating hearts */
+  .heart{position:fixed;font-size:18px;opacity:.75;
+         animation:floatUp linear infinite;pointer-events:none;z-index:1;}
+  @keyframes floatUp{
+    0%{transform:translateY(0) scale(1);opacity:.9;}
+    100%{transform:translateY(-120vh) scale(1.4);opacity:0;}
+  }
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">Upload a Sweet Memory</div>
+  <div class="logo">Upload New Memory</div>
   <nav>
     <a href="life.html">Back to Life</a>
     <a href="gallery.html">Gallery</a>
@@ -32,32 +83,77 @@
 </header>
 
 <main>
-  <form id="upForm">
-    <input type="file" id="photo" name="photo" accept="image/*" required />
-    <input type="text" id="caption" name="caption" placeholder="Write a short caption…" />
-    <button type="submit">Upload</button>
+  <form id="uploadForm">
+    <label>Choose a Photo:</label>
+    <input type="file" id="file" name="file" accept="image/*" required />
+
+    <label>Write a Caption:</label>
+    <textarea id="caption" name="caption" placeholder="Add a sweet caption..." required></textarea>
+
+    <button type="submit">Upload Memory</button>
+
+    <div class="progress"><div></div></div>
     <div id="msg" class="msg"></div>
   </form>
 </main>
 
 <script>
-document.getElementById("upForm").addEventListener("submit", async (e)=>{
+/* floating hearts background */
+const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffffaa"];
+function spawnHeart(){
+  const h=document.createElement("div");
+  h.className="heart";
+  h.textContent=Math.random()>0.5?"❤":"♡";
+  h.style.left=(2+Math.random()*96)+"vw";
+  h.style.bottom="-24px";
+  h.style.fontSize=(10+Math.random()*22)+"px";
+  h.style.color=colors[(Math.random()*colors.length)|0];
+  h.style.animationDuration=(10+Math.random()*10)+"s";
+  document.body.appendChild(h);
+  setTimeout(()=>h.remove(),20000);
+}
+for(let i=0;i<25;i++) setTimeout(spawnHeart,i*180);
+setInterval(spawnHeart,800);
+
+/* upload logic */
+const form=document.getElementById("uploadForm");
+const bar=document.querySelector(".progress div");
+const wrap=document.querySelector(".progress");
+const msg=document.getElementById("msg");
+
+form.addEventListener("submit",async e=>{
   e.preventDefault();
-  const msg=document.getElementById("msg");
+  const file=document.getElementById("file").files[0];
+  const caption=document.getElementById("caption").value.trim();
+  if(!file||!caption){alert("Please select file and caption");return;}
+
+  const fd=new FormData();
+  fd.append("file",file);
+  fd.append("caption",caption);
+
+  wrap.style.display="block";
+  bar.style.width="0%";
+  msg.textContent="";
+
   try{
-    const fd=new FormData();
-    const f=document.getElementById("photo").files[0];
-    if(!f){ msg.textContent="Please choose a photo first."; return; }
-    fd.append("photo", f);
-    fd.append("caption", document.getElementById("caption").value||"");
-    const r=await fetch("/api/upload",{method:"POST",body:fd,credentials:"include"});
-    const j=await r.json();
-    if(!r.ok || !j.ok){ throw new Error(j.error||"Upload failed"); }
-    msg.textContent="Uploaded! ✓";
-    setTimeout(()=>location.href="gallery.html",800);
+    const res=await authFetch("/api/upload",{method:"POST",body:fd,onUploadProgress:prog=>{
+      if(prog.lengthComputable){
+        const pct=(prog.loaded/prog.total*100).toFixed(0);
+        bar.style.width=pct+"%";
+      }
+    }});
+    if(res.ok){
+      bar.style.width="100%";
+      msg.textContent="Uploaded successfully! 🎉";
+      msg.className="msg ok";
+      form.reset();
+    }else{
+      throw new Error("Upload failed "+res.status);
+    }
   }catch(err){
     console.error(err);
-    msg.textContent="Upload failed — please try again.";
+    msg.textContent="Error: "+err.message;
+    msg.className="msg err";
   }
 });
 </script>
