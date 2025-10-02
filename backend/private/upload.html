@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Upload – Shreshtha</title>
+<title>Upload â€“ Shreshtha</title>
 <script src="/auth0-spa-js.production.js"></script>
 <script src="/auth-init.js?v=6" defer></script>
 <script src="/guard-auth.js?v=6" defer></script>
@@ -34,7 +34,7 @@
 <main>
   <form id="upForm">
     <input type="file" id="photo" name="photo" accept="image/*" required />
-    <input type="text" id="caption" name="caption" placeholder="Write a short caption…" />
+    <input type="text" id="caption" name="caption" placeholder="Write a short captionâ€¦" />
     <button type="submit">Upload</button>
     <div id="msg" class="msg"></div>
   </form>
@@ -53,13 +53,28 @@ document.getElementById("upForm").addEventListener("submit", async (e)=>{
     const r=await fetch("/api/upload",{method:"POST",body:fd,credentials:"include"});
     const j=await r.json();
     if(!r.ok || !j.ok){ throw new Error(j.error||"Upload failed"); }
-    msg.textContent="Uploaded! ✓";
+    msg.textContent="Uploaded! âœ“";
     setTimeout(()=>location.href="gallery.html",800);
   }catch(err){
     console.error(err);
-    msg.textContent="Upload failed — please try again.";
+    msg.textContent="Upload failed â€” please try again.";
   }
 });
 </script>
+<!-- START: site-wide background music widget -->
+<audio id="bgMusic" src="/gallery-music.mp3" loop preload="metadata"></audio>
+<div id="musicWidget" style="position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;gap:8px;align-items:center;">
+  <button id="musicPlayBtn" style="background:#6e2430;color:#fff;border-radius:999px;padding:8px 12px;cursor:pointer">▶</button>
+  <input id="musicVol" type="range" min="0" max="1" step="0.05" value="0.9" style="width:80px">
+</div>
+<script>
+(function(){
+  const audio=document.getElementById('bgMusic'),btn=document.getElementById('musicPlayBtn'),vol=document.getElementById('musicVol');
+  btn.addEventListener('click',()=>{ if(audio.paused){audio.play();btn.textContent='⏸'} else{audio.pause();btn.textContent='▶'} });
+  vol.addEventListener('input',e=>audio.volume=+e.target.value);
+})();
+</script>
+<!-- END: site-wide background music widget -->
 </body>
 </html>
+

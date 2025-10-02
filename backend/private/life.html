@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Sweet Memories — Shreshtha</title>
+<title>Sweet Memories â€” Shreshtha</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
 <style>
   :root{--cream:#FFE7DA;--peach:#FFB59E;--red:#FF6B6B;--text:#6e2430;--panel:rgba(255,255,255,.05);--radius:16px;--shadow:0 18px 40px rgba(0,0,0,.32)}
@@ -37,7 +37,7 @@
 </head>
 <body>
 <div class="bg-grad"></div><div class="bg-dither"></div><div class="bg-layer" id="bgLayer"></div>
-<header><div class="logo">Sweet Memories of Shreshtha’s Life</div></header>
+<header><div class="logo">Sweet Memories of Shreshthaâ€™s Life</div></header>
 <main class="wrap">
   <section class="grid" id="grid">
     <article class="card"><a href="photo1.html"><img class="photo" src="photos/photo1.jpg" alt=""></a><div class="meta">"A smile is the beauty of the soul."</div></article>
@@ -58,16 +58,31 @@
 </nav>
 <script>
 (function bgHearts(){
-  const host=document.getElementById('bgLayer');const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffff88"];const glyphs=["❤","♡"];
+  const host=document.getElementById('bgLayer');const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffff88"];const glyphs=["â¤","â™¡"];
   function spawn(){const h=document.createElement('div');h.className='bg-heart';h.textContent=glyphs[Math.random()>.45?0:1];h.style.left=(2+Math.random()*96)+'vw';h.style.bottom='-24px';h.style.fontSize=(8+Math.random()*18)+'px';h.style.color=colors[(Math.random()*colors.length)|0];h.style.animationDuration=(12+Math.random()*12)+'s';host.appendChild(h);setTimeout(()=>h.remove(),20000)}
   for(let i=0;i<30;i++) setTimeout(spawn,i*180); setInterval(spawn,700);
 })();
 document.querySelectorAll(".card").forEach(card=>{
   (function ambient(){const n=6+(Math.random()*3|0);const palette=["#ffd6e0","#ffb7c5","#ffd27a","#ffffffaa"];
-    for(let i=0;i<n;i++){const s=document.createElement("div");s.className="soft-heart";s.textContent=(Math.random()>.5?"❤":"♡");s.style.color=palette[(Math.random()*palette.length)|0];s.style.left=(6+Math.random()*88)+"%";s.style.top=(8+Math.random()*72)+"%";s.style.fontSize=(9+Math.random()*12)+"px";s.style.animationDuration=(4+Math.random()*3)+"s";card.appendChild(s);}})();
+    for(let i=0;i<n;i++){const s=document.createElement("div");s.className="soft-heart";s.textContent=(Math.random()>.5?"â¤":"â™¡");s.style.color=palette[(Math.random()*palette.length)|0];s.style.left=(6+Math.random()*88)+"%";s.style.top=(8+Math.random()*72)+"%";s.style.fontSize=(9+Math.random()*12)+"px";s.style.animationDuration=(4+Math.random()*3)+"s";card.appendChild(s);}})();
   card.addEventListener("mouseenter",()=>{const burst=document.createElement("div");burst.className="burst";card.appendChild(burst);const pieces=14;const bColors=["#ffd27a","#ff9fb3","#ffd6e0","#ffc4a3","#ffffffcc"];
-    for(let i=0;i<pieces;i++){const sp=document.createElement("div");sp.className="spark";sp.textContent=(Math.random()>.5?"❤":"♡");const angle=Math.random()*Math.PI*2;const dist=65+Math.random()*100;sp.style.setProperty("--dx",Math.cos(angle)*dist+"px");sp.style.setProperty("--dy",Math.sin(angle)*(-dist)+"px");sp.style.left="0";sp.style.top="0";sp.style.fontSize=(10+Math.random()*12)+"px";sp.style.color=bColors[(Math.random()*bColors.length)|0];burst.appendChild(sp);setTimeout(()=>sp.remove(),1600);}setTimeout(()=>burst.remove(),1700);});
+    for(let i=0;i<pieces;i++){const sp=document.createElement("div");sp.className="spark";sp.textContent=(Math.random()>.5?"â¤":"â™¡");const angle=Math.random()*Math.PI*2;const dist=65+Math.random()*100;sp.style.setProperty("--dx",Math.cos(angle)*dist+"px");sp.style.setProperty("--dy",Math.sin(angle)*(-dist)+"px");sp.style.left="0";sp.style.top="0";sp.style.fontSize=(10+Math.random()*12)+"px";sp.style.color=bColors[(Math.random()*bColors.length)|0];burst.appendChild(sp);setTimeout(()=>sp.remove(),1600);}setTimeout(()=>burst.remove(),1700);});
 });
 </script>
+<!-- START: site-wide background music widget -->
+<audio id="bgMusic" src="/gallery-music.mp3" loop preload="metadata"></audio>
+<div id="musicWidget" style="position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;gap:8px;align-items:center;">
+  <button id="musicPlayBtn" style="background:#6e2430;color:#fff;border-radius:999px;padding:8px 12px;cursor:pointer">▶</button>
+  <input id="musicVol" type="range" min="0" max="1" step="0.05" value="0.9" style="width:80px">
+</div>
+<script>
+(function(){
+  const audio=document.getElementById('bgMusic'),btn=document.getElementById('musicPlayBtn'),vol=document.getElementById('musicVol');
+  btn.addEventListener('click',()=>{ if(audio.paused){audio.play();btn.textContent='⏸'} else{audio.pause();btn.textContent='▶'} });
+  vol.addEventListener('input',e=>audio.volume=+e.target.value);
+})();
+</script>
+<!-- END: site-wide background music widget -->
 </body>
 </html>
+

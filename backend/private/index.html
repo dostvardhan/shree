@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Shreshtha • Home</title>
+<title>Shreshtha â€¢ Home</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
 <style>
   :root{--cream:#FFE7DA;--peach:#FFB59E;--red:#FF6B6B;--ink:#6e2430;--glass:rgba(255,255,255,.16);--shadow:0 18px 40px rgba(0,0,0,.28);--radius:22px}
@@ -30,7 +30,7 @@
   <div class="wrap">
     <section class="card">
       <h1 class="logo">Shreshtha</h1>
-      <p class="tag">A little home of smiles, tiny adventures, and the sweetest memories — curated with love.</p>
+      <p class="tag">A little home of smiles, tiny adventures, and the sweetest memories â€” curated with love.</p>
       <div class="cta-row">
         <a class="btn btn-primary" href="/auth/login" id="btn-login">Login to Enter</a>
       </div>
@@ -38,7 +38,7 @@
     </section>
   </div>
 
-  <footer>© Shreshtha’s Life • crafted with love</footer>
+  <footer>Â© Shreshthaâ€™s Life â€¢ crafted with love</footer>
 
   <script>
     (function hearts(){
@@ -46,7 +46,7 @@
       const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffffaa"];
       function spawn(){
         const el=document.createElement('div'); el.className='heart';
-        el.textContent=Math.random()>.45?"❤":"♡";
+        el.textContent=Math.random()>.45?"â¤":"â™¡";
         el.style.left=(2+Math.random()*96)+'vw';
         el.style.bottom='-24px';
         el.style.color=colors[(Math.random()*colors.length)|0];
@@ -58,5 +58,20 @@
       setInterval(spawn,800);
     })();
   </script>
+<!-- START: site-wide background music widget -->
+<audio id="bgMusic" src="/gallery-music.mp3" loop preload="metadata"></audio>
+<div id="musicWidget" style="position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;gap:8px;align-items:center;">
+  <button id="musicPlayBtn" style="background:#6e2430;color:#fff;border-radius:999px;padding:8px 12px;cursor:pointer">▶</button>
+  <input id="musicVol" type="range" min="0" max="1" step="0.05" value="0.9" style="width:80px">
+</div>
+<script>
+(function(){
+  const audio=document.getElementById('bgMusic'),btn=document.getElementById('musicPlayBtn'),vol=document.getElementById('musicVol');
+  btn.addEventListener('click',()=>{ if(audio.paused){audio.play();btn.textContent='⏸'} else{audio.pause();btn.textContent='▶'} });
+  vol.addEventListener('input',e=>audio.volume=+e.target.value);
+})();
+</script>
+<!-- END: site-wide background music widget -->
 </body>
 </html>
+

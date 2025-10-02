@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Shreshtha – Gallery</title>
+<title>Shreshtha â€“ Gallery</title>
 
 <!-- Auth & guards -->
 <script src="/auth0-spa-js.production.js"></script>
@@ -45,7 +45,7 @@
   }
   .card:hover{transform:translateY(-6px);}
 
-  /* ✅ No-crop thumbnail: full image visible (letterbox) */
+  /* âœ… No-crop thumbnail: full image visible (letterbox) */
   .imgbox{
     height:320px;               /* thumbnail area height */
     background:#fff9f7;         /* soft backdrop behind transparent images */
@@ -84,7 +84,7 @@
 
 <main>
   <section id="grid" class="grid"></section>
-  <div id="empty" class="empty" style="display:none;">No photos uploaded yet 🌸</div>
+  <div id="empty" class="empty" style="display:none;">No photos uploaded yet ðŸŒ¸</div>
 </main>
 
 <script>
@@ -93,7 +93,7 @@ const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffffaa"];
 function spawnHeart(){
   const h=document.createElement("div");
   h.className="heart";
-  h.textContent=Math.random()>0.5?"❤":"♡";
+  h.textContent=Math.random()>0.5?"â¤":"â™¡";
   h.style.left=(2+Math.random()*96)+"vw";
   h.style.bottom="-24px";
   h.style.fontSize=(10+Math.random()*22)+"px";
@@ -147,11 +147,26 @@ async function loadGallery(){
   }catch(err){
     console.error(err);
     const e = document.getElementById("empty");
-    e.textContent="Error loading gallery 💔";
+    e.textContent="Error loading gallery ðŸ’”";
     e.style.display="block";
   }
 }
 document.addEventListener("DOMContentLoaded",loadGallery);
 </script>
+<!-- START: site-wide background music widget -->
+<audio id="bgMusic" src="/gallery-music.mp3" loop preload="metadata"></audio>
+<div id="musicWidget" style="position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;gap:8px;align-items:center;">
+  <button id="musicPlayBtn" style="background:#6e2430;color:#fff;border-radius:999px;padding:8px 12px;cursor:pointer">▶</button>
+  <input id="musicVol" type="range" min="0" max="1" step="0.05" value="0.9" style="width:80px">
+</div>
+<script>
+(function(){
+  const audio=document.getElementById('bgMusic'),btn=document.getElementById('musicPlayBtn'),vol=document.getElementById('musicVol');
+  btn.addEventListener('click',()=>{ if(audio.paused){audio.play();btn.textContent='⏸'} else{audio.pause();btn.textContent='▶'} });
+  vol.addEventListener('input',e=>audio.volume=+e.target.value);
+})();
+</script>
+<!-- END: site-wide background music widget -->
 </body>
 </html>
+
