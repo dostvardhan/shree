@@ -372,6 +372,34 @@ app.get('/api/file/:id', requireAuth, async (req, res) => {
   }
 });
 
+// ----------------- Serve site-wide music file (explicit route) -----------------
+// Try a few common locations and stream the first that exists. This guarantees
+// /gallery-music.mp3 works regardless of minor static path differences on deploy.
+app.get('/gallery-music.mp3', (req, res) => {
+  const candidates = [
+    path.join(publicDir, 'gallery-music.mp3'),              // usual: private/gallery-music.mp3
+    path.join(__dirname, 'private', 'gallery-music.mp3'),   // explicit fallback
+    path.join(__dirname, 'backend', 'private', 'gallery-music.mp3'), // another possible location
+    path.join(__dirname, 'backend', 'static', 'gallery-music.mp3'),
+    path.join(__dirname, 'static', 'gallery-music.mp3')
+  ];
+
+  const file = candidates.find(p => fs.existsSync(p) && fs.statSync(p).isFile());
+  if (!file) {
+    console.warn('Music file not found. Tried:', candidates);
+    return res.status(404).send('Not found');
+  }
+
+  // set gentle caching for clients (30 minutes)
+  res.setHeader('Cache-Control', 'public, max-age=1800, stale-while-revalidate=86400');
+  res.sendFile(file, err => {
+    if (err) {
+      console.error('Failed to send music file:', err);
+      if (!res.headersSent) res.status(500).end('Failed to stream audio');
+    }
+  });
+});
+
 // ----------------- DIAG & HEALTH -----------------
 app.get('/api/diag', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok', uptime: process.uptime(), ts: Date.now() }));
