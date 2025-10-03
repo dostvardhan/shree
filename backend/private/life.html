@@ -89,8 +89,22 @@ document.querySelectorAll(".card").forEach(card=>{
 })();
 </script>
 <!-- END: floating hearts -->
+<!-- START: artifact cleaner -->
+<script>
+(function(){
+  // hide tiny stray text nodes like "Â", "â„¢" etc.
+  document.querySelectorAll("body *").forEach(el=>{
+    if(el.childNodes.length===1 && el.firstChild.nodeType===3){
+      const t = el.textContent.trim();
+      if(t && /^[Ââ¤¢™©®]{1,4}$/.test(t)) { el.style.display="none"; }
+    }
+  });
+})();
+</script>
+<!-- END: artifact cleaner -->
 </body>
 </html>
+
 
 
 
