@@ -64,3 +64,9 @@ h1 {
 /* keep our canvas hearts visible */
 #heartsCanvas{content:normal!important;}
 /* ================================================ */
+/* === KILL WATERMARK ARTIFACTS (force) === */
+.bg-hearts,.bg-heart,.bgtext,.bg-text,.watermark,.wm,[data-watermark],[class*="watermark"],[id*="watermark"]{display:none!important;}
+*::before,*::after{content:normal!important;}
+#heartsCanvas{content:normal!important;}
+/* ======================================== */
+
