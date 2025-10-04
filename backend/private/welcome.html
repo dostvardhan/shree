@@ -88,25 +88,7 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
 </script>
 
 
-<!-- START: floating hearts (lightweight, safe) -->
-<canvas id="heartsCanvas" aria-hidden="true"></canvas>
-<script>
-(() => {
-  const c = document.getElementById('heartsCanvas');
-  const ctx = c.getContext('2d', { alpha: true });
-  let W, H, hearts = [];
-  const DPR = Math.max(1, window.devicePixelRatio || 1);
-  const MAX = 24;
-  function resize(){ const vw=innerWidth, vh=innerHeight; c.width=Math.floor(vw*DPR); c.height=Math.floor(vh*DPR); c.style.width=vw+'px'; c.style.height=vh+'px'; W=c.width; H=c.height; }
-  function rand(a,b){ return Math.random()*(b-a)+a; }
-  function spawn(){ if(hearts.length>=MAX) return; hearts.push({ x:rand(0,W), y:H+rand(20,200), size:rand(18,34)*DPR, vy:-rand(20,60)*DPR, vx:rand(-15,15)*DPR, a:rand(0.45,0.9), rot:rand(-0.5,0.5), vr:rand(-0.02,0.02)}); }
-  function drawHeart(x,y,s,rot,a){ ctx.save(); ctx.translate(x,y); ctx.rotate(rot); ctx.scale(s,s); ctx.globalAlpha=a; ctx.fillStyle='#ff7aa2'; ctx.beginPath(); ctx.moveTo(0,-0.5); ctx.bezierCurveTo(0.5,-1.1,1.3,-0.1,0,0.8); ctx.bezierCurveTo(-1.3,-0.1,-0.5,-1.1,0,-0.5); ctx.closePath(); ctx.fill(); ctx.restore(); }
-  function tick(){ ctx.clearRect(0,0,W,H); if(Math.random()<0.15) spawn(); hearts.forEach(h=>{ h.x+=h.vx*0.016; h.y+=h.vy*0.016; h.rot+=h.vr; h.a-=0.0008*(1+Math.random()); }); hearts=hearts.filter(h=>h.y>-60 && h.a>0.02); hearts.forEach(h=>drawHeart(h.x,h.y,h.size/50,h.rot,h.a)); requestAnimationFrame(tick); }
-  Object.assign(c.style,{position:'fixed',left:0,top:0,zIndex:0,pointerEvents:'none'}); document.body.style.position = document.body.style.position || 'relative';
-  addEventListener('resize', resize, {passive:true}); resize(); tick();
-})();
-</script>
-<!-- END: floating hearts -->
+
 <!-- START: artifact cleaner -->
 <script>
 (function(){
@@ -120,8 +102,70 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
 })();
 </script>
 <!-- END: artifact cleaner -->
+<!-- START: floating hearts (canvas version) -->
+<canvas id="heartsCanvas" aria-hidden="true"></canvas>
+<script>
+(() => {
+  const c = document.getElementById('heartsCanvas');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  let W,H,hearts=[];
+  const DPR = Math.max(1, window.devicePixelRatio||1);
+  function resize(){
+    W=innerWidth*DPR;H=innerHeight*DPR;
+    c.width=W;c.height=H;
+    c.style.width=innerWidth+'px';c.style.height=innerHeight+'px';
+  }
+  function rand(a,b){return Math.random()*(b-a)+a;}
+  function spawn(){
+    if(hearts.length>40)return;
+    hearts.push({
+      x:rand(0,W),
+      y:H+rand(10,200),
+      s:rand(10,25),
+      vx:rand(-20,20),
+      vy:-rand(40,80),
+      a:rand(0.5,1),
+      rot:rand(0,Math.PI),
+      vr:rand(-0.02,0.02)
+    });
+  }
+  function drawHeart(x,y,s,rot,a){
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(rot);
+    ctx.scale(s,s);
+    ctx.beginPath();
+    ctx.moveTo(0,-0.5);
+    ctx.bezierCurveTo(0.5,-1.2,1.3,-0.1,0,0.8);
+    ctx.bezierCurveTo(-1.3,-0.1,-0.5,-1.2,0,-0.5);
+    ctx.closePath();
+    ctx.globalAlpha=a;
+    ctx.fillStyle="#ff7aa2";
+    ctx.fill();
+    ctx.restore();
+  }
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    if(Math.random()<0.15)spawn();
+    hearts.forEach(h=>{
+      h.x+=h.vx*0.016;h.y+=h.vy*0.016;h.rot+=h.vr;h.a-=0.002;
+    });
+    hearts=hearts.filter(h=>h.y>-60&&h.a>0);
+    hearts.forEach(h=>drawHeart(h.x,h.y,h.s/50,h.rot,h.a));
+    requestAnimationFrame(tick);
+  }
+  Object.assign(c.style,{
+    position:'fixed',left:0,top:0,zIndex:0,pointerEvents:'none'
+  });
+  addEventListener('resize',resize,{passive:true});
+  resize();tick();
+})();
+</script>
+<!-- END: floating hearts -->
 </body>
 </html>
+
 
 
 
