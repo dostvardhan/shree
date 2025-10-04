@@ -1,4 +1,4 @@
-// Soft server-side check: if no session/cookie, bounce to login
+﻿// Soft server-side check: if no session/cookie, bounce to login
 (async () => {
   try {
     const res = await fetch("/api/diag", { credentials: "include" });
@@ -22,3 +22,4 @@ async function authFetch(url, opts = {}) {
   return r;
 }
 window.authFetch = authFetch;
+

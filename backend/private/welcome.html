@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Welcome â€“ Shreshtha</title>
+<title>Welcome – Shreshtha</title>
 
 <!-- Auth0 scripts (guard to ensure login) -->
 <script src="/auth0-spa-js.production.js"></script>
@@ -61,7 +61,7 @@
 </head>
 <body>
 
-  <h1>Welcome to Shreshthaâ€™s Life of Happiness</h1>
+  <h1>Welcome to Shreshtha’s Life of Happiness</h1>
   <a href="life.html" class="enter-btn">Enter Memories</a>
   <button id="warm-btn">Wake Up Server</button>
 
@@ -82,7 +82,7 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
   try{
     await fetch("/health",{mode:"no-cors"});
     alert("Server warmed up!");
-  }catch(e){alert("Still wakingâ€¦");}
+  }catch(e){alert("Still waking…");}
 });
 </script>
 
@@ -109,11 +109,11 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
 <!-- START: artifact cleaner -->
 <script>
 (function(){
-  // hide tiny stray text nodes like "Â", "â„¢" etc.
+  // hide tiny stray text nodes like "", "™" etc.
   document.querySelectorAll("body *").forEach(el=>{
     if(el.childNodes.length===1 && el.firstChild.nodeType===3){
       const t = el.textContent.trim();
-      if(t && /^[Ââ¤¢™©®]{1,4}$/.test(t)) { el.style.display="none"; }
+      if(t && /^[¤¢™©®]{1,4}$/.test(t)) { el.style.display="none"; }
     }
   });
 })();
@@ -121,6 +121,7 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
 <!-- END: artifact cleaner -->
 </body>
 </html>
+
 
 
 

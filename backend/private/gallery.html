@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Shreshtha â€“ Gallery</title>
+<title>Shreshtha – Gallery</title>
 
 <!-- Auth & guards -->
 <script src="/auth0-spa-js.production.js"></script>
@@ -45,7 +45,7 @@
   }
   .card:hover{transform:translateY(-6px);}
 
-  /* âœ… No-crop thumbnail: full image visible (letterbox) */
+  /* œ… No-crop thumbnail: full image visible (letterbox) */
   .imgbox{
     height:320px;               /* thumbnail area height */
     background:#fff9f7;         /* soft backdrop behind transparent images */
@@ -93,7 +93,7 @@ const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffffaa"];
 function spawnHeart(){
   const h=document.createElement("div");
   h.className="heart";
-  h.textContent=Math.random()>0.5?"â¤":"â™¡";
+  h.textContent=Math.random()>0.5?"¤":"™¡";
   h.style.left=(2+Math.random()*96)+"vw";
   h.style.bottom="-24px";
   h.style.fontSize=(10+Math.random()*22)+"px";
@@ -176,11 +176,11 @@ document.addEventListener("DOMContentLoaded",loadGallery);
 <!-- START: artifact cleaner -->
 <script>
 (function(){
-  // hide tiny stray text nodes like "Â", "â„¢" etc.
+  // hide tiny stray text nodes like "", "™" etc.
   document.querySelectorAll("body *").forEach(el=>{
     if(el.childNodes.length===1 && el.firstChild.nodeType===3){
       const t = el.textContent.trim();
-      if(t && /^[Ââ¤¢™©®]{1,4}$/.test(t)) { el.style.display="none"; }
+      if(t && /^[¤¢™©®]{1,4}$/.test(t)) { el.style.display="none"; }
     }
   });
 })();
@@ -188,6 +188,7 @@ document.addEventListener("DOMContentLoaded",loadGallery);
 <!-- END: artifact cleaner -->
 </body>
 </html>
+
 
 
 

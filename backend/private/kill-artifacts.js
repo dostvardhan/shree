@@ -1,7 +1,7 @@
 ﻿// === START: artifact killer ===
 (function(){
-  const BAD_RE = /^[\\u00A0\\sÂâ¢™©®·º°]+$/;
-  const WEAK_RE = /[Ââ¢™©®]{1,}/;
+  const BAD_RE = /^[\\u00A0\\s¢™©®·º°]+$/;
+  const WEAK_RE = /[¢™©®]{1,}/;
   function isArtifactNode(n){
     if(!n) return false;
     if(n.nodeType===3){ const t=n.textContent.trim(); return t && (BAD_RE.test(t) || (WEAK_RE.test(t)&&t.length<=8)); }
@@ -14,4 +14,5 @@
   obs.observe(document.documentElement,{subtree:true,childList:true,characterData:true});
 })();
 // === END: artifact killer ===
+
 

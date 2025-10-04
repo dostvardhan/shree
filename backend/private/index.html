@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Shreshtha â€¢ Home</title>
+<title>Shreshtha • Home</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
 <style>
   :root{--cream:#FFE7DA;--peach:#FFB59E;--red:#FF6B6B;--ink:#6e2430;--glass:rgba(255,255,255,.16);--shadow:0 18px 40px rgba(0,0,0,.28);--radius:22px}
@@ -30,7 +30,7 @@
   <div class="wrap">
     <section class="card">
       <h1 class="logo">Shreshtha</h1>
-      <p class="tag">A little home of smiles, tiny adventures, and the sweetest memories â€” curated with love.</p>
+      <p class="tag">A little home of smiles, tiny adventures, and the sweetest memories — curated with love.</p>
       <div class="cta-row">
         <a class="btn btn-primary" href="/auth/login" id="btn-login">Login to Enter</a>
       </div>
@@ -38,7 +38,7 @@
     </section>
   </div>
 
-  <footer>Â© Shreshthaâ€™s Life â€¢ crafted with love</footer>
+  <footer>© Shreshtha’s Life • crafted with love</footer>
 
   <script>
     (function hearts(){
@@ -46,7 +46,7 @@
       const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffffaa"];
       function spawn(){
         const el=document.createElement('div'); el.className='heart';
-        el.textContent=Math.random()>.45?"â¤":"â™¡";
+        el.textContent=Math.random()>.45?"¤":"™¡";
         el.style.left=(2+Math.random()*96)+'vw';
         el.style.bottom='-24px';
         el.style.color=colors[(Math.random()*colors.length)|0];
@@ -81,11 +81,11 @@
 <!-- START: artifact cleaner -->
 <script>
 (function(){
-  // hide tiny stray text nodes like "Â", "â„¢" etc.
+  // hide tiny stray text nodes like "", "™" etc.
   document.querySelectorAll("body *").forEach(el=>{
     if(el.childNodes.length===1 && el.firstChild.nodeType===3){
       const t = el.textContent.trim();
-      if(t && /^[Ââ¤¢™©®]{1,4}$/.test(t)) { el.style.display="none"; }
+      if(t && /^[¤¢™©®]{1,4}$/.test(t)) { el.style.display="none"; }
     }
   });
 })();
@@ -93,6 +93,7 @@
 <!-- END: artifact cleaner -->
 </body>
 </html>
+
 
 
 

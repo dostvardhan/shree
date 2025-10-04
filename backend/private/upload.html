@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Upload â€“ Shreshtha</title>
+<title>Upload – Shreshtha</title>
 <script src="/auth0-spa-js.production.js"></script>
 <script src="/auth-init.js?v=6" defer></script>
 <script src="/guard-auth.js?v=6" defer></script>
@@ -34,7 +34,7 @@
 <main>
   <form id="upForm">
     <input type="file" id="photo" name="photo" accept="image/*" required />
-    <input type="text" id="caption" name="caption" placeholder="Write a short captionâ€¦" />
+    <input type="text" id="caption" name="caption" placeholder="Write a short caption…" />
     <button type="submit">Upload</button>
     <div id="msg" class="msg"></div>
   </form>
@@ -53,11 +53,11 @@ document.getElementById("upForm").addEventListener("submit", async (e)=>{
     const r=await fetch("/api/upload",{method:"POST",body:fd,credentials:"include"});
     const j=await r.json();
     if(!r.ok || !j.ok){ throw new Error(j.error||"Upload failed"); }
-    msg.textContent="Uploaded! âœ“";
+    msg.textContent="Uploaded! œ“";
     setTimeout(()=>location.href="gallery.html",800);
   }catch(err){
     console.error(err);
-    msg.textContent="Upload failed â€” please try again.";
+    msg.textContent="Upload failed — please try again.";
   }
 });
 </script>
@@ -84,11 +84,11 @@ document.getElementById("upForm").addEventListener("submit", async (e)=>{
 <!-- START: artifact cleaner -->
 <script>
 (function(){
-  // hide tiny stray text nodes like "Â", "â„¢" etc.
+  // hide tiny stray text nodes like "", "™" etc.
   document.querySelectorAll("body *").forEach(el=>{
     if(el.childNodes.length===1 && el.firstChild.nodeType===3){
       const t = el.textContent.trim();
-      if(t && /^[Ââ¤¢™©®]{1,4}$/.test(t)) { el.style.display="none"; }
+      if(t && /^[¤¢™©®]{1,4}$/.test(t)) { el.style.display="none"; }
     }
   });
 })();
@@ -96,6 +96,7 @@ document.getElementById("upForm").addEventListener("submit", async (e)=>{
 <!-- END: artifact cleaner -->
 </body>
 </html>
+
 
 
 
