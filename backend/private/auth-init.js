@@ -46,3 +46,4 @@ window.logoutToHome = logoutToHome;
 
 window.addEventListener("load", initAuth);
 
+
