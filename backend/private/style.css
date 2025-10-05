@@ -1,4 +1,4 @@
-﻿body {
+body {
   font-family: Arial, sans-serif;
   padding: 20px;
   background: #f7f7f7;
@@ -56,17 +56,3 @@ h1 {
   font-size: 12px;
   color: #888;
 }
-
-/* === FIX: kill stray watermark/encoding artifacts === */
-.bg-hearts,.bg-heart,.bg-text,.watermark,.wm{display:none!important;}
-/* keep our canvas hearts visible */
-#heartsCanvas{content:normal!important;}
-/* ================================================ */
-/* === KILL WATERMARK ARTIFACTS (force) === */
-.bg-hearts,.bg-heart,.bgtext,.bg-text,.watermark,.wm,[data-watermark],[class*="watermark"],[id*="watermark"]{display:none!important;}
-#heartsCanvas{content:normal!important;}
-/* ======================================== */
-
-
-
-

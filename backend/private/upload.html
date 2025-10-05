@@ -1,7 +1,6 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta http-equiv="Cache-Control" content="no-store, max-age=0">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Upload – Shreshtha</title>
@@ -24,7 +23,6 @@
 </head>
 <body>
 <header>
-  <meta http-equiv="Cache-Control" content="no-store, max-age=0">
   <div class="logo">Upload a Sweet Memory</div>
   <nav>
     <a href="life.html">Back to Life</a>
@@ -55,7 +53,7 @@ document.getElementById("upForm").addEventListener("submit", async (e)=>{
     const r=await fetch("/api/upload",{method:"POST",body:fd,credentials:"include"});
     const j=await r.json();
     if(!r.ok || !j.ok){ throw new Error(j.error||"Upload failed"); }
-    msg.textContent="Uploaded! œ“";
+    msg.textContent="Uploaded! ✓";
     setTimeout(()=>location.href="gallery.html",800);
   }catch(err){
     console.error(err);
@@ -63,25 +61,5 @@ document.getElementById("upForm").addEventListener("submit", async (e)=>{
   }
 });
 </script>
-
-
-
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

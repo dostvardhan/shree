@@ -1,7 +1,6 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta http-equiv="Cache-Control" content="no-store, max-age=0">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Shreshtha – Gallery</title>
@@ -46,7 +45,7 @@
   }
   .card:hover{transform:translateY(-6px);}
 
-  /* œ… No-crop thumbnail: full image visible (letterbox) */
+  /* ✅ No-crop thumbnail: full image visible (letterbox) */
   .imgbox{
     height:320px;               /* thumbnail area height */
     background:#fff9f7;         /* soft backdrop behind transparent images */
@@ -75,7 +74,6 @@
 </head>
 <body>
 <header>
-  <meta http-equiv="Cache-Control" content="no-store, max-age=0">
   <div class="logo">Gallery of Sweet Memories</div>
   <nav>
     <a href="life.html">Back to Life</a>
@@ -86,7 +84,7 @@
 
 <main>
   <section id="grid" class="grid"></section>
-  <div id="empty" class="empty" style="display:none;">No photos uploaded yet ðŸŒ¸</div>
+  <div id="empty" class="empty" style="display:none;">No photos uploaded yet 🌸</div>
 </main>
 
 <script>
@@ -95,7 +93,7 @@ const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffffaa"];
 function spawnHeart(){
   const h=document.createElement("div");
   h.className="heart";
-  h.textContent=Math.random()>0.5?"¤":"™¡";
+  h.textContent=Math.random()>0.5?"❤":"♡";
   h.style.left=(2+Math.random()*96)+"vw";
   h.style.bottom="-24px";
   h.style.fontSize=(10+Math.random()*22)+"px";
@@ -149,31 +147,11 @@ async function loadGallery(){
   }catch(err){
     console.error(err);
     const e = document.getElementById("empty");
-    e.textContent="Error loading gallery ðŸ’”";
+    e.textContent="Error loading gallery 💔";
     e.style.display="block";
   }
 }
 document.addEventListener("DOMContentLoaded",loadGallery);
 </script>
-
-
-
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

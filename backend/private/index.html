@@ -1,7 +1,6 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta http-equiv="Cache-Control" content="no-store, max-age=0">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Shreshtha • Home</title>
@@ -26,7 +25,7 @@
 </head>
 <body>
   <div class="dither"></div>
-  
+  <div class="bg" id="bg"></div>
 
   <div class="wrap">
     <section class="card">
@@ -47,7 +46,7 @@
       const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffffaa"];
       function spawn(){
         const el=document.createElement('div'); el.className='heart';
-        el.textContent=Math.random()>.45?"¤":"™¡";
+        el.textContent=Math.random()>.45?"❤":"♡";
         el.style.left=(2+Math.random()*96)+'vw';
         el.style.bottom='-24px';
         el.style.color=colors[(Math.random()*colors.length)|0];
@@ -59,27 +58,5 @@
       setInterval(spawn,800);
     })();
   </script>
-
-
-
-
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

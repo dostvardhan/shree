@@ -1,4 +1,4 @@
-﻿// load AFTER /auth0-spa-js.production.js
+// load AFTER /auth0-spa-js.production.js
 const AUDIENCE =
   (location.hostname === "shreshthapushkar.com")
     ? "https://shreshthapushkar.com"
@@ -45,5 +45,3 @@ window.getAuthToken = getAuthToken;
 window.logoutToHome = logoutToHome;
 
 window.addEventListener("load", initAuth);
-
-
