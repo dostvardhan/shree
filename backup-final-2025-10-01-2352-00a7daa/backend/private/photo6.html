@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shreshtha – Memory</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="/auth0-spa-js.production.js"></script>
+  <script src="/auth-init.js?v=6" defer></script>
+  <script src="/guard-auth.js?v=6" defer></script>
+  <style>
+    body{background:linear-gradient(140deg,#ffb6c1,#ffd1dc);margin:0;font-family:Arial,sans-serif;color:#333;overflow-x:hidden;overflow-y:auto;text-align:center}
+    .photo-wrap{width:100%;display:flex;justify-content:center;align-items:center;margin:12px 0 6px}
+    .photo-wrap img{max-width:100%;height:auto;display:block;margin:0 auto}
+    .quote{margin:12px auto 8px;font-style:italic;color:#5a0013;max-width:92%;font-size:16px}
+    .bottom-links{display:flex;gap:16px;justify-content:center;align-items:center;margin:6px 0 20px}
+    .bottom-links a{background:#5a0013;color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;font-weight:600}
+    .heart-float{position:fixed;font-size:18px;opacity:.75;animation:floatUp linear infinite;pointer-events:none;z-index:1}
+    @keyframes floatUp{0%{transform:translateY(0) scale(1);opacity:.9}100%{transform:translateY(-120vh) scale(1.6);opacity:0}}
+    .nav-heart{position:fixed;top:50%;transform:translateY(-50%);font-size:44px;text-decoration:none;z-index:3;transition:transform .2s ease,opacity .2s ease;opacity:.9;user-select:none}
+    .nav-heart:hover{transform:translateY(-50%) scale(1.08);opacity:1}
+    .nav-left{left:16px}.nav-right{right:16px}
+    .nav-heart span{display:inline-block;text-shadow:0 2px 10px rgba(0,0,0,.35)}
+    .nav-heart:focus{outline:3px solid rgba(255,255,255,.6);outline-offset:4px;border-radius:999px}
+  </style>
+  <script>
+    const _colors=['#ff69b4','#ff1493','#ff4500','#ffa500','#ff6347','#ff00ff','#ffd700'];
+    function spawnFloatHeart(){const h=document.createElement('div');h.className='heart-float';h.textContent='❤';h.style.left=(Math.random()*100)+'vw';h.style.color=_colors[(Math.random()*_colors.length)|0];h.style.fontSize=(14+Math.random()*20)+'px';h.style.animationDuration=(6+Math.random()*6)+'s';document.body.appendChild(h);setTimeout(()=>h.remove(),13000)}
+    setInterval(spawnFloatHeart,450);
+
+    document.addEventListener('DOMContentLoaded',()=>{
+      const m=location.pathname.match(/photo(\d+)\.html$/); const n=m?Math.max(1,Math.min(9,parseInt(m[1],10))):1;
+      const prev=(n===1)?9:(n-1); const next=(n===9)?1:(n+1);
+      const img=document.getElementById('photo'); img.src=`photos/photo${n}.jpg`; img.alt=`Sweet Memory ${n}`;
+      const quotes={1:"A smile is the beauty of the soul.",2:"Memories are timeless treasures of the heart.",3:"Happiness looks good on you.",4:"Collect moments, not things.",5:"Every picture tells a story.",6:"Smiles are contagious.",7:"Joy is the best makeup.",8:"A moment lasts all of a second, but the memory lives on forever.",9:"Keep smiling, it makes people wonder what you're up to."};
+      document.getElementById('quote').textContent=`"${quotes[n]||""}"`;
+      const left=document.getElementById('prevHeart'); const right=document.getElementById('nextHeart');
+      left.href=`photo${prev}.html`; right.href=`photo${next}.html`;
+      document.addEventListener('keydown',(e)=>{if(e.key==='ArrowLeft'){location.href=left.href} if(e.key==='ArrowRight'){location.href=right.href}});
+    });
+  </script>
+</head>
+<body>
+  <a id="prevHeart" class="nav-heart nav-left" href="#"><span style="color:#ff6f91">❤</span></a>
+  <a id="nextHeart" class="nav-heart nav-right" href="#"><span style="color:#ffd166">❤</span></a>
+  <div class="photo-wrap"><img id="photo" src="" alt="" /></div>
+  <div id="quote" class="quote"></div>
+  <div class="bottom-links">
+    <a href="upload.html">Upload</a>
+    <a href="gallery.html">Gallery</a>
+    <a href="life.html" style="background:#8b1a1a">Back to Life</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: shree-drive
+    env: node
+    region: singapore
+    plan: free
+    branch: main
+    rootDir: backend
+    buildCommand: "npm ci"
+    startCommand: "node server.js"
+    healthCheckPath: "/health"
+    autoDeploy: true
