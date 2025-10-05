@@ -90,28 +90,11 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
 
 
 
-<!-- START: floating hearts (final clean version) -->
-<canvas id="heartsCanvas" aria-hidden="true"></canvas>
-<script>
-(() => {
-  const c = document.getElementById('heartsCanvas');
-  if(!c) return;
-  const ctx = c.getContext('2d');
-  let W,H,hearts=[];
-  const DPR = Math.max(1, window.devicePixelRatio||1);
-  function resize(){W=innerWidth*DPR;H=innerHeight*DPR;c.width=W;c.height=H;c.style.width=innerWidth+'px';c.style.height=innerHeight+'px';}
-  function r(a,b){return Math.random()*(b-a)+a;}
-  function spawn(){if(hearts.length>40)return;hearts.push({x:r(0,W),y:H+r(10,200),s:r(10,25),vx:r(-20,20),vy:-r(40,80),a:r(0.5,1),rot:r(0,Math.PI),vr:r(-0.02,0.02)});}
-  function draw(x,y,s,rot,a){ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.scale(s,s);ctx.beginPath();ctx.moveTo(0,-0.5);ctx.bezierCurveTo(0.5,-1.2,1.3,-0.1,0,0.8);ctx.bezierCurveTo(-1.3,-0.1,-0.5,-1.2,0,-0.5);ctx.closePath();ctx.globalAlpha=a;ctx.fillStyle="#ff7aa2";ctx.fill();ctx.restore();}
-  function tick(){ctx.clearRect(0,0,W,H);if(Math.random()<0.15)spawn();hearts.forEach(h=>{h.x+=h.vx*0.016;h.y+=h.vy*0.016;h.rot+=h.vr;h.a-=0.002;});hearts=hearts.filter(h=>h.y>-60&&h.a>0);hearts.forEach(h=>draw(h.x,h.y,h.s/50,h.rot,h.a));requestAnimationFrame(tick);}
-  Object.assign(c.style,{position:'fixed',left:0,top:0,zIndex:0,pointerEvents:'none'});
-  addEventListener('resize',resize,{passive:true});
-  resize();tick();
-})();
-</script>
-<!-- END: floating hearts -->
+
 </body>
 </html>
+
+
 
 
 
