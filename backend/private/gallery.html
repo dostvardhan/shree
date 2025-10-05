@@ -85,6 +85,12 @@
 <main>
   <section id="grid" class="grid"></section>
   <div id="empty" class="empty" style="display:none;">No photos uploaded yet 🌸</div>
+<!-- Pagination Controls -->
+<div id="pager" style="display:flex;justify-content:center;gap:12px;align-items:center;margin:18px 0;">
+  <button id="prevBtn" disabled style="padding:8px 12px;border-radius:8px;border:1px solid #ccc;cursor:pointer;">← Prev</button>
+  <div id="pageInfo" style="font-weight:600;"></div>
+  <button id="nextBtn" style="padding:8px 12px;border-radius:8px;border:1px solid #ccc;cursor:pointer;">Next →</button>
+</div>
 </main>
 
 <script>
@@ -165,6 +171,138 @@ document.addEventListener("DOMContentLoaded",loadGallery);
       } catch(e){ console.error("Auth error:", e); reveal(); }
     });
   </script>
+<script>
+/* GALLERY_PAGINATION_V1 */
+(function(){
+  const PAGE_SIZE = 20;
+
+  // We use Drive pageToken based paging. For Prev, keep a token trail in sessionStorage
+  const TRAIL_KEY = "gallery_token_trail_v1";
+  const readTrail = () => { try{ return JSON.parse(sessionStorage.getItem(TRAIL_KEY)||"[]"); }catch(e){return [];} }
+  const writeTrail = (arr) => { try{ sessionStorage.setItem(TRAIL_KEY, JSON.stringify(arr)); }catch(e){} }
+
+  const url = new URL(location.href);
+  const token = url.searchParams.get("pageToken") || null;   // current token
+  const pageSize = Math.max(1, Number(url.searchParams.get("pageSize")||PAGE_SIZE));
+
+  const grid = document.querySelector("#grid, .grid, .photos-grid") || document.body; // fallback
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const pageInfo = document.getElementById("pageInfo");
+
+  // Keep trail (do not push null at start repeatedly)
+  let trail = readTrail();
+  // When navigating forward with a token, remember it so we can step back
+  // Rule: trail stores the sequence of tokens used to reach current page.
+  // if URL has a token and it's not last item, ensure trail ends with it
+  if (token && (trail.length===0 || trail[trail.length-1] !== token)) trail.push(token);
+  // But for page 1 (token=null) we reset
+  if (!token) trail = [];
+
+  writeTrail(trail);
+
+  function setStatus(text){ if(pageInfo) pageInfo.textContent = text; }
+
+  async function loadPage(){
+    setStatus("Loading…");
+    if (prevBtn) prevBtn.disabled = (trail.length <= 1); // can go back only if we have earlier token
+    if (nextBtn) nextBtn.disabled = true;
+
+    try {
+      const qs = new URLSearchParams({ pageSize: String(pageSize) });
+      if (token) qs.set("pageToken", token);
+      const resp = await fetch(`/api/photos?${qs.toString()}`, { credentials: "include" });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const items = data.items || [];
+      const nextToken = data.nextPageToken || null;
+
+      // Render items into grid – replace with your existing renderer if present
+      // Basic clean:
+      const container = grid;
+      // Try to find a known container if exists
+      const known = document.getElementById("photos") || document.querySelector(".gallery-grid");
+      if (known) { known.innerHTML=""; }
+      const target = known || container;
+
+      // Simple grid style if none
+      if (!target.style.display) {
+        target.style.display = "grid";
+        target.style.gridTemplateColumns = "repeat(auto-fill, minmax(220px, 1fr))";
+        target.style.gap = "12px";
+      } else {
+        // clear
+        target.innerHTML = "";
+      }
+
+      items.forEach((f) => {
+        const a = document.createElement("a");
+        a.href = f.webViewLink || f.webContentLink || "#";
+        a.target = "_blank";
+        a.rel = "noopener";
+
+        const img = document.createElement("img");
+        // Prefer thumbnailLink; fallback via Drive content link if needed
+        img.src = (f.thumbnailLink || f.webContentLink || "").replace(/=s\d+/, "=s512");
+        img.alt = f.name || "photo";
+        img.loading = "lazy";
+        img.style.width = "100%";
+        img.style.height = "220px";
+        img.style.objectFit = "cover";
+        img.style.borderRadius = "12px";
+        img.referrerPolicy = "no-referrer";
+
+        a.appendChild(img);
+        target.appendChild(a);
+      });
+
+      // Pager controls
+      if (nextBtn) {
+        nextBtn.disabled = !nextToken;
+        nextBtn.onclick = () => {
+          const u = new URL(location.href);
+          u.searchParams.set("pageSize", String(pageSize));
+          if (nextToken) u.searchParams.set("pageToken", nextToken);
+          // Save current token in trail (if not present already)
+          let t = readTrail();
+          if (token && (t.length===0 || t[t.length-1] !== token)) t.push(token);
+          if (!token && t.length===0) { /* first page */ }
+          writeTrail(t);
+          location.href = u.toString();
+        };
+      }
+
+      if (prevBtn) {
+        prevBtn.disabled = (trail.length <= 1);
+        prevBtn.onclick = () => {
+          let t = readTrail();
+          // current token is last; previous page token is second last
+          // pop current
+          if (t.length > 0) t.pop();
+          const prevToken = (t.length > 0) ? t[t.length-1] : null;
+          // also set reduced trail
+          writeTrail(t);
+          const u = new URL(location.href);
+          u.searchParams.set("pageSize", String(pageSize));
+          if (prevToken) u.searchParams.set("pageToken", prevToken); else u.searchParams.delete("pageToken");
+          location.href = u.toString();
+        };
+      }
+
+      // Show page label (approx): "Page N (20 per page)"
+      const pageNum = Math.max(1, trail.length || 1);
+      setStatus(`Page ${pageNum} • ${pageSize} per page`);
+
+    } catch (e) {
+      console.error("Gallery load failed:", e);
+      setStatus("Failed to load photos.");
+    }
+  }
+
+  loadPage();
+})();
+</script>
 </body>
 </html>
+
 

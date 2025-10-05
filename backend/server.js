@@ -1,4 +1,4 @@
-// backend/server.js
+﻿// backend/server.js
 // Node + Express backend for Shreshtha site
 // Requires: express, cookie-parser, express-session, axios, jsonwebtoken, multer, googleapis
 // Install locally: npm i express cookie-parser express-session axios jsonwebtoken multer googleapis
@@ -395,3 +395,39 @@ function shutdown(signal) {
 }
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+/**
+ * Paginated photo list from Google Drive
+ * Query: ?pageSize=20&pageToken=XYZ
+ * Returns: { items: [...], nextPageToken: "..." | null }
+ */
+app.get("/api/photos", async (req, res) => {
+  try {
+    const pageSize = Math.min(Number(req.query.pageSize) || 20, 100);
+    const pageToken = req.query.pageToken || undefined;
+
+    const drive = getDriveClient(); // your existing helper
+    const folderId = process.env.GDRIVE_FOLDER_ID || process.env.DRIVE_FOLDER_ID || "";
+    if (!folderId) return res.status(500).json({ error: "Folder ID missing" });
+
+    const q = `'` + folderId + `' in parents and mimeType contains 'image/' and trashed=false`;
+    const fields = "nextPageToken, files(id,name,modifiedTime,mimeType,thumbnailLink,webContentLink,webViewLink)";
+    const resp = await drive.files.list({
+      q,
+      pageSize,
+      pageToken,
+      fields,
+      orderBy: "modifiedTime desc",
+      corpora: "user"
+    });
+
+    return res.json({
+      items: resp.data.files || [],
+      nextPageToken: resp.data.nextPageToken || null
+    });
+  } catch (err) {
+    console.error("photos pagination error:", err?.response?.data || err);
+    return res.status(500).json({ error: "Failed to list photos" });
+  }
+});
+
