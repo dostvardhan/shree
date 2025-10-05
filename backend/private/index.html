@@ -1,6 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Auth0 Login Protection -->
+  <script src="/auth0-spa-js.production.js"></script>
+  <script src="auth-init.js" defer></script>
+  <script src="guard-auth.js" defer></script>
+  <style id="auth-gate">body{visibility:hidden !important;}</style>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Shreshtha • Home</title>
@@ -58,5 +63,18 @@
       setInterval(spawn,800);
     })();
   </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const reveal = () => { const gate = document.getElementById("auth-gate"); if (gate) gate.remove(); };
+      try {
+        if (typeof requireAuth === "function") {
+          Promise.resolve(requireAuth()).then(reveal).catch(e => { console.error("Auth failed:", e); reveal(); });
+        } else {
+          console.error("requireAuth not found"); reveal();
+        }
+      } catch(e){ console.error("Auth error:", e); reveal(); }
+    });
+  </script>
 </body>
 </html>
+

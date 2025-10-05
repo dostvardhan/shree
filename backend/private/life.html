@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -69,5 +69,18 @@ document.querySelectorAll(".card").forEach(card=>{
     for(let i=0;i<pieces;i++){const sp=document.createElement("div");sp.className="spark";sp.textContent=(Math.random()>.5?"❤":"♡");const angle=Math.random()*Math.PI*2;const dist=65+Math.random()*100;sp.style.setProperty("--dx",Math.cos(angle)*dist+"px");sp.style.setProperty("--dy",Math.sin(angle)*(-dist)+"px");sp.style.left="0";sp.style.top="0";sp.style.fontSize=(10+Math.random()*12)+"px";sp.style.color=bColors[(Math.random()*bColors.length)|0];burst.appendChild(sp);setTimeout(()=>sp.remove(),1600);}setTimeout(()=>burst.remove(),1700);});
 });
 </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const reveal = () => { const gate = document.getElementById("auth-gate"); if (gate) gate.remove(); };
+      try {
+        if (typeof requireAuth === "function") {
+          Promise.resolve(requireAuth()).then(reveal).catch(e => { console.error("Auth failed:", e); reveal(); });
+        } else {
+          console.error("requireAuth not found"); reveal();
+        }
+      } catch(e){ console.error("Auth error:", e); reveal(); }
+    });
+  </script>
 </body>
 </html>
+

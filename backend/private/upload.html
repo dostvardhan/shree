@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -61,5 +61,18 @@ document.getElementById("upForm").addEventListener("submit", async (e)=>{
   }
 });
 </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const reveal = () => { const gate = document.getElementById("auth-gate"); if (gate) gate.remove(); };
+      try {
+        if (typeof requireAuth === "function") {
+          Promise.resolve(requireAuth()).then(reveal).catch(e => { console.error("Auth failed:", e); reveal(); });
+        } else {
+          console.error("requireAuth not found"); reveal();
+        }
+      } catch(e){ console.error("Auth error:", e); reveal(); }
+    });
+  </script>
 </body>
 </html>
+

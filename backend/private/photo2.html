@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -49,5 +49,18 @@
     <a href="gallery.html">Gallery</a>
     <a href="life.html" style="background:#8b1a1a">Back to Life</a>
   </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const reveal = () => { const gate = document.getElementById("auth-gate"); if (gate) gate.remove(); };
+      try {
+        if (typeof requireAuth === "function") {
+          Promise.resolve(requireAuth()).then(reveal).catch(e => { console.error("Auth failed:", e); reveal(); });
+        } else {
+          console.error("requireAuth not found"); reveal();
+        }
+      } catch(e){ console.error("Auth error:", e); reveal(); }
+    });
+  </script>
 </body>
 </html>
+

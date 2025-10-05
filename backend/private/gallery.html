@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -153,5 +153,18 @@ async function loadGallery(){
 }
 document.addEventListener("DOMContentLoaded",loadGallery);
 </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const reveal = () => { const gate = document.getElementById("auth-gate"); if (gate) gate.remove(); };
+      try {
+        if (typeof requireAuth === "function") {
+          Promise.resolve(requireAuth()).then(reveal).catch(e => { console.error("Auth failed:", e); reveal(); });
+        } else {
+          console.error("requireAuth not found"); reveal();
+        }
+      } catch(e){ console.error("Auth error:", e); reveal(); }
+    });
+  </script>
 </body>
 </html>
+
