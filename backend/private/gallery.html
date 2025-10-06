@@ -93,72 +93,7 @@
 </div>
 </main>
 
-<script>
-/* floating hearts background */
-const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffffaa"];
-function spawnHeart(){
-  const h=document.createElement("div");
-  h.className="heart";
-  h.textContent=Math.random()>0.5?"❤":"♡";
-  h.style.left=(2+Math.random()*96)+"vw";
-  h.style.bottom="-24px";
-  h.style.fontSize=(10+Math.random()*22)+"px";
-  h.style.color=colors[(Math.random()*colors.length)|0];
-  h.style.animationDuration=(10+Math.random()*10)+"s";
-  document.body.appendChild(h);
-  setTimeout(()=>h.remove(),20000);
-}
-for(let i=0;i<25;i++) setTimeout(spawnHeart,i*180);
-setInterval(spawnHeart,800);
 
-/* fetch photo list from backend */
-async function loadGallery(){
-  try{
-    const res = await authFetch("/api/list");
-    if(!res.ok) throw new Error("Failed to list photos");
-    const data = await res.json();
-    const grid = document.getElementById("grid");
-    if(!data || !data.length){
-      document.getElementById("empty").style.display="block";
-      return;
-    }
-    data.forEach(item=>{
-      const card=document.createElement("article");
-      card.className="card";
-
-      // clickable image to open full in new tab (Drive stream)
-      const link = document.createElement("a");
-      link.href = `/api/file/${item.id}`;
-      link.target = "_blank";
-      link.rel = "noopener";
-
-      const imgbox=document.createElement("div");
-      imgbox.className="imgbox";
-
-      const img=document.createElement("img");
-      img.src=`/api/file/${item.id}`;
-      img.alt=item.caption||"memory";
-
-      imgbox.appendChild(img);
-      link.appendChild(imgbox);
-      card.appendChild(link);
-
-      const meta=document.createElement("div");
-      meta.className="meta";
-      meta.textContent=item.caption||"";
-      card.appendChild(meta);
-
-      grid.appendChild(card);
-    });
-  }catch(err){
-    console.error(err);
-    const e = document.getElementById("empty");
-    e.textContent="Error loading gallery 💔";
-    e.style.display="block";
-  }
-}
-document.addEventListener("DOMContentLoaded",loadGallery);
-</script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const reveal = () => { const gate = document.getElementById("auth-gate"); if (gate) gate.remove(); };
@@ -304,5 +239,6 @@ document.addEventListener("DOMContentLoaded",loadGallery);
 </script>
 </body>
 </html>
+
 
 
