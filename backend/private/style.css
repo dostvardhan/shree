@@ -70,3 +70,18 @@ h1 {
   #photos img, .gallery-grid img, .grid img { max-height: 420px; }
 }
 /* ================================== */
+
+/* === GALLERY UN-CROP OVERRIDES === */
+.gallery-grid, #photos { display:grid !important; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
+.gallery-grid a { display:block; }
+.gallery-grid img, #photos img, .grid img {
+  width:100% !important;
+  height:auto !important;          /* no fixed height */
+  max-height:none !important;
+  object-fit:contain !important;    /* show full image */
+  background:#fff; border-radius:14px; box-shadow:0 2px 12px rgba(0,0,0,.06);
+}
+@media (max-width:640px){
+  .gallery-grid { grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; }
+}
+/* ================================== */
