@@ -56,3 +56,17 @@ h1 {
   font-size: 12px;
   color: #888;
 }
+
+/* === GALLERY UN-CROP OVERRIDES === */
+#photos img, .gallery-grid img, .grid img {
+  width: 100% !important;
+  height: auto !important;          /* no fixed height */
+  max-height: 520px;                 /* optional cap; adjust if you want */
+  object-fit: contain !important;    /* show full image, no crop */
+  background: #fff;                  /* clean borders for transparent images */
+  border-radius: 12px;
+}
+@media (max-width: 640px){
+  #photos img, .gallery-grid img, .grid img { max-height: 420px; }
+}
+/* ================================== */
