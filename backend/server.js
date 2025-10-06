@@ -42,13 +42,14 @@ const {
   GOOGLE_CLIENT_SECRET,
   GOOGLE_REFRESH_TOKEN,
   GOOGLE_DRIVE_FOLDER_ID,
+
   MAKE_PUBLIC = 'false',
 
   // Static & listing
   STATIC_DIR = 'private',
-  DRIVE_LIST_MODE = 'drive', // 'drive' to list from Drive; anything else falls back to photos.json
+  DRIVE_LIST_MODE = 'drive', // 'drive' = list from Drive; otherwise fall back to photos.json
 
-  // Fallback JSON path (only used if not listing from Drive)
+  // Fallback JSON (used only if not listing from Drive)
   PHOTOS_JSON = path.join(__dirname, 'photos.json')
 } = process.env;
 
@@ -86,9 +87,8 @@ app.use(session({
   }
 }));
 
-// ----------------- STATIC FILES -----------------
+// ----------------- PATHS -----------------
 const publicDir = path.join(__dirname, STATIC_DIR);
-app.use(express.static(publicDir));
 
 // ----------------- AUTH HELPERS -----------------
 const allowedSet = new Set(ALLOWED_USERS.split(',').map(s => s.trim()).filter(Boolean));
@@ -173,16 +173,6 @@ app.get('/auth/logout', (req, res) => {
   res.redirect(`https://${AUTH0_DOMAIN}/v2/logout?client_id=${AUTH0_CLIENT_ID}&returnTo=${returnTo}`);
 });
 
-// ----------------- PROTECTED PAGES -----------------
-const protectedPages = [
-  '/life.html','/upload.html','/gallery.html',
-  '/photo1.html','/photo2.html','/photo3.html','/photo4.html','/photo5.html',
-  '/photo6.html','/photo7.html','/photo8.html','/photo9.html'
-];
-app.get(protectedPages, requireAuth, (req, res) =>
-  res.sendFile(path.join(publicDir, req.path))
-);
-
 // ----------------- GOOGLE DRIVE -----------------
 let driveClient;
 if (isDriveConfigured) {
@@ -191,7 +181,7 @@ if (isDriveConfigured) {
   driveClient = google.drive({ version: 'v3', auth: oauth2Client });
   console.log('✅ Google Drive client configured.');
 } else {
-  console.warn('⚠️ Google Drive env vars missing — uploads to Drive will not work.');
+  console.warn('⚠️ Google Drive env vars missing — uploads/listing from Drive will not work.');
 }
 
 // ----------------- FALLBACK photos.json (only if not listing from Drive) -----------------
@@ -216,6 +206,18 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 15 * 1024 * 1024 } });
 
+// ----------------- PROTECTED PAGES -----------------
+// NOTE: Register these BEFORE express.static so unauthenticated users can’t bypass via static.
+const protectedPages = [
+  '/life.html','/upload.html','/gallery.html',
+  '/photo1.html','/photo2.html','/photo3.html','/photo4.html','/photo5.html',
+  '/photo6.html','/photo7.html','/photo8.html','/photo9.html',
+  '/welcome.html'
+];
+app.get(protectedPages, requireAuth, (req, res) =>
+  res.sendFile(path.join(publicDir, req.path))
+);
+
 // ----------------- API: UPLOAD -----------------
 app.post('/api/upload', requireAuth, upload.single('photo'), async (req, res) => {
   try {
@@ -232,9 +234,9 @@ app.post('/api/upload', requireAuth, upload.single('photo'), async (req, res) =>
         appProperties: {         // machine-friendly for our API
           caption,
           uploadedBy: uploader
-        }
+        },
+        parents: GOOGLE_DRIVE_FOLDER_ID ? [GOOGLE_DRIVE_FOLDER_ID] : undefined
       };
-      if (GOOGLE_DRIVE_FOLDER_ID) fileMetadata.parents = [GOOGLE_DRIVE_FOLDER_ID];
 
       const media = { mimeType: req.file.mimetype, body: fs.createReadStream(req.file.path) };
 
@@ -315,7 +317,9 @@ app.get('/api/list', requireAuth, async (req, res) => {
           pageSize: 50,
           fields: 'nextPageToken, files(id,name,mimeType,description,appProperties,createdTime)',
           orderBy: 'createdTime desc',
-          pageToken
+          pageToken,
+          supportsAllDrives: true,
+          includeItemsFromAllDrives: true
         });
         files.push(...(resp.data.files || []));
         pageToken = resp.data.nextPageToken;
@@ -372,12 +376,51 @@ app.get('/api/file/:id', requireAuth, async (req, res) => {
   }
 });
 
+// ----------------- API: PAGINATED PHOTOS (Drive) -----------------
+/**
+ * GET /api/photos?pageSize=20&pageToken=XYZ
+ * Returns: { items: [...], nextPageToken: "..." | null }
+ */
+app.get('/api/photos', requireAuth, async (req, res) => {
+  try {
+    if (!driveClient) return res.status(500).json({ error: 'Drive not configured' });
+    if (!GOOGLE_DRIVE_FOLDER_ID) return res.status(500).json({ error: 'Folder ID missing' });
+
+    const pageSize = Math.min(Number(req.query.pageSize) || 20, 100);
+    const pageToken = req.query.pageToken || undefined;
+
+    const q = `'${GOOGLE_DRIVE_FOLDER_ID}' in parents and mimeType contains 'image/' and trashed = false`;
+    const fields = "nextPageToken, files(id,name,createdTime,mimeType,thumbnailLink,webContentLink,webViewLink)";
+    const resp = await driveClient.files.list({
+      q,
+      pageSize,
+      pageToken,
+      fields,
+      orderBy: "createdTime desc",
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true
+    });
+
+    return res.json({
+      items: resp.data.files || [],
+      nextPageToken: resp.data.nextPageToken || null
+    });
+  } catch (err) {
+    console.error('photos pagination error:', err?.response?.data || err);
+    return res.status(500).json({ error: 'Failed to list photos' });
+  }
+});
+
 // ----------------- DIAG & HEALTH -----------------
 app.get('/api/diag', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
 app.get('/health', (req, res) => res.status(200).json({ status: 'ok', uptime: process.uptime(), ts: Date.now() }));
 
 // ----------------- ROOT -----------------
 app.get('/', (req, res) => res.redirect('/index.html'));
+
+// ----------------- STATIC FILES (PUBLIC) -----------------
+// Mount static AFTER registering protected routes so they can’t be bypassed.
+app.use(express.static(publicDir));
 
 // ----------------- START -----------------
 const listenPort = process.env.PORT ? Number(process.env.PORT) : Number(PORT || 4000);
@@ -395,39 +438,3 @@ function shutdown(signal) {
 }
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
-
-/**
- * Paginated photo list from Google Drive
- * Query: ?pageSize=20&pageToken=XYZ
- * Returns: { items: [...], nextPageToken: "..." | null }
- */
-app.get("/api/photos", async (req, res) => {
-  try {
-    const pageSize = Math.min(Number(req.query.pageSize) || 20, 100);
-    const pageToken = req.query.pageToken || undefined;
-
-    const drive = getDriveClient(); // your existing helper
-    const folderId = process.env.GDRIVE_FOLDER_ID || process.env.DRIVE_FOLDER_ID || "";
-    if (!folderId) return res.status(500).json({ error: "Folder ID missing" });
-
-    const q = `'` + folderId + `' in parents and mimeType contains 'image/' and trashed=false`;
-    const fields = "nextPageToken, files(id,name,modifiedTime,mimeType,thumbnailLink,webContentLink,webViewLink)";
-    const resp = await drive.files.list({
-      q,
-      pageSize,
-      pageToken,
-      fields,
-      orderBy: "modifiedTime desc",
-      corpora: "user"
-    });
-
-    return res.json({
-      items: resp.data.files || [],
-      nextPageToken: resp.data.nextPageToken || null
-    });
-  } catch (err) {
-    console.error("photos pagination error:", err?.response?.data || err);
-    return res.status(500).json({ error: "Failed to list photos" });
-  }
-});
-
