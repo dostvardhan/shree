@@ -107,7 +107,7 @@
     });
   </script>
 <script>
-/* GALLERY_PAGINATION_V1 */
+/* GALLERY_PAGINATION_V2 */
 (function(){
   const PAGE_SIZE = 20;
 
@@ -180,10 +180,15 @@
         // Prefer thumbnailLink; fallback via Drive content link if needed
         img.src = (f.thumbnailLink || f.webContentLink || "").replace(/=s\d+/, "=s512");
         img.alt = f.name || "photo";
+img.style.width = "100%";
+img.style.height = "auto";
+img.style.objectFit = "contain";
+img.style.display = "block";
+
         img.loading = "lazy";
         img.style.width = "100%";
-        img.style.height = "220px";
-        img.style.objectFit = "cover";
+        
+        
         img.style.borderRadius = "12px";
         img.referrerPolicy = "no-referrer";
 
@@ -239,6 +244,7 @@
 </script>
 </body>
 </html>
+
 
 
 
