@@ -250,22 +250,25 @@ target.appendChild(card);
   loadPage();
 })();
 </script>
-<!-- START: floating hearts (canvas) -->
-<canvas id="heartsCanvas" aria-hidden="true"></canvas>
+
+<!-- START: floating hearts (overlay) -->
+<div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
 <script>
-(()=>{const c=document.getElementById("heartsCanvas");if(!c)return;const x=c.getContext("2d");
+(()=>{const c=document.getElementById("fxCanvas");if(!c)return;const ctx=c.getContext("2d");
 let W,H;const DPR=Math.max(1,window.devicePixelRatio||1);let hs=[];
 function R(a,b){return Math.random()*(b-a)+a}
-function resize(){W=innerWidth*DPR;H=innerHeight*DPR;c.width=W;c.height=H;c.style.cssText="position:fixed;inset:0;pointer-events:none;z-index:0"}
-function spawn(){if(hs.length>28)return;hs.push({x:R(0,W),y:H+R(20,200),s:R(10,22),vx:R(-15,15),vy:-R(35,70),a:R(.35,.8),r:R(-.5,.5),vr:R(-.02,.02)})}
-function heart(px,py,s,rot,a){x.save();x.translate(px,py);x.rotate(rot);x.scale(s,s);x.globalAlpha=a;x.fillStyle="#ff7aa2";
-x.beginPath();x.moveTo(0,-.5);x.bezierCurveTo(.5,-1.1,1.3,-.1,0,.8);x.bezierCurveTo(-1.3,-.1,-.5,-1.1,0,-.5);x.fill();x.restore()}
-function tick(){x.clearRect(0,0,W,H);if(Math.random()<.12)spawn();hs.forEach(h=>{h.x+=h.vx*.016;h.y+=h.vy*.016;h.r+=h.vr;h.a-=.0018});hs=hs.filter(h=>h.y>-60&&h.a>.02);hs.forEach(h=>heart(h.x,h.y,h.s/50,h.r,h.a));requestAnimationFrame(tick)}
+function resize(){W=innerWidth*DPR;H=innerHeight*DPR;c.width=W;c.height=H}
+function spawn(){if(hs.length>28)return;hs.push({x:R(0,W),y:H+R(20,200),s:R(10,22),vx:R(-15,15),vy:-R(35,70),a:R(.25,.6),r:R(-.5,.5),vr:R(-.02,.02)})}
+function heart(px,py,s,rot,a){ctx.save();ctx.translate(px,py);ctx.rotate(rot);ctx.scale(s,s);ctx.globalAlpha=a;ctx.fillStyle="#ff85a7";
+ctx.beginPath();ctx.moveTo(0,-.5);ctx.bezierCurveTo(.5,-1.1,1.3,-.1,0,.8);ctx.bezierCurveTo(-1.3,-.1,-.5,-1.1,0,-.5);ctx.fill();ctx.restore()}
+function tick(){ctx.clearRect(0,0,W,H);if(Math.random()<.12)spawn();hs.forEach(h=>{h.x+=h.vx*.016;h.y+=h.vy*.016;h.r+=h.vr;h.a-=.0012});
+hs=hs.filter(h=>h.y>-60&&h.a>.02);hs.forEach(h=>heart(h.x,h.y,h.s/50,h.r,h.a));requestAnimationFrame(tick)}
 addEventListener("resize",resize,{passive:true});resize();tick();})();
 </script>
 <!-- END: floating hearts -->
 </body>
 </html>
+
 
 
 
