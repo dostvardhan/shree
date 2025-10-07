@@ -275,3 +275,22 @@ addEventListener("resize",resize,{passive:true});resize();tick();})();
 
 
 
+<script>
+(function(){
+  // avoid duplicates if already injected
+  if (window.__heartsInjected) return; 
+  window.__heartsInjected = true;
+
+  function spawnHeart(){
+    const heart=document.createElement('div');
+    heart.className='heart';
+    heart.style.left = (Math.random()*100) + 'vw';
+    heart.style.animationDuration = (6 + Math.random()*4) + 's';
+    document.body.appendChild(heart);
+    setTimeout(()=>heart.remove(), 10000);
+  }
+  // make a bunch at start, then keep trickling in
+  for(let i=0;i<16;i++) spawnHeart();
+  setInterval(spawnHeart, 1200);
+})();
+</script>
