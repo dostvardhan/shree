@@ -109,7 +109,13 @@
 <script>
 /* GALLERY_PAGINATION_V3 */
 (function(){
-  const PAGE_SIZE = 20;
+  const PAGE_SIZE = (function () {
+  const w = window.innerWidth || 0;
+  if (w >= 1400) return 40;
+  if (w >= 1000) return 30;
+  if (w >= 700)  return 24;
+  return 20;
+})();
 
   // We use Drive pageToken based paging. For Prev, keep a token trail in sessionStorage
   const TRAIL_KEY = "gallery_token_trail_v1";
@@ -294,3 +300,4 @@ addEventListener("resize",resize,{passive:true});resize();tick();})();
   setInterval(spawnHeart, 1200);
 })();
 </script>
+
