@@ -203,3 +203,6 @@ body {
   100% { transform: translateY(-120vh) rotate(45deg); opacity: 0; }
 }
 /* === END === */
+
+/* Pager tidy */
+#pager{display:flex;gap:8px;align-items:center;justify-content:center;margin:24px auto 96px;}
