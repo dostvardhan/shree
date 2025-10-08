@@ -164,7 +164,7 @@
       // Try to find a known container if exists
       const known = document.getElementById("photos") || document.querySelector(".gallery-grid");
       if (known) { known.innerHTML=""; }
-      const target = known || container;
+      const target = known || container; target.classList.add("masonry");
 
       // Simple grid style if none
       if (!target.style.display) {
@@ -300,6 +300,7 @@ addEventListener("resize",resize,{passive:true});resize();tick();})();
   setInterval(spawnHeart, 1200);
 })();
 </script>
+
 
 
 

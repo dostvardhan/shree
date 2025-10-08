@@ -206,3 +206,24 @@ body {
 
 /* Pager tidy */
 #pager{display:flex;gap:8px;align-items:center;justify-content:center;margin:24px auto 96px;}
+
+ /* === Masonry gallery (no vertical gaps) === */
+ #photos.masonry{
+   column-width: 260px;
+   column-gap: 16px;
+   padding: 20px;
+ }
+ #photos.masonry .card{
+   break-inside: avoid;
+   display: inline-block;
+   width: 100%;
+   margin: 0 0 16px;
+ }
+ #photos.masonry a{ display:block; transition:transform .25s ease, box-shadow .25s ease; }
+ #photos.masonry a:hover{ transform: translateY(-6px); box-shadow: 0 8px 20px rgba(0,0,0,.1); }
+ #photos.masonry img{
+   width:100% !important; height:auto !important; object-fit:contain !important;
+   border-radius:16px; background:#fff; box-shadow:0 3px 14px rgba(0,0,0,.07);
+ }
+ /* pager */
+ #pager{display:flex;gap:8px;align-items:center;justify-content:center;margin:24px auto 64px;}

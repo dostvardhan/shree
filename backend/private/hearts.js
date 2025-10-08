@@ -4,7 +4,7 @@
   c.style.position = "fixed";
   c.style.inset = "0";
   c.style.pointerEvents = "none";
-  c.style.zIndex = "0";
+  c.style.zIndex = "5";
   document.body.appendChild(c);
 
   const ctx = c.getContext("2d");
@@ -62,3 +62,4 @@
   addEventListener("resize", resize, { passive: true });
   resize(); tick();
 })();
+
