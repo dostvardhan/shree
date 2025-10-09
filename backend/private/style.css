@@ -328,3 +328,29 @@ canvas#heartsCanvas {
   z-index: 0;
   opacity: 0.8;
 }
+
+ /* ==== GALLERY FIX + HEARTS Z-INDEX ===================================== */
+ /* Kill old grid on #photos and use CSS-columns masonry */
+ #photos{ display:block !important; column-width:260px; column-gap:18px; padding:20px 20px 0; }
+ #photos .gallery-grid{ all:unset; }                              /* if that class exists, neutralize */
+ .gallery-grid{ all:unset; }                                       /* neutralize old grid anywhere   */
+
+ /* Tiles */
+ #photos a{ display:inline-block; width:100%; break-inside:avoid; margin:0 0 18px; }
+ #photos img{ width:100% !important; height:auto !important; object-fit:contain !important;
+              border-radius:14px; background:#fff; box-shadow:0 3px 14px rgba(0,0,0,.06); }
+
+ /* Pager nice & anchored */
+ #pager{ display:flex; gap:10px; align-items:center; justify-content:center;
+         margin:24px auto 96px; }
+
+ /* Put hearts canvas under content but on top of background */
+ body{ position:relative; }
+ #heartsCanvas{ position:fixed; inset:0; pointer-events:none; z-index:0; }
+
+ /* Ensure page content paints above canvas everywhere */
+ header, main, footer, .container, .content, .wrap, .page, .cards, .grid { position:relative; z-index:1; }
+
+ /* Hide any legacy DIV hearts if they still get injected somewhere */
+ .heart{ display:none !important; }
+ /* ======================================================================= */
