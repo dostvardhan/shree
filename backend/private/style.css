@@ -283,3 +283,48 @@ body {
 /* Pager centered and not floating mid-page */
 #pager{display:flex;gap:8px;align-items:center;justify-content:center;margin:24px auto 48px;}
 /* ================================= */
+
+/* === FINAL GALLERY + FLOATING HEARTS === */
+body {
+  background: linear-gradient(180deg, #ffd6cc 0%, #ffb6b3 100%) !important;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Masonry Grid - fills full page (no blank space) */
+#photos, .gallery-grid {
+  column-count: 4;
+  column-gap: 18px;
+  padding: 30px;
+}
+@media (max-width: 1200px){ #photos{ column-count:3; } }
+@media (max-width: 900px){ #photos{ column-count:2; } }
+@media (max-width: 600px){ #photos{ column-count:1; } }
+
+#photos a {
+  display:inline-block;
+  width:100%;
+  margin:0 0 16px;
+  break-inside: avoid;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+#photos a:hover { transform: translateY(-6px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+
+#photos img {
+  width:100%;
+  height:auto;
+  object-fit:contain;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+/* Floating Canvas Hearts */
+canvas#heartsCanvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.8;
+}
