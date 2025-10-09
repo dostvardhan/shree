@@ -101,7 +101,7 @@
         if (typeof requireAuth === "function") {
           Promise.resolve(requireAuth()).then(reveal).catch(e => { console.error("Auth failed:", e); reveal(); });
         } else {
-          console.error("requireAuth not found"); reveal();
+          // requireAuth not wired here; skip log reveal();
         }
       } catch(e){ console.error("Auth error:", e); reveal(); }
     });
@@ -300,6 +300,7 @@ addEventListener("resize",resize,{passive:true});resize();tick();})();
   setInterval(spawnHeart, 1200);
 })();
 </script>
+
 
 
 
