@@ -255,3 +255,31 @@ body {
 /* Pager centered and not floating mid-page */
 #pager{display:flex;gap:8px;align-items:center;justify-content:center;margin:24px auto 48px;}
 /* ================================= */
+
+/* === MASONRY GALLERY (force) === */
+#photos, .gallery-grid {
+  display: block !important;                 /* kill inline grid from JS */
+  column-width: 260px;                       /* auto columns */
+  column-gap: 16px;
+  padding: 20px 20px 28px;
+}
+#photos > a, .gallery-grid > a {
+  display: inline-block;
+  width: 100%;
+  margin: 0 0 16px;
+  break-inside: avoid;
+  vertical-align: top;
+}
+#photos img, .gallery-grid img {
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 3px 14px rgba(0,0,0,.07);
+}
+
+/* Pager centered and not floating mid-page */
+#pager{display:flex;gap:8px;align-items:center;justify-content:center;margin:24px auto 48px;}
+/* ================================= */
