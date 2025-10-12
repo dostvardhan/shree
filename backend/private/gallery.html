@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Shreshtha – Gallery</title>
 
@@ -25,27 +25,32 @@
     background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red));
     overflow-x:hidden;
   }
-  header{text-align:center;padding:24px 12px;position:relative;z-index:5}
-  .logo{font-family:"Italianno",cursive;font-size:46px;text-shadow:0 2px 10px rgba(0,0,0,.25);}
-  nav{margin-top:8px;}
-  nav a{margin:0 12px;padding:8px 18px;background:rgba(255,255,255,.15);
-        border-radius:999px;text-decoration:none;color:var(--text);
-        box-shadow:0 4px 8px rgba(0,0,0,.18);}
-  nav a:hover{background:rgba(255,255,255,.3);}
-  main{max-width:1200px;margin:30px auto;padding:0 18px;position:relative;z-index:5}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px;}
+
+  /* Header / nav (keep above hearts) */
+  header { text-align:center; padding:24px 12px; position:relative; z-index:100; }
+  .logo{ font-family:"Italianno",cursive; font-size:46px; text-shadow:0 2px 10px rgba(0,0,0,.25); }
+  nav{ margin-top:8px; }
+  nav a{
+    margin:0 12px; padding:8px 18px; background:rgba(255,255,255,.15);
+    border-radius:999px; text-decoration:none; color:var(--text);
+    box-shadow:0 4px 8px rgba(0,0,0,.12);
+  }
+  nav a:hover{ background:rgba(255,255,255,.28); }
+
+  /* Main content (below header but under hearts) */
+  main { max-width:1200px; margin:30px auto; padding:0 18px; position:relative; z-index:5; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:22px; }
 
   .photo-card{
     background:var(--panel);
     border-radius:16px;
     overflow:hidden;
-    box-shadow:0 18px 40px rgba(0,0,0,.18);
+    box-shadow:0 12px 30px rgba(0,0,0,.14);
     transition:transform .28s cubic-bezier(.2,.9,.3,1);
-    display:flex;
-    flex-direction:column;
+    display:flex; flex-direction:column;
   }
-  .photo-card:hover{transform:translateY(-6px);}
-  .photo-card a{display:block;flex:1}
+  .photo-card:hover{ transform:translateY(-6px); }
+  .photo-card a{ display:block; flex:1; }
   .photo-card img{
     width:100%;
     border-radius:12px;
@@ -54,22 +59,44 @@
     max-height:360px;
     background:#fff9f7;
   }
-  .meta{padding:10px 12px 14px;text-align:center;font-style:italic;font-size:14px;color:#48242a;}
-  .empty{text-align:center;font-size:18px;margin-top:80px;opacity:.9;color:#4b2b2b}
+  .meta{ padding:10px 12px 14px; text-align:center; font-style:italic; font-size:14px; color:#48242a; }
+  .empty{ text-align:center; font-size:18px; margin-top:80px; opacity:.95; color:#4b2b2b }
 
-  /* floating hearts canvas base */
-  #fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:0;}
-  .heart{position:fixed;font-size:18px;opacity:.75;pointer-events:none;z-index:0;
-         animation:floatUp linear infinite;}
-  @keyframes floatUp{
-    0%{transform:translateY(0) scale(1);opacity:.95;}
-    100%{transform:translateY(-120vh) scale(1.4);opacity:0;}
+  /* Pager */
+  #pager{ display:flex; justify-content:center; gap:12px; align-items:center; margin:18px 0; z-index:6; position:relative; }
+  #pager button{ padding:8px 12px; border-radius:8px; border:1px solid rgba(0,0,0,0.08); cursor:pointer; background:rgba(255,255,255,0.12); }
+  #pager button:disabled{ opacity:0.45; cursor:default; }
+
+  /* Hearts canvas sits above photos but under header */
+  #fxCanvas {
+    position:fixed;
+    left:0;
+    top:0;
+    width:100vw;
+    height:100vh;
+    pointer-events:none;
+    z-index:60; /* above main/photos, below header (header=100) */
   }
 
-  /* pager */
-  #pager{display:flex;justify-content:center;gap:12px;align-items:center;margin:18px 0;}
-  #pager button{padding:8px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);cursor:pointer;background:rgba(255,255,255,0.12)}
-  #pager button:disabled{opacity:0.45;cursor:default}
+  /* DOM hearts fallback (above photos) */
+  .heart {
+    position:fixed;
+    font-size:18px;
+    opacity:.9;
+    pointer-events:none;
+    z-index:58;
+    will-change: transform, opacity;
+    animation:floatUp linear infinite;
+  }
+  @keyframes floatUp {
+    0%{ transform: translateY(0) scale(1); opacity: .95; }
+    100%{ transform: translateY(-120vh) scale(1.3); opacity: 0; }
+  }
+
+  /* small responsive tweaks */
+  @media (max-width:600px){
+    .logo{ font-size:34px; }
+  }
 </style>
 </head>
 <body>
@@ -163,12 +190,9 @@ document.addEventListener("DOMContentLoaded", () => {
         anchor.rel = "noopener";
 
         const img = document.createElement("img");
-
-        // <<< IMPORTANT: use backend streaming endpoint for full-quality image bytes >>>
-        // encodeURIComponent ensures special chars in id are safe
+        // use backend streaming endpoint for full-quality image bytes
         const fileUrl = `/api/file/${encodeURIComponent(f.id)}`;
         img.src = fileUrl;
-        // helpful srcset (backend currently streams original; srcset entries only help cache keys/responsive browsers)
         img.srcset = `${fileUrl}?w=1024 1024w, ${fileUrl}?w=640 640w`;
         img.sizes = "(max-width:700px) 100vw, 33vw";
         img.alt = f.name || 'photo';
@@ -227,7 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 </script>
 
-<!-- START: floating hearts (canvas) - slower + multi-color -->
+<!-- START: canvas hearts (rainbow pastel, above photos) -->
 <div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
 <script>
 (()=> {
@@ -237,62 +261,97 @@ document.addEventListener("DOMContentLoaded", () => {
   let W,H;
   const DPR = Math.max(1, window.devicePixelRatio || 1);
   let hs = [];
-  const COLORS = ["#ff85a7","#ffd28f","#ffb3c6","#a6f0c6","#ffd1ea","#c6e7ff"];
+
+  // pastel rainbow
+  const COLORS = [
+    "#a8e6ff", // light blue
+    "#fff6a6", // light yellow
+    "#ffd89e", // light orange
+    "#ffb3c6", // pink
+    "#d6f5c6", // light green
+    "#d6e0ff", // lavender
+    "#ffd1ea", // rose
+    "#ffe3b8"  // peach
+  ];
+
   function R(a,b){ return Math.random()*(b-a)+a; }
   function resize(){ W = innerWidth * DPR; H = innerHeight * DPR; c.width = W; c.height = H; }
   function spawn(){
-    if (hs.length > 18) return;
+    if (hs.length > 22) return;
     hs.push({
       x: R(0, W),
-      y: H + R(10*DPR, 120*DPR),
-      s: R(10, 26),
-      vx: R(-8, 8),
-      vy: -R(20, 40),
-      a: R(.35, .72),
-      r: R(-.5, .5),
-      vr: R(-.01, .01),
-      color: COLORS[Math.floor(Math.random() * COLORS.length)]
+      y: H + R(10*DPR, 160*DPR),
+      s: R(12, 34),
+      vx: R(-6, 6),
+      vy: -R(16, 38),
+      a: R(.45, .95),
+      r: R(-.6, .6),
+      vr: R(-.012, .012),
+      color: COLORS[Math.floor(Math.random()*COLORS.length)]
     });
   }
+
   function heart(px,py,s,rot,a,color){
-    ctx.save(); ctx.translate(px,py); ctx.rotate(rot); ctx.scale(s,s);
-    ctx.globalAlpha = a; ctx.fillStyle = color;
-    ctx.beginPath(); ctx.moveTo(0,-0.5);
+    ctx.save();
+    ctx.translate(px,py);
+    ctx.rotate(rot);
+    ctx.scale(s,s);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0,-0.5);
     ctx.bezierCurveTo(0.5,-1.1,1.3,-0.1,0,0.8);
     ctx.bezierCurveTo(-1.3,-0.1,-0.5,-1.1,0,-0.5);
-    ctx.fill(); ctx.restore();
+    ctx.fill();
+    ctx.restore();
   }
+
   function tick(){
     ctx.clearRect(0,0,W,H);
-    if (Math.random() < 0.08) spawn();
-    hs.forEach(h => { h.x += h.vx * 0.016; h.y += h.vy * 0.016; h.r += h.vr; h.a -= 0.0009; });
-    hs = hs.filter(h => (h.y > -60*DPR) && (h.a > 0.03));
+    if (Math.random() < 0.10) spawn();
+    hs.forEach(h => {
+      h.x += h.vx * 0.016;
+      h.y += h.vy * 0.016;
+      h.r += h.vr;
+      h.a -= 0.0008;
+    });
+    hs = hs.filter(h => (h.y > -80*DPR) && (h.a > 0.02));
     hs.forEach(h => heart(h.x, h.y, h.s/50*DPR, h.r, h.a, h.color));
     requestAnimationFrame(tick);
   }
+
   addEventListener("resize", resize, { passive:true });
   resize(); tick();
 })();
 </script>
-<!-- END: floating hearts -->
+<!-- END: canvas hearts -->
 
-<!-- DOM hearts fallback (slower + color variety) -->
+<!-- DOM hearts fallback (rainbow + slower) -->
 <script>
 (function(){
   if (window.__heartsInjected) return; window.__heartsInjected = true;
-  const COLORS = ['#ff85a7','#ffd28f','#ffb3c6','#a6f0c6','#ffd1ea','#c6e7ff'];
+  const COLORS = [
+    "#a8e6ff","#fff6a6","#ffd89e","#ffb3c6","#d6f5c6","#d6e0ff","#ffd1ea","#ffe3b8"
+  ];
+
   function spawnHeart(){
-    const h = document.createElement('div'); h.className = 'heart'; h.textContent = '❤️';
+    const h = document.createElement('div');
+    h.className = 'heart';
+    h.textContent = '❤️';
     h.style.left = (Math.random()*100) + 'vw';
-    h.style.top = (82 + Math.random()*14) + 'vh';
-    h.style.animationDuration = (8 + Math.random()*5) + 's';
+    h.style.top = (78 + Math.random()*20) + 'vh';
+    h.style.animationDuration = (9 + Math.random()*6) + 's';
     h.style.color = COLORS[Math.floor(Math.random()*COLORS.length)];
-    h.style.fontSize = (14 + Math.random()*16) + 'px';
-    h.style.opacity = 0.85; h.style.pointerEvents = 'none'; h.style.zIndex = 0;
-    document.body.appendChild(h); setTimeout(()=> h.remove(), 14000);
+    h.style.fontSize = (16 + Math.random()*22) + 'px';
+    h.style.opacity = 0.95;
+    h.style.pointerEvents = 'none';
+    h.style.zIndex = 58;
+    document.body.appendChild(h);
+    setTimeout(()=> h.remove(), 20000);
   }
-  for (let i=0;i<6;i++) spawnHeart();
-  setInterval(spawnHeart, 1600);
+
+  for (let i=0;i<8;i++) spawnHeart();
+  setInterval(spawnHeart, 1400);
 })();
 </script>
 </body>
