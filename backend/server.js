@@ -423,9 +423,11 @@ app.get('/', (req, res) => res.redirect('/index.html'));
 app.use(express.static(publicDir));
 
 // ----------------- START -----------------
-const listenPort = process.env.PORT ? Number(process.env.PORT) : Number(PORT || 4000);
-const server = app.listen(listenPort, () => {
-  console.log(`✅ Server listening on port ${listenPort} - NODE_ENV=${NODE_ENV}`);
+const listenPort = Number(process.env.PORT || 4000);
+app.listen(listenPort, "0.0.0.0", () => {
+  console.log(`✅ Server listening on ${listenPort} (Render-ready)`);
+});
+
   console.log(`Static dir: ${publicDir}`);
   console.log(`Drive configured: ${isDriveConfigured ? 'yes' : 'no'}`);
   console.log(`DRIVE_LIST_MODE=${DRIVE_LIST_MODE}`);
