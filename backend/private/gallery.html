@@ -63,9 +63,16 @@
   .meta{padding:12px 14px 16px;text-align:center;font-style:italic;font-size:15px;}
   .empty{text-align:center;font-size:18px;margin-top:80px;opacity:.8;}
 
-  /* Floating hearts */
-  .heart{position:fixed;font-size:18px;opacity:.75;
-         animation:floatUp linear infinite;pointer-events:none;}
+  /* photo-card used by paginator renderer */
+  .photo-card{background:rgba(255,255,255,0.06);border-radius:12px;padding:8px;overflow:hidden}
+  .photo-card img{border-radius:10px;display:block;width:100%;height:auto}
+
+  /* Floating hearts - canvas sits on top but pointer-events:none */
+  #fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:0}
+
+  /* DOM hearts (fallback) */
+  .heart{position:fixed;font-size:18px;opacity:.75;pointer-events:none;z-index:0;
+         animation:floatUp linear infinite;}
   @keyframes floatUp{
     0%{transform:translateY(0) scale(1);opacity:.9;}
     100%{transform:translateY(-120vh) scale(1.4);opacity:0;}
@@ -95,132 +102,116 @@
 
 
   <script>
+    // Reveal content only after auth check completes (if requireAuth exists)
     document.addEventListener("DOMContentLoaded", () => {
       const reveal = () => { const gate = document.getElementById("auth-gate"); if (gate) gate.remove(); };
       try {
         if (typeof requireAuth === "function") {
-          Promise.resolve(requireAuth()).then(reveal).catch(e => { console.error("Auth failed:", e); reveal(); });
+          // requireAuth should return a promise that resolves when auth is good
+          Promise.resolve(requireAuth()).then(reveal).catch(e => { console.warn("Auth check failed, continuing anyway:", e); reveal(); });
         } else {
-          // requireAuth not wired here; skip log reveal();
+          // no requireAuth wired (server-based session flow). proceed to show page.
+          reveal();
         }
       } catch(e){ console.error("Auth error:", e); reveal(); }
     });
   </script>
 <script>
-/* GALLERY_PAGINATION_V3 */
+/* GALLERY_PAGINATION_V3 - fixed renderer + empty state + page numbering */
 (function(){
   const PAGE_SIZE = (function () {
-  const w = window.innerWidth || 0;
-  if (w >= 1400) return 40;
-  if (w >= 1000) return 30;
-  if (w >= 700)  return 24;
-  return 20;
-})();
+    const w = window.innerWidth || 0;
+    if (w >= 1400) return 40;
+    if (w >= 1000) return 30;
+    if (w >= 700)  return 24;
+    return 20;
+  })();
 
-  // We use Drive pageToken based paging. For Prev, keep a token trail in sessionStorage
   const TRAIL_KEY = "gallery_token_trail_v1";
   const readTrail = () => { try{ return JSON.parse(sessionStorage.getItem(TRAIL_KEY)||"[]"); }catch(e){return [];} }
   const writeTrail = (arr) => { try{ sessionStorage.setItem(TRAIL_KEY, JSON.stringify(arr)); }catch(e){} }
 
   const url = new URL(location.href);
-  const token = url.searchParams.get("pageToken") || null;   // current token
+  const token = url.searchParams.get("pageToken") || null;
   const pageSize = Math.max(1, Number(url.searchParams.get("pageSize")||PAGE_SIZE));
 
-  const grid = document.querySelector("#grid, .grid, .photos-grid") || document.body; // fallback
+  const grid = document.querySelector("#grid") || document.body;
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
   const pageInfo = document.getElementById("pageInfo");
+  const emptyEl = document.getElementById("empty");
 
-  // Keep trail (do not push null at start repeatedly)
   let trail = readTrail();
-  // When navigating forward with a token, remember it so we can step back
-  // Rule: trail stores the sequence of tokens used to reach current page.
-  // if URL has a token and it's not last item, ensure trail ends with it
   if (token && (trail.length===0 || trail[trail.length-1] !== token)) trail.push(token);
-  // But for page 1 (token=null) we reset
   if (!token) trail = [];
-
   writeTrail(trail);
 
   function setStatus(text){ if(pageInfo) pageInfo.textContent = text; }
 
   async function loadPage(){
     setStatus("Loading…");
-    if (prevBtn) prevBtn.disabled = (trail.length <= 1); // can go back only if we have earlier token
+    if (prevBtn) prevBtn.disabled = (trail.length <= 1);
     if (nextBtn) nextBtn.disabled = true;
 
     try {
       const qs = new URLSearchParams({ pageSize: String(pageSize) });
       if (token) qs.set("pageToken", token);
+      // Use credentialed fetch — server should validate session/JWT
       const resp = await fetch(`/api/photos?${qs.toString()}`, { credentials: "include" });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
       const items = data.items || [];
       const nextToken = data.nextPageToken || null;
 
-      // Render items into grid – replace with your existing renderer if present
-      // Basic clean:
-      const container = grid;
-      // Try to find a known container if exists
-      const known = document.getElementById("photos") || document.querySelector(".gallery-grid");
-      if (known) { known.innerHTML=""; }
-      const target = known || container; target.classList.add("masonry");
+      // Render items
+      const target = grid;
+      target.innerHTML = ""; // clear existing content
 
-      // Simple grid style if none
-      if (!target.style.display) {
-        target.style.display = "grid";
-        target.style.gridTemplateColumns = "repeat(auto-fill, minmax(220px, 1fr))";
-        target.style.gap = "12px";
+      if (!items.length) {
+        if (emptyEl) emptyEl.style.display = "block"; else {
+          const no = document.createElement('div'); no.className='empty'; no.textContent='No photos uploaded yet 🌸'; target.appendChild(no);
+        }
       } else {
-        // clear
-        target.innerHTML = "";
+        if (emptyEl) emptyEl.style.display = "none";
       }
 
       items.forEach((f) => {
-        const a = document.createElement("a");
-        a.href = f.webViewLink || f.webContentLink || "#";
-        a.target = "_blank";
-        a.rel = "noopener";
+        const link = document.createElement("a");
+        link.href = f.webViewLink || f.webContentLink || '#';
+        link.target = "_blank";
+        link.rel = "noopener";
 
         const img = document.createElement("img");
-        // Prefer thumbnailLink; fallback via Drive content link if needed
-        img.src = (f.thumbnailLink || f.webContentLink || "").replace(/=s\d+/, "=s512");
-        img.alt = f.name || "photo";
-img.style.width = "100%";
-img.style.height = "auto";
-img.style.objectFit = "contain";
-img.style.display = "block";
+        // prefer server-side thumbnail URL; fallback to provided link
+        const thumb = (f.thumbnailLink || f.webContentLink || '').replace(/=s\d+/, "=s512");
+        img.src = thumb || '/placeholder.jpg';
+        img.alt = f.name || 'photo';
+        img.loading = 'lazy';
+        img.referrerPolicy = 'no-referrer';
 
-img.style.width = "100%";
-img.style.height = "auto";
-img.style.objectFit = "contain";
-img.style.display = "block";
+        link.appendChild(img);
 
-        img.loading = "lazy";
-        img.style.width = "100%";
-        
-        
-        img.style.borderRadius = "12px";
-        img.referrerPolicy = "no-referrer";
-
-        a.appendChild(img);
         const card = document.createElement("div");
-card.className = "photo-card";
-card.appendChild(a);
-target.appendChild(card);
+        card.className = 'photo-card';
+        card.appendChild(link);
+        if (f.description || f.caption) {
+          const meta = document.createElement('div'); meta.className='meta'; meta.textContent = f.caption || f.description || '';
+          card.appendChild(meta);
+        }
+
+        target.appendChild(card);
       });
 
-      // Pager controls
+      // Pager setup
       if (nextBtn) {
         nextBtn.disabled = !nextToken;
         nextBtn.onclick = () => {
           const u = new URL(location.href);
-          u.searchParams.set("pageSize", String(pageSize));
-          if (nextToken) u.searchParams.set("pageToken", nextToken);
-          // Save current token in trail (if not present already)
+          u.searchParams.set('pageSize', String(pageSize));
+          if (nextToken) u.searchParams.set('pageToken', nextToken);
+          // Save current token into trail if present
           let t = readTrail();
           if (token && (t.length===0 || t[t.length-1] !== token)) t.push(token);
-          if (!token && t.length===0) { /* first page */ }
           writeTrail(t);
           location.href = u.toString();
         };
@@ -230,26 +221,24 @@ target.appendChild(card);
         prevBtn.disabled = (trail.length <= 1);
         prevBtn.onclick = () => {
           let t = readTrail();
-          // current token is last; previous page token is second last
-          // pop current
           if (t.length > 0) t.pop();
           const prevToken = (t.length > 0) ? t[t.length-1] : null;
-          // also set reduced trail
           writeTrail(t);
           const u = new URL(location.href);
-          u.searchParams.set("pageSize", String(pageSize));
-          if (prevToken) u.searchParams.set("pageToken", prevToken); else u.searchParams.delete("pageToken");
+          u.searchParams.set('pageSize', String(pageSize));
+          if (prevToken) u.searchParams.set('pageToken', prevToken); else u.searchParams.delete('pageToken');
           location.href = u.toString();
         };
       }
 
-      // Show page label (approx): "Page N (20 per page)"
-      const pageNum = Math.max(1, trail.length || 1);
+      // Page number approximation
+      const pageNum = (trail.length>0) ? (trail.length + 1) : 1;
       setStatus(`Page ${pageNum} • ${pageSize} per page`);
 
     } catch (e) {
       console.error("Gallery load failed:", e);
       setStatus("Failed to load photos.");
+      if (emptyEl) emptyEl.style.display = 'block';
     }
   }
 
@@ -257,7 +246,7 @@ target.appendChild(card);
 })();
 </script>
 
-<!-- START: floating hearts (overlay) -->
+<!-- START: floating hearts (canvas) -->
 <div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
 <script>
 (()=>{const c=document.getElementById("fxCanvas");if(!c)return;const ctx=c.getContext("2d");
@@ -272,38 +261,25 @@ hs=hs.filter(h=>h.y>-60&&h.a>.02);hs.forEach(h=>heart(h.x,h.y,h.s/50,h.r,h.a));r
 addEventListener("resize",resize,{passive:true});resize();tick();})();
 </script>
 <!-- END: floating hearts -->
-</body>
-</html>
 
-
-
-
-
-
-
+<!-- DOM hearts fallback / light-weight decoration -->
 <script>
 (function(){
-  // avoid duplicates if already injected
-  if (window.__heartsInjected) return; 
-  window.__heartsInjected = true;
-
+  if (window.__heartsInjected) return; window.__heartsInjected = true;
   function spawnHeart(){
     const heart=document.createElement('div');
     heart.className='heart';
+    heart.textContent = '❤️';
     heart.style.left = (Math.random()*100) + 'vw';
+    heart.style.top = (80 + Math.random()*15) + 'vh';
     heart.style.animationDuration = (6 + Math.random()*4) + 's';
     document.body.appendChild(heart);
     setTimeout(()=>heart.remove(), 10000);
   }
-  // make a bunch at start, then keep trickling in
-  for(let i=0;i<16;i++) spawnHeart();
-  setInterval(spawnHeart, 1200);
+  for(let i=0;i<8;i++) spawnHeart();
+  setInterval(spawnHeart, 1400);
 })();
 </script>
 
-
-
-
-
-
-
+</body>
+</html>
