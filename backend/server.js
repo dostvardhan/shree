@@ -390,7 +390,7 @@ app.get('/api/photos', requireAuth, async (req, res) => {
     const pageToken = req.query.pageToken || undefined;
 
     const q = `'${GOOGLE_DRIVE_FOLDER_ID}' in parents and mimeType contains 'image/' and trashed = false`;
-    const fields = "nextPageToken, files(id,name,createdTime,mimeType,thumbnailLink,webContentLink,webViewLink)";
+    const fields = "nextPageToken, files(id,name,createdTime,mimeType,thumbnailLink,webContentLink,webViewLink,description,appProperties)";
     const resp = await driveClient.files.list({
       q,
       pageSize,
@@ -401,8 +401,24 @@ app.get('/api/photos', requireAuth, async (req, res) => {
       includeItemsFromAllDrives: true
     });
 
+    const files = resp.data.files || [];
+    const items = files.map(f => {
+      const caption = (f.appProperties && f.appProperties.caption) || f.description || '';
+      return {
+        id: f.id,
+        name: f.name,
+        mimeType: f.mimeType,
+        caption,
+        uploadedAt: f.createdTime,
+        // point frontend to the secure streaming endpoint
+        thumbnailLink: `/api/file/${f.id}`,
+        driveWebViewLink: f.webViewLink || null,
+        driveWebContentLink: f.webContentLink || null
+      };
+    });
+
     return res.json({
-      items: resp.data.files || [],
+      items,
       nextPageToken: resp.data.nextPageToken || null
     });
   } catch (err) {
@@ -413,30 +429,53 @@ app.get('/api/photos', requireAuth, async (req, res) => {
 
 // ----------------- DIAG & HEALTH -----------------
 app.get('/api/diag', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
-app.get('/health', (req, res) => res.status(200).json({ status: 'ok', uptime: process.uptime(), ts: Date.now() }));
+
+// Lightweight health endpoint (fast, unauthenticated)
+app.get('/health', (req, res) => {
+  return res.status(200).json({ status: 'ok', uptime: process.uptime(), ts: Date.now() });
+});
 
 // ----------------- ROOT -----------------
 app.get('/', (req, res) => res.redirect('/index.html'));
 
 // ----------------- STATIC FILES (PUBLIC) -----------------
-// Mount static AFTER registering protected routes so they can’t be bypassed.
+// Mount static AFTER registering protected routes so unauthenticated users can't bypass them.
 app.use(express.static(publicDir));
 
-// ----------------- START -----------------
-const listenPort = Number(process.env.PORT || 4000);
-app.listen(listenPort, "0.0.0.0", () => {
-  console.log(`✅ Server listening on ${listenPort} (Render-ready)`);
-});
-
+// ----------------- START SERVER -----------------
+// Use the port provided by the environment (Render sets process.env.PORT)
+// Bind to 0.0.0.0 so external probes can reach the server.
+const listenPort = Number(process.env.PORT || PORT || 4000);
+const server = app.listen(listenPort, '0.0.0.0', () => {
+  console.log(`✅ Server listening on port ${listenPort} - NODE_ENV=${NODE_ENV}`);
   console.log(`Static dir: ${publicDir}`);
   console.log(`Drive configured: ${isDriveConfigured ? 'yes' : 'no'}`);
   console.log(`DRIVE_LIST_MODE=${DRIVE_LIST_MODE}`);
 });
 
+// ----------------- GRACEFUL SHUTDOWN -----------------
 function shutdown(signal) {
   console.log(`Received ${signal}. Closing server...`);
-  server.close(() => process.exit(0));
-  setTimeout(() => process.exit(1), 10000).unref();
+  // stop accepting new connections
+  server.close(() => {
+    console.log('Server closed. Exiting process.');
+    process.exit(0);
+  });
+  // Force exit after 10s
+  setTimeout(() => {
+    console.error('Forcing shutdown after timeout.');
+    process.exit(1);
+  }, 10000).unref();
 }
+
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+// Optional: log uncaught exceptions / unhandled rejections to help debugging
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err && err.stack ? err.stack : err);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
