@@ -17,6 +17,7 @@
     --text:#6e2430; --panel:rgba(255,255,255,.05);
   }
   *{box-sizing:border-box}
+  html,body{height:100%}
   body{
     margin:0;
     font-family:"Playfair Display",serif;
@@ -24,41 +25,51 @@
     background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red));
     overflow-x:hidden;
   }
-  header{text-align:center;padding:24px 12px;}
+  header{text-align:center;padding:24px 12px;position:relative;z-index:5}
   .logo{font-family:"Italianno",cursive;font-size:46px;text-shadow:0 2px 10px rgba(0,0,0,.25);}
   nav{margin-top:8px;}
   nav a{margin:0 12px;padding:8px 18px;background:rgba(255,255,255,.15);
         border-radius:999px;text-decoration:none;color:var(--text);
         box-shadow:0 4px 8px rgba(0,0,0,.18);}
   nav a:hover{background:rgba(255,255,255,.3);}
-  main{max-width:1200px;margin:30px auto;padding:0 18px;}
+  main{max-width:1200px;margin:30px auto;padding:0 18px;position:relative;z-index:5}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px;}
 
   .photo-card{
     background:var(--panel);
     border-radius:16px;
     overflow:hidden;
-    box-shadow:0 18px 40px rgba(0,0,0,.25);
-    transition:transform .3s cubic-bezier(.2,.9,.3,1);
+    box-shadow:0 18px 40px rgba(0,0,0,.18);
+    transition:transform .28s cubic-bezier(.2,.9,.3,1);
+    display:flex;
+    flex-direction:column;
   }
   .photo-card:hover{transform:translateY(-6px);}
+  .photo-card a{display:block;flex:1}
   .photo-card img{
     width:100%;
     border-radius:12px;
     object-fit:contain;
     display:block;
+    max-height:360px;
+    background:#fff9f7;
   }
-  .meta{padding:12px 14px 16px;text-align:center;font-style:italic;font-size:15px;}
-  .empty{text-align:center;font-size:18px;margin-top:80px;opacity:.8;}
+  .meta{padding:10px 12px 14px;text-align:center;font-style:italic;font-size:14px;color:#48242a;}
+  .empty{text-align:center;font-size:18px;margin-top:80px;opacity:.9;color:#4b2b2b}
 
   /* floating hearts canvas base */
   #fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:0;}
   .heart{position:fixed;font-size:18px;opacity:.75;pointer-events:none;z-index:0;
          animation:floatUp linear infinite;}
   @keyframes floatUp{
-    0%{transform:translateY(0) scale(1);opacity:.9;}
+    0%{transform:translateY(0) scale(1);opacity:.95;}
     100%{transform:translateY(-120vh) scale(1.4);opacity:0;}
   }
+
+  /* pager */
+  #pager{display:flex;justify-content:center;gap:12px;align-items:center;margin:18px 0;}
+  #pager button{padding:8px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);cursor:pointer;background:rgba(255,255,255,0.12)}
+  #pager button:disabled{opacity:0.45;cursor:default}
 </style>
 </head>
 <body>
@@ -72,29 +83,30 @@
 </header>
 
 <main>
-  <section id="grid" class="grid"></section>
+  <section id="grid" class="grid" aria-live="polite"></section>
   <div id="empty" class="empty" style="display:none;">No photos uploaded yet 🌸</div>
 
-  <div id="pager" style="display:flex;justify-content:center;gap:12px;align-items:center;margin:18px 0;">
-    <button id="prevBtn" disabled style="padding:8px 12px;border-radius:8px;border:1px solid #ccc;cursor:pointer;">← Prev</button>
+  <div id="pager">
+    <button id="prevBtn" disabled>← Prev</button>
     <div id="pageInfo" style="font-weight:600;"></div>
-    <button id="nextBtn" style="padding:8px 12px;border-radius:8px;border:1px solid #ccc;cursor:pointer;">Next →</button>
+    <button id="nextBtn">Next →</button>
   </div>
 </main>
 
 <script>
+/* Reveal content only after auth check completes (if requireAuth exists) */
 document.addEventListener("DOMContentLoaded", () => {
   const reveal = () => { const gate = document.getElementById("auth-gate"); if (gate) gate.remove(); };
   try {
     if (typeof requireAuth === "function") {
-      Promise.resolve(requireAuth()).then(reveal).catch(e => { console.error("Auth failed:", e); reveal(); });
+      Promise.resolve(requireAuth()).then(reveal).catch(e => { console.warn("Auth check failed, continuing:", e); reveal(); });
     } else { reveal(); }
   } catch(e){ console.error("Auth error:", e); reveal(); }
 });
 </script>
 
 <script>
-/* GALLERY_PAGINATION_V3 */
+/* GALLERY: pagination + render (uses /api/photos + /api/file/:id streaming for full-quality images) */
 (function(){
   const PAGE_SIZE = (() => {
     const w = window.innerWidth || 0;
@@ -112,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const token = url.searchParams.get("pageToken") || null;
   const pageSize = Math.max(1, Number(url.searchParams.get("pageSize")||PAGE_SIZE));
 
-  const grid = document.querySelector("#grid") || document.body;
+  const grid = document.querySelector("#grid");
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
   const pageInfo = document.getElementById("pageInfo");
@@ -129,31 +141,46 @@ document.addEventListener("DOMContentLoaded", () => {
     setStatus("Loading…");
     if (prevBtn) prevBtn.disabled = (trail.length <= 1);
     if (nextBtn) nextBtn.disabled = true;
+
     try {
       const qs = new URLSearchParams({ pageSize: String(pageSize) });
       if (token) qs.set("pageToken", token);
+
       const resp = await fetch(`/api/photos?${qs.toString()}`, { credentials: "include" });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
       const items = data.items || [];
       const nextToken = data.nextPageToken || null;
-      grid.innerHTML = "";
 
-      if (!items.length) emptyEl.style.display = "block"; else emptyEl.style.display = "none";
+      grid.innerHTML = "";
+      if (!items.length) { if (emptyEl) emptyEl.style.display = "block"; }
+      else { if (emptyEl) emptyEl.style.display = "none"; }
 
       items.forEach((f) => {
-        const link = document.createElement("a");
-        link.href = f.driveWebViewLink || "#";
-        link.target = "_blank";
+        const anchor = document.createElement("a");
+        anchor.href = f.driveWebViewLink || "#";
+        anchor.target = "_blank";
+        anchor.rel = "noopener";
+
         const img = document.createElement("img");
-        img.src = f.thumbnailLink || `/api/file/${f.id}`;
-        img.alt = f.name || "photo";
+
+        // <<< IMPORTANT: use backend streaming endpoint for full-quality image bytes >>>
+        // encodeURIComponent ensures special chars in id are safe
+        const fileUrl = `/api/file/${encodeURIComponent(f.id)}`;
+        img.src = fileUrl;
+        // helpful srcset (backend currently streams original; srcset entries only help cache keys/responsive browsers)
+        img.srcset = `${fileUrl}?w=1024 1024w, ${fileUrl}?w=640 640w`;
+        img.sizes = "(max-width:700px) 100vw, 33vw";
+        img.alt = f.name || 'photo';
         img.loading = "lazy";
-        link.appendChild(img);
+        img.referrerPolicy = "no-referrer";
+
+        anchor.appendChild(img);
 
         const card = document.createElement("div");
         card.className = "photo-card";
-        card.appendChild(link);
+        card.appendChild(anchor);
+
         if (f.caption) {
           const meta = document.createElement("div");
           meta.className = "meta";
@@ -163,9 +190,9 @@ document.addEventListener("DOMContentLoaded", () => {
         grid.appendChild(card);
       });
 
+      // pager handlers
       nextBtn.disabled = !nextToken;
-      prevBtn.disabled = (trail.length <= 1);
-      nextBtn.onclick = () => {
+      if (nextBtn) nextBtn.onclick = () => {
         const u = new URL(location.href);
         u.searchParams.set("pageSize", String(pageSize));
         if (nextToken) u.searchParams.set("pageToken", nextToken);
@@ -174,8 +201,10 @@ document.addEventListener("DOMContentLoaded", () => {
         writeTrail(t);
         location.href = u.toString();
       };
-      prevBtn.onclick = () => {
-        let t = readTrail(); if (t.length > 0) t.pop();
+
+      if (prevBtn) prevBtn.onclick = () => {
+        let t = readTrail();
+        if (t.length > 0) t.pop();
         const prevToken = (t.length > 0) ? t[t.length-1] : null;
         writeTrail(t);
         const u = new URL(location.href);
@@ -183,14 +212,17 @@ document.addEventListener("DOMContentLoaded", () => {
         if (prevToken) u.searchParams.set("pageToken", prevToken); else u.searchParams.delete("pageToken");
         location.href = u.toString();
       };
-      const pageNum = (trail.length>0) ? (trail.length+1) : 1;
+
+      const pageNum = (trail.length>0) ? (trail.length + 1) : 1;
       setStatus(`Page ${pageNum} • ${pageSize} per page`);
+
     } catch (e) {
       console.error("Gallery load failed:", e);
       setStatus("Failed to load photos.");
-      emptyEl.style.display = 'block';
+      if (emptyEl) emptyEl.style.display = "block";
     }
   }
+
   loadPage();
 })();
 </script>
@@ -207,30 +239,39 @@ document.addEventListener("DOMContentLoaded", () => {
   let hs = [];
   const COLORS = ["#ff85a7","#ffd28f","#ffb3c6","#a6f0c6","#ffd1ea","#c6e7ff"];
   function R(a,b){ return Math.random()*(b-a)+a; }
-  function resize(){W=innerWidth*DPR;H=innerHeight*DPR;c.width=W;c.height=H;}
+  function resize(){ W = innerWidth * DPR; H = innerHeight * DPR; c.width = W; c.height = H; }
   function spawn(){
-    if(hs.length>18)return;
-    hs.push({x:R(0,W),y:H+R(10*DPR,120*DPR),s:R(10,26),vx:R(-8,8),vy:-R(20,40),
-             a:R(.35,.72),r:R(-.5,.5),vr:R(-.01,.01),
-             color:COLORS[Math.floor(Math.random()*COLORS.length)]});
+    if (hs.length > 18) return;
+    hs.push({
+      x: R(0, W),
+      y: H + R(10*DPR, 120*DPR),
+      s: R(10, 26),
+      vx: R(-8, 8),
+      vy: -R(20, 40),
+      a: R(.35, .72),
+      r: R(-.5, .5),
+      vr: R(-.01, .01),
+      color: COLORS[Math.floor(Math.random() * COLORS.length)]
+    });
   }
   function heart(px,py,s,rot,a,color){
-    ctx.save();ctx.translate(px,py);ctx.rotate(rot);ctx.scale(s,s);
-    ctx.globalAlpha=a;ctx.fillStyle=color;
-    ctx.beginPath();ctx.moveTo(0,-0.5);
+    ctx.save(); ctx.translate(px,py); ctx.rotate(rot); ctx.scale(s,s);
+    ctx.globalAlpha = a; ctx.fillStyle = color;
+    ctx.beginPath(); ctx.moveTo(0,-0.5);
     ctx.bezierCurveTo(0.5,-1.1,1.3,-0.1,0,0.8);
     ctx.bezierCurveTo(-1.3,-0.1,-0.5,-1.1,0,-0.5);
-    ctx.fill();ctx.restore();
+    ctx.fill(); ctx.restore();
   }
   function tick(){
     ctx.clearRect(0,0,W,H);
-    if(Math.random()<0.08)spawn();
-    hs.forEach(h=>{h.x+=h.vx*.016;h.y+=h.vy*.016;h.r+=h.vr;h.a-=.0009;});
-    hs=hs.filter(h=>h.y>-60*DPR&&h.a>0.03);
-    hs.forEach(h=>heart(h.x,h.y,h.s/50*DPR,h.r,h.a,h.color));
+    if (Math.random() < 0.08) spawn();
+    hs.forEach(h => { h.x += h.vx * 0.016; h.y += h.vy * 0.016; h.r += h.vr; h.a -= 0.0009; });
+    hs = hs.filter(h => (h.y > -60*DPR) && (h.a > 0.03));
+    hs.forEach(h => heart(h.x, h.y, h.s/50*DPR, h.r, h.a, h.color));
     requestAnimationFrame(tick);
   }
-  addEventListener("resize",resize,{passive:true});resize();tick();
+  addEventListener("resize", resize, { passive:true });
+  resize(); tick();
 })();
 </script>
 <!-- END: floating hearts -->
@@ -238,20 +279,20 @@ document.addEventListener("DOMContentLoaded", () => {
 <!-- DOM hearts fallback (slower + color variety) -->
 <script>
 (function(){
-  if(window.__heartsInjected)return;window.__heartsInjected=true;
-  const COLORS=['#ff85a7','#ffd28f','#ffb3c6','#a6f0c6','#ffd1ea','#c6e7ff'];
+  if (window.__heartsInjected) return; window.__heartsInjected = true;
+  const COLORS = ['#ff85a7','#ffd28f','#ffb3c6','#a6f0c6','#ffd1ea','#c6e7ff'];
   function spawnHeart(){
-    const h=document.createElement('div');h.className='heart';h.textContent='❤️';
-    h.style.left=(Math.random()*100)+'vw';
-    h.style.top=(82+Math.random()*14)+'vh';
-    h.style.animationDuration=(8+Math.random()*5)+'s';
-    h.style.color=COLORS[Math.floor(Math.random()*COLORS.length)];
-    h.style.fontSize=(14+Math.random()*16)+'px';
-    h.style.opacity=0.85;h.style.pointerEvents='none';h.style.zIndex=0;
-    document.body.appendChild(h);setTimeout(()=>h.remove(),14000);
+    const h = document.createElement('div'); h.className = 'heart'; h.textContent = '❤️';
+    h.style.left = (Math.random()*100) + 'vw';
+    h.style.top = (82 + Math.random()*14) + 'vh';
+    h.style.animationDuration = (8 + Math.random()*5) + 's';
+    h.style.color = COLORS[Math.floor(Math.random()*COLORS.length)];
+    h.style.fontSize = (14 + Math.random()*16) + 'px';
+    h.style.opacity = 0.85; h.style.pointerEvents = 'none'; h.style.zIndex = 0;
+    document.body.appendChild(h); setTimeout(()=> h.remove(), 14000);
   }
-  for(let i=0;i<6;i++)spawnHeart();
-  setInterval(spawnHeart,1600);
+  for (let i=0;i<6;i++) spawnHeart();
+  setInterval(spawnHeart, 1600);
 })();
 </script>
 </body>
