@@ -34,43 +34,25 @@
   main{max-width:1200px;margin:30px auto;padding:0 18px;}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px;}
 
-  /* CARD */
-  .card{
+  .photo-card{
     background:var(--panel);
     border-radius:16px;
     overflow:hidden;
     box-shadow:0 18px 40px rgba(0,0,0,.25);
-    position:relative;
     transition:transform .3s cubic-bezier(.2,.9,.3,1);
   }
-  .card:hover{transform:translateY(-6px);}
-
-  /* ✅ No-crop thumbnail: full image visible (letterbox) */
-  .imgbox{
-    height:320px;               /* thumbnail area height */
-    background:#fff9f7;         /* soft backdrop behind transparent images */
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .imgbox img{
-    max-width:100%;
-    max-height:100%;
-    object-fit:contain;         /* <- show full image, no crop */
+  .photo-card:hover{transform:translateY(-6px);}
+  .photo-card img{
+    width:100%;
+    border-radius:12px;
+    object-fit:contain;
     display:block;
   }
-
   .meta{padding:12px 14px 16px;text-align:center;font-style:italic;font-size:15px;}
   .empty{text-align:center;font-size:18px;margin-top:80px;opacity:.8;}
 
-  /* photo-card used by paginator renderer */
-  .photo-card{background:rgba(255,255,255,0.06);border-radius:12px;padding:8px;overflow:hidden}
-  .photo-card img{border-radius:10px;display:block;width:100%;height:auto}
-
-  /* Floating hearts - canvas sits on top but pointer-events:none */
-  #fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:0}
-
-  /* DOM hearts (fallback) */
+  /* floating hearts canvas base */
+  #fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:0;}
   .heart{position:fixed;font-size:18px;opacity:.75;pointer-events:none;z-index:0;
          animation:floatUp linear infinite;}
   @keyframes floatUp{
@@ -92,34 +74,29 @@
 <main>
   <section id="grid" class="grid"></section>
   <div id="empty" class="empty" style="display:none;">No photos uploaded yet 🌸</div>
-<!-- Pagination Controls -->
-<div id="pager" style="display:flex;justify-content:center;gap:12px;align-items:center;margin:18px 0;">
-  <button id="prevBtn" disabled style="padding:8px 12px;border-radius:8px;border:1px solid #ccc;cursor:pointer;">← Prev</button>
-  <div id="pageInfo" style="font-weight:600;"></div>
-  <button id="nextBtn" style="padding:8px 12px;border-radius:8px;border:1px solid #ccc;cursor:pointer;">Next →</button>
-</div>
+
+  <div id="pager" style="display:flex;justify-content:center;gap:12px;align-items:center;margin:18px 0;">
+    <button id="prevBtn" disabled style="padding:8px 12px;border-radius:8px;border:1px solid #ccc;cursor:pointer;">← Prev</button>
+    <div id="pageInfo" style="font-weight:600;"></div>
+    <button id="nextBtn" style="padding:8px 12px;border-radius:8px;border:1px solid #ccc;cursor:pointer;">Next →</button>
+  </div>
 </main>
 
-
-  <script>
-    // Reveal content only after auth check completes (if requireAuth exists)
-    document.addEventListener("DOMContentLoaded", () => {
-      const reveal = () => { const gate = document.getElementById("auth-gate"); if (gate) gate.remove(); };
-      try {
-        if (typeof requireAuth === "function") {
-          // requireAuth should return a promise that resolves when auth is good
-          Promise.resolve(requireAuth()).then(reveal).catch(e => { console.warn("Auth check failed, continuing anyway:", e); reveal(); });
-        } else {
-          // no requireAuth wired (server-based session flow). proceed to show page.
-          reveal();
-        }
-      } catch(e){ console.error("Auth error:", e); reveal(); }
-    });
-  </script>
 <script>
-/* GALLERY_PAGINATION_V3 - fixed renderer + empty state + page numbering */
+document.addEventListener("DOMContentLoaded", () => {
+  const reveal = () => { const gate = document.getElementById("auth-gate"); if (gate) gate.remove(); };
+  try {
+    if (typeof requireAuth === "function") {
+      Promise.resolve(requireAuth()).then(reveal).catch(e => { console.error("Auth failed:", e); reveal(); });
+    } else { reveal(); }
+  } catch(e){ console.error("Auth error:", e); reveal(); }
+});
+</script>
+
+<script>
+/* GALLERY_PAGINATION_V3 */
 (function(){
-  const PAGE_SIZE = (function () {
+  const PAGE_SIZE = (() => {
     const w = window.innerWidth || 0;
     if (w >= 1400) return 40;
     if (w >= 1000) return 30;
@@ -146,140 +123,136 @@
   if (!token) trail = [];
   writeTrail(trail);
 
-  function setStatus(text){ if(pageInfo) pageInfo.textContent = text; }
+  function setStatus(t){ if(pageInfo) pageInfo.textContent = t; }
 
   async function loadPage(){
     setStatus("Loading…");
     if (prevBtn) prevBtn.disabled = (trail.length <= 1);
     if (nextBtn) nextBtn.disabled = true;
-
     try {
       const qs = new URLSearchParams({ pageSize: String(pageSize) });
       if (token) qs.set("pageToken", token);
-      // Use credentialed fetch — server should validate session/JWT
       const resp = await fetch(`/api/photos?${qs.toString()}`, { credentials: "include" });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
       const items = data.items || [];
       const nextToken = data.nextPageToken || null;
+      grid.innerHTML = "";
 
-      // Render items
-      const target = grid;
-      target.innerHTML = ""; // clear existing content
-
-      if (!items.length) {
-        if (emptyEl) emptyEl.style.display = "block"; else {
-          const no = document.createElement('div'); no.className='empty'; no.textContent='No photos uploaded yet 🌸'; target.appendChild(no);
-        }
-      } else {
-        if (emptyEl) emptyEl.style.display = "none";
-      }
+      if (!items.length) emptyEl.style.display = "block"; else emptyEl.style.display = "none";
 
       items.forEach((f) => {
         const link = document.createElement("a");
-        link.href = f.webViewLink || f.webContentLink || '#';
+        link.href = f.driveWebViewLink || "#";
         link.target = "_blank";
-        link.rel = "noopener";
-
         const img = document.createElement("img");
-        // prefer server-side thumbnail URL; fallback to provided link
-        const thumb = (f.thumbnailLink || f.webContentLink || '').replace(/=s\d+/, "=s512");
-        img.src = thumb || '/placeholder.jpg';
-        img.alt = f.name || 'photo';
-        img.loading = 'lazy';
-        img.referrerPolicy = 'no-referrer';
-
+        img.src = f.thumbnailLink || `/api/file/${f.id}`;
+        img.alt = f.name || "photo";
+        img.loading = "lazy";
         link.appendChild(img);
 
         const card = document.createElement("div");
-        card.className = 'photo-card';
+        card.className = "photo-card";
         card.appendChild(link);
-        if (f.description || f.caption) {
-          const meta = document.createElement('div'); meta.className='meta'; meta.textContent = f.caption || f.description || '';
+        if (f.caption) {
+          const meta = document.createElement("div");
+          meta.className = "meta";
+          meta.textContent = f.caption;
           card.appendChild(meta);
         }
-
-        target.appendChild(card);
+        grid.appendChild(card);
       });
 
-      // Pager setup
-      if (nextBtn) {
-        nextBtn.disabled = !nextToken;
-        nextBtn.onclick = () => {
-          const u = new URL(location.href);
-          u.searchParams.set('pageSize', String(pageSize));
-          if (nextToken) u.searchParams.set('pageToken', nextToken);
-          // Save current token into trail if present
-          let t = readTrail();
-          if (token && (t.length===0 || t[t.length-1] !== token)) t.push(token);
-          writeTrail(t);
-          location.href = u.toString();
-        };
-      }
-
-      if (prevBtn) {
-        prevBtn.disabled = (trail.length <= 1);
-        prevBtn.onclick = () => {
-          let t = readTrail();
-          if (t.length > 0) t.pop();
-          const prevToken = (t.length > 0) ? t[t.length-1] : null;
-          writeTrail(t);
-          const u = new URL(location.href);
-          u.searchParams.set('pageSize', String(pageSize));
-          if (prevToken) u.searchParams.set('pageToken', prevToken); else u.searchParams.delete('pageToken');
-          location.href = u.toString();
-        };
-      }
-
-      // Page number approximation
-      const pageNum = (trail.length>0) ? (trail.length + 1) : 1;
+      nextBtn.disabled = !nextToken;
+      prevBtn.disabled = (trail.length <= 1);
+      nextBtn.onclick = () => {
+        const u = new URL(location.href);
+        u.searchParams.set("pageSize", String(pageSize));
+        if (nextToken) u.searchParams.set("pageToken", nextToken);
+        let t = readTrail();
+        if (token && (t.length===0 || t[t.length-1] !== token)) t.push(token);
+        writeTrail(t);
+        location.href = u.toString();
+      };
+      prevBtn.onclick = () => {
+        let t = readTrail(); if (t.length > 0) t.pop();
+        const prevToken = (t.length > 0) ? t[t.length-1] : null;
+        writeTrail(t);
+        const u = new URL(location.href);
+        u.searchParams.set("pageSize", String(pageSize));
+        if (prevToken) u.searchParams.set("pageToken", prevToken); else u.searchParams.delete("pageToken");
+        location.href = u.toString();
+      };
+      const pageNum = (trail.length>0) ? (trail.length+1) : 1;
       setStatus(`Page ${pageNum} • ${pageSize} per page`);
-
     } catch (e) {
       console.error("Gallery load failed:", e);
       setStatus("Failed to load photos.");
-      if (emptyEl) emptyEl.style.display = 'block';
+      emptyEl.style.display = 'block';
     }
   }
-
   loadPage();
 })();
 </script>
 
-<!-- START: floating hearts (canvas) -->
+<!-- START: floating hearts (canvas) - slower + multi-color -->
 <div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
 <script>
-(()=>{const c=document.getElementById("fxCanvas");if(!c)return;const ctx=c.getContext("2d");
-let W,H;const DPR=Math.max(1,window.devicePixelRatio||1);let hs=[];
-function R(a,b){return Math.random()*(b-a)+a}
-function resize(){W=innerWidth*DPR;H=innerHeight*DPR;c.width=W;c.height=H}
-function spawn(){if(hs.length>28)return;hs.push({x:R(0,W),y:H+R(20,200),s:R(10,22),vx:R(-15,15),vy:-R(35,70),a:R(.25,.6),r:R(-.5,.5),vr:R(-.02,.02)})}
-function heart(px,py,s,rot,a){ctx.save();ctx.translate(px,py);ctx.rotate(rot);ctx.scale(s,s);ctx.globalAlpha=a;ctx.fillStyle="#ff85a7";
-ctx.beginPath();ctx.moveTo(0,-.5);ctx.bezierCurveTo(.5,-1.1,1.3,-.1,0,.8);ctx.bezierCurveTo(-1.3,-.1,-.5,-1.1,0,-.5);ctx.fill();ctx.restore()}
-function tick(){ctx.clearRect(0,0,W,H);if(Math.random()<.12)spawn();hs.forEach(h=>{h.x+=h.vx*.016;h.y+=h.vy*.016;h.r+=h.vr;h.a-=.0012});
-hs=hs.filter(h=>h.y>-60&&h.a>.02);hs.forEach(h=>heart(h.x,h.y,h.s/50,h.r,h.a));requestAnimationFrame(tick)}
-addEventListener("resize",resize,{passive:true});resize();tick();})();
+(()=> {
+  const c = document.getElementById("fxCanvas");
+  if (!c) return;
+  const ctx = c.getContext("2d");
+  let W,H;
+  const DPR = Math.max(1, window.devicePixelRatio || 1);
+  let hs = [];
+  const COLORS = ["#ff85a7","#ffd28f","#ffb3c6","#a6f0c6","#ffd1ea","#c6e7ff"];
+  function R(a,b){ return Math.random()*(b-a)+a; }
+  function resize(){W=innerWidth*DPR;H=innerHeight*DPR;c.width=W;c.height=H;}
+  function spawn(){
+    if(hs.length>18)return;
+    hs.push({x:R(0,W),y:H+R(10*DPR,120*DPR),s:R(10,26),vx:R(-8,8),vy:-R(20,40),
+             a:R(.35,.72),r:R(-.5,.5),vr:R(-.01,.01),
+             color:COLORS[Math.floor(Math.random()*COLORS.length)]});
+  }
+  function heart(px,py,s,rot,a,color){
+    ctx.save();ctx.translate(px,py);ctx.rotate(rot);ctx.scale(s,s);
+    ctx.globalAlpha=a;ctx.fillStyle=color;
+    ctx.beginPath();ctx.moveTo(0,-0.5);
+    ctx.bezierCurveTo(0.5,-1.1,1.3,-0.1,0,0.8);
+    ctx.bezierCurveTo(-1.3,-0.1,-0.5,-1.1,0,-0.5);
+    ctx.fill();ctx.restore();
+  }
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    if(Math.random()<0.08)spawn();
+    hs.forEach(h=>{h.x+=h.vx*.016;h.y+=h.vy*.016;h.r+=h.vr;h.a-=.0009;});
+    hs=hs.filter(h=>h.y>-60*DPR&&h.a>0.03);
+    hs.forEach(h=>heart(h.x,h.y,h.s/50*DPR,h.r,h.a,h.color));
+    requestAnimationFrame(tick);
+  }
+  addEventListener("resize",resize,{passive:true});resize();tick();
+})();
 </script>
 <!-- END: floating hearts -->
 
-<!-- DOM hearts fallback / light-weight decoration -->
+<!-- DOM hearts fallback (slower + color variety) -->
 <script>
 (function(){
-  if (window.__heartsInjected) return; window.__heartsInjected = true;
+  if(window.__heartsInjected)return;window.__heartsInjected=true;
+  const COLORS=['#ff85a7','#ffd28f','#ffb3c6','#a6f0c6','#ffd1ea','#c6e7ff'];
   function spawnHeart(){
-    const heart=document.createElement('div');
-    heart.className='heart';
-    heart.textContent = '❤️';
-    heart.style.left = (Math.random()*100) + 'vw';
-    heart.style.top = (80 + Math.random()*15) + 'vh';
-    heart.style.animationDuration = (6 + Math.random()*4) + 's';
-    document.body.appendChild(heart);
-    setTimeout(()=>heart.remove(), 10000);
+    const h=document.createElement('div');h.className='heart';h.textContent='❤️';
+    h.style.left=(Math.random()*100)+'vw';
+    h.style.top=(82+Math.random()*14)+'vh';
+    h.style.animationDuration=(8+Math.random()*5)+'s';
+    h.style.color=COLORS[Math.floor(Math.random()*COLORS.length)];
+    h.style.fontSize=(14+Math.random()*16)+'px';
+    h.style.opacity=0.85;h.style.pointerEvents='none';h.style.zIndex=0;
+    document.body.appendChild(h);setTimeout(()=>h.remove(),14000);
   }
-  for(let i=0;i<8;i++) spawnHeart();
-  setInterval(spawnHeart, 1400);
+  for(let i=0;i<6;i++)spawnHeart();
+  setInterval(spawnHeart,1600);
 })();
 </script>
-
 </body>
 </html>
