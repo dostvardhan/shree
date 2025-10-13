@@ -1,16 +1,16 @@
-<!doctype html>
+ï»¿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Shreshtha – Gallery</title>
+<title>Shreshtha ï¿½ Gallery</title>
 
 <!-- Auth & guards -->
 <script src="/auth0-spa-js.production.js"></script>
 <script src="auth-init.js" defer></script>
 <script src="guard-auth.js" defer></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
 <style>
   :root{
     --cream:#FFE7DA; --peach:#FFB59E; --red:#FF6B6B;
@@ -114,12 +114,12 @@
 
 <main>
   <section id="grid" class="grid" aria-live="polite"></section>
-  <div id="empty" class="empty" style="display:none;">No photos uploaded yet ??</div>
+  <div id="empty" class="empty" style="display:none;">No photos uploaded yet </div>
 
   <div id="pager" aria-hidden="false">
-    <button id="prevBtn" disabled>? Prev</button>
+    <button id="prevBtn" disabled> Prev</button>
     <div id="pageInfo" style="font-weight:600;"></div>
-    <button id="nextBtn">Next ?</button>
+    <button id="nextBtn">Next </button>
   </div>
 </main>
 
@@ -127,7 +127,7 @@
 <div id="lightbox" aria-hidden="true">
   <div id="lbBack"></div>
   <div id="lbContent" role="dialog" aria-modal="true">
-    <button id="lbClose" aria-label="Close">?</button>
+    <button id="lbClose" aria-label="Close"></button>
     <img id="lbImage" alt="">
     <div id="lbCaption" class="meta"></div>
   </div>
@@ -184,7 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function setStatus(t){ if(pageInfo) pageInfo.textContent = t; }
 
   async function loadPage(){
-    setStatus("Loading…");
+    setStatus("Loadingï¿½");
     if (prevBtn) prevBtn.disabled = (trail.length <= 1);
     if (nextBtn) nextBtn.disabled = true;
 
@@ -192,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const qs = new URLSearchParams({ pageSize: String(pageSize) });
       if (token) qs.set("pageToken", token);
 
-      const resp = await fetch(`/api/photos?${qs.toString()}`, { credentials: "include" });
+      const resp = await fetch(`/api/photos${qs.toString()}`, { credentials: "include" });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
       const items = data.items || [];
@@ -258,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
         prevBtn.onclick = () => {
           let t = readTrail();
           if (t.length > 0) t.pop();
-          const prevToken = (t.length > 0) ? t[t.length-1] : null;
+          const prevToken = (t.length > 0)  t[t.length-1] : null;
           writeTrail(t);
           const u = new URL(location.href);
           u.searchParams.set("pageSize", String(pageSize));
@@ -267,8 +267,8 @@ document.addEventListener("DOMContentLoaded", () => {
         };
       }
 
-      const pageNum = (trail.length>0) ? (trail.length + 1) : 1;
-      setStatus(`Page ${pageNum} • ${pageSize} per page`);
+      const pageNum = (trail.length>0)  (trail.length + 1) : 1;
+      setStatus(`Page ${pageNum} ï¿½ ${pageSize} per page`);
     } catch (e) {
       console.error("Gallery load failed:", e);
       setStatus("Failed to load photos.");
@@ -307,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <script>
-/* Canvas hearts (pastel, shiny) — self-contained and safe */
+/* Canvas hearts (pastel, shiny) ï¿½ self-contained and safe */
 (function(){
   if (window.__shreeFxInit) return; window.__shreeFxInit = true;
   const c = document.getElementById('fxCanvas');
@@ -373,7 +373,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 <script src="hearts.js" defer></script>
+<!-- Hearts Start -->
+<div id='heartsContainer'></div>
+<style>
+  @keyframes floatUp {
+    0% { transform: translateY(0) scale(1); opacity: 0.95; }
+    100% { transform: translateY(-110vh) scale(1.4); opacity: 0; }
+  }
+  .floating-heart {
+    position: fixed;
+    bottom: -10px;
+    font-size: 18px;
+    opacity: 0.9;
+    pointer-events: none;
+    animation: floatUp linear forwards;
+    z-index: 90;
+  }
+</style>
+<script>
+(() => {
+  const COLORS = ['#ffd6e0','#ffe8cc','#ffe9ec','#d6f5ff','#c6e5ff','#e5d6ff','#ffd1fa'];
+  function spawnHeart(){
+    const heart = document.createElement('div');
+    heart.className = 'floating-heart';
+    heart.textContent = 'â¤';
+    heart.style.left = Math.random()*100 + 'vw';
+    heart.style.color = COLORS[Math.floor(Math.random()*COLORS.length)];
+    heart.style.fontSize = (16 + Math.random()*16) + 'px';
+    heart.style.animationDuration = (8 + Math.random()*6) + 's';
+    document.body.appendChild(heart);
+    setTimeout(()=>heart.remove(),15000);
+  }
+  for(let i=0;i<10;i++) spawnHeart();
+  setInterval(spawnHeart,900);
+})();
+</script>
+<!-- Hearts End -->
 </body>
 </html>
+
 
 

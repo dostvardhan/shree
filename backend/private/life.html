@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+ï»¿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Sweet Memories — Shreshtha</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
+<title>Sweet Memories ï¿½ Shreshtha</title>
+<link href="https://fonts.googleapis.com/css2family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
 <style>
   :root{--cream:#FFE7DA;--peach:#FFB59E;--red:#FF6B6B;--text:#6e2430;--panel:rgba(255,255,255,.05);--radius:16px;--shadow:0 18px 40px rgba(0,0,0,.32)}
   *{box-sizing:border-box}a{text-decoration:none;color:inherit}html,body{height:100%}
@@ -34,12 +34,12 @@
 #fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:95;} 
 </style>
 <script src="/auth0-spa-js.production.js"></script>
-<script src="/auth-init.js?v=6" defer></script>
-<script src="/guard-auth.js?v=6" defer></script>
+<script src="/auth-init.jsv=6" defer></script>
+<script src="/guard-auth.jsv=6" defer></script>
 </head>
 <body>
 <div class="bg-grad"></div><div class="bg-dither"></div><div class="bg-layer" id="bgLayer"></div>
-<header><div class="logo">Sweet Memories of Shreshtha’s Life</div></header>
+<header><div class="logo">Sweet Memories of Shreshthaï¿½s Life</div></header>
 <main class="wrap">
   <section class="grid" id="grid">
     <article class="card"><a href="photo1.html"><img class="photo" src="photos/photo1.jpg" alt=""></a><div class="meta">"A smile is the beauty of the soul."</div></article>
@@ -60,15 +60,15 @@
 </nav>
 <script>
 (function bgHearts(){
-  const host=document.getElementById('bgLayer');const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffff88"];const glyphs=["?","?"];
-  function spawn(){const h=document.createElement('div');h.className='bg-heart';h.textContent=glyphs[Math.random()>.45?0:1];h.style.left=(2+Math.random()*96)+'vw';h.style.bottom='-24px';h.style.fontSize=(8+Math.random()*18)+'px';h.style.color=colors[(Math.random()*colors.length)|0];h.style.animationDuration=(12+Math.random()*12)+'s';host.appendChild(h);setTimeout(()=>h.remove(),20000)}
+  const host=document.getElementById('bgLayer');const colors=["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#ffffff88"];const glyphs=["",""];
+  function spawn(){const h=document.createElement('div');h.className='bg-heart';h.textContent=glyphs[Math.random()>.450:1];h.style.left=(2+Math.random()*96)+'vw';h.style.bottom='-24px';h.style.fontSize=(8+Math.random()*18)+'px';h.style.color=colors[(Math.random()*colors.length)|0];h.style.animationDuration=(12+Math.random()*12)+'s';host.appendChild(h);setTimeout(()=>h.remove(),20000)}
   for(let i=0;i<30;i++) setTimeout(spawn,i*180); setInterval(spawn,700);
 })();
 document.querySelectorAll(".card").forEach(card=>{
   (function ambient(){const n=6+(Math.random()*3|0);const palette=["#ffd6e0","#ffb7c5","#ffd27a","#ffffffaa"];
-    for(let i=0;i<n;i++){const s=document.createElement("div");s.className="soft-heart";s.textContent=(Math.random()>.5?"?":"?");s.style.color=palette[(Math.random()*palette.length)|0];s.style.left=(6+Math.random()*88)+"%";s.style.top=(8+Math.random()*72)+"%";s.style.fontSize=(9+Math.random()*12)+"px";s.style.animationDuration=(4+Math.random()*3)+"s";card.appendChild(s);}})();
+    for(let i=0;i<n;i++){const s=document.createElement("div");s.className="soft-heart";s.textContent=(Math.random()>.5"":"");s.style.color=palette[(Math.random()*palette.length)|0];s.style.left=(6+Math.random()*88)+"%";s.style.top=(8+Math.random()*72)+"%";s.style.fontSize=(9+Math.random()*12)+"px";s.style.animationDuration=(4+Math.random()*3)+"s";card.appendChild(s);}})();
   card.addEventListener("mouseenter",()=>{const burst=document.createElement("div");burst.className="burst";card.appendChild(burst);const pieces=14;const bColors=["#ffd27a","#ff9fb3","#ffd6e0","#ffc4a3","#ffffffcc"];
-    for(let i=0;i<pieces;i++){const sp=document.createElement("div");sp.className="spark";sp.textContent=(Math.random()>.5?"?":"?");const angle=Math.random()*Math.PI*2;const dist=65+Math.random()*100;sp.style.setProperty("--dx",Math.cos(angle)*dist+"px");sp.style.setProperty("--dy",Math.sin(angle)*(-dist)+"px");sp.style.left="0";sp.style.top="0";sp.style.fontSize=(10+Math.random()*12)+"px";sp.style.color=bColors[(Math.random()*bColors.length)|0];burst.appendChild(sp);setTimeout(()=>sp.remove(),1600);}setTimeout(()=>burst.remove(),1700);});
+    for(let i=0;i<pieces;i++){const sp=document.createElement("div");sp.className="spark";sp.textContent=(Math.random()>.5"":"");const angle=Math.random()*Math.PI*2;const dist=65+Math.random()*100;sp.style.setProperty("--dx",Math.cos(angle)*dist+"px");sp.style.setProperty("--dy",Math.sin(angle)*(-dist)+"px");sp.style.left="0";sp.style.top="0";sp.style.fontSize=(10+Math.random()*12)+"px";sp.style.color=bColors[(Math.random()*bColors.length)|0];burst.appendChild(sp);setTimeout(()=>sp.remove(),1600);}setTimeout(()=>burst.remove(),1700);});
 });
 </script>
   <script>
@@ -85,7 +85,7 @@ document.querySelectorAll(".card").forEach(card=>{
   </script>
 
 <script src="/music-player.js" defer></script>
-<!-- ?? START: Canvas Hearts (light pastel + shiny floating hearts) -->
+<!--  START: Canvas Hearts (light pastel + shiny floating hearts) -->
 <div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
 <script>
 (() => {
@@ -149,11 +149,48 @@ document.querySelectorAll(".card").forEach(card=>{
   resize(); tick();
 })();
 </script>
-<!-- ?? END: Canvas Hearts -->
+<!--  END: Canvas Hearts -->
 
 <script src="hearts.js" defer></script>
+<!-- Hearts Start -->
+<div id='heartsContainer'></div>
+<style>
+  @keyframes floatUp {
+    0% { transform: translateY(0) scale(1); opacity: 0.95; }
+    100% { transform: translateY(-110vh) scale(1.4); opacity: 0; }
+  }
+  .floating-heart {
+    position: fixed;
+    bottom: -10px;
+    font-size: 18px;
+    opacity: 0.9;
+    pointer-events: none;
+    animation: floatUp linear forwards;
+    z-index: 90;
+  }
+</style>
+<script>
+(() => {
+  const COLORS = ['#ffd6e0','#ffe8cc','#ffe9ec','#d6f5ff','#c6e5ff','#e5d6ff','#ffd1fa'];
+  function spawnHeart(){
+    const heart = document.createElement('div');
+    heart.className = 'floating-heart';
+    heart.textContent = 'â¤';
+    heart.style.left = Math.random()*100 + 'vw';
+    heart.style.color = COLORS[Math.floor(Math.random()*COLORS.length)];
+    heart.style.fontSize = (16 + Math.random()*16) + 'px';
+    heart.style.animationDuration = (8 + Math.random()*6) + 's';
+    document.body.appendChild(heart);
+    setTimeout(()=>heart.remove(),15000);
+  }
+  for(let i=0;i<10;i++) spawnHeart();
+  setInterval(spawnHeart,900);
+})();
+</script>
+<!-- Hearts End -->
 </body>
 </html>
+
 
 
 

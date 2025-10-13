@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html>
 <head><meta charset="utf-8"><style>body{margin:0;background:transparent}
 #fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:95;} 
@@ -17,7 +17,7 @@
   // reply ready
   parent.postMessage({ready:true}, '*');
 </script>
-<!-- ?? START: Canvas Hearts (light pastel + shiny floating hearts) -->
+<!--  START: Canvas Hearts (light pastel + shiny floating hearts) -->
 <div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
 <script>
 (() => {
@@ -81,11 +81,48 @@
   resize(); tick();
 })();
 </script>
-<!-- ?? END: Canvas Hearts -->
+<!--  END: Canvas Hearts -->
 
 <script src="hearts.js" defer></script>
+<!-- Hearts Start -->
+<div id='heartsContainer'></div>
+<style>
+  @keyframes floatUp {
+    0% { transform: translateY(0) scale(1); opacity: 0.95; }
+    100% { transform: translateY(-110vh) scale(1.4); opacity: 0; }
+  }
+  .floating-heart {
+    position: fixed;
+    bottom: -10px;
+    font-size: 18px;
+    opacity: 0.9;
+    pointer-events: none;
+    animation: floatUp linear forwards;
+    z-index: 90;
+  }
+</style>
+<script>
+(() => {
+  const COLORS = ['#ffd6e0','#ffe8cc','#ffe9ec','#d6f5ff','#c6e5ff','#e5d6ff','#ffd1fa'];
+  function spawnHeart(){
+    const heart = document.createElement('div');
+    heart.className = 'floating-heart';
+    heart.textContent = '❤';
+    heart.style.left = Math.random()*100 + 'vw';
+    heart.style.color = COLORS[Math.floor(Math.random()*COLORS.length)];
+    heart.style.fontSize = (16 + Math.random()*16) + 'px';
+    heart.style.animationDuration = (8 + Math.random()*6) + 's';
+    document.body.appendChild(heart);
+    setTimeout(()=>heart.remove(),15000);
+  }
+  for(let i=0;i<10;i++) spawnHeart();
+  setInterval(spawnHeart,900);
+})();
+</script>
+<!-- Hearts End -->
 </body>
 </html>
+
 
 
 
