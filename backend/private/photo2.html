@@ -115,8 +115,32 @@
 })();
 </script>
 <!-- 🌸 END: Canvas Hearts -->
+<!-- Hearts Start -->
+<div id='heartsContainer'></div>
+<script>
+(function(){
+  const root=document.getElementById('heartsContainer');
+  if(!root)return;
+  const COLORS=['#ffb3c6','#ffd6a5','#fcd5ce','#caffbf','#9bf6ff','#a0c4ff','#bdb2ff'];
+  function heart(){const h=document.createElement('div');
+  h.textContent='❤️';
+  h.style.position='fixed';
+  h.style.left=Math.random()*100+'vw';
+  h.style.fontSize=(14+Math.random()*20)+'px';
+  h.style.top='100vh';
+  h.style.opacity='.85';
+  h.style.color=COLORS[Math.floor(Math.random()*COLORS.length)];
+  h.style.animation=loatUp s linear infinite;
+  document.body.appendChild(h);
+  setTimeout(()=>h.remove(),12000);}
+  setInterval(heart,700);
+})();
+</script>
+<style>@keyframes floatUp{0%{transform:translateY(0);opacity:.9}100%{transform:translateY(-110vh);opacity:0}}</style>
+<!-- Hearts End -->
 </body>
 </html>
+
 
 
 
