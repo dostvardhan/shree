@@ -68,6 +68,7 @@ if (missing.length) {
   process.exit(1);
 }
 
+// boolean flags
 const isDriveConfigured =
   !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REFRESH_TOKEN && GOOGLE_DRIVE_FOLDER_ID);
 
@@ -89,6 +90,10 @@ app.use(session({
 
 // ----------------- PATHS -----------------
 const publicDir = path.join(__dirname, STATIC_DIR);
+const uploadsDir = path.join(__dirname, 'uploads'); // private uploads (fallback) - NOT inside publicDir
+
+// ensure uploads dir exists
+fs.promises.mkdir(uploadsDir, { recursive: true }).catch(() => {});
 
 // ----------------- AUTH HELPERS -----------------
 const allowedSet = new Set(ALLOWED_USERS.split(',').map(s => s.trim()).filter(Boolean));
@@ -277,10 +282,9 @@ app.post('/api/upload', requireAuth, upload.single('photo'), async (req, res) =>
       return res.json({ ok: true, entry: { id: fileId, caption } });
     }
 
-    // Fallback: save into public/photos when Drive is not configured
-    const destDir = path.join(publicDir, 'photos');
-    await fs.promises.mkdir(destDir, { recursive: true });
-    const dest = path.join(destDir, path.basename(req.file.path));
+    // Fallback: save into private uploads (not served statically)
+    await fs.promises.mkdir(uploadsDir, { recursive: true });
+    const dest = path.join(uploadsDir, path.basename(req.file.path));
     await fs.promises.copyFile(req.file.path, dest);
     await unlink(req.file.path).catch(() => {});
     const photos = await readPhotos(PHOTOS_JSON);
@@ -289,8 +293,8 @@ app.post('/api/upload', requireAuth, upload.single('photo'), async (req, res) =>
       name: path.basename(dest),
       caption,
       uploadedBy: uploader,
-      uploadedAt: new Date().toISOString(),
-      url: `/photos/${path.basename(dest)}`
+      uploadedAt: new Date().toISOString()
+      // intentionally no 'url' pointing to publicDir
     });
     await writePhotos(PHOTOS_JSON, photos);
     return res.json({ ok: true, entry: { id: `local:${path.basename(dest)}`, caption } });
@@ -351,19 +355,30 @@ app.get('/api/file/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
   if (!id) return res.status(400).send('Missing id');
 
-  // local file
+  // local file (private uploads)
   if (id.startsWith('local:')) {
     const filename = id.replace('local:', '');
-    const filePath = path.join(publicDir, 'photos', filename);
+    const filePath = path.join(uploadsDir, filename);
     if (!fs.existsSync(filePath)) return res.status(404).send('Not found');
+
+    // Inline display and private caching
+    res.setHeader('Content-Disposition', `inline; filename="${path.basename(filePath).replace(/"/g,'')}"`);
+    res.setHeader('Cache-Control', 'private, max-age=0, must-revalidate');
+
     return res.sendFile(filePath);
   }
 
   if (!driveClient) return res.status(500).send('Drive not configured');
 
   try {
-    const meta = await driveClient.files.get({ fileId: id, fields: 'mimeType' });
+    // fetch metadata (mimeType + name) for headers
+    const meta = await driveClient.files.get({ fileId: id, fields: 'mimeType,name' });
     res.setHeader('Content-Type', meta.data.mimeType || 'application/octet-stream');
+
+    const safeName = (meta.data.name || 'file').replace(/["\\]/g, '');
+    res.setHeader('Content-Disposition', `inline; filename="${safeName}"`);
+    res.setHeader('Cache-Control', 'private, max-age=0, must-revalidate');
+
     const driveRes = await driveClient.files.get({ fileId: id, alt: 'media' }, { responseType: 'stream' });
     driveRes.data.on('error', err => {
       console.error('Drive stream error:', err);
@@ -427,6 +442,25 @@ app.get('/api/photos', requireAuth, async (req, res) => {
   }
 });
 
+// ----------------- API: MUSIC (private) -----------------
+// Streams background music only to authenticated users.
+// Place your music file at: backend/uploads/music.mp3
+app.get('/api/music', requireAuth, async (req, res) => {
+  try {
+    const musicPath = path.join(uploadsDir, 'music.mp3');
+    if (!fs.existsSync(musicPath)) return res.status(404).send('Music not found');
+
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Disposition', `inline; filename="${path.basename(musicPath)}"`);
+    res.setHeader('Cache-Control', 'private, max-age=0, must-revalidate');
+
+    return res.sendFile(musicPath);
+  } catch (err) {
+    console.error('/api/music error:', err && err.message ? err.message : err);
+    return res.status(500).send('Music stream error');
+  }
+});
+
 // ----------------- DIAG & HEALTH -----------------
 app.get('/api/diag', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
 
@@ -449,6 +483,7 @@ const listenPort = Number(process.env.PORT || PORT || 4000);
 const server = app.listen(listenPort, '0.0.0.0', () => {
   console.log(`✅ Server listening on port ${listenPort} - NODE_ENV=${NODE_ENV}`);
   console.log(`Static dir: ${publicDir}`);
+  console.log(`Uploads dir (private): ${uploadsDir}`);
   console.log(`Drive configured: ${isDriveConfigured ? 'yes' : 'no'}`);
   console.log(`DRIVE_LIST_MODE=${DRIVE_LIST_MODE}`);
 });
