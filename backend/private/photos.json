@@ -1,0 +1,11 @@
+[
+  { "name": "photo1.jpg", "url": "/private/photos/photo1.jpg", "caption": "A smile is the beauty of the soul." },
+  { "name": "photo2.jpg", "url": "/private/photos/photo2.jpg", "caption": "Memories are timeless treasures of the heart." },
+  { "name": "photo3.jpg", "url": "/private/photos/photo3.jpg", "caption": "Happiness looks good on you." },
+  { "name": "photo4.jpg", "url": "/private/photos/photo4.jpg", "caption": "Collect moments, not things." },
+  { "name": "photo5.jpg", "url": "/private/photos/photo5.jpg", "caption": "Every picture tells a story." },
+  { "name": "photo6.jpg", "url": "/private/photos/photo6.jpg", "caption": "Smiles are contagious." },
+  { "name": "photo7.jpg", "url": "/private/photos/photo7.jpg", "caption": "Joy is the best makeup." },
+  { "name": "photo8.jpg", "url": "/private/photos/photo8.jpg", "caption": "A moment lasts all of a second." },
+  { "name": "photo9.jpg", "url": "/private/photos/photo9.jpg", "caption": "Keep smiling, it makes people wonder what you're up to." }
+]

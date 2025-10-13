@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Shreshtha � Gallery</title>
+<title>Shreshtha – Gallery</title>
 
 <!-- Auth & guards -->
 <script src="/auth0-spa-js.production.js"></script>
 <script src="auth-init.js" defer></script>
 <script src="guard-auth.js" defer></script>
 
-<link href="https://fonts.googleapis.com/css2family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
 <style>
   :root{
     --cream:#FFE7DA; --peach:#FFB59E; --red:#FF6B6B;
@@ -26,7 +26,6 @@
     overflow-x:hidden;
   }
 
-  /* Header / nav (keep above hearts) */
   header { text-align:center; padding:24px 12px; position:relative; z-index:100; }
   .logo{ font-family:"Italianno",cursive; font-size:46px; text-shadow:0 2px 10px rgba(0,0,0,.25); }
   nav{ margin-top:8px; }
@@ -37,9 +36,8 @@
   }
   nav a:hover{ background:rgba(255,255,255,.28); }
 
-  /* Main content (below header but under hearts) */
   main { max-width:1200px; margin:30px auto; padding:0 18px; position:relative; z-index:5; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:22px; }
+  .grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:22px; }
 
   .photo-card{
     background:var(--panel);
@@ -56,8 +54,9 @@
     border-radius:12px;
     object-fit:contain;
     display:block;
-    max-height:360px;
+    max-height:420px;
     background:#fff9f7;
+    cursor:zoom-in;
   }
   .meta{ padding:10px 12px 14px; text-align:center; font-style:italic; font-size:14px; color:#48242a; }
   .empty{ text-align:center; font-size:18px; margin-top:80px; opacity:.95; color:#4b2b2b }
@@ -86,15 +85,6 @@
   #lbClose { position:absolute; right:-6px; top:-18px; background:rgba(255,255,255,0.9); border-radius:999px; border:none; padding:6px 8px; cursor:pointer; font-size:16px; z-index:202; }
   #lbCaption { margin-top:12px; color:#f6efe8; font-size:16px; text-align:center; max-width:90vw; }
 
-  /* music toggle small fixed anchor (music-player.js also creates a nicer widget) */
-  #musicToggle {
-    position: fixed;
-    right: 18px;
-    bottom: 18px;
-    z-index: 220;
-    display: none;
-  }
-
   @media (max-width:600px){
     .logo{ font-size:34px; }
     #lbCaption { font-size:14px; }
@@ -114,12 +104,12 @@
 
 <main>
   <section id="grid" class="grid" aria-live="polite"></section>
-  <div id="empty" class="empty" style="display:none;">No photos uploaded yet </div>
+  <div id="empty" class="empty" style="display:none;">No photos uploaded yet 🌸</div>
 
   <div id="pager" aria-hidden="false">
-    <button id="prevBtn" disabled> Prev</button>
+    <button id="prevBtn" disabled>← Prev</button>
     <div id="pageInfo" style="font-weight:600;"></div>
-    <button id="nextBtn">Next </button>
+    <button id="nextBtn">Next →</button>
   </div>
 </main>
 
@@ -127,7 +117,7 @@
 <div id="lightbox" aria-hidden="true">
   <div id="lbBack"></div>
   <div id="lbContent" role="dialog" aria-modal="true">
-    <button id="lbClose" aria-label="Close"></button>
+    <button id="lbClose" aria-label="Close">✕</button>
     <img id="lbImage" alt="">
     <div id="lbCaption" class="meta"></div>
   </div>
@@ -152,7 +142,13 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <script>
-/* GALLERY: pagination + render + lightbox (uses /api/photos and /api/file/:id) */
+/* GALLERY: pagination + render + lightbox
+   Behavior:
+   1) Try /api/photos?pageSize=.. (Drive-backed) and render using /api/file/:id for secure streaming.
+   2) If API fails or returns empty, fall back to local list:
+       - first try /private/photos.json (explicit listing),
+       - otherwise probe /private/photos/photo1..photo60.(jpg|jpeg|png)
+*/
 (function(){
   const PAGE_SIZE = (() => {
     const w = window.innerWidth || 0;
@@ -183,131 +179,193 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function setStatus(t){ if(pageInfo) pageInfo.textContent = t; }
 
-  async function loadPage(){
-    setStatus("Loading�");
-    if (prevBtn) prevBtn.disabled = (trail.length <= 1);
-    if (nextBtn) nextBtn.disabled = true;
+  function makeCard(imgSrc, caption){
+    const anchor = document.createElement("a");
+    anchor.href = imgSrc;
+    anchor.target = "_blank";
+    anchor.rel = "noopener noreferrer";
 
-    try {
-      const qs = new URLSearchParams({ pageSize: String(pageSize) });
-      if (token) qs.set("pageToken", token);
+    const img = document.createElement("img");
+    img.src = imgSrc;
+    img.alt = caption || 'photo';
+    img.loading = "lazy";
+    img.referrerPolicy = "no-referrer";
+    img.addEventListener('click', (ev) => { ev.preventDefault(); openLightbox(imgSrc, caption); });
 
-      const resp = await fetch(`/api/photos${qs.toString()}`, { credentials: "include" });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
-      const items = data.items || [];
-      const nextToken = data.nextPageToken || null;
+    anchor.appendChild(img);
 
-      // render
-      grid.innerHTML = "";
-      if (!items.length) { if (emptyEl) emptyEl.style.display = "block"; }
-      else { if (emptyEl) emptyEl.style.display = "none"; }
+    const card = document.createElement("div");
+    card.className = "photo-card";
+    card.appendChild(anchor);
 
-      items.forEach((f) => {
-        const fileUrl = `/api/file/${encodeURIComponent(f.id)}`;
-
-        const anchor = document.createElement("a");
-        anchor.href = f.driveWebViewLink || "#";
-        anchor.target = "_blank";
-        anchor.rel = "noopener";
-
-        const img = document.createElement("img");
-        img.src = fileUrl;
-        img.alt = f.name || 'photo';
-        img.loading = "lazy";
-        img.referrerPolicy = "no-referrer";
-
-        anchor.appendChild(img);
-
-        const card = document.createElement("div");
-        card.className = "photo-card";
-        card.appendChild(anchor);
-
-        if (f.caption) {
-          const meta = document.createElement("div");
-          meta.className = "meta";
-          meta.textContent = f.caption;
-          card.appendChild(meta);
-        }
-
-        // open lightbox when clicking the image (prevent leaving site)
-        anchor.addEventListener('click', function (ev) {
-          ev.preventDefault();
-          openLightbox(fileUrl, f.caption || f.name || "");
-        });
-
-        grid.appendChild(card);
-      });
-
-      // pager handlers
-      if (nextBtn) {
-        nextBtn.disabled = !nextToken;
-        nextBtn.onclick = () => {
-          const u = new URL(location.href);
-          u.searchParams.set("pageSize", String(pageSize));
-          if (nextToken) u.searchParams.set("pageToken", nextToken);
-          let t = readTrail();
-          if (token && (t.length===0 || t[t.length-1] !== token)) t.push(token);
-          writeTrail(t);
-          location.href = u.toString();
-        };
-      }
-
-      if (prevBtn) {
-        prevBtn.disabled = (trail.length <= 1);
-        prevBtn.onclick = () => {
-          let t = readTrail();
-          if (t.length > 0) t.pop();
-          const prevToken = (t.length > 0)  t[t.length-1] : null;
-          writeTrail(t);
-          const u = new URL(location.href);
-          u.searchParams.set("pageSize", String(pageSize));
-          if (prevToken) u.searchParams.set("pageToken", prevToken); else u.searchParams.delete("pageToken");
-          location.href = u.toString();
-        };
-      }
-
-      const pageNum = (trail.length>0)  (trail.length + 1) : 1;
-      setStatus(`Page ${pageNum} � ${pageSize} per page`);
-    } catch (e) {
-      console.error("Gallery load failed:", e);
-      setStatus("Failed to load photos.");
-      if (emptyEl) emptyEl.style.display = "block";
+    if (caption) {
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = caption;
+      card.appendChild(meta);
     }
+    return card;
   }
 
-  loadPage();
-
-  // Lightbox helpers
+  // Lightbox
   const lb = document.getElementById('lightbox');
   const lbImg = document.getElementById('lbImage');
   const lbCaption = document.getElementById('lbCaption');
   const lbClose = document.getElementById('lbClose');
-
-  function openLightbox(src, caption) {
-    if (!lb) return;
+  function openLightbox(src, caption){
     lbImg.src = src;
-    lbCaption.textContent = caption || "";
+    lbCaption.textContent = caption || '';
     lb.style.display = 'flex';
-    lb.setAttribute('aria-hidden', 'false');
+    lb.setAttribute('aria-hidden','false');
     document.body.style.overflow = 'hidden';
   }
-  function closeLightbox() {
-    if (!lb) return;
+  function closeLightbox(){
     lbImg.src = '';
     lb.style.display = 'none';
-    lb.setAttribute('aria-hidden', 'true');
+    lb.setAttribute('aria-hidden','true');
     document.body.style.overflow = '';
   }
-
   if (lbClose) lbClose.addEventListener('click', closeLightbox);
-  if (document.getElementById('lbBack')) document.getElementById('lbBack').addEventListener('click', closeLightbox);
+  const lbBack = document.getElementById('lbBack');
+  if (lbBack) lbBack.addEventListener('click', closeLightbox);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+
+  // Fetch /api/photos (Drive-backed)
+  async function loadFromApi(){
+    try {
+      const qs = new URLSearchParams({ pageSize: String(pageSize) });
+      if (token) qs.set("pageToken", token);
+      const resp = await fetch(`/api/photos?${qs.toString()}`, { credentials: 'include' });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const items = data.items || [];
+      const nextToken = data.nextPageToken || null;
+      if (!items.length) throw new Error('no-items');
+
+      // Render
+      grid.innerHTML = '';
+      items.forEach(f => {
+        // Use streaming endpoint for secure access
+        const src = `/api/file/${encodeURIComponent(f.id)}`;
+        const caption = f.caption || f.name || '';
+        grid.appendChild(makeCard(src, caption));
+      });
+
+      emptyEl.style.display = 'none';
+      setStatus(`Page ${ (trail.length>0) ? (trail.length+1) : 1 } • ${pageSize} per page (Drive)`);
+      setupPager(nextToken);
+      return true;
+    } catch (err) {
+      console.warn('Drive listing failed or returned empty:', err);
+      return false;
+    }
+  }
+
+  // Local fallback: try /private/photos.json then probe /private/photos/
+  async function loadFromLocal(){
+    try {
+      // try explicit JSON listing first
+      let list = null;
+      try {
+        const j = await fetch('/private/photos.json', { cache: 'no-cache' });
+        if (j.ok) {
+          const parsed = await j.json();
+          // expect array of {url,name,caption} or strings
+          if (Array.isArray(parsed) && parsed.length) {
+            list = parsed.map(it => {
+              if (typeof it === 'string') return { url: `/private/photos/${it}`, name: it };
+              if (it && it.url) return it;
+              if (it && it.name) return { url: `/private/photos/${it.name}`, name: it.name, caption: it.caption };
+              return null;
+            }).filter(Boolean);
+          }
+        }
+      } catch(e){ /* ignore */ }
+
+      // If no explicit list, probe common filenames
+      if (!list || list.length === 0) {
+        list = [];
+        const MAX = 60;
+        const exts = ['jpg','jpeg','png','webp'];
+        for (let i = 1; i <= MAX; i++){
+          for (const ext of exts){
+            const nm = `photo${i}.${ext}`;
+            try {
+              const h = await fetch(`/private/photos/${nm}`, { method: 'HEAD' });
+              if (h.ok) { list.push({ url: `/private/photos/${nm}`, name: nm }); break; }
+            } catch(e){ /* ignore */ }
+          }
+        }
+      }
+
+      if (!list || list.length === 0) throw new Error('no local photos found');
+
+      grid.innerHTML = '';
+      list.forEach(item => {
+        const src = item.url || `/private/photos/${item.name}`;
+        const caption = item.caption || item.name || '';
+        grid.appendChild(makeCard(src, caption));
+      });
+
+      emptyEl.style.display = 'none';
+      setStatus(`Showing ${list.length} (Local)`);
+      setupPager(null); // no server pagination for local
+      return true;
+    } catch (err) {
+      console.warn('Local fallback failed:', err);
+      return false;
+    }
+  }
+
+  function setupPager(nextToken){
+    if (nextBtn) {
+      nextBtn.disabled = !nextToken;
+      nextBtn.onclick = () => {
+        const u = new URL(location.href);
+        u.searchParams.set("pageSize", String(pageSize));
+        if (nextToken) u.searchParams.set("pageToken", nextToken);
+        let t = readTrail();
+        if (token && (t.length===0 || t[t.length-1] !== token)) t.push(token);
+        writeTrail(t);
+        location.href = u.toString();
+      };
+    }
+    if (prevBtn) {
+      prevBtn.disabled = (trail.length <= 1);
+      prevBtn.onclick = () => {
+        let t = readTrail();
+        if (t.length > 0) t.pop();
+        const prevToken = (t.length > 0) ? t[t.length-1] : null;
+        writeTrail(t);
+        const u = new URL(location.href);
+        u.searchParams.set("pageSize", String(pageSize));
+        if (prevToken) u.searchParams.set("pageToken", prevToken); else u.searchParams.delete("pageToken");
+        location.href = u.toString();
+      };
+    }
+  }
+
+  async function loadPage(){
+    setStatus("Loading…");
+    if (prevBtn) prevBtn.disabled = (trail.length <= 1);
+    if (nextBtn) nextBtn.disabled = true;
+
+    const okApi = await loadFromApi();
+    if (okApi) return;
+    const okLocal = await loadFromLocal();
+    if (!okLocal) {
+      grid.innerHTML = '';
+      emptyEl.style.display = 'block';
+      setStatus('');
+    }
+  }
+
+  loadPage();
 })();
 </script>
 
 <script>
-/* Canvas hearts (pastel, shiny) � self-contained and safe */
+/* Canvas hearts (pastel, shiny) */
 (function(){
   if (window.__shreeFxInit) return; window.__shreeFxInit = true;
   const c = document.getElementById('fxCanvas');
@@ -316,16 +374,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const DPR = Math.max(1, window.devicePixelRatio || 1);
   let W = 0, H = 0, hearts = [];
 
-  const COLORS = ['#dff7ff','#fff9d6','#ffe9d2','#ffdce6','#e9f7e9','#eae8ff','#fff0f6','#fff4de'];
+  const COLORS = ['#dff7ff','#fff6a6','#ffd89e','#ffb3c6','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
 
   function R(a,b){ return Math.random()*(b-a)+a; }
   function resize(){ W = innerWidth * DPR; H = innerHeight * DPR; c.width = W; c.height = H; c.style.width = '100vw'; c.style.height = '100vh'; }
   function spawn(){
-    if (hearts.length > 24) return;
+    if (hearts.length > 26) return;
     hearts.push({
-      x: R(0, W), y: H + R(8*DPR, 110*DPR),
-      s: R(12, 30), vx: R(-6,6), vy: -R(10, 26),
-      a: R(.55, .98), r: R(-.5, .5), vr: R(-.012, .012),
+      x: R(0, W), y: H + R(10*DPR, 140*DPR),
+      s: R(10, 26), vx: R(-8,8), vy: -R(12, 30),
+      a: R(.45, .95), r: R(-.6, .6), vr: R(-.012, .012),
       color: COLORS[Math.floor(Math.random()*COLORS.length)]
     });
   }
@@ -333,8 +391,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function drawHeart(px,py,scale,rot,alpha,color){
     ctx.save();
     ctx.translate(px,py); ctx.rotate(rot); ctx.scale(scale, scale);
-    ctx.globalAlpha = Math.min(1, alpha * 1.05);
-    ctx.shadowColor = color; ctx.shadowBlur = 14 * scale;
+    ctx.globalAlpha = Math.min(1, alpha * 1.06);
+    ctx.shadowColor = color; ctx.shadowBlur = 12 * scale;
     const g = ctx.createRadialGradient(0, -0.12, 0.05, 0, 0.12, 1.0);
     g.addColorStop(0, color); g.addColorStop(0.6, color); g.addColorStop(1, 'rgba(255,255,255,0.08)');
     ctx.fillStyle = g;
@@ -343,12 +401,15 @@ document.addEventListener("DOMContentLoaded", () => {
     ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);
     ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);
     ctx.fill();
-    ctx.globalAlpha = 0.55 * alpha;
-    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+
+    // small highlight
+    ctx.globalAlpha = 0.6 * alpha;
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
     ctx.beginPath();
     ctx.ellipse(0.18, -0.28, 0.12, 0.06, -0.4, 0, Math.PI*2);
     ctx.fill();
-    ctx.restore(); ctx.shadowBlur = 0;
+    ctx.restore();
+    ctx.shadowBlur = 0;
   }
 
   function tick(){
@@ -370,47 +431,5 @@ document.addEventListener("DOMContentLoaded", () => {
   resize(); tick();
 })();
 </script>
-
-
-<script src="hearts.js" defer></script>
-<!-- Hearts Start -->
-<div id='heartsContainer'></div>
-<style>
-  @keyframes floatUp {
-    0% { transform: translateY(0) scale(1); opacity: 0.95; }
-    100% { transform: translateY(-110vh) scale(1.4); opacity: 0; }
-  }
-  .floating-heart {
-    position: fixed;
-    bottom: -10px;
-    font-size: 18px;
-    opacity: 0.9;
-    pointer-events: none;
-    animation: floatUp linear forwards;
-    z-index: 90;
-  }
-</style>
-<script>
-(() => {
-  const COLORS = ['#ffd6e0','#ffe8cc','#ffe9ec','#d6f5ff','#c6e5ff','#e5d6ff','#ffd1fa'];
-  function spawnHeart(){
-    const heart = document.createElement('div');
-    heart.className = 'floating-heart';
-    heart.textContent = '❤';
-    heart.style.left = Math.random()*100 + 'vw';
-    heart.style.color = COLORS[Math.floor(Math.random()*COLORS.length)];
-    heart.style.fontSize = (16 + Math.random()*16) + 'px';
-    heart.style.animationDuration = (8 + Math.random()*6) + 's';
-    document.body.appendChild(heart);
-    setTimeout(()=>heart.remove(),15000);
-  }
-  for(let i=0;i<10;i++) spawnHeart();
-  setInterval(spawnHeart,900);
-})();
-</script>
-<!-- Hearts End -->
 </body>
 </html>
-
-
-
