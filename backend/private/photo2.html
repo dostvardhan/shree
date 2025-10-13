@@ -63,8 +63,74 @@
   </script>
 
 <script src="/music-player.js" defer></script>
+<!-- ?? START: Canvas Hearts (light pastel + shiny floating hearts) -->
+<div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
+<script>
+(() => {
+  const c = document.getElementById('fxCanvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const DPR = Math.max(1, window.devicePixelRatio || 1);
+  let W = 0, H = 0, hearts = [];
+
+  const COLORS = ['#dff7ff','#fff9d6','#ffe9d2','#ffdce6','#e9f7e9','#eae8ff','#fff0f6','#fff4de'];
+
+  function R(a,b){ return Math.random()*(b-a)+a; }
+  function resize(){
+    W = innerWidth * DPR;
+    H = innerHeight * DPR;
+    c.width = W; c.height = H;
+    c.style.width = '100vw'; c.style.height = '100vh';
+  }
+
+  function spawn(){
+    if (hearts.length > 22) return;
+    hearts.push({
+      x: R(0, W), y: H + R(8*DPR, 160*DPR),
+      s: R(12, 34), vx: R(-6,6), vy: -R(12, 32),
+      a: R(.55, .98), r: R(-.5, .5), vr: R(-.012, .012),
+      color: COLORS[Math.floor(Math.random()*COLORS.length)]
+    });
+  }
+
+  function drawHeart(px,py,scale,rot,alpha,color){
+    ctx.save();
+    ctx.translate(px,py); ctx.rotate(rot); ctx.scale(scale, scale);
+    ctx.globalAlpha = Math.min(1, alpha * 1.05);
+    ctx.shadowColor = color; ctx.shadowBlur = 14 * scale;
+    const g = ctx.createRadialGradient(0, -0.12, 0.05, 0, 0.12, 1.0);
+    g.addColorStop(0, color); g.addColorStop(0.6, color); g.addColorStop(1, 'rgba(255,255,255,0.08)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(0,-0.5);
+    ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);
+    ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);
+    ctx.fill();
+    ctx.globalAlpha = 0.55 * alpha;
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.beginPath();
+    ctx.ellipse(0.18, -0.28, 0.12, 0.06, -0.4, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore(); ctx.shadowBlur = 0;
+  }
+
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    if (Math.random() < 0.11) spawn();
+    hearts.forEach(h => { h.x += h.vx * 0.016; h.y += h.vy * 0.016; h.r += h.vr; h.a -= 0.0009; });
+    hearts = hearts.filter(h => h.y > -120*DPR && h.a > 0.02);
+    hearts.forEach(h => drawHeart(h.x, h.y, (h.s/50)*DPR, h.r, h.a, h.color));
+    requestAnimationFrame(tick);
+  }
+
+  addEventListener('resize', resize, { passive:true });
+  resize(); tick();
+})();
+</script>
+<!-- ?? END: Canvas Hearts -->
 </body>
 </html>
+
 
 
 
