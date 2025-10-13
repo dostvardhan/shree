@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -67,7 +67,7 @@
   #pager button{ padding:8px 12px; border-radius:8px; border:1px solid rgba(0,0,0,0.08); cursor:pointer; background:rgba(255,255,255,0.12); }
   #pager button:disabled{ opacity:0.45; cursor:default; }
 
-  /* Hearts canvas sits above photos but under header */
+  /* Canvas hearts sits above photos but below header */
   #fxCanvas {
     position:fixed;
     left:0;
@@ -78,21 +78,6 @@
     z-index:60; /* above main/photos, below header (header=100) */
   }
 
-  /* DOM hearts fallback (above photos) */
-  .heart {
-    position:fixed;
-    font-size:18px;
-    opacity:.9;
-    pointer-events:none;
-    z-index:58;
-    will-change: transform, opacity;
-    animation:floatUp linear infinite;
-  }
-  @keyframes floatUp {
-    0%{ transform: translateY(0) scale(1); opacity: .95; }
-    100%{ transform: translateY(-120vh) scale(1.3); opacity: 0; }
-  }
-
   /* lightbox styles */
   #lightbox { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:200; }
   #lbBack { position:absolute; inset:0; background:rgba(6,8,10,0.72); backdrop-filter: blur(6px); }
@@ -101,19 +86,13 @@
   #lbClose { position:absolute; right:-6px; top:-18px; background:rgba(255,255,255,0.9); border-radius:999px; border:none; padding:6px 8px; cursor:pointer; font-size:16px; z-index:202; }
   #lbCaption { margin-top:12px; color:#f6efe8; font-size:16px; text-align:center; max-width:90vw; }
 
-  /* music toggle button */
+  /* music toggle small fixed anchor (music-player.js also creates a nicer widget) */
   #musicToggle {
     position: fixed;
     right: 18px;
     bottom: 18px;
     z-index: 220;
-    background: rgba(255,255,255,0.95);
-    padding: 8px 10px;
-    border-radius: 999px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
-    font-size: 14px;
     display: none;
-    cursor: pointer;
   }
 
   @media (max-width:600px){
@@ -137,7 +116,7 @@
   <section id="grid" class="grid" aria-live="polite"></section>
   <div id="empty" class="empty" style="display:none;">No photos uploaded yet 🌸</div>
 
-  <div id="pager">
+  <div id="pager" aria-hidden="false">
     <button id="prevBtn" disabled>← Prev</button>
     <div id="pageInfo" style="font-weight:600;"></div>
     <button id="nextBtn">Next →</button>
@@ -154,9 +133,11 @@
   </div>
 </div>
 
-<!-- Background music source: protected endpoint (requires auth) -->
-<audio id="bgMusic" loop preload="auto" src="/api/music"></audio>
-<button id="musicToggle" aria-label="Play background music">🎵 Music</button>
+<!-- Canvas hearts (soft pastel / shiny) -->
+<div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
+
+<!-- Music player script (your music-player.js) -->
+<script src="/music-player.js" defer></script>
 
 <script>
 /* Reveal content only after auth check completes (if requireAuth exists) */
@@ -171,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <script>
-/* GALLERY: pagination + render (uses /api/photos + /api/file/:id streaming for full-quality images) */
+/* GALLERY: pagination + render + lightbox (uses /api/photos and /api/file/:id) */
 (function(){
   const PAGE_SIZE = (() => {
     const w = window.innerWidth || 0;
@@ -217,25 +198,21 @@ document.addEventListener("DOMContentLoaded", () => {
       const items = data.items || [];
       const nextToken = data.nextPageToken || null;
 
+      // render
       grid.innerHTML = "";
       if (!items.length) { if (emptyEl) emptyEl.style.display = "block"; }
       else { if (emptyEl) emptyEl.style.display = "none"; }
 
       items.forEach((f) => {
-        // compute secure backend URL once
         const fileUrl = `/api/file/${encodeURIComponent(f.id)}`;
 
         const anchor = document.createElement("a");
-        anchor.href = fileUrl;            // use backend stream, not Drive webview
+        anchor.href = f.driveWebViewLink || "#";
         anchor.target = "_blank";
         anchor.rel = "noopener";
-        anchor.setAttribute('aria-label', f.caption `Open photo: ${f.caption}` : `Open photo: ${f.name || 'photo'}`);
 
         const img = document.createElement("img");
-        // use backend streaming endpoint for full-quality image bytes
         img.src = fileUrl;
-        img.srcset = `${fileUrl}?w=1024 1024w, ${fileUrl}?w=640 640w`;
-        img.sizes = "(max-width:700px) 100vw, 33vw";
         img.alt = f.name || 'photo';
         img.loading = "lazy";
         img.referrerPolicy = "no-referrer";
@@ -252,35 +229,46 @@ document.addEventListener("DOMContentLoaded", () => {
           meta.textContent = f.caption;
           card.appendChild(meta);
         }
+
+        // open lightbox when clicking the image (prevent leaving site)
+        anchor.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          openLightbox(fileUrl, f.caption || f.name || "");
+        });
+
         grid.appendChild(card);
       });
 
       // pager handlers
-      nextBtn.disabled = !nextToken;
-      if (nextBtn) nextBtn.onclick = () => {
-        const u = new URL(location.href);
-        u.searchParams.set("pageSize", String(pageSize));
-        if (nextToken) u.searchParams.set("pageToken", nextToken);
-        let t = readTrail();
-        if (token && (t.length===0 || t[t.length-1] !== token)) t.push(token);
-        writeTrail(t);
-        location.href = u.toString();
-      };
+      if (nextBtn) {
+        nextBtn.disabled = !nextToken;
+        nextBtn.onclick = () => {
+          const u = new URL(location.href);
+          u.searchParams.set("pageSize", String(pageSize));
+          if (nextToken) u.searchParams.set("pageToken", nextToken);
+          let t = readTrail();
+          if (token && (t.length===0 || t[t.length-1] !== token)) t.push(token);
+          writeTrail(t);
+          location.href = u.toString();
+        };
+      }
 
-      if (prevBtn) prevBtn.onclick = () => {
-        let t = readTrail();
-        if (t.length > 0) t.pop();
-        const prevToken = (t.length > 0) t[t.length-1] : null;
-        writeTrail(t);
-        const u = new URL(location.href);
-        u.searchParams.set("pageSize", String(pageSize));
-        if (prevToken) u.searchParams.set("pageToken", prevToken); else u.searchParams.delete("pageToken");
-        location.href = u.toString();
-      };
+      if (prevBtn) {
+        prevBtn.disabled = (trail.length <= 1);
+        prevBtn.onclick = () => {
+          let t = readTrail();
+          if (t.length > 0) t.pop();
+          const prevToken = (t.length > 0) ? t[t.length-1] : null;
+          writeTrail(t);
+          const u = new URL(location.href);
+          u.searchParams.set("pageSize", String(pageSize));
+          if (prevToken) u.searchParams.set("pageToken", prevToken); else u.searchParams.delete("pageToken");
+          location.href = u.toString();
+        };
+      }
 
-      const pageNum = (trail.length>0) (trail.length + 1) : 1;
+      const pageNum = (trail.length>0) ? (trail.length + 1) : 1;
       setStatus(`Page ${pageNum} • ${pageSize} per page`);
-
     } catch (e) {
       console.error("Gallery load failed:", e);
       setStatus("Failed to load photos.");
@@ -289,114 +277,39 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   loadPage();
-})();
-</script>
 
-
-
-
-<script>
-(function(){
-  if (window.__heartsInjected) return; window.__heartsInjected = true;
-  const COLORS = ["#4fc3f7","#fff176","#ff8a65","#ff4081","#81c784","#9575cd","#ffd54f","#29b6f6"];
-  function spawnHeart(){
-    const h = document.createElement('div');
-    h.className = 'heart';
-    h.textContent = '?';
-    h.style.left = (Math.random()*100) + 'vw';
-    h.style.top = (78 + Math.random()*20) + 'vh';
-    h.style.animationDuration = (9 + Math.random()*6) + 's';
-    h.style.color = COLORS[Math.floor(Math.random()*COLORS.length)];
-    h.style.fontSize = (18 + Math.random()*28) + 'px';
-    h.style.opacity = 0.96;
-    h.style.pointerEvents = 'none';
-    h.style.zIndex = 58;
-    document.body.appendChild(h);
-    setTimeout(()=> h.remove(), 22000);
-  }
-  for (let i=0;i<10;i++) spawnHeart();
-  setInterval(spawnHeart, 1200);
-})();
-</script>
-
-<!-- Lightbox script (delegated open) -->
-<script>
-(function(){
-  const lightbox = document.getElementById('lightbox');
-  const lbImage = document.getElementById('lbImage');
+  // Lightbox helpers
+  const lb = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lbImage');
   const lbCaption = document.getElementById('lbCaption');
   const lbClose = document.getElementById('lbClose');
 
-  function openLightbox(src, caption){
-    lbImage.src = src;
-    lbImage.alt = caption || '';
-    lbCaption.textContent = caption || '';
-    lightbox.style.display = 'flex';
-    lightbox.setAttribute('aria-hidden','false');
+  function openLightbox(src, caption) {
+    if (!lb) return;
+    lbImg.src = src;
+    lbCaption.textContent = caption || "";
+    lb.style.display = 'flex';
+    lb.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
   }
-
-  function closeLightbox(){
-    lightbox.style.display = 'none';
-    lightbox.setAttribute('aria-hidden','true');
-    lbImage.src = '';
+  function closeLightbox() {
+    if (!lb) return;
+    lbImg.src = '';
+    lb.style.display = 'none';
+    lb.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
   }
 
-  document.addEventListener('click', (e) => {
-    const a = e.target.closest('.photo-card a');
-    if (!a) return;
-    const href = a.getAttribute('href');
-    if (!href || !href.includes('/api/file/')) return;
-    e.preventDefault();
-    const captionEl = a.closest('.photo-card').querySelector('.meta');
-    const caption = captionEl captionEl.textContent : '';
-    openLightbox(href, caption);
-  });
-
-  lbClose.addEventListener('click', closeLightbox);
-  document.getElementById('lbBack').addEventListener('click', closeLightbox);
+  if (lbClose) lbClose.addEventListener('click', closeLightbox);
+  if (document.getElementById('lbBack')) document.getElementById('lbBack').addEventListener('click', closeLightbox);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
 })();
 </script>
 
-<!-- Background music toggle logic -->
 <script>
+/* Canvas hearts (pastel, shiny) — self-contained and safe */
 (function(){
-  const audio = document.getElementById('bgMusic');
-  const btn = document.getElementById('musicToggle');
-
-  function tryPlay() {
-    audio.play().then(()=> {
-      btn.style.display = 'none';
-    }).catch(() => {
-      // Autoplay blocked — show toggle
-      btn.style.display = 'block';
-    });
-  }
-
-  btn.addEventListener('click', () => {
-    if (audio.paused) {
-      audio.play().catch(()=>{});
-      btn.textContent = '? Music';
-    } else {
-      audio.pause();
-      btn.textContent = '🌸 Music';
-    }
-  });
-
-  audio.addEventListener('play', ()=> btn.textContent = '? Music');
-  audio.addEventListener('pause', ()=> btn.textContent = '🌸 Music');
-
-  window.addEventListener('load', () => setTimeout(tryPlay, 500));
-})();
-</script>
-
-<script src="/music-player.js" defer></script>
-<!-- 🌸 START: Canvas Hearts (light pastel + shiny floating hearts) -->
-<div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
-<script>
-(() => {
+  if (window.__shreeFxInit) return; window.__shreeFxInit = true;
   const c = document.getElementById('fxCanvas');
   if (!c) return;
   const ctx = c.getContext('2d');
@@ -406,18 +319,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const COLORS = ['#dff7ff','#fff9d6','#ffe9d2','#ffdce6','#e9f7e9','#eae8ff','#fff0f6','#fff4de'];
 
   function R(a,b){ return Math.random()*(b-a)+a; }
-  function resize(){
-    W = innerWidth * DPR;
-    H = innerHeight * DPR;
-    c.width = W; c.height = H;
-    c.style.width = '100vw'; c.style.height = '100vh';
-  }
-
+  function resize(){ W = innerWidth * DPR; H = innerHeight * DPR; c.width = W; c.height = H; c.style.width = '100vw'; c.style.height = '100vh'; }
   function spawn(){
-    if (hearts.length > 22) return;
+    if (hearts.length > 24) return;
     hearts.push({
-      x: R(0, W), y: H + R(8*DPR, 160*DPR),
-      s: R(12, 34), vx: R(-6,6), vy: -R(12, 32),
+      x: R(0, W), y: H + R(8*DPR, 110*DPR),
+      s: R(12, 30), vx: R(-6,6), vy: -R(10, 26),
       a: R(.55, .98), r: R(-.5, .5), vr: R(-.012, .012),
       color: COLORS[Math.floor(Math.random()*COLORS.length)]
     });
@@ -446,9 +353,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function tick(){
     ctx.clearRect(0,0,W,H);
-    if (Math.random() < 0.11) spawn();
-    hearts.forEach(h => { h.x += h.vx * 0.016; h.y += h.vy * 0.016; h.r += h.vr; h.a -= 0.0009; });
-    hearts = hearts.filter(h => h.y > -120*DPR && h.a > 0.02);
+    if (Math.random() < 0.10) spawn();
+    for (let i=0;i<hearts.length;i++){
+      const h = hearts[i];
+      h.x += h.vx * 0.016;
+      h.y += h.vy * 0.016;
+      h.r += h.vr;
+      h.a -= 0.0009;
+    }
+    hearts = hearts.filter(h => (h.y > -120*DPR) && (h.a > 0.02));
     hearts.forEach(h => drawHeart(h.x, h.y, (h.s/50)*DPR, h.r, h.a, h.color));
     requestAnimationFrame(tick);
   }
@@ -457,10 +370,6 @@ document.addEventListener("DOMContentLoaded", () => {
   resize(); tick();
 })();
 </script>
-<!-- 🌸 END: Canvas Hearts -->
+
 </body>
 </html>
-
-
-
-
