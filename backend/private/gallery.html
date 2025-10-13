@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Shreshtha – Gallery</title>
+<title>Shreshtha � Gallery</title>
 
 <!-- Auth & guards -->
 <script src="/auth0-spa-js.production.js"></script>
@@ -114,12 +114,12 @@
 
 <main>
   <section id="grid" class="grid" aria-live="polite"></section>
-  <div id="empty" class="empty" style="display:none;">No photos uploaded yet 🌸</div>
+  <div id="empty" class="empty" style="display:none;">No photos uploaded yet ??</div>
 
   <div id="pager" aria-hidden="false">
-    <button id="prevBtn" disabled>← Prev</button>
+    <button id="prevBtn" disabled>? Prev</button>
     <div id="pageInfo" style="font-weight:600;"></div>
-    <button id="nextBtn">Next →</button>
+    <button id="nextBtn">Next ?</button>
   </div>
 </main>
 
@@ -127,7 +127,7 @@
 <div id="lightbox" aria-hidden="true">
   <div id="lbBack"></div>
   <div id="lbContent" role="dialog" aria-modal="true">
-    <button id="lbClose" aria-label="Close">✕</button>
+    <button id="lbClose" aria-label="Close">?</button>
     <img id="lbImage" alt="">
     <div id="lbCaption" class="meta"></div>
   </div>
@@ -184,7 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function setStatus(t){ if(pageInfo) pageInfo.textContent = t; }
 
   async function loadPage(){
-    setStatus("Loading…");
+    setStatus("Loading�");
     if (prevBtn) prevBtn.disabled = (trail.length <= 1);
     if (nextBtn) nextBtn.disabled = true;
 
@@ -268,7 +268,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const pageNum = (trail.length>0) ? (trail.length + 1) : 1;
-      setStatus(`Page ${pageNum} • ${pageSize} per page`);
+      setStatus(`Page ${pageNum} � ${pageSize} per page`);
     } catch (e) {
       console.error("Gallery load failed:", e);
       setStatus("Failed to load photos.");
@@ -307,7 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 <script>
-/* Canvas hearts (pastel, shiny) — self-contained and safe */
+/* Canvas hearts (pastel, shiny) � self-contained and safe */
 (function(){
   if (window.__shreeFxInit) return; window.__shreeFxInit = true;
   const c = document.getElementById('fxCanvas');
@@ -371,29 +371,9 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 </script>
 
-<!-- Hearts Start -->
-<div id='heartsContainer'></div>
-<script>
-(function(){
-  const root=document.getElementById('heartsContainer');
-  if(!root)return;
-  const COLORS=['#ffb3c6','#ffd6a5','#fcd5ce','#caffbf','#9bf6ff','#a0c4ff','#bdb2ff'];
-  function heart(){const h=document.createElement('div');
-  h.textContent='❤️';
-  h.style.position='fixed';
-  h.style.left=Math.random()*100+'vw';
-  h.style.fontSize=(14+Math.random()*20)+'px';
-  h.style.top='100vh';
-  h.style.opacity='.85';
-  h.style.color=COLORS[Math.floor(Math.random()*COLORS.length)];
-  h.style.animation=loatUp s linear infinite;
-  document.body.appendChild(h);
-  setTimeout(()=>h.remove(),12000);}
-  setInterval(heart,700);
-})();
-</script>
-<style>@keyframes floatUp{0%{transform:translateY(0);opacity:.9}100%{transform:translateY(-110vh);opacity:0}}</style>
-<!-- Hearts End -->
+
+<script src="hearts.js" defer></script>
 </body>
 </html>
+
 

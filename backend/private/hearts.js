@@ -1,29 +1,92 @@
-﻿(() => {
-  let c = document.getElementById("heartsCanvas");
-  if (!c) {
-    c = document.createElement("canvas");
-    c.id = "heartsCanvas";
-    document.body.prepend(c);
-  }
-  Object.assign(c.style, { position:"fixed", inset:"0", pointerEvents:"none", zIndex:"0" });
+﻿// 🌈 Floating Pastel Hearts (Canvas Version)
+// Smooth pastel animation with glowing effect above all content
+
+(() => {
+  const c = document.createElement("canvas");
+  c.id = "fxCanvas";
+  Object.assign(c.style, {
+    position: "fixed",
+    left: 0,
+    top: 0,
+    width: "100vw",
+    height: "100vh",
+    pointerEvents: "none",
+    zIndex: 120, // above photos
+  });
+  document.body.appendChild(c);
 
   const ctx = c.getContext("2d");
-  const DPR = Math.max(1, window.devicePixelRatio||1);
-  let W,H,hearts=[];
-  const R = (a,b)=>Math.random()*(b-a)+a;
+  const DPR = Math.max(1, window.devicePixelRatio || 1);
+  let W = 0, H = 0, hearts = [];
 
-  function resize(){ W=innerWidth*DPR; H=innerHeight*DPR; c.width=W; c.height=H;
-                     c.style.width = innerWidth+"px"; c.style.height = innerHeight+"px"; }
-  function spawn(){ if(hearts.length>60) return; hearts.push({
-    x:R(0,W), y:H+R(10,200), s:R(12,26), vx:R(-10,10), vy:-R(40,90),
-    rot:R(0,Math.PI), vr:R(-0.02,0.02), a:R(0.35,0.9)
-  });}
-  function draw(h){ ctx.save(); ctx.translate(h.x,h.y); ctx.rotate(h.rot); ctx.scale(h.s,h.s);
-    ctx.beginPath(); ctx.moveTo(0,-0.5);
-    ctx.bezierCurveTo(0.5,-1.2,1.3,-0.1,0,0.8); ctx.bezierCurveTo(-1.3,-0.1,-0.5,-1.2,0,-0.5);
-    ctx.closePath(); ctx.globalAlpha=h.a; ctx.fillStyle="rgba(255,120,160,0.8)"; ctx.fill(); ctx.restore(); }
-  function tick(){ ctx.clearRect(0,0,W,H); if(Math.random()<0.25) spawn();
-    hearts.forEach(h=>{ h.x+=h.vx*0.016*DPR; h.y+=h.vy*0.016*DPR; h.rot+=h.vr; h.a-=0.0018; });
-    hearts = hearts.filter(h=>h.y>-60 && h.a>0); hearts.forEach(draw); requestAnimationFrame(tick); }
-  addEventListener("resize", resize, {passive:true}); resize(); tick();
+  const COLORS = [
+    "#ff9aa2", "#ffb7b2", "#ffdac1", "#e2f0cb",
+    "#b5ead7", "#c7ceea", "#f6e6ff", "#fff5ba"
+  ];
+
+  function R(a, b) { return Math.random() * (b - a) + a; }
+
+  function resize() {
+    W = innerWidth * DPR;
+    H = innerHeight * DPR;
+    c.width = W;
+    c.height = H;
+    c.style.width = "100vw";
+    c.style.height = "100vh";
+  }
+
+  function spawn() {
+    if (hearts.length > 24) return;
+    hearts.push({
+      x: R(0, W),
+      y: H + R(20, 160),
+      s: R(10, 30),
+      vx: R(-0.2, 0.2),
+      vy: -R(0.6, 1.2),
+      a: R(0.6, 1),
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      r: R(-0.3, 0.3),
+      vr: R(-0.002, 0.002)
+    });
+  }
+
+  function drawHeart(x, y, s, a, rot, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.scale(s, s);
+    ctx.globalAlpha = a;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
+
+    ctx.beginPath();
+    ctx.moveTo(0, -0.5);
+    ctx.bezierCurveTo(0.5, -1, 1, 0, 0, 1);
+    ctx.bezierCurveTo(-1, 0, -0.5, -1, 0, -0.5);
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function tick() {
+    ctx.clearRect(0, 0, W, H);
+    if (Math.random() < 0.12) spawn();
+
+    hearts.forEach(h => {
+      h.x += h.vx * 60;
+      h.y += h.vy * 60;
+      h.r += h.vr;
+      h.a -= 0.002;
+    });
+
+    hearts = hearts.filter(h => h.a > 0 && h.y > -50);
+    hearts.forEach(h => drawHeart(h.x, h.y, h.s / 50 * DPR, h.a, h.r, h.color));
+
+    requestAnimationFrame(tick);
+  }
+
+  addEventListener("resize", resize);
+  resize();
+  tick();
 })();

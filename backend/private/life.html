@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Sweet Memories — Shreshtha</title>
+<title>Sweet Memories � Shreshtha</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Italianno&display=swap" rel="stylesheet">
 <style>
   :root{--cream:#FFE7DA;--peach:#FFB59E;--red:#FF6B6B;--text:#6e2430;--panel:rgba(255,255,255,.05);--radius:16px;--shadow:0 18px 40px rgba(0,0,0,.32)}
@@ -39,7 +39,7 @@
 </head>
 <body>
 <div class="bg-grad"></div><div class="bg-dither"></div><div class="bg-layer" id="bgLayer"></div>
-<header><div class="logo">Sweet Memories of Shreshtha’s Life</div></header>
+<header><div class="logo">Sweet Memories of Shreshtha�s Life</div></header>
 <main class="wrap">
   <section class="grid" id="grid">
     <article class="card"><a href="photo1.html"><img class="photo" src="photos/photo1.jpg" alt=""></a><div class="meta">"A smile is the beauty of the soul."</div></article>
@@ -85,7 +85,7 @@ document.querySelectorAll(".card").forEach(card=>{
   </script>
 
 <script src="/music-player.js" defer></script>
-<!-- 🌸 START: Canvas Hearts (light pastel + shiny floating hearts) -->
+<!-- ?? START: Canvas Hearts (light pastel + shiny floating hearts) -->
 <div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
 <script>
 (() => {
@@ -149,32 +149,12 @@ document.querySelectorAll(".card").forEach(card=>{
   resize(); tick();
 })();
 </script>
-<!-- 🌸 END: Canvas Hearts -->
-<!-- Hearts Start -->
-<div id='heartsContainer'></div>
-<script>
-(function(){
-  const root=document.getElementById('heartsContainer');
-  if(!root)return;
-  const COLORS=['#ffb3c6','#ffd6a5','#fcd5ce','#caffbf','#9bf6ff','#a0c4ff','#bdb2ff'];
-  function heart(){const h=document.createElement('div');
-  h.textContent='❤️';
-  h.style.position='fixed';
-  h.style.left=Math.random()*100+'vw';
-  h.style.fontSize=(14+Math.random()*20)+'px';
-  h.style.top='100vh';
-  h.style.opacity='.85';
-  h.style.color=COLORS[Math.floor(Math.random()*COLORS.length)];
-  h.style.animation=loatUp s linear infinite;
-  document.body.appendChild(h);
-  setTimeout(()=>h.remove(),12000);}
-  setInterval(heart,700);
-})();
-</script>
-<style>@keyframes floatUp{0%{transform:translateY(0);opacity:.9}100%{transform:translateY(-110vh);opacity:0}}</style>
-<!-- Hearts End -->
+<!-- ?? END: Canvas Hearts -->
+
+<script src="hearts.js" defer></script>
 </body>
 </html>
+
 
 
 
