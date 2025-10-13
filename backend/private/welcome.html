@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Welcome � Shreshtha</title>
+<title>Welcome – Shreshtha</title>
 
 <!-- Auth0 scripts (guard to ensure login) -->
 <script src="/auth0-spa-js.production.js"></script>
@@ -61,7 +61,7 @@
 </head>
 <body>
 
-  <h1>Welcome to Shreshtha�s Life of Happiness</h1>
+  <h1>Welcome to Shreshtha’s Life of Happiness</h1>
   <a href="life.html" class="enter-btn">Enter Memories</a>
   <button id="warm-btn">Wake Up Server</button>
 
@@ -82,7 +82,7 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
   try{
     await fetch("/health",{mode:"no-cors"});
     alert("Server warmed up!");
-  }catch(e){alert("Still waking�");}
+  }catch(e){alert("Still waking…");}
 });
 </script>
 
@@ -100,7 +100,7 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
   </script>
 
 <script src="/music-player.js" defer></script>
-<!-- ?? START: Canvas Hearts (light pastel + shiny floating hearts) -->
+<!-- 🌸 START: Canvas Hearts (light pastel + shiny floating hearts) -->
 <div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
 <script>
 (() => {
@@ -164,9 +164,10 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
   resize(); tick();
 })();
 </script>
-<!-- ?? END: Canvas Hearts -->
+<!-- 🌸 END: Canvas Hearts -->
 </body>
 </html>
+
 
 
 

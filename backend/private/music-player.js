@@ -1,172 +1,85 @@
-// music-player.js
-// Tiny, cute, persistent music player UI.
-// Usage: include <script src="/music-player.js" defer></script> on pages (except index.html)
-
-(function(){
-  // avoid double-init
+﻿(function(){
   if (window.__musicPlayerInit) return; window.__musicPlayerInit = true;
-
-  // Create UI container
   const wrapper = document.createElement('div');
   wrapper.id = 'musicWidget';
-  wrapper.setAttribute('aria-hidden','false');
-  wrapper.style.position = 'fixed';
-  wrapper.style.right = '14px';
-  wrapper.style.bottom = '14px';
-  wrapper.style.zIndex = '230';
-  wrapper.style.fontFamily = 'system-ui, sans-serif';
-  wrapper.style.display = 'flex';
-  wrapper.style.alignItems = 'center';
-  wrapper.style.gap = '8px';
+  Object.assign(wrapper.style, { position:'fixed', right:'14px', bottom:'14px', zIndex:'230', display:'flex', alignItems:'center', gap:'8px', fontFamily:'system-ui,Segoe UI,Roboto' });
 
-  // Tiny circular button
+  // round play/pause button (SVG)
   const btn = document.createElement('button');
-  btn.id = 'musicBtn';
-  btn.title = 'Play / Pause background music';
-  btn.style.width = '44px';
-  btn.style.height = '44px';
-  btn.style.borderRadius = '50%';
-  btn.style.border = 'none';
-  btn.style.boxShadow = '0 6px 18px rgba(0,0,0,0.18)';
-  btn.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(245,245,255,0.9))';
-  btn.style.cursor = 'pointer';
-  btn.style.display = 'flex';
-  btn.style.alignItems = 'center';
-  btn.style.justifyContent = 'center';
-  btn.style.fontSize = '18px';
-  btn.style.padding = '0';
-  btn.style.lineHeight = '1';
-  btn.style.transition = 'transform .12s ease';
-  btn.style.backdropFilter = 'blur(4px)';
+  Object.assign(btn.style, { width:'44px', height:'44px', borderRadius:'50%', border:'none', boxShadow:'0 6px 18px rgba(0,0,0,0.18)', background:'linear-gradient(135deg,#fff,#f6f6ff)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', padding:'0' });
+  btn.title = 'Play / Pause';
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const iconSVG = document.createElementNS(svgNS,'svg');
+  iconSVG.setAttribute('viewBox','0 0 24 24'); iconSVG.setAttribute('width','20'); iconSVG.setAttribute('height','20');
+  iconSVG.innerHTML = '<path fill=\"#333\" d=\"M8 5v14l11-7z\"></path>';
+  btn.appendChild(iconSVG);
 
-  // Icon (initially play)
-  const icon = document.createElement('span');
-  icon.id = 'musicIcon';
-  icon.textContent = '▶️';
-  btn.appendChild(icon);
-
-  // small volume slider panel (hidden until toggled)
+  // tiny volume panel
   const volPanel = document.createElement('div');
-  volPanel.id = 'volPanel';
-  volPanel.style.display = 'none';
-  volPanel.style.alignItems = 'center';
-  volPanel.style.padding = '8px';
-  volPanel.style.borderRadius = '12px';
-  volPanel.style.background = 'rgba(255,255,255,0.95)';
-  volPanel.style.boxShadow = '0 10px 30px rgba(0,0,0,0.12)';
-  volPanel.style.gap = '8px';
-  volPanel.style.flexDirection = 'row';
-  volPanel.style.position = 'relative';
-  volPanel.style.minWidth = '120px';
+  Object.assign(volPanel.style, { display:'none', alignItems:'center', padding:'8px', borderRadius:'12px', background:'rgba(255,255,255,0.95)', boxShadow:'0 10px 30px rgba(0,0,0,0.12)', gap:'8px', minWidth:'140px' });
+  const volIcon = document.createElement('span'); volIcon.textContent = '🔈';
+  const volInput = document.createElement('input'); volInput.type='range'; volInput.min='0'; volInput.max='1'; volInput.step='0.01'; volInput.style.width='90px'; volInput.title='Volume';
+  volPanel.appendChild(volIcon); volPanel.appendChild(volInput);
 
-  // volume slider
-  const volInput = document.createElement('input');
-  volInput.type = 'range';
-  volInput.min = '0';
-  volInput.max = '1';
-  volInput.step = '0.01';
-  volInput.style.width = '90px';
-  volInput.style.cursor = 'pointer';
-  volInput.title = 'Volume';
-
-  // small mute icon
-  const volIcon = document.createElement('span');
-  volIcon.textContent = '🔈';
-  volIcon.style.fontSize = '16px';
-
-  volPanel.appendChild(volIcon);
-  volPanel.appendChild(volInput);
-
-  // append elements
-  wrapper.appendChild(btn);
-  wrapper.appendChild(volPanel);
+  wrapper.appendChild(btn); wrapper.appendChild(volPanel);
   document.body.appendChild(wrapper);
 
-  // create audio element (stream from /api/music, requires auth cookie)
+  // hidden audio element (source from protected endpoint)
   const audio = document.createElement('audio');
-  audio.id = 'bgAudio';
+  audio.id = 'shreeBgAudio';
   audio.loop = true;
   audio.preload = 'auto';
-  audio.src = '/api/music';
+  audio.style.display = 'none';
+  document.body.appendChild(audio);
 
-  // apply saved volume from localStorage (default 0.6)
+  // persistent volume
   const savedVol = parseFloat(localStorage.getItem('shree_bg_vol'));
   audio.volume = (!isNaN(savedVol)) ? savedVol : 0.6;
   volInput.value = audio.volume;
 
-  // update vol icon based on volume
-  function refreshVolIcon() {
+  function refreshVolIcon(){
     if (audio.muted || audio.volume <= 0) volIcon.textContent = '🔇';
     else if (audio.volume < 0.4) volIcon.textContent = '🔈';
     else volIcon.textContent = '🔊';
   }
   refreshVolIcon();
 
-  // try autoplay, show controls if blocked
-  function tryAutoplay() {
-    audio.play().then(()=> {
-      icon.textContent = '⏸';
-      btn.style.transform = 'scale(1)';
-    }).catch(() => {
-      // blocked -> show button (user must press)
-      icon.textContent = '▶️';
+  // set audio src lazily (only when user interacts)
+  let audioReady = false;
+  function ensureAudioSrc(){
+    if (audioReady) return Promise.resolve(true);
+    return fetch('/api/music', { method:'HEAD', credentials:'include' }).then(r => {
+      if (!r.ok) throw new Error('not available');
+      audio.src = '/api/music';
+      audioReady = true;
+      return true;
     });
   }
 
-  // toggle play/pause
-  btn.addEventListener('click', (e) => {
+  btn.addEventListener('click', async (e) => {
     e.stopPropagation();
-    if (audio.paused) {
-      audio.play().then(()=> {
-        icon.textContent = '⏸';
-      }).catch(()=> {
-        // failed
-        icon.textContent = '▶️';
-      });
-    } else {
-      audio.pause();
-      icon.textContent = '▶️';
+    if (volPanel.style.display === 'flex') volPanel.style.display = 'none'; else volPanel.style.display = 'flex';
+    try {
+      await ensureAudioSrc();
+      if (audio.paused) { await audio.play(); } else { audio.pause(); }
+    } catch (err) {
+      btn.animate([{transform:'scale(1)'},{transform:'scale(0.96)'},{transform:'scale(1)'}], { duration:400 });
+      console.warn('Music not available (likely not logged-in):', err);
     }
-    // show/hide volPanel briefly on click
-    volPanel.style.display = (volPanel.style.display === 'flex') ? 'none' : 'flex';
   });
 
-  // volume input behavior
+  audio.addEventListener('play', ()=>{ iconSVG.innerHTML = '<path fill=\"#333\" d=\"M6 19h4V5H6zm8-14v14h4V5z\"></path>'; btn.style.boxShadow='0 8px 22px rgba(0,0,0,0.22)';});
+  audio.addEventListener('pause', ()=>{ iconSVG.innerHTML = '<path fill=\"#333\" d=\"M8 5v14l11-7z\"></path>'; btn.style.boxShadow='0 6px 18px rgba(0,0,0,0.18)';});
+
   volInput.addEventListener('input', (e) => {
-    const v = parseFloat(e.target.value);
-    audio.volume = v;
-    audio.muted = false;
-    localStorage.setItem('shree_bg_vol', String(v));
-    refreshVolIcon();
+    const v = Number(e.target.value);
+    if (!Number.isFinite(v)) return;
+    audio.volume = v; audio.muted = false; localStorage.setItem('shree_bg_vol', String(v)); refreshVolIcon();
   });
 
-  // clicking outside hides the panel
-  document.addEventListener('click', (e) => {
-    if (!wrapper.contains(e.target)) {
-      volPanel.style.display = 'none';
-    }
-  });
+  document.addEventListener('click', (e)=> { if (!wrapper.contains(e.target)) volPanel.style.display='none'; });
+  document.addEventListener('keydown', (e)=> { if (e.key === 'm' || e.key === 'M') { audio.muted = !audio.muted; refreshVolIcon(); }});
 
-  // keyboard shortcuts: m to mute/unmute
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'm' || e.key === 'M') {
-      audio.muted = !audio.muted;
-      refreshVolIcon();
-    }
-  });
-
-  // reflect play/pause state on audio events
-  audio.addEventListener('play', () => { icon.textContent = '⏸'; });
-  audio.addEventListener('pause', () => { icon.textContent = '▶️'; });
-  audio.addEventListener('volumechange', refreshVolIcon);
-
-  // add audio to DOM (but hidden)
-  audio.style.display = 'none';
-  document.body.appendChild(audio);
-
-  // attempt autoplay after a small delay (user gesture friendly)
-  window.addEventListener('load', () => setTimeout(tryAutoplay, 500));
-
-  // expose quick API for tests
+  // expose for debugging
   window._shreeAudio = audio;
 })();

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Shreshtha � Gallery</title>
+<title>Shreshtha – Gallery</title>
 
 <!-- Auth & guards -->
 <script src="/auth0-spa-js.production.js"></script>
@@ -135,12 +135,12 @@
 
 <main>
   <section id="grid" class="grid" aria-live="polite"></section>
-  <div id="empty" class="empty" style="display:none;">No photos uploaded yet ??</div>
+  <div id="empty" class="empty" style="display:none;">No photos uploaded yet 🌸</div>
 
   <div id="pager">
-    <button id="prevBtn" disabled>? Prev</button>
+    <button id="prevBtn" disabled>← Prev</button>
     <div id="pageInfo" style="font-weight:600;"></div>
-    <button id="nextBtn">Next ?</button>
+    <button id="nextBtn">Next →</button>
   </div>
 </main>
 
@@ -148,7 +148,7 @@
 <div id="lightbox" aria-hidden="true">
   <div id="lbBack"></div>
   <div id="lbContent" role="dialog" aria-modal="true">
-    <button id="lbClose" aria-label="Close">?</button>
+    <button id="lbClose" aria-label="Close">✕</button>
     <img id="lbImage" alt="">
     <div id="lbCaption" class="meta"></div>
   </div>
@@ -156,7 +156,7 @@
 
 <!-- Background music source: protected endpoint (requires auth) -->
 <audio id="bgMusic" loop preload="auto" src="/api/music"></audio>
-<button id="musicToggle" aria-label="Play background music">?? Music</button>
+<button id="musicToggle" aria-label="Play background music">🎵 Music</button>
 
 <script>
 /* Reveal content only after auth check completes (if requireAuth exists) */
@@ -203,7 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function setStatus(t){ if(pageInfo) pageInfo.textContent = t; }
 
   async function loadPage(){
-    setStatus("Loading�");
+    setStatus("Loading…");
     if (prevBtn) prevBtn.disabled = (trail.length <= 1);
     if (nextBtn) nextBtn.disabled = true;
 
@@ -229,7 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
         anchor.href = fileUrl;            // use backend stream, not Drive webview
         anchor.target = "_blank";
         anchor.rel = "noopener";
-        anchor.setAttribute('aria-label', f.caption ? `Open photo: ${f.caption}` : `Open photo: ${f.name || 'photo'}`);
+        anchor.setAttribute('aria-label', f.caption `Open photo: ${f.caption}` : `Open photo: ${f.name || 'photo'}`);
 
         const img = document.createElement("img");
         // use backend streaming endpoint for full-quality image bytes
@@ -270,7 +270,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (prevBtn) prevBtn.onclick = () => {
         let t = readTrail();
         if (t.length > 0) t.pop();
-        const prevToken = (t.length > 0) ? t[t.length-1] : null;
+        const prevToken = (t.length > 0) t[t.length-1] : null;
         writeTrail(t);
         const u = new URL(location.href);
         u.searchParams.set("pageSize", String(pageSize));
@@ -278,8 +278,8 @@ document.addEventListener("DOMContentLoaded", () => {
         location.href = u.toString();
       };
 
-      const pageNum = (trail.length>0) ? (trail.length + 1) : 1;
-      setStatus(`Page ${pageNum} � ${pageSize} per page`);
+      const pageNum = (trail.length>0) (trail.length + 1) : 1;
+      setStatus(`Page ${pageNum} • ${pageSize} per page`);
 
     } catch (e) {
       console.error("Gallery load failed:", e);
@@ -350,7 +350,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!href || !href.includes('/api/file/')) return;
     e.preventDefault();
     const captionEl = a.closest('.photo-card').querySelector('.meta');
-    const caption = captionEl ? captionEl.textContent : '';
+    const caption = captionEl captionEl.textContent : '';
     openLightbox(href, caption);
   });
 
@@ -370,7 +370,7 @@ document.addEventListener("DOMContentLoaded", () => {
     audio.play().then(()=> {
       btn.style.display = 'none';
     }).catch(() => {
-      // Autoplay blocked � show toggle
+      // Autoplay blocked — show toggle
       btn.style.display = 'block';
     });
   }
@@ -381,19 +381,19 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.textContent = '? Music';
     } else {
       audio.pause();
-      btn.textContent = '?? Music';
+      btn.textContent = '🌸 Music';
     }
   });
 
   audio.addEventListener('play', ()=> btn.textContent = '? Music');
-  audio.addEventListener('pause', ()=> btn.textContent = '?? Music');
+  audio.addEventListener('pause', ()=> btn.textContent = '🌸 Music');
 
   window.addEventListener('load', () => setTimeout(tryPlay, 500));
 })();
 </script>
 
 <script src="/music-player.js" defer></script>
-<!-- ?? START: Canvas Hearts (light pastel + shiny floating hearts) -->
+<!-- 🌸 START: Canvas Hearts (light pastel + shiny floating hearts) -->
 <div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
 <script>
 (() => {
@@ -457,8 +457,9 @@ document.addEventListener("DOMContentLoaded", () => {
   resize(); tick();
 })();
 </script>
-<!-- ?? END: Canvas Hearts -->
+<!-- 🌸 END: Canvas Hearts -->
 </body>
 </html>
+
 
 
