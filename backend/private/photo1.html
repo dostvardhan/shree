@@ -1,8 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Shreshtha – Memory</title>
+  <title>Shreshtha � Memory</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="/auth0-spa-js.production.js"></script>
   <script src="/auth-init.js?v=6" defer></script>
@@ -24,7 +24,7 @@
   </style>
   <script>
     const _colors=['#ff69b4','#ff1493','#ff4500','#ffa500','#ff6347','#ff00ff','#ffd700'];
-    function spawnFloatHeart(){const h=document.createElement('div');h.className='heart-float';h.textContent='❤';h.style.left=(Math.random()*100)+'vw';h.style.color=_colors[(Math.random()*_colors.length)|0];h.style.fontSize=(14+Math.random()*20)+'px';h.style.animationDuration=(6+Math.random()*6)+'s';document.body.appendChild(h);setTimeout(()=>h.remove(),13000)}
+    function spawnFloatHeart(){const h=document.createElement('div');h.className='heart-float';h.textContent='?';h.style.left=(Math.random()*100)+'vw';h.style.color=_colors[(Math.random()*_colors.length)|0];h.style.fontSize=(14+Math.random()*20)+'px';h.style.animationDuration=(6+Math.random()*6)+'s';document.body.appendChild(h);setTimeout(()=>h.remove(),13000)}
     setInterval(spawnFloatHeart,450);
 
     document.addEventListener('DOMContentLoaded',()=>{
@@ -40,8 +40,8 @@
   </script>
 </head>
 <body>
-  <a id="prevHeart" class="nav-heart nav-left" href="#"><span style="color:#ff6f91">❤</span></a>
-  <a id="nextHeart" class="nav-heart nav-right" href="#"><span style="color:#ffd166">❤</span></a>
+  <a id="prevHeart" class="nav-heart nav-left" href="#"><span style="color:#ff6f91">?</span></a>
+  <a id="nextHeart" class="nav-heart nav-right" href="#"><span style="color:#ffd166">?</span></a>
   <div class="photo-wrap"><img id="photo" src="" alt="" /></div>
   <div id="quote" class="quote"></div>
   <div class="bottom-links">
@@ -61,7 +61,10 @@
       } catch(e){ console.error("Auth error:", e); reveal(); }
     });
   </script>
+
+<script src="/music-player.js" defer></script>
 </body>
 </html>
+
 
 

@@ -1,9 +1,9 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Welcome â€“ Shreshtha</title>
+<title>Welcome – Shreshtha</title>
 
 <!-- Auth0 scripts (guard to ensure login) -->
 <script src="/auth0-spa-js.production.js"></script>
@@ -61,7 +61,7 @@
 </head>
 <body>
 
-  <h1>Welcome to Shreshthaâ€™s Life of Happiness</h1>
+  <h1>Welcome to Shreshtha’s Life of Happiness</h1>
   <a href="life.html" class="enter-btn">Enter Memories</a>
   <button id="warm-btn">Wake Up Server</button>
 
@@ -82,7 +82,7 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
   try{
     await fetch("/health",{mode:"no-cors"});
     alert("Server warmed up!");
-  }catch(e){alert("Still wakingâ€¦");}
+  }catch(e){alert("Still waking…");}
 });
 </script>
 
@@ -98,7 +98,10 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
       } catch(e){ console.error("Auth error:", e); reveal(); }
     });
   </script>
+
+<script src="/music-player.js" defer></script>
 </body>
 </html>
+
 
 
