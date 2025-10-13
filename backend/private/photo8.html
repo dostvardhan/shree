@@ -24,22 +24,7 @@
   
 #fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:95;} 
 </style>
-  <script>
-    const _colors=['#ff69b4','#ff1493','#ff4500','#ffa500','#ff6347','#ff00ff','#ffd700'];
-    function spawnFloatHeart(){const h=document.createElement('div');h.className='heart-float';h.textContent='?';h.style.left=(Math.random()*100)+'vw';h.style.color=_colors[(Math.random()*_colors.length)|0];h.style.fontSize=(14+Math.random()*20)+'px';h.style.animationDuration=(6+Math.random()*6)+'s';document.body.appendChild(h);setTimeout(()=>h.remove(),13000)}
-    setInterval(spawnFloatHeart,450);
-
-    document.addEventListener('DOMContentLoaded',()=>{
-      const m=location.pathname.match(/photo(\d+)\.html$/); const n=m?Math.max(1,Math.min(9,parseInt(m[1],10))):1;
-      const prev=(n===1)?9:(n-1); const next=(n===9)?1:(n+1);
-      const img=document.getElementById('photo'); img.src=`photos/photo${n}.jpg`; img.alt=`Sweet Memory ${n}`;
-      const quotes={1:"A smile is the beauty of the soul.",2:"Memories are timeless treasures of the heart.",3:"Happiness looks good on you.",4:"Collect moments, not things.",5:"Every picture tells a story.",6:"Smiles are contagious.",7:"Joy is the best makeup.",8:"A moment lasts all of a second, but the memory lives on forever.",9:"Keep smiling, it makes people wonder what you're up to."};
-      document.getElementById('quote').textContent=`"${quotes[n]||""}"`;
-      const left=document.getElementById('prevHeart'); const right=document.getElementById('nextHeart');
-      left.href=`photo${prev}.html`; right.href=`photo${next}.html`;
-      document.addEventListener('keydown',(e)=>{if(e.key==='ArrowLeft'){location.href=left.href} if(e.key==='ArrowRight'){location.href=right.href}});
-    });
-  </script>
+  
 </head>
 <body>
   <a id="prevHeart" class="nav-heart nav-left" href="#"><span style="color:#ff6f91"></span></a>
@@ -132,6 +117,7 @@
 <!-- 🌸 END: Canvas Hearts -->
 </body>
 </html>
+
 
 
 
