@@ -21,7 +21,9 @@
     .nav-left{left:16px}.nav-right{right:16px}
     .nav-heart span{display:inline-block;text-shadow:0 2px 10px rgba(0,0,0,.35)}
     .nav-heart:focus{outline:3px solid rgba(255,255,255,.6);outline-offset:4px;border-radius:999px}
-  </style>
+  
+#fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:95;} 
+</style>
   <script>
     const _colors=['#ff69b4','#ff1493','#ff4500','#ffa500','#ff6347','#ff00ff','#ffd700'];
     function spawnFloatHeart(){const h=document.createElement('div');h.className='heart-float';h.textContent='?';h.style.left=(Math.random()*100)+'vw';h.style.color=_colors[(Math.random()*_colors.length)|0];h.style.fontSize=(14+Math.random()*20)+'px';h.style.animationDuration=(6+Math.random()*6)+'s';document.body.appendChild(h);setTimeout(()=>h.remove(),13000)}
@@ -40,8 +42,8 @@
   </script>
 </head>
 <body>
-  <a id="prevHeart" class="nav-heart nav-left" href="#"><span style="color:#ff6f91">?</span></a>
-  <a id="nextHeart" class="nav-heart nav-right" href="#"><span style="color:#ffd166">?</span></a>
+  <a id="prevHeart" class="nav-heart nav-left" href="#"><span style="color:#ff6f91"></span></a>
+  <a id="nextHeart" class="nav-heart nav-right" href="#"><span style="color:#ffd166"></span></a>
   <div class="photo-wrap"><img id="photo" src="" alt="" /></div>
   <div id="quote" class="quote"></div>
   <div class="bottom-links">
@@ -130,6 +132,8 @@
 <!-- 🌸 END: Canvas Hearts -->
 </body>
 </html>
+
+
 
 
 

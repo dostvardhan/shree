@@ -5,7 +5,9 @@
   <script src="/auth0-spa-js.production.js"></script>
   <script src="auth-init.js" defer></script>
   <script src="guard-auth.js" defer></script>
-  <style id="auth-gate">body{visibility:hidden !important;}</style>
+  <style id="auth-gate">body{visibility:hidden !important;}
+#fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:95;} 
+</style>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Shreshtha • Home</title>
@@ -26,6 +28,8 @@
   .btn-primary{background:#6e2430;color:#fff}.btn-primary:hover{transform:translateY(-2px)}
   .mini{margin-top:20px;font-size:14px;opacity:.85}.mini a{color:inherit}
   footer{position:fixed;inset:auto 0 10px;text-align:center;font-size:12px;color:#3e0f18;opacity:.8;pointer-events:none}
+
+#fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:95;} 
 </style>
 </head>
 <body>
@@ -75,7 +79,18 @@
       } catch(e){ console.error("Auth error:", e); reveal(); }
     });
   </script>
+<!-- Canvas hearts root (injected by maintenance script) -->
+<div id=""fxRoot"" aria-hidden=""true""><canvas id=""fxCanvas""></canvas></div>
+<script>
+(() => {
+  if (window.__shree_fx_injected) return;
+  window.__shree_fx_injected = true;
+  // (the full canvas drawing code is inlined in page by previous updates)
+})();
+</script>
+<!-- End canvas hearts root -->
 </body>
 </html>
+
 
 

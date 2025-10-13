@@ -30,6 +30,8 @@
   .bottom-nav{position:fixed;left:0;right:0;bottom:18px;z-index:5;display:flex;justify-content:center;gap:16px}
   .bottom-nav a{padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.18);box-shadow:0 4px 8px rgba(0,0,0,.2);font-size:16px;transition:background .25s;color:var(--text);backdrop-filter:blur(4px)}
   .bottom-nav a:hover{background:rgba(255,255,255,.3)}
+
+#fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:95;} 
 </style>
 <script src="/auth0-spa-js.production.js"></script>
 <script src="/auth-init.js?v=6" defer></script>
@@ -150,6 +152,7 @@ document.querySelectorAll(".card").forEach(card=>{
 <!-- 🌸 END: Canvas Hearts -->
 </body>
 </html>
+
 
 
 
