@@ -101,7 +101,7 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
     });
   </script>
 
-<script src="/music-player.js" defer></script>
+
 <!--  START: Canvas Hearts (light pastel + shiny floating hearts) -->
 <div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
 <script>
@@ -205,8 +205,77 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
 })();
 </script>
 <!-- Hearts End -->
+<!-- Mini Floating Music Player (added by script) -->
+<style>
+  .music-btn {
+    position: fixed;
+    bottom: 22px;
+    right: 26px;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.88);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 150;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .music-btn:hover { transform: translateY(-3px); box-shadow: 0 14px 28px rgba(0,0,0,0.18); }
+  .music-btn.playing { animation: mPulse 2.4s infinite ease-in-out; }
+  @keyframes mPulse {
+    0% { transform: scale(1); box-shadow: 0 10px 18px rgba(255,105,180,0.12); }
+    50% { transform: scale(1.06); box-shadow: 0 18px 30px rgba(255,105,180,0.18); }
+    100% { transform: scale(1); box-shadow: 0 10px 18px rgba(255,105,180,0.12); }
+  }
+  .music-btn svg { width:22px; height:22px; fill:#8b1a1a; }
+</style>
+
+<div id="musicButton" class="music-btn" title="Play Music">
+  <svg id="musicIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+</div>
+
+<audio id="bgMusic" loop preload="auto">
+  <source src="/music/bg.mp3" type="audio/mpeg" />
+</audio>
+
+<script>
+(() => {
+  const btn = document.getElementById('musicButton');
+  const icon = document.getElementById('musicIcon');
+  const music = document.getElementById('bgMusic');
+  let playing = false;
+  const playIcon = '<path d="M8 5v14l11-7z"/>';
+  const pauseIcon = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+
+  // restore last play state if you want (optional)
+  try {
+    const last = localStorage.getItem('shree_music_playing');
+    if (last === '1') { playing = true; icon.innerHTML = pauseIcon; btn.classList.add('playing'); music.play().catch(()=>{}); }
+  } catch(e){}
+
+  btn.addEventListener('click', () => {
+    playing = !playing;
+    if (playing) {
+      music.play().catch(()=>{});
+      icon.innerHTML = pauseIcon;
+      btn.classList.add('playing');
+      try { localStorage.setItem('shree_music_playing','1'); } catch(e){}
+    } else {
+      music.pause();
+      icon.innerHTML = playIcon;
+      btn.classList.remove('playing');
+      try { localStorage.setItem('shree_music_playing','0'); } catch(e){}
+    }
+  });
+})();
+</script>
 </body>
 </html>
+
+
 
 
 
