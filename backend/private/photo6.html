@@ -1,5 +1,8 @@
 ﻿<!DOCTYPE html><html lang="en"><head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">  <meta charset="UTF-8">  <title>Shreshtha ? Memory</title>  <meta name="viewport" content="width=device-width, initial-scale=1" />  <script src="/auth0-spa-js.production.js"></script>  <script src="/auth-init.js?v=6" defer></script>  <script src="/guard-auth.js?v=6" defer></script>  <style>    body{background:linear-gradient(140deg,#ffb6c1,#ffd1dc);margin:0;font-family:Arial,sans-serif;color:#333;overflow-x:hidden;overflow-y:auto;text-align:center}    .photo-wrap{width:100%;display:flex;justify-content:center;align-items:center;margin:12px 0 6px}    .photo-wrap img{max-width:100%;height:auto;display:block;margin:0 auto}    .quote{margin:12px auto 8px;font-style:italic;color:#5a0013;max-width:92%;font-size:16px}    .bottom-links{display:flex;gap:16px;justify-content:center;align-items:center;margin:6px 0 20px}    .bottom-links a{background:#5a0013;color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;font-weight:600}    .heart-float{position:fixed;font-size:18px;opacity:.75;animation:floatUp linear infinite;pointer-events:none;z-index:1}    @keyframes floatUp{0%{transform:translateY(0) scale(1);opacity:.9}100%{transform:translateY(-120vh) scale(1.6);opacity:0}}    .nav-heart{position:fixed;top:50%;transform:translateY(-50%);font-size:44px;text-decoration:none;z-index:3;transition:transform .2s ease,opacity .2s ease;opacity:.9;user-select:none}    .nav-heart:hover{transform:translateY(-50%) scale(1.08);opacity:1}    .nav-left{left:16px}.nav-right{right:16px}    .nav-heart span{display:inline-block;text-shadow:0 2px 10px rgba(0,0,0,.35)}    .nav-heart:focus{outline:3px solid rgba(255,255,255,.6);outline-offset:4px;border-radius:999px}  #fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:95;} </style>  </head><body>  <a id="prevHeart" class="nav-heart nav-left" href="#"><span style="color:#ff6f91">&#10084;</span></a>  <a id="nextHeart" class="nav-heart nav-right" href="#"><span style="color:#ffd166">&#10084;</span></a>  <div class="photo-wrap"><img id="photo" src="/photos/photo6.jpg" alt="Photo 6" /></div>  <div id="quote" class="quote"></div>  <div class="bottom-links">    <a href="upload.html">Upload</a>    <a href="gallery.html">Gallery</a>    <a href="life.html" style="background:#8b1a1a">Back to Life</a>  </div>  <script>    document.addEventListener("DOMContentLoaded", () => {      const reveal = () => { const gate = document.getElementById("auth-gate"); if (gate) gate.remove(); };      try {        if (typeof requireAuth === "function") {          Promise.resolve(requireAuth()).then(reveal).catch(e => { console.error("Auth failed:", e); reveal(); });        } else {          console.error("requireAuth not found"); reveal();        }      } catch(e){ console.error("Auth error:", e); reveal(); }    });  </script><!--  START: Canvas Hearts (light pastel + shiny floating hearts) --><div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div><script>(() => {  const c = document.getElementById('fxCanvas');  if (!c) return;  const ctx = c.getContext('2d');  const DPR = Math.max(1, window.devicePixelRatio || 1);  let W = 0, H = 0, hearts = [];  const COLORS = ['#dff7ff','#fff9d6','#ffe9d2','#ffdce6','#e9f7e9','#eae8ff','#fff0f6','#fff4de'];  function R(a,b){ return Math.random()*(b-a)+a; }  function resize(){    W = innerWidth * DPR;    H = innerHeight * DPR;    c.width = W; c.height = H;    c.style.width = '100vw'; c.style.height = '100vh';  }  function spawn(){    if (hearts.length > 22) return;    hearts.push({      x: R(0, W), y: H + R(8*DPR, 160*DPR),      s: R(12, 34), vx: R(-6,6), vy: -R(12, 32),      a: R(.55, .98), r: R(-.5, .5), vr: R(-.012, .012),      color: COLORS[Math.floor(Math.random()*COLORS.length)]    });  }  function drawHeart(px,py,scale,rot,alpha,color){    ctx.save();    ctx.translate(px,py); ctx.rotate(rot); ctx.scale(scale, scale);    ctx.globalAlpha = Math.min(1, alpha * 1.05);    ctx.shadowColor = color; ctx.shadowBlur = 14 * scale;    const g = ctx.createRadialGradient(0, -0.12, 0.05, 0, 0.12, 1.0);    g.addColorStop(0, color); g.addColorStop(0.6, color); g.addColorStop(1, 'rgba(255,255,255,0.08)');    ctx.fillStyle = g;    ctx.beginPath();    ctx.moveTo(0,-0.5);    ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);    ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);    ctx.fill();    ctx.globalAlpha = 0.55 * alpha;    ctx.fillStyle = 'rgba(255,255,255,0.9)';    ctx.beginPath();    ctx.ellipse(0.18, -0.28, 0.12, 0.06, -0.4, 0, Math.PI*2);    ctx.fill();    ctx.restore(); ctx.shadowBlur = 0;  }  function tick(){    ctx.clearRect(0,0,W,H);    if (Math.random() < 0.11) spawn();    hearts.forEach(h => { h.x += h.vx * 0.016; h.y += h.vy * 0.016; h.r += h.vr; h.a -= 0.0009; });    hearts = hearts.filter(h => h.y > -120*DPR && h.a > 0.02);    hearts.forEach(h => drawHeart(h.x, h.y, (h.s/50)*DPR, h.r, h.a, h.color));    requestAnimationFrame(tick);  }  addEventListener('resize', resize, { passive:true });  resize(); tick();})();</script><!--  END: Canvas Hearts --><script src="hearts.js" defer></script><!-- Hearts Start --><div id='heartsContainer'></div><style>  @keyframes floatUp {    0% { transform: translateY(0) scale(1); opacity: 0.95; }    100% { transform: translateY(-110vh) scale(1.4); opacity: 0; }  }  .floating-heart {    position: fixed;    bottom: -10px;    font-size: 18px;    opacity: 0.9;    pointer-events: none;    animation: floatUp linear forwards;    z-index: 90;  }</style><script>(() => {  const COLORS = ['#ffd6e0','#ffe8cc','#ffe9ec','#d6f5ff','#c6e5ff','#e5d6ff','#ffd1fa'];  function spawnHeart(){    const heart = document.createElement('div');    heart.className = 'floating-heart';    heart.innerHTML = '&#10084;';    heart.style.left = Math.random()*100 + 'vw';    heart.style.color = COLORS[Math.floor(Math.random()*COLORS.length)] || '#ff6f91';    heart.style.fontSize = (18 + Math.random()*22) + 'px';    heart.style.animationDuration = (8 + Math.random()*6) + 's';    document.body.appendChild(heart);    setTimeout(()=>heart.remove(),15000);  }  for(let i=0;i<10;i++) spawnHeart();  setInterval(spawnHeart,900);})();</script><!-- Hearts End --><script>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">  <meta charset="UTF-8">  <title>Shreshtha ? Memory</title>  <meta name="viewport" content="width=device-width, initial-scale=1" />  <script src="/auth0-spa-js.production.js"></script>  <script src="/auth-init.js?v=6" defer></script>  <script src="/guard-auth.js?v=6" defer></script>  <style>    body{background:
+      radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
+      radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,0.18), transparent 18%),
+      linear-gradient(160deg, #fff0ef 0%, #ffd6d6 18%, #ffc0be 38%, #ffb3b3 60%, #ffb0b0 100%);margin:0;font-family:Arial,sans-serif;color:#333;overflow-x:hidden;overflow-y:auto;text-align:center}    .photo-wrap{width:100%;display:flex;justify-content:center;align-items:center;margin:12px 0 6px}    .photo-wrap img{max-width:100%;height:auto;display:block;margin:0 auto}    .quote{margin:12px auto 8px;font-style:italic;color:#5a0013;max-width:92%;font-size:16px}    .bottom-links{display:flex;gap:16px;justify-content:center;align-items:center;margin:6px 0 20px}    .bottom-links a{background:#5a0013;color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;font-weight:600}    .heart-float{position:fixed;font-size:18px;opacity:.75;animation:floatUp linear infinite;pointer-events:none;z-index:1}    @keyframes floatUp{0%{transform:translateY(0) scale(1);opacity:.9}100%{transform:translateY(-120vh) scale(1.6);opacity:0}}    .nav-heart{position:fixed;top:50%;transform:translateY(-50%);font-size:44px;text-decoration:none;z-index:3;transition:transform .2s ease,opacity .2s ease;opacity:.9;user-select:none}    .nav-heart:hover{transform:translateY(-50%) scale(1.08);opacity:1}    .nav-left{left:16px}.nav-right{right:16px}    .nav-heart span{display:inline-block;text-shadow:0 2px 10px rgba(0,0,0,.35)}    .nav-heart:focus{outline:3px solid rgba(255,255,255,.6);outline-offset:4px;border-radius:999px}  #fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:95;} </style>  </head><body>  <a id="prevHeart" class="nav-heart nav-left" href="#"><span style="color:#ff6f91">&#10084;</span></a>  <a id="nextHeart" class="nav-heart nav-right" href="#"><span style="color:#ffd166">&#10084;</span></a>  <div class="photo-wrap"><img id="photo" src="/photos/photo6.jpg" alt="Photo 6" /></div>  <div id="quote" class="quote"></div>  <div class="bottom-links">    <a href="upload.html">Upload</a>    <a href="gallery.html">Gallery</a>    <a href="life.html" style="background:#8b1a1a">Back to Life</a>  </div>  <script>    document.addEventListener("DOMContentLoaded", () => {      const reveal = () => { const gate = document.getElementById("auth-gate"); if (gate) gate.remove(); };      try {        if (typeof requireAuth === "function") {          Promise.resolve(requireAuth()).then(reveal).catch(e => { console.error("Auth failed:", e); reveal(); });        } else {          console.error("requireAuth not found"); reveal();        }      } catch(e){ console.error("Auth error:", e); reveal(); }    });  </script><!--  START: Canvas Hearts (light pastel + shiny floating hearts) --><div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div><script>(() => {  const c = document.getElementById('fxCanvas');  if (!c) return;  const ctx = c.getContext('2d');  const DPR = Math.max(1, window.devicePixelRatio || 1);  let W = 0, H = 0, hearts = [];  const COLORS = ['#dff7ff','#fff9d6','#ffe9d2','#ffdce6','#e9f7e9','#eae8ff','#fff0f6','#fff4de'];  function R(a,b){ return Math.random()*(b-a)+a; }  function resize(){    W = innerWidth * DPR;    H = innerHeight * DPR;    c.width = W; c.height = H;    c.style.width = '100vw'; c.style.height = '100vh';  }  function spawn(){    if (hearts.length > 22) return;    hearts.push({      x: R(0, W), y: H + R(8*DPR, 160*DPR),      s: R(12, 34), vx: R(-6,6), vy: -R(12, 32),      a: R(.55, .98), r: R(-.5, .5), vr: R(-.012, .012),      color: COLORS[Math.floor(Math.random()*COLORS.length)]    });  }  function drawHeart(px,py,scale,rot,alpha,color){    ctx.save();    ctx.translate(px,py); ctx.rotate(rot); ctx.scale(scale, scale);    ctx.globalAlpha = Math.min(1, alpha * 1.05);    ctx.shadowColor = color; ctx.shadowBlur = 14 * scale;    const g = ctx.createRadialGradient(0, -0.12, 0.05, 0, 0.12, 1.0);    g.addColorStop(0, color); g.addColorStop(0.6, color); g.addColorStop(1, 'rgba(255,255,255,0.08)');    ctx.fillStyle = g;    ctx.beginPath();    ctx.moveTo(0,-0.5);    ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);    ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);    ctx.fill();    ctx.globalAlpha = 0.55 * alpha;    ctx.fillStyle = 'rgba(255,255,255,0.9)';    ctx.beginPath();    ctx.ellipse(0.18, -0.28, 0.12, 0.06, -0.4, 0, Math.PI*2);    ctx.fill();    ctx.restore(); ctx.shadowBlur = 0;  }  function tick(){    ctx.clearRect(0,0,W,H);    if (Math.random() < 0.11) spawn();    hearts.forEach(h => { h.x += h.vx * 0.016; h.y += h.vy * 0.016; h.r += h.vr; h.a -= 0.0009; });    hearts = hearts.filter(h => h.y > -120*DPR && h.a > 0.02);    hearts.forEach(h => drawHeart(h.x, h.y, (h.s/50)*DPR, h.r, h.a, h.color));    requestAnimationFrame(tick);  }  addEventListener('resize', resize, { passive:true });  resize(); tick();})();</script><!--  END: Canvas Hearts --><script src="hearts.js" defer></script><!-- Hearts Start --><div id='heartsContainer'></div><style>  @keyframes floatUp {    0% { transform: translateY(0) scale(1); opacity: 0.95; }    100% { transform: translateY(-110vh) scale(1.4); opacity: 0; }  }  .floating-heart {    position: fixed;    bottom: -10px;    font-size: 18px;    opacity: 0.9;    pointer-events: none;    animation: floatUp linear forwards;    z-index: 90;  }</style><script>(() => {  const COLORS = ['#ffd6e0','#ffe8cc','#ffe9ec','#d6f5ff','#c6e5ff','#e5d6ff','#ffd1fa'];  function spawnHeart(){    const heart = document.createElement('div');    heart.className = 'floating-heart';    heart.innerHTML = '&#10084;';    heart.style.left = Math.random()*100 + 'vw';    heart.style.color = COLORS[Math.floor(Math.random()*COLORS.length)] || '#ff6f91';    heart.style.fontSize = (18 + Math.random()*22) + 'px';    heart.style.animationDuration = (8 + Math.random()*6) + 's';    document.body.appendChild(heart);    setTimeout(()=>heart.remove(),15000);  }  for(let i=0;i<10;i++) spawnHeart();  setInterval(spawnHeart,900);})();</script><!-- Hearts End --><script>
 (() => {
   function getCurrentIndex() {
     // try img src first (robust)
@@ -31,63 +34,111 @@
   if (nextLink) nextLink.addEventListener('click', (e) => { e.preventDefault(); location.href = nextLink.href; });
 })();
 </script>
-<!-- Mini Floating Music Player (added by script) -->
+<!-- Improved Mini Music Player + Volume Popover (replaces older snippet) -->
 <style>
-  /* compact heart player */
+  /* --- smoother global background for private pages --- */
+  /* Replace old body background lines with this gradient to remove the visible seam */
+  body {
+    background:
+      radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
+      radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,0.18), transparent 18%),
+      linear-gradient(160deg, #fff0ef 0%, #ffd6d6 18%, #ffc0be 38%, #ffb3b3 60%, #ffb0b0 100%);
+    background-attachment: fixed;
+    color: #333;
+  }
+
+  /* --- compact heart player container --- */
   .music-btn {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 48px;
-    height: 48px;
+    bottom: 22px;
+    right: 22px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.95);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.14);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 160;
-    transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
-    border: 2px solid rgba(255,255,255,0.6);
+    background: linear-gradient(135deg,#fffafc 0%,#ffeef2 100%);
+    box-shadow: 0 10px 22px rgba(230,100,140,0.18);
+    display:flex;align-items:center;justify-content:center;
+    z-index:160; border:none; cursor:pointer; transition:transform .18s ease,box-shadow .18s ease;
     backdrop-filter: blur(4px);
   }
-  .music-btn:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.18); }
-  .music-btn.playing { animation: mPulse 2s infinite ease-in-out; }
-  @keyframes mPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.06); }
-    100% { transform: scale(1); }
-  }
-  /* soft pastel ring when active */
-  .music-btn .ring {
+  .music-btn:hover { transform: translateY(-4px); box-shadow: 0 16px 30px rgba(230,100,140,0.25); }
+
+  .music-btn svg { width:26px; height:26px; display:block; }
+  .music-btn .heart { fill:#ff6b81; transition: transform .18s ease, fill .22s ease; }
+  .music-btn.playing .heart { transform: scale(1.08); fill:#ffd166; filter: drop-shadow(0 6px 12px rgba(255,170,80,0.20)); }
+
+  /* little gold volume dot to the right of the heart (click to open volume popover) */
+  .vol-dot {
     position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    pointer-events: none;
-    box-shadow: 0 0 0 4px rgba(255,215,153,0.06);
-    opacity: 0;
-    transform: scale(.94);
-    transition: opacity .25s ease, transform .25s ease;
+    right: -6px;
+    top: -6px;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background: linear-gradient(150deg,#ffd76d,#ffc96a);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow: 0 6px 10px rgba(255,170,100,0.24);
+    border: 2px solid rgba(255,255,255,0.9);
+    cursor:pointer;
   }
-  .music-btn.playing .ring { opacity: 1; transform: scale(1); }
+  .vol-dot:active { transform: scale(.96); }
 
-  /* heart icon */
-  .music-btn svg { width:22px; height:22px; display:block; }
-  .music-btn .heart { fill: #ff6f91; transition: transform .15s ease; }
-  .music-btn.playing .heart { fill: #ffd166; transform: scale(1.05); }
+  /* volume popover */
+  .vol-pop {
+    position: fixed;
+    bottom: 84px;
+    right: 18px;
+    width: 214px;
+    padding: 10px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    z-index: 170;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  .vol-pop.show { display: flex; }
 
-  /* small focus outline for keyboard users */
-  .music-btn:focus { outline: 3px solid rgba(255,255,255,0.9); outline-offset: 6px; border-radius: 50%; }
+  .vol-pop input[type="range"] {
+    -webkit-appearance: none; width: 120px; height: 6px; border-radius: 999px;
+    background: linear-gradient(90deg,#ffc1c1,#ffd88a);
+    outline: none;
+  }
+  .vol-pop input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:16px;height:16px;border-radius:50%;
+    background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border: 3px solid #ffb0a0;
+  }
+  .vol-label { font-size:13px; color:#6b2b2b; margin-right:6px; }
+
+  /* small mute button */
+  .vol-btn {
+    width:30px;height:30px;border-radius:8px;border:none;
+    background:#fff;border:1px solid rgba(0,0,0,0.06); cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .vol-btn svg { width:14px; height:14px; fill:#b04a4a; opacity:.95; }
+
+  /* accessible focus */
+  .music-btn:focus, .vol-dot:focus, .vol-btn:focus { outline: 3px solid rgba(255,200,200,0.6); outline-offset:3px; }
 </style>
 
 <button id="musicButton" class="music-btn" aria-pressed="false" aria-label="Play background music" title="Play / Pause music">
-  <span class="ring" aria-hidden="true"></span>
-  <!-- Heart icon -->
   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path class="heart" d="M12 21s-7.33-4.94-9.33-7.02C.8 11.9 2.1 7.9 5.5 6.3 7.2 5.4 9.1 6 10 7.3c.9-1.3 2.8-1.9 4.5-1 3.4 1.6 4.7 5.6 2.8 7.68C19.33 16.06 12 21 12 21z"/>
   </svg>
+
+  <span class="vol-dot" id="volDot" role="button" aria-label="Volume control" title="Open volume control"></span>
 </button>
+
+<div id="volPop" class="vol-pop" role="dialog" aria-hidden="true">
+  <div class="vol-label" aria-hidden="true">Vol</div>
+  <input id="volRange" type="range" min="0" max="100" step="1" value="60" aria-label="Volume slider" />
+  <button id="muteBtn" class="vol-btn" aria-pressed="false" title="Mute / unmute" aria-label="Mute or unmute">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 10v4h4l5 4V6L8 10H4z"/></svg>
+  </button>
+</div>
 
 <audio id="bgMusic" loop preload="auto">
   <source src="/music/bg.mp3" type="audio/mpeg" />
@@ -96,47 +147,104 @@
 <script>
 (() => {
   const btn = document.getElementById('musicButton');
-  const heart = btn.querySelector('.heart');
+  const volDot = document.getElementById('volDot');
+  const volPop = document.getElementById('volPop');
+  const volRange = document.getElementById('volRange');
+  const muteBtn = document.getElementById('muteBtn');
   const music = document.getElementById('bgMusic');
+
+  // restore stored state
   let playing = false;
-  // icons are inlined via SVG; update aria + classes
+  try {
+    const savedVol = localStorage.getItem('shree_music_volume');
+    if (savedVol !== null) volRange.value = savedVol;
+    const savedPlaying = localStorage.getItem('shree_music_playing');
+    if (savedPlaying === '1') { playing = true; }
+  } catch(e){}
+
+  // set actual audio volume (0..1)
+  function applyVolume() {
+    const v = Math.max(0, Math.min(100, parseInt(volRange.value || 60,10)));
+    music.volume = v/100;
+    if (v === 0) { muteBtn.setAttribute('aria-pressed','true'); } else { muteBtn.setAttribute('aria-pressed','false'); }
+    try { localStorage.setItem('shree_music_volume', String(v)); } catch(e){}
+  }
+  applyVolume();
+
   function setPlaying(state) {
     playing = !!state;
     btn.setAttribute('aria-pressed', playing ? 'true' : 'false');
     if (playing) {
       btn.classList.add('playing');
-      try { music.play().catch(()=>{}); } catch(e){}
+      music.play().catch(()=>{});
+      try { localStorage.setItem('shree_music_playing','1'); } catch(e){}
       btn.setAttribute('title','Pause music');
     } else {
       btn.classList.remove('playing');
-      try { music.pause(); } catch(e){}
+      music.pause();
+      try { localStorage.setItem('shree_music_playing','0'); } catch(e){}
       btn.setAttribute('title','Play music');
     }
   }
 
-  // restore last state from localStorage if user had it playing
-  try {
-    if (localStorage.getItem('shree_music_playing') === '1') {
-      setPlaying(true);
-    }
-  } catch(e){}
+  // initial play state (do not force autoplay; only restore visual if already allowed)
+  if (playing) {
+    // try resume playback if browser allows
+    music.play().then(()=>{ setPlaying(true); }).catch(()=>{ setPlaying(false); });
+  }
 
-  btn.addEventListener('click', (ev) => {
+  // heart click toggles play/pause
+  btn.addEventListener('click', (e) => {
+    // if click target was the volDot, handled separately
+    if (e.target && (e.target.id === 'volDot' || e.target.closest('#volDot'))) return;
     setPlaying(!playing);
-    try { localStorage.setItem('shree_music_playing', playing ? '1' : '0'); } catch(e){}
   });
 
-  // keyboard accessibility (space / enter)
-  btn.addEventListener('keydown', (e) => {
-    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); btn.click(); }
+  // show/hide volume popover on volDot click
+  volDot.addEventListener('click', (e) => {
+    const showing = volPop.classList.toggle('show');
+    volPop.setAttribute('aria-hidden', showing ? 'false' : 'true');
+    if (showing) { // auto-hide after 6s
+      setTimeout(()=>{ volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true'); }, 6000);
+    }
+    e.stopPropagation();
   });
 
-  // if the audio fails to play (autoplay policies), keep UI sync
+  // volume slider changes
+  volRange.addEventListener('input', () => {
+    applyVolume();
+  });
+
+  // mute toggle
+  muteBtn.addEventListener('click', () => {
+    if (music.volume > 0) {
+      volRange.dataset.prev = volRange.value;
+      volRange.value = 0;
+    } else {
+      volRange.value = volRange.dataset.prev || 60;
+    }
+    applyVolume();
+  });
+
+  // close popover when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.vol-pop') && !e.target.closest('#volDot')) {
+      volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true');
+    }
+  });
+
+  // sync UI when audio events happen
   music.addEventListener('play', ()=> setPlaying(true));
   music.addEventListener('pause', ()=> setPlaying(false));
+
+  // ensure keyboard accessibility
+  volDot.tabIndex = 0;
+  volDot.addEventListener('keydown', (e)=> { if (e.key==='Enter' || e.key===' ') { e.preventDefault(); volDot.click(); }});
+
 })();
 </script>
 </body></html><!-- Force sync: 2025-10-14 05:00:21 -->
+
 
 
 
