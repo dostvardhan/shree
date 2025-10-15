@@ -1,4 +1,4 @@
-﻿<div class="page-links"> <a href="life.html">Back to Life</a> | <a href="gallery.html">Gallery</a> | <a href="logout.html">Logout</a> </div>
+﻿<div class="page-links"> <a href="life.html">Life</a> | <a href="gallery.html">Gallery</a> | <a href="/auth/logout">Logout</a> </div>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,22 +53,31 @@
 /* ensure floating effects do not block clicks */
 #fxCanvas, #fxRoot, .dither, .bg { pointer-events: none !important; }
 </style>
+' + $marker + '
+<style>
+  /* Upload page heading: maroon gradient text */
+  h1.page-title, .logo { 
+    font-family: "Italianno", cursive;
+    font-weight: 600;
+    font-size: clamp(36px, 6vw, 64px);
+    background: linear-gradient(90deg,#8b1e3f,#6e2430);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 6px 10px rgba(0,0,0,0.08);
+  }
+</style>
 </head>
 <body>
 <header>
   <div class="logo">Upload a Sweet Memory</div>
-  <nav>
-    <a href="life.html">Back to Life</a>
-    <a href="gallery.html">Gallery</a>
-    <a href="/auth/logout">Logout</a>
-  </nav>
+  
 </header>
 
 <main>
   <form id="upForm" enctype="multipart/form-data" method="post">
     <input type="file" id="photo" name="photo" accept="image/*" required />
-<button id='uploadBtn' type='button' style='margin-top:10px;padding:10px 18px;border-radius:22px;background:#6e2430;color:#fff;border:none;cursor:pointer;'>Upload</button>
-    <input type="text" id="caption" name="caption" placeholder="Write a short caption<div id="msg" class="msg"></div>
+<button id="uploadBtn" type="submit" style="margin-top:10px;padding:10px 18px;border-radius:22px;background:#6e2430;color:#fff;border:none;cursor:pointer;">Upload</button>
+    <input type="text" id="caption" name="caption" placeholder="Write a short caption" /></div>
   </form>
 </main>
 
@@ -334,6 +343,7 @@ document.getElementById("upForm").addEventListener("submit", async (e)=>{
 <!-- end upload button handler -->
 </body>
 </html>
+
 
 
 
