@@ -65,7 +65,7 @@
 </header>
 
 <main>
-  <form id="upForm">
+  <form id="upForm" enctype="multipart/form-data" method="post">
     <input type="file" id="photo" name="photo" accept="image/*" required />
 <button id='uploadBtn' type='button' style='margin-top:10px;padding:10px 18px;border-radius:22px;background:#6e2430;color:#fff;border:none;cursor:pointer;'>Upload</button>
     <input type="text" id="caption" name="caption" placeholder="Write a short caption<div id="msg" class="msg"></div>
@@ -334,6 +334,7 @@ document.getElementById("upForm").addEventListener("submit", async (e)=>{
 <!-- end upload button handler -->
 </body>
 </html>
+
 
 
 
