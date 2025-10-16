@@ -1,4 +1,4 @@
-<div class="page-links" style="text-align:center;margin:8px 0 18px;font-size:15px;"> <a href="life.html">Life</a> &nbsp;|&nbsp; <a href="gallery.html">Gallery</a> &nbsp;|&nbsp; <a href="upload.html">Upload</a> &nbsp;|&nbsp; <a href="logout.html">Logout</a> </div>
+﻿<div class="page-links" style="text-align:center;margin:8px 0 18px;font-size:15px;"> <a href="life.html">Life</a> &nbsp;|&nbsp; <a href="gallery.html">Gallery</a> &nbsp;|&nbsp; <a href="upload.html">Upload</a> &nbsp;|&nbsp; <a href="logout.html">Logout</a> </div>
 <!DOCTYPE html><html lang="en"><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">  <meta charset="UTF-8">  <title>Shreshtha ? Memory</title>  <meta name="viewport" content="width=device-width, initial-scale=1" />  <script src="/auth0-spa-js.production.js"></script>  <script src="/auth-init.js?v=6" defer></script>  <script src="/guard-auth.js?v=6" defer></script>  <style>    body{background:
       radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
@@ -335,7 +335,66 @@
 
 })();
 </script>
+<!-- MUSIC SNIPPET: start -->
+<audio id="bgMusic" loop preload="auto" style="display:none">
+  <source src="/music/bg.mp3" type="audio/mpeg">
+</audio>
+
+<button id="pageMusicBtn" aria-label="Play background music" title="Play music"
+  style="position:fixed; right:18px; bottom:18px; width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,#fffafc,#ffeef2); border:none; box-shadow:0 8px 20px rgba(0,0,0,0.12); display:none; align-items:center; justify-content:center; z-index:9999; cursor:pointer;">
+  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+    <path d="M8 5v14l11-7z" fill="#8B3B4B"></path>
+  </svg>
+</button>
+
+<script>
+(function(){
+  try {
+    const audio = document.getElementById('bgMusic');
+    const btn = document.getElementById('pageMusicBtn');
+
+    // set sensible defaults if not present
+    if (audio) {
+      // restore volume if stored
+      try { const v = localStorage.getItem('shree_music_volume'); if (v !== null) audio.volume = Math.max(0, Math.min(1, parseFloat(v))); else audio.volume = 0.6; } catch(e){ audio.volume = 0.6; }
+
+      // try autoplay (best-effort)
+      audio.play().then(()=> {
+        // autoplay allowed — hide button
+        if (btn) btn.style.display = 'none';
+      }).catch(()=> {
+        // autoplay blocked — show play button
+        if (btn) btn.style.display = 'flex';
+      });
+
+      // clicking the fallback button will play/pause
+      if (btn) {
+        btn.addEventListener('click', function(e){
+          e.preventDefault();
+          if (audio.paused) {
+            audio.play().catch(()=>{ /* ignore */ });
+            btn.style.display = 'none';
+            try { localStorage.setItem('shree_music_playing','1'); } catch(e){}
+          } else {
+            audio.pause();
+            btn.style.display = 'flex';
+            try { localStorage.setItem('shree_music_playing','0'); } catch(e){}
+          }
+        });
+      }
+
+      // sync UI based on play/pause events
+      audio.addEventListener('play', ()=> { if (btn) btn.style.display = 'none'; });
+      audio.addEventListener('pause', ()=> { if (btn) btn.style.display = 'flex'; });
+    }
+  } catch(err) {
+    console.warn('Music snippet error', err);
+  }
+})();
+</script>
+<!-- MUSIC SNIPPET: end -->
 </body></html><!-- Force sync: 2025-10-14 05:00:21 -->
+
 
 
 
