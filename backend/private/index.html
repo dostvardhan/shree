@@ -142,7 +142,7 @@
       function spawn(){
         const el = document.createElement('div');
         el.className = 'heart';
-        el.textContent = Math.random()>.45 ? "?" : "?";
+        el.textContent = Math.random()>.45"?" : "?";
         el.style.left = (2 + Math.random()*96) + 'vw';
         el.style.bottom = '-24px';
         el.style.color = colors[(Math.random()*colors.length)|0];
@@ -164,9 +164,7 @@
     });
   </script>
 
-  <!-- Canvas Hearts background (soft, subtle, same as life.html) -->
-  <canvas id="fxCanvas"></canvas>
-  <script>
+  <!-- Canvas Hearts background (soft, subtle, same as life.html) --><script>
     (function(){
       const c=document.getElementById('fxCanvas');
       if(!c)return;
@@ -459,7 +457,7 @@
 
   function setPlaying(state) {
     playing = !!state;
-    btn.setAttribute('aria-pressed', playing ? 'true' : 'false');
+    btn.setAttribute('aria-pressed', playing'true' : 'false');
     if (playing) {
       btn.classList.add('playing');
       music.play().catch(()=>{});
@@ -489,7 +487,7 @@
   // show/hide volume popover on volDot click
   volDot.addEventListener('click', (e) => {
     const showing = volPop.classList.toggle('show');
-    volPop.setAttribute('aria-hidden', showing ? 'false' : 'true');
+    volPop.setAttribute('aria-hidden', showing'false' : 'true');
     if (showing) { // auto-hide after 6s
       setTimeout(()=>{ volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true'); }, 6000);
     }
