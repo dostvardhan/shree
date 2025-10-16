@@ -6,7 +6,7 @@
   <title>Upload — Shreshtha</title>
 
   <!-- CSP meta MUST be inside head (if used) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; coect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
 
   <!-- Auth / guard scripts (defer so DOM loads first) -->
   <script src="/auth0-spa-js.production.js"></script>
@@ -18,7 +18,7 @@
     *{box-sizing:border-box}
     body{margin:0;font-family:"Playfair Display",serif;color:var(--text);background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red));min-height:100vh}
     header{text-align:center;padding:24px 12px}
-    .logo{font-family:"Italianno",cursive;font-size:38px;text-shadow:0 2px 10px rgba(0,0,0,.15)}
+    .logo{font-family:"Italiao",cursive;font-size:38px;text-shadow:0 2px 10px rgba(0,0,0,.15)}
     main{max-width:720px;margin:20px auto;padding:0 18px}
     form.card{background:rgba(255,255,255,.14);padding:18px;border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.22)}
     input[type="file"], input[type="text"], textarea{width:100%;padding:10px 12px;margin:0 0 12px;border:0;border-radius:12px}
@@ -152,7 +152,7 @@
     let W = 0, H = 0, hearts = [];
     const COLORS = ['#dff7ff','#fff9d6','#ffe9d2','#ffdce6','#e9f7e9','#eae8ff','#fff0f6','#fff4de'];
     function R(a,b){ return Math.random()*(b-a)+a; }
-    function resize(){ W = innerWidth * DPR; H = innerHeight * DPR; c.width = W; c.height = H; c.style.width='100vw'; c.style.height='100vh'; }
+    function resize(){ W = ierWidth * DPR; H = ierHeight * DPR; c.width = W; c.height = H; c.style.width='100vw'; c.style.height='100vh'; }
     function spawn(){ if(hearts.length>22) return; hearts.push({ x:R(0,W), y:H+R(8*DPR,160*DPR), s:R(12,34), vx:R(-6,6), vy:-R(12,32), a:R(.55,.98), r:R(-.5,.5), vr:R(-.012,.012), color: COLORS[Math.floor(Math.random()*COLORS.length)] }); }
     function drawHeart(px,py,scale,rot,alpha,color){ ctx.save(); ctx.translate(px,py); ctx.rotate(rot); ctx.scale(scale,scale); ctx.globalAlpha = Math.min(1, alpha * 1.05); ctx.shadowColor = color; ctx.shadowBlur = 14 * scale; const g = ctx.createRadialGradient(0,-0.12,0.05,0,0.12,1.0); g.addColorStop(0,color); g.addColorStop(0.6,color); g.addColorStop(1,'rgba(255,255,255,0.08)'); ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0,-0.5); ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8); ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5); ctx.fill(); ctx.globalAlpha = 0.55 * alpha; ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.ellipse(0.18,-0.28,0.12,0.06,-0.4,0,Math.PI*2); ctx.fill(); ctx.restore(); ctx.shadowBlur = 0; }
     function tick(){ ctx.clearRect(0,0,W,H); if(Math.random() < 0.11) spawn(); hearts.forEach(h => { h.x += h.vx * 0.016; h.y += h.vy * 0.016; h.r += h.vr; h.a -= 0.0009; }); hearts = hearts.filter(h => h.y > -120*DPR && h.a > 0.02); hearts.forEach(h => drawHeart(h.x,h.y,(h.s/50)*DPR,h.r,h.a,h.color)); requestAnimationFrame(tick); }
@@ -364,175 +364,28 @@
 })();
 </script>
 
-<!-- MUSIC-HEART-SNIPPET: start -->
-<style id="music-heart-style">
-  #musicHeartBtn {
-    position: fixed;
-    right: 18px;
-    bottom: 18px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0);
-    box-shadow: 0 6px 22px rgba(220,80,110,0.18);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    cursor: pointer;
-    border: none;
-    transition: transform .16s ease, box-shadow .16s ease, opacity .2s ease;
-    opacity: 0.98;
-  }
-  #musicHeartBtn:active { transform: scale(.96); }
-  #musicHeartBtn.playing { box-shadow: 0 12px 36px rgba(220,80,110,0.28); transform: scale(1.04); }
-  #musicHeartBtn .heart { font-size: 22px; line-height:1; user-select:none; }
-  /* subtle pulsate when playing */
-  @keyframes heartPulse { 0% { transform: scale(1); } 50% { transform: scale(1.06); } 100% { transform: scale(1); } }
-  #musicHeartBtn.playing .heart { animation: heartPulse 1.6s infinite ease-in-out; transform-origin:center; }
-</style>
 
+<!-- MUSIC HEART FIXED -->
 <audio id="bgMusicHeart" loop preload="auto" style="display:none">
   <source src="/music/bg.mp3" type="audio/mpeg">
 </audio>
-
-<button id="musicHeartBtn" aria-label="Play background music" title="Play / Pause background music" type="button">
-  <span class="heart" aria-hidden="true">♡</span>
-</button>
-
+<button id="musicHeartBtn" style="position:fixed;right:20px;bottom:20px;width:54px;height:54px;border-radius:50%;border:none;background:radial-gradient(circle at 30% 30%,#ffd6e0,#ff9fb0);box-shadow:0 6px 20px rgba(0,0,0,0.15);cursor:pointer;z-index:9999;display:flex;align-items:center;justify-content:center;font-size:22px;">♡</button>
 <script>
 (function(){
-  try {
-    const audioId = 'bgMusicHeart';
-    const btnId = 'musicHeartBtn';
-    let playedOnce = false;
-
-    // ensure single audio element
-    let audio = document.getElementById(audioId);
-    if (!audio) {
-      audio = document.createElement('audio');
-      audio.id = audioId;
-      audio.loop = true;
-      audio.preload = 'auto';
-      const src = document.createElement('source');
-      src.src = '/music/bg.mp3';
-      src.type = 'audio/mpeg';
-      audio.appendChild(src);
-      audio.style.display = 'none';
-      document.body.appendChild(audio);
-    }
-
-    // ensure single button
-    let btn = document.getElementById(btnId);
-    if (!btn) {
-      btn = document.createElement('button');
-      btn.id = btnId;
-      btn.type = 'button';
-      btn.title = 'Play / Pause background music';
-      btn.innerHTML = '<span class="heart">♡</span>';
-      document.body.appendChild(btn);
-    }
-
-    // restore saved volume/state
-    try {
-      const sv = localStorage.getItem('shree_music_volume');
-      if (sv !== null) {
-        const v = Math.max(0, Math.min(1, parseFloat(sv)));
-        audio.volume = isNaN(v) ? 0.6 : v;
-      } else {
-        audio.volume = 0.6;
-      }
-      const sp = localStorage.getItem('shree_music_playing');
-      if (sp === '1') {
-        // remember that user wanted playback; but still respect autoplay policy
-        // we will try to play on the first user interaction below
-      }
-    } catch(e){ /* ignore storage errors */ }
-
-    function updateBtnUI() {
-      const heart = btn.querySelector('.heart');
-      if (audio && !audio.paused) {
-        btn.classList.add('playing');
-        if (heart) heart.textContent = '❤';
-        btn.setAttribute('aria-pressed','true');
-      } else {
-        btn.classList.remove('playing');
-        if (heart) heart.textContent = '♡';
-        btn.setAttribute('aria-pressed','false');
-      }
-    }
-
-    // try play now (best-effort). If blocked promise will reject.
-    function tryPlay() {
-      if (!audio) return Promise.reject('no-audio');
-      return audio.play().then(() => {
-        localStorage.setItem('shree_music_playing','1');
-        playedOnce = true;
-        updateBtnUI();
-      }).catch((e) => {
-        // autoplay blocked; wait for user interaction
-        return Promise.reject(e);
-      });
-    }
-
-    // toggle on button
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (audio.paused) {
-        audio.play().then(()=> {
-          localStorage.setItem('shree_music_playing','1');
-          updateBtnUI();
-        }).catch(()=> {
-          // ignore
-        });
-      } else {
-        audio.pause();
-        localStorage.setItem('shree_music_playing','0');
-        updateBtnUI();
-      }
-    });
-
-    // when audio starts/stops update UI
-    audio.addEventListener('play', updateBtnUI);
-    audio.addEventListener('pause', updateBtnUI);
-
-    // try autoplay on load (may be blocked)
-    tryPlay().catch(()=> {
-      // if blocked, show button and attach one-time user-interaction handler to start playback
-      updateBtnUI();
-      function userStart() {
-        if (playedOnce) return;
-        audio.play().then(()=> {
-          localStorage.setItem('shree_music_playing','1');
-          playedOnce = true;
-          updateBtnUI();
-          // remove listeners
-          window.removeEventListener('click', userStart, {capture:true});
-          window.removeEventListener('touchstart', userStart, {passive:true});
-          window.removeEventListener('keydown', userStart, {capture:true});
-        }).catch(()=>{ /* still blocked */ });
-      }
-      window.addEventListener('click', userStart, {capture:true});
-      window.addEventListener('touchstart', userStart, {passive:true});
-      window.addEventListener('keydown', userStart, {capture:true});
-    });
-
-    // persist volume changes if any external control modifies audio.volume
-    audio.addEventListener('volumechange', ()=> {
-      try { localStorage.setItem('shree_music_volume', String(audio.volume)); } catch(e){}
-    });
-
-    // initial UI sync
-    updateBtnUI();
-
-  } catch(err) {
-    console.warn('Music heart snippet error', err);
-  }
+ const a=document.getElementById("bgMusicHeart"),b=document.getElementById("musicHeartBtn");
+ if(!a||!b)return;
+ function u(){b.textContent=a.paused?"♡":"❤";}
+ b.onclick=()=>{a.paused?a.play():a.pause();};
+ a.onplay=a.onpause=u;
+ document.body.addEventListener("click",()=>{a.play().catch(()=>{})},{once:true});
+ u();
 })();
 </script>
-<!-- MUSIC-HEART-SNIPPET: end -->
+<!-- /MUSIC HEART FIXED -->
 </body>
 </html>
+
+
 
 
 

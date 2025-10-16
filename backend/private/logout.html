@@ -50,174 +50,27 @@
     })();
   </script>
 
-<!-- MUSIC-HEART-SNIPPET: start -->
-<style id="music-heart-style">
-  #musicHeartBtn {
-    position: fixed;
-    right: 18px;
-    bottom: 18px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0);
-    box-shadow: 0 6px 22px rgba(220,80,110,0.18);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    cursor: pointer;
-    border: none;
-    transition: transform .16s ease, box-shadow .16s ease, opacity .2s ease;
-    opacity: 0.98;
-  }
-  #musicHeartBtn:active { transform: scale(.96); }
-  #musicHeartBtn.playing { box-shadow: 0 12px 36px rgba(220,80,110,0.28); transform: scale(1.04); }
-  #musicHeartBtn .heart { font-size: 22px; line-height:1; user-select:none; }
-  /* subtle pulsate when playing */
-  @keyframes heartPulse { 0% { transform: scale(1); } 50% { transform: scale(1.06); } 100% { transform: scale(1); } }
-  #musicHeartBtn.playing .heart { animation: heartPulse 1.6s infinite ease-in-out; transform-origin:center; }
-</style>
 
+<!-- MUSIC HEART FIXED -->
 <audio id="bgMusicHeart" loop preload="auto" style="display:none">
   <source src="/music/bg.mp3" type="audio/mpeg">
 </audio>
-
-<button id="musicHeartBtn" aria-label="Play background music" title="Play / Pause background music" type="button">
-  <span class="heart" aria-hidden="true">♡</span>
-</button>
-
+<button id="musicHeartBtn" style="position:fixed;right:20px;bottom:20px;width:54px;height:54px;border-radius:50%;border:none;background:radial-gradient(circle at 30% 30%,#ffd6e0,#ff9fb0);box-shadow:0 6px 20px rgba(0,0,0,0.15);cursor:pointer;z-index:9999;display:flex;align-items:center;justify-content:center;font-size:22px;">♡</button>
 <script>
 (function(){
-  try {
-    const audioId = 'bgMusicHeart';
-    const btnId = 'musicHeartBtn';
-    let playedOnce = false;
-
-    // ensure single audio element
-    let audio = document.getElementById(audioId);
-    if (!audio) {
-      audio = document.createElement('audio');
-      audio.id = audioId;
-      audio.loop = true;
-      audio.preload = 'auto';
-      const src = document.createElement('source');
-      src.src = '/music/bg.mp3';
-      src.type = 'audio/mpeg';
-      audio.appendChild(src);
-      audio.style.display = 'none';
-      document.body.appendChild(audio);
-    }
-
-    // ensure single button
-    let btn = document.getElementById(btnId);
-    if (!btn) {
-      btn = document.createElement('button');
-      btn.id = btnId;
-      btn.type = 'button';
-      btn.title = 'Play / Pause background music';
-      btn.innerHTML = '<span class="heart">♡</span>';
-      document.body.appendChild(btn);
-    }
-
-    // restore saved volume/state
-    try {
-      const sv = localStorage.getItem('shree_music_volume');
-      if (sv !== null) {
-        const v = Math.max(0, Math.min(1, parseFloat(sv)));
-        audio.volume = isNaN(v) ? 0.6 : v;
-      } else {
-        audio.volume = 0.6;
-      }
-      const sp = localStorage.getItem('shree_music_playing');
-      if (sp === '1') {
-        // remember that user wanted playback; but still respect autoplay policy
-        // we will try to play on the first user interaction below
-      }
-    } catch(e){ /* ignore storage errors */ }
-
-    function updateBtnUI() {
-      const heart = btn.querySelector('.heart');
-      if (audio && !audio.paused) {
-        btn.classList.add('playing');
-        if (heart) heart.textContent = '❤';
-        btn.setAttribute('aria-pressed','true');
-      } else {
-        btn.classList.remove('playing');
-        if (heart) heart.textContent = '♡';
-        btn.setAttribute('aria-pressed','false');
-      }
-    }
-
-    // try play now (best-effort). If blocked promise will reject.
-    function tryPlay() {
-      if (!audio) return Promise.reject('no-audio');
-      return audio.play().then(() => {
-        localStorage.setItem('shree_music_playing','1');
-        playedOnce = true;
-        updateBtnUI();
-      }).catch((e) => {
-        // autoplay blocked; wait for user interaction
-        return Promise.reject(e);
-      });
-    }
-
-    // toggle on button
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (audio.paused) {
-        audio.play().then(()=> {
-          localStorage.setItem('shree_music_playing','1');
-          updateBtnUI();
-        }).catch(()=> {
-          // ignore
-        });
-      } else {
-        audio.pause();
-        localStorage.setItem('shree_music_playing','0');
-        updateBtnUI();
-      }
-    });
-
-    // when audio starts/stops update UI
-    audio.addEventListener('play', updateBtnUI);
-    audio.addEventListener('pause', updateBtnUI);
-
-    // try autoplay on load (may be blocked)
-    tryPlay().catch(()=> {
-      // if blocked, show button and attach one-time user-interaction handler to start playback
-      updateBtnUI();
-      function userStart() {
-        if (playedOnce) return;
-        audio.play().then(()=> {
-          localStorage.setItem('shree_music_playing','1');
-          playedOnce = true;
-          updateBtnUI();
-          // remove listeners
-          window.removeEventListener('click', userStart, {capture:true});
-          window.removeEventListener('touchstart', userStart, {passive:true});
-          window.removeEventListener('keydown', userStart, {capture:true});
-        }).catch(()=>{ /* still blocked */ });
-      }
-      window.addEventListener('click', userStart, {capture:true});
-      window.addEventListener('touchstart', userStart, {passive:true});
-      window.addEventListener('keydown', userStart, {capture:true});
-    });
-
-    // persist volume changes if any external control modifies audio.volume
-    audio.addEventListener('volumechange', ()=> {
-      try { localStorage.setItem('shree_music_volume', String(audio.volume)); } catch(e){}
-    });
-
-    // initial UI sync
-    updateBtnUI();
-
-  } catch(err) {
-    console.warn('Music heart snippet error', err);
-  }
+ const a=document.getElementById("bgMusicHeart"),b=document.getElementById("musicHeartBtn");
+ if(!a||!b)return;
+ function u(){b.textContent=a.paused?"♡":"❤";}
+ b.onclick=()=>{a.paused?a.play():a.pause();};
+ a.onplay=a.onpause=u;
+ document.body.addEventListener("click",()=>{a.play().catch(()=>{})},{once:true});
+ u();
 })();
 </script>
-<!-- MUSIC-HEART-SNIPPET: end -->
+<!-- /MUSIC HEART FIXED -->
 </body>
 </html>
+
+
 
 

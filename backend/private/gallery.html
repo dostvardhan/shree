@@ -1,7 +1,7 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; coect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Shreshtha – Gallery</title>
@@ -28,7 +28,7 @@
   }
 
   header { text-align:center; padding:24px 12px; position:relative; z-index:100; }
-  .logo{ font-family:"Italianno",cursive; font-size:46px; text-shadow:0 2px 10px rgba(0,0,0,.25); }
+  .logo{ font-family:"Italiao",cursive; font-size:46px; text-shadow:0 2px 10px rgba(0,0,0,.25); }
   nav{ margin-top:8px; }
   nav a{
     margin:0 12px; padding:8px 18px; background:rgba(255,255,255,.15);
@@ -137,7 +137,7 @@
 */
 (function(){
   const PAGE_SIZE = (() => {
-    const w = window.innerWidth || 0;
+    const w = window.ierWidth || 0;
     if (w >= 1400) return 40;
     if (w >= 1000) return 30;
     if (w >= 700)  return 24;
@@ -229,7 +229,7 @@
       if (!items.length) throw new Error('no-items');
 
       // Render
-      grid.innerHTML = '';
+      grid.ierHTML = '';
       items.forEach(f => {
         // Use streaming endpoint for secure access
         const src = `/api/file/${encodeURIComponent(f.id)}`;
@@ -286,7 +286,7 @@
 
       if (!list || list.length === 0) throw new Error('no local photos found');
 
-      grid.innerHTML = '';
+      grid.ierHTML = '';
       list.forEach(item => {
         const src = item.url || `/private/photos/${item.name}`;
         const caption = item.caption || item.name || '';
@@ -340,7 +340,7 @@
     if (okApi) return;
     const okLocal = await loadFromLocal();
     if (!okLocal) {
-      grid.innerHTML = '';
+      grid.ierHTML = '';
       emptyEl.style.display = 'block';
       setStatus('');
     }
@@ -363,7 +363,7 @@
   const COLORS = ['#dff7ff','#fff6a6','#ffd89e','#ffb3c6','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
 
   function R(a,b){ return Math.random()*(b-a)+a; }
-  function resize(){ W = innerWidth * DPR; H = innerHeight * DPR; c.width = W; c.height = H; c.style.width = '100vw'; c.style.height = '100vh'; }
+  function resize(){ W = ierWidth * DPR; H = ierHeight * DPR; c.width = W; c.height = H; c.style.width = '100vw'; c.style.height = '100vh'; }
   function spawn(){
     if (hearts.length > 26) return;
     hearts.push({
@@ -715,175 +715,28 @@
 })();
 </script>
 
-<!-- MUSIC-HEART-SNIPPET: start -->
-<style id="music-heart-style">
-  #musicHeartBtn {
-    position: fixed;
-    right: 18px;
-    bottom: 18px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0);
-    box-shadow: 0 6px 22px rgba(220,80,110,0.18);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    cursor: pointer;
-    border: none;
-    transition: transform .16s ease, box-shadow .16s ease, opacity .2s ease;
-    opacity: 0.98;
-  }
-  #musicHeartBtn:active { transform: scale(.96); }
-  #musicHeartBtn.playing { box-shadow: 0 12px 36px rgba(220,80,110,0.28); transform: scale(1.04); }
-  #musicHeartBtn .heart { font-size: 22px; line-height:1; user-select:none; }
-  /* subtle pulsate when playing */
-  @keyframes heartPulse { 0% { transform: scale(1); } 50% { transform: scale(1.06); } 100% { transform: scale(1); } }
-  #musicHeartBtn.playing .heart { animation: heartPulse 1.6s infinite ease-in-out; transform-origin:center; }
-</style>
 
+<!-- MUSIC HEART FIXED -->
 <audio id="bgMusicHeart" loop preload="auto" style="display:none">
   <source src="/music/bg.mp3" type="audio/mpeg">
 </audio>
-
-<button id="musicHeartBtn" aria-label="Play background music" title="Play / Pause background music" type="button">
-  <span class="heart" aria-hidden="true">♡</span>
-</button>
-
+<button id="musicHeartBtn" style="position:fixed;right:20px;bottom:20px;width:54px;height:54px;border-radius:50%;border:none;background:radial-gradient(circle at 30% 30%,#ffd6e0,#ff9fb0);box-shadow:0 6px 20px rgba(0,0,0,0.15);cursor:pointer;z-index:9999;display:flex;align-items:center;justify-content:center;font-size:22px;">♡</button>
 <script>
 (function(){
-  try {
-    const audioId = 'bgMusicHeart';
-    const btnId = 'musicHeartBtn';
-    let playedOnce = false;
-
-    // ensure single audio element
-    let audio = document.getElementById(audioId);
-    if (!audio) {
-      audio = document.createElement('audio');
-      audio.id = audioId;
-      audio.loop = true;
-      audio.preload = 'auto';
-      const src = document.createElement('source');
-      src.src = '/music/bg.mp3';
-      src.type = 'audio/mpeg';
-      audio.appendChild(src);
-      audio.style.display = 'none';
-      document.body.appendChild(audio);
-    }
-
-    // ensure single button
-    let btn = document.getElementById(btnId);
-    if (!btn) {
-      btn = document.createElement('button');
-      btn.id = btnId;
-      btn.type = 'button';
-      btn.title = 'Play / Pause background music';
-      btn.innerHTML = '<span class="heart">♡</span>';
-      document.body.appendChild(btn);
-    }
-
-    // restore saved volume/state
-    try {
-      const sv = localStorage.getItem('shree_music_volume');
-      if (sv !== null) {
-        const v = Math.max(0, Math.min(1, parseFloat(sv)));
-        audio.volume = isNaN(v) ? 0.6 : v;
-      } else {
-        audio.volume = 0.6;
-      }
-      const sp = localStorage.getItem('shree_music_playing');
-      if (sp === '1') {
-        // remember that user wanted playback; but still respect autoplay policy
-        // we will try to play on the first user interaction below
-      }
-    } catch(e){ /* ignore storage errors */ }
-
-    function updateBtnUI() {
-      const heart = btn.querySelector('.heart');
-      if (audio && !audio.paused) {
-        btn.classList.add('playing');
-        if (heart) heart.textContent = '❤';
-        btn.setAttribute('aria-pressed','true');
-      } else {
-        btn.classList.remove('playing');
-        if (heart) heart.textContent = '♡';
-        btn.setAttribute('aria-pressed','false');
-      }
-    }
-
-    // try play now (best-effort). If blocked promise will reject.
-    function tryPlay() {
-      if (!audio) return Promise.reject('no-audio');
-      return audio.play().then(() => {
-        localStorage.setItem('shree_music_playing','1');
-        playedOnce = true;
-        updateBtnUI();
-      }).catch((e) => {
-        // autoplay blocked; wait for user interaction
-        return Promise.reject(e);
-      });
-    }
-
-    // toggle on button
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (audio.paused) {
-        audio.play().then(()=> {
-          localStorage.setItem('shree_music_playing','1');
-          updateBtnUI();
-        }).catch(()=> {
-          // ignore
-        });
-      } else {
-        audio.pause();
-        localStorage.setItem('shree_music_playing','0');
-        updateBtnUI();
-      }
-    });
-
-    // when audio starts/stops update UI
-    audio.addEventListener('play', updateBtnUI);
-    audio.addEventListener('pause', updateBtnUI);
-
-    // try autoplay on load (may be blocked)
-    tryPlay().catch(()=> {
-      // if blocked, show button and attach one-time user-interaction handler to start playback
-      updateBtnUI();
-      function userStart() {
-        if (playedOnce) return;
-        audio.play().then(()=> {
-          localStorage.setItem('shree_music_playing','1');
-          playedOnce = true;
-          updateBtnUI();
-          // remove listeners
-          window.removeEventListener('click', userStart, {capture:true});
-          window.removeEventListener('touchstart', userStart, {passive:true});
-          window.removeEventListener('keydown', userStart, {capture:true});
-        }).catch(()=>{ /* still blocked */ });
-      }
-      window.addEventListener('click', userStart, {capture:true});
-      window.addEventListener('touchstart', userStart, {passive:true});
-      window.addEventListener('keydown', userStart, {capture:true});
-    });
-
-    // persist volume changes if any external control modifies audio.volume
-    audio.addEventListener('volumechange', ()=> {
-      try { localStorage.setItem('shree_music_volume', String(audio.volume)); } catch(e){}
-    });
-
-    // initial UI sync
-    updateBtnUI();
-
-  } catch(err) {
-    console.warn('Music heart snippet error', err);
-  }
+ const a=document.getElementById("bgMusicHeart"),b=document.getElementById("musicHeartBtn");
+ if(!a||!b)return;
+ function u(){b.textContent=a.paused?"♡":"❤";}
+ b.onclick=()=>{a.paused?a.play():a.pause();};
+ a.onplay=a.onpause=u;
+ document.body.addEventListener("click",()=>{a.play().catch(()=>{})},{once:true});
+ u();
 })();
 </script>
-<!-- MUSIC-HEART-SNIPPET: end -->
+<!-- /MUSIC HEART FIXED -->
 </body>
 </html>
+
+
 
 
 
