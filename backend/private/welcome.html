@@ -225,7 +225,7 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
   .music-btn:focus, .vol-dot:focus, .vol-btn:focus { outline: 3px solid rgba(255,200,200,0.6); outline-offset:3px; }
 </style>
 
-<!--\ Improved\ Music\ Control\ \(updated\)\ --><style>\ \ /\*\ small\ override\ for\ headings\ color\ &\ smoother\ gradient\ \(site-wide\ private\ pages\)\ \*/\ \ h1\.site-title,\ \.page-title,\ h1\ \{\ color:\ \#6d232b\ !important;\ text-shadow:\ 0\ 6px\ 22px\ rgba\(0,0,0,0\.12\);\ }\ \ /\*\ music\ control\ \(prettier\)\ \*/\ \ \.music-btn\ \{\ \ \ \ position:\ fixed;\ \ \ \ bottom:\ 22px;\ \ \ \ right:\ 22px;\ \ \ \ width:\ 58px;\ \ \ \ height:\ 58px;\ \ \ \ border-radius:\ 50%;\ \ \ \ background:\ linear-gradient\(145deg,\#fff\ 0%,\#ffeff0\ 100%\);\ \ \ \ box-shadow:\ 0\ 10px\ 30px\ rgba\(220,90,120,0\.18\);\ \ \ \ display:flex;align-items:center;justify-content:center;\ \ \ \ z-index:160;\ cursor:pointer;\ border:\ none;\ transition:\ transform\ \.16s\ ease,\ box-shadow\ \.16s\ ease;\ \ \ \ backdrop-filter:\ blur\(4px\);\ \ }\ \ \.music-btn:hover\ \{\ transform:\ translateY\(-3px\);\ box-shadow:\ 0\ 16px\ 36px\ rgba\(220,90,120,0\.25\);\ }\ \ \.music-btn\ svg\ \{\ width:26px;\ height:26px;\ display:block;\ }\ \ \.music-btn\ \.heart\ \{\ fill:\#ff6b81;\ transition:\ transform\ \.18s\ ease,\ fill\ \.22s\ ease;\ }\ \ \.music-btn\.playing\ \.heart\ \{\ transform:\ scale\(1\.12\);\ fill:\#ffd166;\ filter:\ drop-shadow\(0\ 8px\ 18px\ rgba\(255,165,70,0\.18\)\);\ }\ \ /\*\ small\ gold\ badge\ \*/\ \ \.music-badge\ \{\ \ \ \ position:absolute;\ right:-6px;\ top:-6px;\ \ \ \ width:18px;height:18px;border-radius:50%;\ \ \ \ background:\ radial-gradient\(circle\ at\ 30%\ 30%,\ \#fff8e6,\ \#ffd76d\);\ \ \ \ border:2px\ solid\ rgba\(255,255,255,0\.9\);\ \ \ \ box-shadow:0\ 6px\ 14px\ rgba\(255,160,70,0\.18\);\ \ }\ \ \.vol-pop\ \{\ position:\ fixed;\ bottom:\ 88px;\ right:\ 16px;\ width:220px;\ padding:10px\ 12px;\ \ \ \ \ \ \ \ \ \ \ \ \ background:\ linear-gradient\(180deg,\ rgba\(255,255,255,0\.98\),\ rgba\(255,250,248,0\.95\)\);\ \ \ \ \ \ \ \ \ \ \ \ border-radius:12px;\ box-shadow:0\ 12px\ 30px\ rgba\(0,0,0,0\.12\);\ z-index:170;\ display:none;\ gap:10px;\ align-items:center;\ }\ \ \.vol-pop\.show\ \{\ display:flex;\ }\ \ \.vol-range\ \{\ -webkit-appearance:none;\ width:130px;\ height:7px;\ border-radius:999px;\ background:\ linear-gradient\(90deg,\#ffc1c1,\#ffd88a\);\ outline:none;\ }\ \ \.vol-range::-webkit-slider-thumb\ \{\ -webkit-appearance:none;\ width:16px;height:16px;border-radius:50%;\ background:\#fff;\ box-shadow:0\ 4px\ 10px\ rgba\(0,0,0,0\.12\);\ border:3px\ solid\ \#ffb0a0;\ }</style><button\ id="musicButton"\ class="music-btn"\ aria-label="Toggle\ music">\ \ <svg\ viewBox="0\ 0\ 24\ 24"\ aria-hidden="true"><path\ class="heart"\ d="M12\ 21s-7\.33-4\.94-9\.33-7\.02C\.8\ 11\.9\ 2\.1\ 7\.9\ 5\.5\ 6\.3\ 7\.2\ 5\.4\ 9\.1\ 6\ 10\ 7\.3c\.9-1\.3\ 2\.8-1\.9\ 4\.5-1\ 3\.4\ 1\.6\ 4\.7\ 5\.6\ 2\.8\ 7\.68C19\.33\ 16\.06\ 12\ 21\ 12\ 21z"/></svg>\ \ <span\ class="music-badge"\ id="musicBadge"\ aria-hidden="true"></span></button><div\ id="volPop"\ class="vol-pop"\ aria-hidden="true">\ \ <div\ style="font-size:13px;color:\#6b2b2b">Vol</div>\ \ <input\ id="volRange"\ class="vol-range"\ type="range"\ min="0"\ max="100"\ step="1"\ value="60"\ aria-label="Volume"\ />\ \ <button\ id="muteBtn"\ style="border:none;background:\#fff;padding:6px;border-radius:8px;box-shadow:0\ 4px\ 8px\ rgba\(0,0,0,0\.06\);cursor:pointer"\ aria-label="Mute/unmute">🔈</button></div><audio\ id="bgMusic"\ loop\ preload="auto"><source\ src="/music/bg\.mp3"\ type="audio/mpeg"\ /></audio><script>\(\(\)\ =>\ \{\ \ const\ btn\ =\ document\.getElementById\('musicButton'\),\ badge\ =\ document\.getElementById\('musicBadge'\),\ \ \ \ \ \ \ \ volPop\ =\ document\.getElementById\('volPop'\),\ volRange\ =\ document\.getElementById\('volRange'\),\ \ \ \ \ \ \ \ muteBtn\ =\ document\.getElementById\('muteBtn'\),\ music\ =\ document\.getElementById\('bgMusic'\);\ \ function\ setVolume\(v\)\{\ music\.volume\ =\ Math\.max\(0,Math\.min\(100,v\)\)/100;\ try\{localStorage\.setItem\('shree_music_volume',String\(v\)\);}catch\(e\)\{}\ }\ \ function\ setPlaying\(p\)\{\ \ \ \ if\(p\)\{\ btn\.classList\.add\('playing'\);\ music\.play\(\)\.catch\(\(\)=>\{}\);\ localStorage\.setItem\('shree_music_playing','1'\);\ }\ \ \ \ \ else\ \{\ btn\.classList\.remove\('playing'\);\ music\.pause\(\);\ localStorage\.setItem\('shree_music_playing','0'\);\ }\ \ }\ \ //\ restore\ state\ \ try\{\ const\ sv\ =\ localStorage\.getItem\('shree_music_volume'\);\ if\(sv!==null\)\ volRange\.value\ =\ sv;\ setVolume\(volRange\.value\);\ }catch\(e\)\{}\ \ try\{\ if\(localStorage\.getItem\('shree_music_playing'\)==='1'\)\{\ music\.play\(\)\.then\(\(\)=>btn\.classList\.add\('playing'\)\)\.catch\(\(\)=>\{}\);\ }\ }catch\(e\)\{}\ \ btn\.addEventListener\('click',\ \(e\)=>\ \{\ if\(e\.target\.id==='musicBadge'\)\ return;\ setPlaying\(!btn\.classList\.contains\('playing'\)\);\ }\);\ \ badge\.addEventListener\('click',\ \(e\)=>\ \{\ volPop\.classList\.toggle\('show'\);\ volPop\.setAttribute\('aria-hidden',\ volPop\.classList\.contains\('show'\)\?\ 'false':'true'\);\ e\.stopPropagation\(\);\ }\);\ \ volRange\.addEventListener\('input',\ \(\)=>\{\ setVolume\(volRange\.value\);\ }\);\ \ muteBtn\.addEventListener\('click',\ \(\)=>\{\ if\(music\.volume>0\)\{\ volRange\.dataset\.prev\ =\ volRange\.value;\ volRange\.value=0;\ }\ else\ \{\ volRange\.value\ =\ volRange\.dataset\.prev\ \|\|\ 60;\ }\ setVolume\(volRange\.value\);\ }\);\ \ document\.addEventListener\('click',\ \(e\)=>\{\ if\(!e\.target\.closest\('\.vol-pop'\)\ &&\ !e\.target\.closest\('\#musicBadge'\)\)\{\ volPop\.classList\.remove\('show'\);\ volPop\.setAttribute\('aria-hidden','true'\);\ }}\);\ \ music\.addEventListener\('play',\ \(\)=>\ btn\.classList\.add\('playing'\)\);\ \ music\.addEventListener\('pause',\ \(\)=>\ btn\.classList\.remove\('playing'\)\);}\)\(\);</script>
+<!--\ Improved\ Music\ Control\ \(updated\)\ --><style>\ \ /\*\ small\ override\ for\ headings\ color\ &\ smoother\ gradient\ \(site-wide\ private\ pages\)\ \*/\ \ h1\.site-title,\ \.page-title,\ h1\ \{\ color:\ \#6d232b\ !important;\ text-shadow:\ 0\ 6px\ 22px\ rgba\(0,0,0,0\.12\);\ }\ \ /\*\ music\ control\ \(prettier\)\ \*/\ \ \.music-btn\ \{\ \ \ \ position:\ fixed;\ \ \ \ bottom:\ 22px;\ \ \ \ right:\ 22px;\ \ \ \ width:\ 58px;\ \ \ \ height:\ 58px;\ \ \ \ border-radius:\ 50%;\ \ \ \ background:\ linear-gradient\(145deg,\#fff\ 0%,\#ffeff0\ 100%\);\ \ \ \ box-shadow:\ 0\ 10px\ 30px\ rgba\(220,90,120,0\.18\);\ \ \ \ display:flex;align-items:center;justify-content:center;\ \ \ \ z-index:160;\ cursor:pointer;\ border:\ none;\ transition:\ transform\ \.16s\ ease,\ box-shadow\ \.16s\ ease;\ \ \ \ backdrop-filter:\ blur\(4px\);\ \ }\ \ \.music-btn:hover\ \{\ transform:\ translateY\(-3px\);\ box-shadow:\ 0\ 16px\ 36px\ rgba\(220,90,120,0\.25\);\ }\ \ \.music-btn\ svg\ \{\ width:26px;\ height:26px;\ display:block;\ }\ \ \.music-btn\ \.heart\ \{\ fill:\#ff6b81;\ transition:\ transform\ \.18s\ ease,\ fill\ \.22s\ ease;\ }\ \ \.music-btn\.playing\ \.heart\ \{\ transform:\ scale\(1\.12\);\ fill:\#ffd166;\ filter:\ drop-shadow\(0\ 8px\ 18px\ rgba\(255,165,70,0\.18\)\);\ }\ \ /\*\ small\ gold\ badge\ \*/\ \ \.music-badge\ \{\ \ \ \ position:absolute;\ right:-6px;\ top:-6px;\ \ \ \ width:18px;height:18px;border-radius:50%;\ \ \ \ background:\ radial-gradient\(circle\ at\ 30%\ 30%,\ \#fff8e6,\ \#ffd76d\);\ \ \ \ border:2px\ solid\ rgba\(255,255,255,0\.9\);\ \ \ \ box-shadow:0\ 6px\ 14px\ rgba\(255,160,70,0\.18\);\ \ }\ \ \.vol-pop\ \{\ position:\ fixed;\ bottom:\ 88px;\ right:\ 16px;\ width:220px;\ padding:10px\ 12px;\ \ \ \ \ \ \ \ \ \ \ \ \ background:\ linear-gradient\(180deg,\ rgba\(255,255,255,0\.98\),\ rgba\(255,250,248,0\.95\)\);\ \ \ \ \ \ \ \ \ \ \ \ border-radius:12px;\ box-shadow:0\ 12px\ 30px\ rgba\(0,0,0,0\.12\);\ z-index:170;\ display:none;\ gap:10px;\ align-items:center;\ }\ \ \.vol-pop\.show\ \{\ display:flex;\ }\ \ \.vol-range\ \{\ -webkit-appearance:none;\ width:130px;\ height:7px;\ border-radius:999px;\ background:\ linear-gradient\(90deg,\#ffc1c1,\#ffd88a\);\ outline:none;\ }\ \ \.vol-range::-webkit-slider-thumb\ \{\ -webkit-appearance:none;\ width:16px;height:16px;border-radius:50%;\ background:\#fff;\ box-shadow:0\ 4px\ 10px\ rgba\(0,0,0,0\.12\);\ border:3px\ solid\ \#ffb0a0;\ }</style><button\ id="musicButton"\ class="music-btn"\ aria-label="Toggle\ music">\ \ <svg\ viewBox="0\ 0\ 24\ 24"\ aria-hidden="true"><path\ class="heart"\ d="M12\ 21s-7\.33-4\.94-9\.33-7\.02C\.8\ 11\.9\ 2\.1\ 7\.9\ 5\.5\ 6\.3\ 7\.2\ 5\.4\ 9\.1\ 6\ 10\ 7\.3c\.9-1\.3\ 2\.8-1\.9\ 4\.5-1\ 3\.4\ 1\.6\ 4\.7\ 5\.6\ 2\.8\ 7\.68C19\.33\ 16\.06\ 12\ 21\ 12\ 21z"/></svg>\ \ <span\ class="music-badge"\ id="musicBadge"\ aria-hidden="true"></span></button><div\ id="volPop"\ class="vol-pop"\ aria-hidden="true">\ \ <div\ style="font-size:13px;color:\#6b2b2b">Vol</div>\ \ <input\ id="volRange"\ class="vol-range"\ type="range"\ min="0"\ max="100"\ step="1"\ value="60"\ aria-label="Volume"\ />\ \ <button\ id="muteBtn"\ style="border:none;background:\#fff;padding:6px;border-radius:8px;box-shadow:0\ 4px\ 8px\ rgba\(0,0,0,0\.06\);cursor:pointer"\ aria-label="Mute/unmute">🔈</button></div><script>\(\(\)\ =>\ \{\ \ const\ btn\ =\ document\.getElementById\('musicButton'\),\ badge\ =\ document\.getElementById\('musicBadge'\),\ \ \ \ \ \ \ \ volPop\ =\ document\.getElementById\('volPop'\),\ volRange\ =\ document\.getElementById\('volRange'\),\ \ \ \ \ \ \ \ muteBtn\ =\ document\.getElementById\('muteBtn'\),\ music\ =\ document\.getElementById\('bgMusic'\);\ \ function\ setVolume\(v\)\{\ music\.volume\ =\ Math\.max\(0,Math\.min\(100,v\)\)/100;\ try\{localStorage\.setItem\('shree_music_volume',String\(v\)\);}catch\(e\)\{}\ }\ \ function\ setPlaying\(p\)\{\ \ \ \ if\(p\)\{\ btn\.classList\.add\('playing'\);\ music\.play\(\)\.catch\(\(\)=>\{}\);\ localStorage\.setItem\('shree_music_playing','1'\);\ }\ \ \ \ \ else\ \{\ btn\.classList\.remove\('playing'\);\ music\.pause\(\);\ localStorage\.setItem\('shree_music_playing','0'\);\ }\ \ }\ \ //\ restore\ state\ \ try\{\ const\ sv\ =\ localStorage\.getItem\('shree_music_volume'\);\ if\(sv!==null\)\ volRange\.value\ =\ sv;\ setVolume\(volRange\.value\);\ }catch\(e\)\{}\ \ try\{\ if\(localStorage\.getItem\('shree_music_playing'\)==='1'\)\{\ music\.play\(\)\.then\(\(\)=>btn\.classList\.add\('playing'\)\)\.catch\(\(\)=>\{}\);\ }\ }catch\(e\)\{}\ \ btn\.addEventListener\('click',\ \(e\)=>\ \{\ if\(e\.target\.id==='musicBadge'\)\ return;\ setPlaying\(!btn\.classList\.contains\('playing'\)\);\ }\);\ \ badge\.addEventListener\('click',\ \(e\)=>\ \{\ volPop\.classList\.toggle\('show'\);\ volPop\.setAttribute\('aria-hidden',\ volPop\.classList\.contains\('show'\)\?\ 'false':'true'\);\ e\.stopPropagation\(\);\ }\);\ \ volRange\.addEventListener\('input',\ \(\)=>\{\ setVolume\(volRange\.value\);\ }\);\ \ muteBtn\.addEventListener\('click',\ \(\)=>\{\ if\(music\.volume>0\)\{\ volRange\.dataset\.prev\ =\ volRange\.value;\ volRange\.value=0;\ }\ else\ \{\ volRange\.value\ =\ volRange\.dataset\.prev\ \|\|\ 60;\ }\ setVolume\(volRange\.value\);\ }\);\ \ document\.addEventListener\('click',\ \(e\)=>\{\ if\(!e\.target\.closest\('\.vol-pop'\)\ &&\ !e\.target\.closest\('\#musicBadge'\)\)\{\ volPop\.classList\.remove\('show'\);\ volPop\.setAttribute\('aria-hidden','true'\);\ }}\);\ \ music\.addEventListener\('play',\ \(\)=>\ btn\.classList\.add\('playing'\)\);\ \ music\.addEventListener\('pause',\ \(\)=>\ btn\.classList\.remove\('playing'\)\);}\)\(\);</script>
 <!-- Improved Mini Music Player + Volume Popover (replaces older snippet) -->
 <style>
   /* --- smoother global background for private pages --- */
@@ -330,13 +330,7 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
   <button id="muteBtn" class="vol-btn" aria-pressed="false" title="Mute / unmute" aria-label="Mute or unmute">
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 10v4h4l5 4V6L8 10H4z"/></svg>
   </button>
-</div>
-
-<audio id="bgMusic" loop preload="auto">
-  <source src="/music/bg.mp3" type="audio/mpeg" />
-</audio>
-
-<script>
+</div><script>
 (() => {
   const btn = document.getElementById('musicButton');
   const volDot = document.getElementById('volDot');
@@ -435,66 +429,177 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
 
 })();
 </script>
-<!-- MUSIC SNIPPET: start -->
-<audio id="bgMusic" loop preload="auto" style="display:none">
+
+<!-- MUSIC-HEART-SNIPPET: start -->
+<style id="music-heart-style">
+  #musicHeartBtn {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0);
+    box-shadow: 0 6px 22px rgba(220,80,110,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    cursor: pointer;
+    border: none;
+    transition: transform .16s ease, box-shadow .16s ease, opacity .2s ease;
+    opacity: 0.98;
+  }
+  #musicHeartBtn:active { transform: scale(.96); }
+  #musicHeartBtn.playing { box-shadow: 0 12px 36px rgba(220,80,110,0.28); transform: scale(1.04); }
+  #musicHeartBtn .heart { font-size: 22px; line-height:1; user-select:none; }
+  /* subtle pulsate when playing */
+  @keyframes heartPulse { 0% { transform: scale(1); } 50% { transform: scale(1.06); } 100% { transform: scale(1); } }
+  #musicHeartBtn.playing .heart { animation: heartPulse 1.6s infinite ease-in-out; transform-origin:center; }
+</style>
+
+<audio id="bgMusicHeart" loop preload="auto" style="display:none">
   <source src="/music/bg.mp3" type="audio/mpeg">
 </audio>
 
-<button id="pageMusicBtn" aria-label="Play background music" title="Play music"
-  style="position:fixed; right:18px; bottom:18px; width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg,#fffafc,#ffeef2); border:none; box-shadow:0 8px 20px rgba(0,0,0,0.12); display:none; align-items:center; justify-content:center; z-index:9999; cursor:pointer;">
-  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
-    <path d="M8 5v14l11-7z" fill="#8B3B4B"></path>
-  </svg>
+<button id="musicHeartBtn" aria-label="Play background music" title="Play / Pause background music" type="button">
+  <span class="heart" aria-hidden="true">♡</span>
 </button>
 
 <script>
 (function(){
   try {
-    const audio = document.getElementById('bgMusic');
-    const btn = document.getElementById('pageMusicBtn');
+    const audioId = 'bgMusicHeart';
+    const btnId = 'musicHeartBtn';
+    let playedOnce = false;
 
-    // set sensible defaults if not present
-    if (audio) {
-      // restore volume if stored
-      try { const v = localStorage.getItem('shree_music_volume'); if (v !== null) audio.volume = Math.max(0, Math.min(1, parseFloat(v))); else audio.volume = 0.6; } catch(e){ audio.volume = 0.6; }
-
-      // try autoplay (best-effort)
-      audio.play().then(()=> {
-        // autoplay allowed — hide button
-        if (btn) btn.style.display = 'none';
-      }).catch(()=> {
-        // autoplay blocked — show play button
-        if (btn) btn.style.display = 'flex';
-      });
-
-      // clicking the fallback button will play/pause
-      if (btn) {
-        btn.addEventListener('click', function(e){
-          e.preventDefault();
-          if (audio.paused) {
-            audio.play().catch(()=>{ /* ignore */ });
-            btn.style.display = 'none';
-            try { localStorage.setItem('shree_music_playing','1'); } catch(e){}
-          } else {
-            audio.pause();
-            btn.style.display = 'flex';
-            try { localStorage.setItem('shree_music_playing','0'); } catch(e){}
-          }
-        });
-      }
-
-      // sync UI based on play/pause events
-      audio.addEventListener('play', ()=> { if (btn) btn.style.display = 'none'; });
-      audio.addEventListener('pause', ()=> { if (btn) btn.style.display = 'flex'; });
+    // ensure single audio element
+    let audio = document.getElementById(audioId);
+    if (!audio) {
+      audio = document.createElement('audio');
+      audio.id = audioId;
+      audio.loop = true;
+      audio.preload = 'auto';
+      const src = document.createElement('source');
+      src.src = '/music/bg.mp3';
+      src.type = 'audio/mpeg';
+      audio.appendChild(src);
+      audio.style.display = 'none';
+      document.body.appendChild(audio);
     }
+
+    // ensure single button
+    let btn = document.getElementById(btnId);
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.id = btnId;
+      btn.type = 'button';
+      btn.title = 'Play / Pause background music';
+      btn.innerHTML = '<span class="heart">♡</span>';
+      document.body.appendChild(btn);
+    }
+
+    // restore saved volume/state
+    try {
+      const sv = localStorage.getItem('shree_music_volume');
+      if (sv !== null) {
+        const v = Math.max(0, Math.min(1, parseFloat(sv)));
+        audio.volume = isNaN(v) ? 0.6 : v;
+      } else {
+        audio.volume = 0.6;
+      }
+      const sp = localStorage.getItem('shree_music_playing');
+      if (sp === '1') {
+        // remember that user wanted playback; but still respect autoplay policy
+        // we will try to play on the first user interaction below
+      }
+    } catch(e){ /* ignore storage errors */ }
+
+    function updateBtnUI() {
+      const heart = btn.querySelector('.heart');
+      if (audio && !audio.paused) {
+        btn.classList.add('playing');
+        if (heart) heart.textContent = '❤';
+        btn.setAttribute('aria-pressed','true');
+      } else {
+        btn.classList.remove('playing');
+        if (heart) heart.textContent = '♡';
+        btn.setAttribute('aria-pressed','false');
+      }
+    }
+
+    // try play now (best-effort). If blocked promise will reject.
+    function tryPlay() {
+      if (!audio) return Promise.reject('no-audio');
+      return audio.play().then(() => {
+        localStorage.setItem('shree_music_playing','1');
+        playedOnce = true;
+        updateBtnUI();
+      }).catch((e) => {
+        // autoplay blocked; wait for user interaction
+        return Promise.reject(e);
+      });
+    }
+
+    // toggle on button
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (audio.paused) {
+        audio.play().then(()=> {
+          localStorage.setItem('shree_music_playing','1');
+          updateBtnUI();
+        }).catch(()=> {
+          // ignore
+        });
+      } else {
+        audio.pause();
+        localStorage.setItem('shree_music_playing','0');
+        updateBtnUI();
+      }
+    });
+
+    // when audio starts/stops update UI
+    audio.addEventListener('play', updateBtnUI);
+    audio.addEventListener('pause', updateBtnUI);
+
+    // try autoplay on load (may be blocked)
+    tryPlay().catch(()=> {
+      // if blocked, show button and attach one-time user-interaction handler to start playback
+      updateBtnUI();
+      function userStart() {
+        if (playedOnce) return;
+        audio.play().then(()=> {
+          localStorage.setItem('shree_music_playing','1');
+          playedOnce = true;
+          updateBtnUI();
+          // remove listeners
+          window.removeEventListener('click', userStart, {capture:true});
+          window.removeEventListener('touchstart', userStart, {passive:true});
+          window.removeEventListener('keydown', userStart, {capture:true});
+        }).catch(()=>{ /* still blocked */ });
+      }
+      window.addEventListener('click', userStart, {capture:true});
+      window.addEventListener('touchstart', userStart, {passive:true});
+      window.addEventListener('keydown', userStart, {capture:true});
+    });
+
+    // persist volume changes if any external control modifies audio.volume
+    audio.addEventListener('volumechange', ()=> {
+      try { localStorage.setItem('shree_music_volume', String(audio.volume)); } catch(e){}
+    });
+
+    // initial UI sync
+    updateBtnUI();
+
   } catch(err) {
-    console.warn('Music snippet error', err);
+    console.warn('Music heart snippet error', err);
   }
 })();
 </script>
-<!-- MUSIC SNIPPET: end -->
+<!-- MUSIC-HEART-SNIPPET: end -->
 </body>
 </html>
+
 
 
 
