@@ -89,8 +89,15 @@ app.use(session({
 }));
 
 // ----------------- PATHS -----------------
-const publicDir = path.join(__dirname, STATIC_DIR);
+// Resolve publicDir and fall back to project root if missing
+let publicDir = path.join(__dirname, STATIC_DIR || 'private');
+if (!fs.existsSync(publicDir)) {
+  console.warn(`⚠️ STATIC_DIR "${STATIC_DIR}" not found at ${publicDir}. Falling back to project root.`);
+  publicDir = path.join(__dirname);
+}
 const uploadsDir = path.join(__dirname, 'uploads'); // private uploads (fallback) - NOT inside publicDir
+
+console.log('Resolved publicDir:', publicDir);
 
 // ensure uploads dir exists
 fs.promises.mkdir(uploadsDir, { recursive: true }).catch(() => {});
@@ -104,12 +111,29 @@ function createSessionToken(payload) {
 function verifySessionToken(token) {
   try { return jwt.verify(token, SESSION_SECRET); } catch { return null; }
 }
+
+// Improved requireAuth: returns 401 JSON for API/XHR requests, redirects for page requests
 function requireAuth(req, res, next) {
   const token = req.cookies && req.cookies['shree_session'];
-  if (!token) return res.redirect('/index.html');
+  if (!token) {
+    // If request is for API or expects JSON, return 401 instead of redirect
+    const wantsJson = (req.xhr === true)
+      || (req.headers['accept'] && req.headers['accept'].includes('application/json'))
+      || req.path.startsWith('/api/');
+    if (wantsJson) {
+      return res.status(401).json({ error: 'unauthenticated' });
+    }
+    return res.redirect('/index.html');
+  }
   const user = verifySessionToken(token);
   if (!user) {
     res.clearCookie('shree_session');
+    const wantsJson = (req.xhr === true)
+      || (req.headers['accept'] && req.headers['accept'].includes('application/json'))
+      || req.path.startsWith('/api/');
+    if (wantsJson) {
+      return res.status(401).json({ error: 'invalid_session' });
+    }
     return res.redirect('/index.html');
   }
   req.user = user;
@@ -219,11 +243,23 @@ const protectedPages = [
   '/photo6.html','/photo7.html','/photo8.html','/photo9.html',
   '/welcome.html'
 ];
-app.get(protectedPages, requireAuth, (req, res) =>
-  res.sendFile(path.join(publicDir, req.path))
-);
+
+app.get(protectedPages, requireAuth, (req, res) => {
+  const target = path.join(publicDir, req.path);
+  console.log(`Protected page request for ${req.path} → file ${target}`);
+  if (!fs.existsSync(target)) {
+    console.warn(`Protected file not found: ${target}`);
+    return res.status(404).send('Not found');
+  }
+  return res.sendFile(target);
+});
 
 // ----------------- API: UPLOAD -----------------
+// Temporary public GET endpoint for sanity checking while debugging (safe to remove later)
+app.get('/api/upload', (req, res) => {
+  return res.json({ ok: true, msg: 'upload endpoint reachable (GET) - auth required for POST' });
+});
+
 app.post('/api/upload', requireAuth, upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });

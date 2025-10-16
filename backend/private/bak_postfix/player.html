@@ -1,234 +1,70 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿<!doctype html>
+<html>
 <head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shreshtha • Home</title>
-
-  <!-- Auth -->
-  <script src="/auth0-spa-js.production.js"></script>
-  <script src="auth-init.js" defer></script>
-  <script src="guard-auth.js" defer></script>
-
-  <!-- Fonts -->
-  
-
-  <style>
-    :root {
-      --cream:#FFE7DA;
-      --peach:#FFB59E;
-      --red:#FF6B6B;
-      --ink:#6e2430;
-      --glass:rgba(255,255,255,.16);
-      --shadow:0 18px 40px rgba(0,0,0,.28);
-      --radius:22px;
-    }
-
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:"Playfair Display",serif;color:var(--ink);}
-    body{
-      background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red));
-      overflow:hidden;
-    }
-
-    .dither{
-      position:fixed;inset:0;
-      mix-blend-mode:overlay;opacity:.10;
-      pointer-events:none;
-      background:repeating-linear-gradient(0deg,
-        rgba(255,255,255,.04)0px,rgba(255,255,255,.04)2px,
-        rgba(0,0,0,.03)2px,rgba(0,0,0,.03)4px);
-    }
-
-    .bg{position:fixed;inset:0;pointer-events:none;z-index:1;}
-    .heart{
-      position:absolute;font-size:14px;
-      opacity:.7;text-shadow:0 2px 8px rgba(0,0,0,.25);
-      animation:rise linear forwards;
-    }
-    @keyframes rise {
-      0% {transform:translateY(0) scale(1);opacity:.8}
-      100% {transform:translateY(-110vh) scale(1.25);opacity:0}
-    }
-
-    .wrap{
-      height:100%;display:grid;place-items:center;
-      padding:18px;position:relative;z-index:5;
-    }
-
-    .card{
-      width:min(920px,92vw);
-      background:var(--glass);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      backdrop-filter:blur(10px);
-      -webkit-backdrop-filter:blur(10px);
-      padding:clamp(22px,6vw,48px);
-      text-align:center;
-    }
-
-    .logo{
-      font-family:"Italianno",cursive;
-      font-size:clamp(48px,8vw,86px);
-      line-height:1;margin:0 0 8px;
-      text-shadow:0 3px 12px rgba(0,0,0,.25);
-    }
-
-    .tag{
-      margin:0 auto 26px;max-width:48ch;
-      opacity:.9;font-size:clamp(16px,2.4vw,20px);
-    }
-
-    .cta-row{
-      display:flex;flex-wrap:wrap;
-      gap:14px;justify-content:center;
-      margin-top:8px;
-    }
-
-    .btn{
-      display:inline-flex;align-items:center;gap:10px;
-      justify-content:center;
-      padding:14px 22px;border-radius:999px;
-      text-decoration:none;font-weight:700;
-      letter-spacing:.2px;
-      box-shadow:0 10px 24px rgba(0,0,0,.25);
-      transition:transform .2s ease,opacity .2s ease;
-      user-select:none;
-    }
-
-    .btn-primary{background:#6e2430;color:#fff;}
-    .btn-primary:hover{transform:translateY(-2px);}
-
-    .mini{margin-top:20px;font-size:14px;opacity:.85;}
-    .mini a{color:inherit;text-decoration:underline;}
-
-    footer{
-      position:fixed;inset:auto 0 10px;
-      text-align:center;font-size:12px;
-      color:#3e0f18;opacity:.8;pointer-events:none;
-    }
-
-    /* hearts canvas overlay */
-    #fxCanvas {
-      position:fixed;left:0;top:0;width:100vw;height:100vh;
-      pointer-events:none;z-index:2;
-    }
-  </style>
+<meta charset="utf-8">
+<title>Shree Music Player</title>
+<style>
+  body{margin:12px;font-family:system-ui,Segoe UI,Roboto;display:flex;align-items:center;gap:12px}
+  button{padding:8px 12px;border-radius:8px;border:none;background:#6e2430;color:white;cursor:pointer}
+  input[type=range]{width:160px}
+  .label{font-size:13px;color:#333}
+</style>
 </head>
 <body>
-  <div class="dither"></div>
-  <div class="bg" id="bg"></div>
+  <button id="playBtn">Play</button>
+  <input id="vol" type="range" min="0" max="1" step="0.01" value="0.6">
+  <span class="label" id="status">Stopped</span>
 
-  <div class="wrap">
-    <section class="card">
-      <h1 class="logo">Shreshtha</h1>
-<div class="page-links" style="text-align:center;margin:8px 0 18px;font-size:15px;"> <a href="life.html">Back to Life</a> &nbsp;|&nbsp; <a href="gallery.html">Gallery</a> &nbsp;|&nbsp; <a href="upload.html">Upload</a> &nbsp;|&nbsp; <a href="logout.html">Logout</a> </div>
-      <p class="tag">A little home of smiles, tiny adventures, and the sweetest memories — curated with love.</p>
-      <div class="cta-row">
-        <a class="btn btn-primary" href="/auth/login" id="btn-login">Login to Enter</a>
-      </div>
-      <p class="mini">Already logged in? Go to <a href="welcome.html">Welcome</a> or <a href="life.html">Life</a>.</p>
-    </section>
-  </div>
+  <audio id="bg" loop preload="auto"></audio>
 
-  <footer>© Shreshtha’s Life • crafted with love</footer>
+<script>
+  // Set the audio src here; server should serve /api/music
+  const audio = document.getElementById('bg');
+  audio.src = '/api/music';
+  const playBtn = document.getElementById('playBtn');
+  const vol = document.getElementById('vol');
+  const status = document.getElementById('status');
 
-  <!-- floating pastel hearts -->
-  <script>
-    (function hearts(){
-      const host = document.getElementById('bg');
-      const colors = ["#ffd6e0","#ffb7c5","#ffd27a","#ffc4a3","#fff0f6","#ffe9ec"];
-      function spawn(){
-        const el = document.createElement('div');
-        el.className = 'heart';
-        el.textContent = Math.random()>.45 ? "❤" : "♡";
-        el.style.left = (2 + Math.random()*96) + 'vw';
-        el.style.bottom = '-24px';
-        el.style.color = colors[(Math.random()*colors.length)|0];
-        el.style.fontSize = (10 + Math.random()*20) + 'px';
-        el.style.animationDuration = (10 + Math.random()*12) + 's';
-        host.appendChild(el);
-        setTimeout(()=>el.remove(),24000);
-      }
-      for(let i=0;i<20;i++) setTimeout(spawn,i*180);
-      setInterval(spawn,900);
-    })();
-  </script>
+  // restore volume
+  const savedVol = parseFloat(localStorage.getItem('shree_bg_vol'));
+  audio.volume = !isNaN(savedVol) ? savedVol : 0.6;
+  vol.value = audio.volume;
 
-  <!-- auth reveal (keeps content visible even if no login) -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const gate = document.getElementById("auth-gate");
-      if (gate) gate.remove();
-    });
-  </script>
+  function updateUI(){
+    status.textContent = audio.paused ? 'Paused' : 'Playing';
+    playBtn.textContent = audio.paused ? 'Play' : 'Pause';
+  }
+  playBtn.addEventListener('click', ()=> {
+    if (audio.paused) audio.play().catch(()=>{});
+    else audio.pause();
+    updateUI();
+  });
+  audio.addEventListener('play', updateUI);
+  audio.addEventListener('pause', updateUI);
 
-  <!-- Canvas Hearts background (soft, subtle, same as life.html) -->
-  <canvas id="fxCanvas"></canvas>
-  <script>
-    (function(){
-      const c=document.getElementById('fxCanvas');
-      if(!c)return;
-      const ctx=c.getContext('2d');
-      const DPR=Math.max(1,window.devicePixelRatio||1);
-      let W=0,H=0,hearts=[];
-      const COLORS=['#ffd6e0','#fff9d6','#ffe9d2','#ffdce6','#eae8ff','#fff4de'];
+  vol.addEventListener('input', (e) => {
+    audio.volume = Number(e.target.value);
+    localStorage.setItem('shree_bg_vol', String(audio.volume));
+  });
 
-      function R(a,b){return Math.random()*(b-a)+a;}
-      function resize(){
-        W=innerWidth*DPR;H=innerHeight*DPR;
-        c.width=W;c.height=H;
-        c.style.width='100vw';c.style.height='100vh';
-      }
+  // receive commands from opener via postMessage
+  window.addEventListener('message', (ev) => {
+    const cmd = ev.data && ev.data.cmd;
+    if (!cmd) return;
+    if (cmd === 'play') audio.play().catch(()=>{});
+    else if (cmd === 'pause') audio.pause();
+    else if (cmd === 'toggle') { if (audio.paused) audio.play().catch(()=>{}); else audio.pause(); }
+    else if (cmd === 'setVol') { audio.volume = Number(ev.data.v); vol.value = audio.volume; localStorage.setItem('shree_bg_vol', String(audio.volume)); }
+  }, false);
 
-      function spawn(){
-        if(hearts.length>18)return;
-        hearts.push({
-          x:R(0,W),y:H+R(20,120),
-          s:R(10,28),vx:R(-3,3),vy:-R(10,30),
-          a:R(.5,.9),r:R(-.4,.4),vr:R(-.01,.01),
-          color:COLORS[Math.floor(Math.random()*COLORS.length)]
-        });
-      }
+  // when ready, tell opener that we're ready
+  if (window.opener) window.opener.postMessage({ from:'shreePlayer', ready:true }, '*');
 
-      function drawHeart(px,py,scale,rot,alpha,color){
-        ctx.save();ctx.translate(px,py);ctx.rotate(rot);ctx.scale(scale,scale);
-        ctx.globalAlpha=Math.min(1,alpha);
-        ctx.shadowColor=color;ctx.shadowBlur=10*scale;
-        const g=ctx.createRadialGradient(0,-.1,.05,0,.12,1);
-        g.addColorStop(0,color);
-        g.addColorStop(.6,color);
-        g.addColorStop(1,'rgba(255,255,255,0.08)');
-        ctx.fillStyle=g;
-        ctx.beginPath();
-        ctx.moveTo(0,-.5);
-        ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8);
-        ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5);
-        ctx.fill();
-        ctx.globalAlpha=.6*alpha;
-        ctx.fillStyle='rgba(255,255,255,.9)';
-        ctx.beginPath();
-        ctx.ellipse(.18,-.28,.12,.06,-.4,0,Math.PI*2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      function tick(){
-        ctx.clearRect(0,0,W,H);
-        if(Math.random()<.1)spawn();
-        hearts.forEach(h=>{
-          h.x+=h.vx*.016;h.y+=h.vy*.016;
-          h.r+=h.vr;h.a-=.0009;
-        });
-        hearts=hearts.filter(h=>h.y>-120&&h.a>0.02);
-        hearts.forEach(h=>drawHeart(h.x,h.y,(h.s/50)*DPR,h.r,h.a,h.color));
-        requestAnimationFrame(tick);
-      }
-      addEventListener('resize',resize,{passive:true});
-      resize();tick();
-    })();
-  </script>
+  // try to auto-play if allowed (will be blocked until user interacts)
+  audio.play().catch(()=>{ updateUI(); });
+  updateUI();
+</script>
 <!-- Improved Mini Music Player + Volume Popover (replaces older snippet) -->
 <style>
   /* --- smoother global background for private pages --- */
