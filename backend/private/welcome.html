@@ -225,7 +225,7 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
   .music-btn:focus, .vol-dot:focus, .vol-btn:focus { outline: 3px solid rgba(255,200,200,0.6); outline-offset:3px; }
 </style>
 
-<!--\ Improved\ Music\ Control\ \(updated\)\ --><style>\ \ /\*\ small\ override\ for\ headings\ color\ &\ smoother\ gradient\ \(site-wide\ private\ pages\)\ \*/\ \ h1\.site-title,\ \.page-title,\ h1\ \{\ color:\ \#6d232b\ !important;\ text-shadow:\ 0\ 6px\ 22px\ rgba\(0,0,0,0\.12\);\ }\ \ /\*\ music\ control\ \(prettier\)\ \*/\ \ \.music-btn\ \{\ \ \ \ position:\ fixed;\ \ \ \ bottom:\ 22px;\ \ \ \ right:\ 22px;\ \ \ \ width:\ 58px;\ \ \ \ height:\ 58px;\ \ \ \ border-radius:\ 50%;\ \ \ \ background:\ linear-gradient\(145deg,\#fff\ 0%,\#ffeff0\ 100%\);\ \ \ \ box-shadow:\ 0\ 10px\ 30px\ rgba\(220,90,120,0\.18\);\ \ \ \ display:flex;align-items:center;justify-content:center;\ \ \ \ z-index:160;\ cursor:pointer;\ border:\ none;\ transition:\ transform\ \.16s\ ease,\ box-shadow\ \.16s\ ease;\ \ \ \ backdrop-filter:\ blur\(4px\);\ \ }\ \ \.music-btn:hover\ \{\ transform:\ translateY\(-3px\);\ box-shadow:\ 0\ 16px\ 36px\ rgba\(220,90,120,0\.25\);\ }\ \ \.music-btn\ svg\ \{\ width:26px;\ height:26px;\ display:block;\ }\ \ \.music-btn\ \.heart\ \{\ fill:\#ff6b81;\ transition:\ transform\ \.18s\ ease,\ fill\ \.22s\ ease;\ }\ \ \.music-btn\.playing\ \.heart\ \{\ transform:\ scale\(1\.12\);\ fill:\#ffd166;\ filter:\ drop-shadow\(0\ 8px\ 18px\ rgba\(255,165,70,0\.18\)\);\ }\ \ /\*\ small\ gold\ badge\ \*/\ \ \.music-badge\ \{\ \ \ \ position:absolute;\ right:-6px;\ top:-6px;\ \ \ \ width:18px;height:18px;border-radius:50%;\ \ \ \ background:\ radial-gradient\(circle\ at\ 30%\ 30%,\ \#fff8e6,\ \#ffd76d\);\ \ \ \ border:2px\ solid\ rgba\(255,255,255,0\.9\);\ \ \ \ box-shadow:0\ 6px\ 14px\ rgba\(255,160,70,0\.18\);\ \ }\ \ \.vol-pop\ \{\ position:\ fixed;\ bottom:\ 88px;\ right:\ 16px;\ width:220px;\ padding:10px\ 12px;\ \ \ \ \ \ \ \ \ \ \ \ \ background:\ linear-gradient\(180deg,\ rgba\(255,255,255,0\.98\),\ rgba\(255,250,248,0\.95\)\);\ \ \ \ \ \ \ \ \ \ \ \ border-radius:12px;\ box-shadow:0\ 12px\ 30px\ rgba\(0,0,0,0\.12\);\ z-index:170;\ display:none;\ gap:10px;\ align-items:center;\ }\ \ \.vol-pop\.show\ \{\ display:flex;\ }\ \ \.vol-range\ \{\ -webkit-appearance:none;\ width:130px;\ height:7px;\ border-radius:999px;\ background:\ linear-gradient\(90deg,\#ffc1c1,\#ffd88a\);\ outline:none;\ }\ \ \.vol-range::-webkit-slider-thumb\ \{\ -webkit-appearance:none;\ width:16px;height:16px;border-radius:50%;\ background:\#fff;\ box-shadow:0\ 4px\ 10px\ rgba\(0,0,0,0\.12\);\ border:3px\ solid\ \#ffb0a0;\ }</style><button\ id="musicButton"\ class="music-btn"\ aria-label="Toggle\ music">\ \ <svg\ viewBox="0\ 0\ 24\ 24"\ aria-hidden="true"><path\ class="heart"\ d="M12\ 21s-7\.33-4\.94-9\.33-7\.02C\.8\ 11\.9\ 2\.1\ 7\.9\ 5\.5\ 6\.3\ 7\.2\ 5\.4\ 9\.1\ 6\ 10\ 7\.3c\.9-1\.3\ 2\.8-1\.9\ 4\.5-1\ 3\.4\ 1\.6\ 4\.7\ 5\.6\ 2\.8\ 7\.68C19\.33\ 16\.06\ 12\ 21\ 12\ 21z"/></svg>\ \ <span\ class="music-badge"\ id="musicBadge"\ aria-hidden="true"></span></button><div\ id="volPop"\ class="vol-pop"\ aria-hidden="true">\ \ <div\ style="font-size:13px;color:\#6b2b2b">Vol</div>\ \ <input\ id="volRange"\ class="vol-range"\ type="range"\ min="0"\ max="100"\ step="1"\ value="60"\ aria-label="Volume"\ />\ \ <button\ id="muteBtn"\ style="border:none;background:\#fff;padding:6px;border-radius:8px;box-shadow:0\ 4px\ 8px\ rgba\(0,0,0,0\.06\);cursor:pointer"\ aria-label="Mute/unmute">🔈</button></div><script>\(\(\)\ =>\ \{\ \ const\ btn\ =\ document\.getElementById\('musicButton'\),\ badge\ =\ document\.getElementById\('musicBadge'\),\ \ \ \ \ \ \ \ volPop\ =\ document\.getElementById\('volPop'\),\ volRange\ =\ document\.getElementById\('volRange'\),\ \ \ \ \ \ \ \ muteBtn\ =\ document\.getElementById\('muteBtn'\),\ music\ =\ document\.getElementById\('bgMusic'\);\ \ function\ setVolume\(v\)\{\ music\.volume\ =\ Math\.max\(0,Math\.min\(100,v\)\)/100;\ try\{localStorage\.setItem\('shree_music_volume',String\(v\)\);}catch\(e\)\{}\ }\ \ function\ setPlaying\(p\)\{\ \ \ \ if\(p\)\{\ btn\.classList\.add\('playing'\);\ music\.play\(\)\.catch\(\(\)=>\{}\);\ localStorage\.setItem\('shree_music_playing','1'\);\ }\ \ \ \ \ else\ \{\ btn\.classList\.remove\('playing'\);\ music\.pause\(\);\ localStorage\.setItem\('shree_music_playing','0'\);\ }\ \ }\ \ //\ restore\ state\ \ try\{\ const\ sv\ =\ localStorage\.getItem\('shree_music_volume'\);\ if\(sv!==null\)\ volRange\.value\ =\ sv;\ setVolume\(volRange\.value\);\ }catch\(e\)\{}\ \ try\{\ if\(localStorage\.getItem\('shree_music_playing'\)==='1'\)\{\ music\.play\(\)\.then\(\(\)=>btn\.classList\.add\('playing'\)\)\.catch\(\(\)=>\{}\);\ }\ }catch\(e\)\{}\ \ btn\.addEventListener\('click',\ \(e\)=>\ \{\ if\(e\.target\.id==='musicBadge'\)\ return;\ setPlaying\(!btn\.classList\.contains\('playing'\)\);\ }\);\ \ badge\.addEventListener\('click',\ \(e\)=>\ \{\ volPop\.classList\.toggle\('show'\);\ volPop\.setAttribute\('aria-hidden',\ volPop\.classList\.contains\('show'\)\?\ 'false':'true'\);\ e\.stopPropagation\(\);\ }\);\ \ volRange\.addEventListener\('input',\ \(\)=>\{\ setVolume\(volRange\.value\);\ }\);\ \ muteBtn\.addEventListener\('click',\ \(\)=>\{\ if\(music\.volume>0\)\{\ volRange\.dataset\.prev\ =\ volRange\.value;\ volRange\.value=0;\ }\ else\ \{\ volRange\.value\ =\ volRange\.dataset\.prev\ \|\|\ 60;\ }\ setVolume\(volRange\.value\);\ }\);\ \ document\.addEventListener\('click',\ \(e\)=>\{\ if\(!e\.target\.closest\('\.vol-pop'\)\ &&\ !e\.target\.closest\('\#musicBadge'\)\)\{\ volPop\.classList\.remove\('show'\);\ volPop\.setAttribute\('aria-hidden','true'\);\ }}\);\ \ music\.addEventListener\('play',\ \(\)=>\ btn\.classList\.add\('playing'\)\);\ \ music\.addEventListener\('pause',\ \(\)=>\ btn\.classList\.remove\('playing'\)\);}\)\(\);</script>
+<!--\ Improved\ Music\ Control\ \(updated\)\ --><style>\ \ /\*\ small\ override\ for\ headings\ color\ &\ smoother\ gradient\ \(site-wide\ private\ pages\)\ \*/\ \ h1\.site-title,\ \.page-title,\ h1\ \{\ color:\ \#6d232b\ !important;\ text-shadow:\ 0\ 6px\ 22px\ rgba\(0,0,0,0\.12\);\ }\ \ /\*\ music\ control\ \(prettier\)\ \*/\ \ \.music-btn\ \{\ \ \ \ position:\ fixed;\ \ \ \ bottom:\ 22px;\ \ \ \ right:\ 22px;\ \ \ \ width:\ 58px;\ \ \ \ height:\ 58px;\ \ \ \ border-radius:\ 50%;\ \ \ \ background:\ linear-gradient\(145deg,\#fff\ 0%,\#ffeff0\ 100%\);\ \ \ \ box-shadow:\ 0\ 10px\ 30px\ rgba\(220,90,120,0\.18\);\ \ \ \ display:flex;align-items:center;justify-content:center;\ \ \ \ z-index:160;\ cursor:pointer;\ border:\ none;\ transition:\ transform\ \.16s\ ease,\ box-shadow\ \.16s\ ease;\ \ \ \ backdrop-filter:\ blur\(4px\);\ \ }\ \ \.music-btn:hover\ \{\ transform:\ translateY\(-3px\);\ box-shadow:\ 0\ 16px\ 36px\ rgba\(220,90,120,0\.25\);\ }\ \ \.music-btn\ svg\ \{\ width:26px;\ height:26px;\ display:block;\ }\ \ \.music-btn\ \.heart\ \{\ fill:\#ff6b81;\ transition:\ transform\ \.18s\ ease,\ fill\ \.22s\ ease;\ }\ \ \.music-btn\.playing\ \.heart\ \{\ transform:\ scale\(1\.12\);\ fill:\#ffd166;\ filter:\ drop-shadow\(0\ 8px\ 18px\ rgba\(255,165,70,0\.18\)\);\ }\ \ /\*\ small\ gold\ badge\ \*/\ \ \.music-badge\ \{\ \ \ \ position:absolute;\ right:-6px;\ top:-6px;\ \ \ \ width:18px;height:18px;border-radius:50%;\ \ \ \ background:\ radial-gradient\(circle\ at\ 30%\ 30%,\ \#fff8e6,\ \#ffd76d\);\ \ \ \ border:2px\ solid\ rgba\(255,255,255,0\.9\);\ \ \ \ box-shadow:0\ 6px\ 14px\ rgba\(255,160,70,0\.18\);\ \ }\ \ \.vol-pop\ \{\ position:\ fixed;\ bottom:\ 88px;\ right:\ 16px;\ width:220px;\ padding:10px\ 12px;\ \ \ \ \ \ \ \ \ \ \ \ \ background:\ linear-gradient\(180deg,\ rgba\(255,255,255,0\.98\),\ rgba\(255,250,248,0\.95\)\);\ \ \ \ \ \ \ \ \ \ \ \ border-radius:12px;\ box-shadow:0\ 12px\ 30px\ rgba\(0,0,0,0\.12\);\ z-index:170;\ display:none;\ gap:10px;\ align-items:center;\ }\ \ \.vol-pop\.show\ \{\ display:flex;\ }\ \ \.vol-range\ \{\ -webkit-appearance:none;\ width:130px;\ height:7px;\ border-radius:999px;\ background:\ linear-gradient\(90deg,\#ffc1c1,\#ffd88a\);\ outline:none;\ }\ \ \.vol-range::-webkit-slider-thumb\ \{\ -webkit-appearance:none;\ width:16px;height:16px;border-radius:50%;\ background:\#fff;\ box-shadow:0\ 4px\ 10px\ rgba\(0,0,0,0\.12\);\ border:3px\ solid\ \#ffb0a0;\ }</style><div\ id="volPop"\ class="vol-pop"\ aria-hidden="true">\ \ <div\ style="font-size:13px;color:\#6b2b2b">Vol</div>\ \ <input\ id="volRange"\ class="vol-range"\ type="range"\ min="0"\ max="100"\ step="1"\ value="60"\ aria-label="Volume"\ />\ \ <button\ id="muteBtn"\ style="border:none;background:\#fff;padding:6px;border-radius:8px;box-shadow:0\ 4px\ 8px\ rgba\(0,0,0,0\.06\);cursor:pointer"\ aria-label="Mute/unmute">🔈</button></div><script>\(\(\)\ =>\ \{\ \ const\ btn\ =\ document\.getElementById\('musicButton'\),\ badge\ =\ document\.getElementById\('musicBadge'\),\ \ \ \ \ \ \ \ volPop\ =\ document\.getElementById\('volPop'\),\ volRange\ =\ document\.getElementById\('volRange'\),\ \ \ \ \ \ \ \ muteBtn\ =\ document\.getElementById\('muteBtn'\),\ music\ =\ document\.getElementById\('bgMusic'\);\ \ function\ setVolume\(v\)\{\ music\.volume\ =\ Math\.max\(0,Math\.min\(100,v\)\)/100;\ try\{localStorage\.setItem\('shree_music_volume',String\(v\)\);}catch\(e\)\{}\ }\ \ function\ setPlaying\(p\)\{\ \ \ \ if\(p\)\{\ btn\.classList\.add\('playing'\);\ music\.play\(\)\.catch\(\(\)=>\{}\);\ localStorage\.setItem\('shree_music_playing','1'\);\ }\ \ \ \ \ else\ \{\ btn\.classList\.remove\('playing'\);\ music\.pause\(\);\ localStorage\.setItem\('shree_music_playing','0'\);\ }\ \ }\ \ //\ restore\ state\ \ try\{\ const\ sv\ =\ localStorage\.getItem\('shree_music_volume'\);\ if\(sv!==null\)\ volRange\.value\ =\ sv;\ setVolume\(volRange\.value\);\ }catch\(e\)\{}\ \ try\{\ if\(localStorage\.getItem\('shree_music_playing'\)==='1'\)\{\ music\.play\(\)\.then\(\(\)=>btn\.classList\.add\('playing'\)\)\.catch\(\(\)=>\{}\);\ }\ }catch\(e\)\{}\ \ btn\.addEventListener\('click',\ \(e\)=>\ \{\ if\(e\.target\.id==='musicBadge'\)\ return;\ setPlaying\(!btn\.classList\.contains\('playing'\)\);\ }\);\ \ badge\.addEventListener\('click',\ \(e\)=>\ \{\ volPop\.classList\.toggle\('show'\);\ volPop\.setAttribute\('aria-hidden',\ volPop\.classList\.contains\('show'\)\?\ 'false':'true'\);\ e\.stopPropagation\(\);\ }\);\ \ volRange\.addEventListener\('input',\ \(\)=>\{\ setVolume\(volRange\.value\);\ }\);\ \ muteBtn\.addEventListener\('click',\ \(\)=>\{\ if\(music\.volume>0\)\{\ volRange\.dataset\.prev\ =\ volRange\.value;\ volRange\.value=0;\ }\ else\ \{\ volRange\.value\ =\ volRange\.dataset\.prev\ \|\|\ 60;\ }\ setVolume\(volRange\.value\);\ }\);\ \ document\.addEventListener\('click',\ \(e\)=>\{\ if\(!e\.target\.closest\('\.vol-pop'\)\ &&\ !e\.target\.closest\('\#musicBadge'\)\)\{\ volPop\.classList\.remove\('show'\);\ volPop\.setAttribute\('aria-hidden','true'\);\ }}\);\ \ music\.addEventListener\('play',\ \(\)=>\ btn\.classList\.add\('playing'\)\);\ \ music\.addEventListener\('pause',\ \(\)=>\ btn\.classList\.remove\('playing'\)\);}\)\(\);</script>
 <!-- Improved Mini Music Player + Volume Popover (replaces older snippet) -->
 <style>
   /* --- smoother global background for private pages --- */
@@ -316,13 +316,7 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
   .music-btn:focus, .vol-dot:focus, .vol-btn:focus { outline: 3px solid rgba(255,200,200,0.6); outline-offset:3px; }
 </style>
 
-<button id="musicButton" class="music-btn" aria-pressed="false" aria-label="Play background music" title="Play / Pause music">
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path class="heart" d="M12 21s-7.33-4.94-9.33-7.02C.8 11.9 2.1 7.9 5.5 6.3 7.2 5.4 9.1 6 10 7.3c.9-1.3 2.8-1.9 4.5-1 3.4 1.6 4.7 5.6 2.8 7.68C19.33 16.06 12 21 12 21z"/>
-  </svg>
 
-  <span class="vol-dot" id="volDot" role="button" aria-label="Volume control" title="Open volume control"></span>
-</button>
 
 <div id="volPop" class="vol-pop" role="dialog" aria-hidden="true">
   <div class="vol-label" aria-hidden="true">Vol</div>
@@ -432,10 +426,8 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
 
 
 <!-- MUSIC HEART FIXED -->
-<audio id="bgMusicHeart" loop preload="auto" style="display:none">
-  <source src="/music/bg.mp3" type="audio/mpeg">
-</audio>
-<button id="musicHeartBtn" style="position:fixed;right:20px;bottom:20px;width:54px;height:54px;border-radius:50%;border:none;background:radial-gradient(circle at 30% 30%,#ffd6e0,#ff9fb0);box-shadow:0 6px 20px rgba(0,0,0,0.15);cursor:pointer;z-index:9999;display:flex;align-items:center;justify-content:center;font-size:22px;">♡</button>
+
+
 <script>
 (function(){
  const a=document.getElementById("bgMusicHeart"),b=document.getElementById("musicHeartBtn");
@@ -448,8 +440,124 @@ document.getElementById("warm-btn").addEventListener("click",async()=>{
 })();
 </script>
 <!-- /MUSIC HEART FIXED -->
+<!-- MUSIC-HEART-FINAL: start -->
+<style id="music-heart-final-style">
+  #musicHeartWrap { position: fixed; right: 18px; bottom: 18px; z-index: 9999; display:flex; gap:8px; align-items:center; }
+  #musicHeartBtn { width:56px;height:56px;border-radius:50%;border:none;cursor:pointer; display:flex;align-items:center;justify-content:center;font-size:22px;
+    background: radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0); box-shadow: 0 8px 28px rgba(220,80,110,0.14); transition: transform .16s ease, box-shadow .16s ease, opacity .18s ease; }
+  #musicHeartBtn:active { transform: scale(.96); }
+  #musicHeartBtn.playing { box-shadow: 0 14px 42px rgba(220,80,110,0.24); transform: scale(1.04); }
+  #musicHeartBtn .heart { pointer-events:none; user-select:none; }
+  .vol-dot { width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background: linear-gradient(150deg,#ffd76d,#ffc96a); box-shadow:0 6px 10px rgba(255,170,100,0.18); border:2px solid rgba(255,255,255,0.9); cursor:pointer; margin-left:-8px; }
+  .vol-pop { position: absolute; right: 72px; bottom: 10px; width:220px; padding:10px 12px; background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
+    border-radius:12px; box-shadow:0 12px 30px rgba(0,0,0,0.12); display:none; gap:10px; align-items:center; }
+  .vol-pop.show { display:flex; }
+  .vol-range { -webkit-appearance:none; width:130px; height:7px; border-radius:999px; background:linear-gradient(90deg,#ffc1c1,#ffd88a); outline:none; }
+  .vol-range::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:0 4px 10px rgba(0,0,0,0.12); border:3px solid #ffb0a0; }
+</style>
+
+<audio id="bgMusicFinal" loop preload="auto" style="display:none">
+  <source src="/music/bg.mp3" type="audio/mpeg" />
+</audio>
+
+<div id="musicHeartWrap" aria-hidden="false">
+  <button id="musicHeartBtn" aria-label="Toggle background music" title="Play / Pause background music" type="button">
+    <span class="heart" aria-hidden="true">♡</span>
+  </button>
+  <div class="vol-dot" id="musicVolDot" role="button" tabindex="0" aria-label="Volume control" title="Volume"></div>
+
+  <div class="vol-pop" id="musicVolPop" role="dialog" aria-hidden="true">
+    <div style="font-size:13px;color:#6b2b2b;">Vol</div>
+    <input id="musicVolRange" class="vol-range" type="range" min="0" max="100" step="1" value="60" aria-label="Volume slider" />
+    <button id="musicMuteBtn" style="border:none;background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.06);cursor:pointer" aria-pressed="false" title="Mute/unmute">M</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  try {
+    const audio = document.getElementById('bgMusicFinal');
+    const btn = document.getElementById('musicHeartBtn');
+    const volDot = document.getElementById('musicVolDot');
+    const volPop = document.getElementById('musicVolPop');
+    const volRange = document.getElementById('musicVolRange');
+    const muteBtn = document.getElementById('musicMuteBtn');
+
+    if (!audio || !btn || !volDot || !volPop || !volRange || !muteBtn) return;
+
+    try {
+      const savedVol = localStorage.getItem('shree_music_volume');
+      if (savedVol !== null) volRange.value = savedVol;
+      audio.volume = (savedVol !== null) ? (Math.max(0, Math.min(100, parseInt(savedVol,10))) / 100) : 0.6;
+    } catch(e){}
+
+    function updateBtn() {
+      const heart = btn.querySelector('.heart');
+      if (!heart) return;
+      if (!audio.paused) { btn.classList.add('playing'); heart.textContent = '❤'; btn.setAttribute('aria-pressed','true'); }
+      else { btn.classList.remove('playing'); heart.textContent = '♡'; btn.setAttribute('aria-pressed','false'); }
+    }
+
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      if (audio.paused) {
+        audio.play().then(()=> { localStorage.setItem('shree_music_playing','1'); updateBtn(); }).catch(()=>{});
+      } else {
+        audio.pause(); localStorage.setItem('shree_music_playing','0'); updateBtn();
+      }
+    });
+
+    volDot.addEventListener('click', function(e){
+      e.stopPropagation();
+      const show = volPop.classList.toggle('show');
+      volPop.setAttribute('aria-hidden', show ? 'false' : 'true');
+      if (show) { setTimeout(()=> volRange.focus(), 40); }
+    });
+
+    volDot.addEventListener('keydown', function(e){ if (e.key==='Enter' || e.key===' ') { e.preventDefault(); volDot.click(); } });
+
+    volRange.addEventListener('input', function(){
+      const v = Math.max(0, Math.min(100, parseInt(volRange.value,10)));
+      audio.volume = v/100;
+      try { localStorage.setItem('shree_music_volume', String(v)); } catch(e){}
+      if (v === 0) muteBtn.setAttribute('aria-pressed','true'); else muteBtn.setAttribute('aria-pressed','false');
+    });
+
+    muteBtn.addEventListener('click', function(){
+      if (audio.volume > 0) { volRange.dataset.prev = volRange.value; volRange.value = 0; } 
+      else { volRange.value = volRange.dataset.prev || 60; }
+      volRange.dispatchEvent(new Event('input'));
+    });
+
+    document.addEventListener('click', function(e){
+      if (!e.target.closest('.vol-pop') && !e.target.closest('#musicVolDot')) { volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true'); }
+    });
+
+    audio.play().then(()=>{ updateBtn(); }).catch(()=> {
+      function userStart() {
+        audio.play().then(()=>{ localStorage.setItem('shree_music_playing','1'); updateBtn(); }).catch(()=>{});
+        window.removeEventListener('click', userStart, {capture:true});
+        window.removeEventListener('touchstart', userStart, {passive:true});
+        window.removeEventListener('keydown', userStart, {capture:true});
+      }
+      window.addEventListener('click', userStart, {capture:true});
+      window.addEventListener('touchstart', userStart, {passive:true});
+      window.addEventListener('keydown', userStart, {capture:true});
+    });
+
+    audio.addEventListener('play', updateBtn);
+    audio.addEventListener('pause', updateBtn);
+    audio.addEventListener('volumechange', function(){ try{ localStorage.setItem('shree_music_volume', String(Math.round(audio.volume*100))); }catch(e){} });
+
+    updateBtn();
+  } catch(err) { console.warn('music heart final snippet error', err); }
+})();
+</script>
+<!-- MUSIC-HEART-FINAL: end -->
 </body>
 </html>
+
 
 
 
