@@ -1,6 +1,17 @@
 ﻿// backend/private/assets/js/music-heart.js
 (function(){
   "use strict";
+
+  // --- do not run on index page ---
+  try {
+    const p = (location.pathname || '').toLowerCase();
+    if (p === '/' || p === '/index.html' || p.endsWith('/index.html')) {
+      // early exit on index/root
+      console.debug('[music-heart] skipping on index page');
+      return;
+    }
+  } catch(e) { /* ignore and continue if location not available */ }
+
   // guard: run once
   if (window.__shree_music_loaded) return;
   window.__shree_music_loaded = true;
@@ -74,7 +85,7 @@
     btn.addEventListener('click', function(e){
       e.preventDefault();
       if (audio.paused) {
-        audio.play().then(()=>{ localStorage.setItem('shree_music_playing','1'); updateBtn(); })
+        audio.play().then(()=>{ try{ localStorage.setItem('shree_music_playing','1'); }catch(e){}; updateBtn(); })
         .catch((err)=>{ console.warn('[music-heart] play() failed', err); });
       } else {
         audio.pause();
