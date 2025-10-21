@@ -1,102 +1,131 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Shreshtha – Gallery</title>
 
-  <!-- Auth0 -->
+  <!-- Auth & guards -->
   <script src="/auth0-spa-js.production.js"></script>
   <script src="auth-init.js" defer></script>
   <script src="guard-auth.js" defer></script>
 
-  <!-- Page Style -->
   <style>
-    :root { --text:#6e2430; }
+    :root {
+      --text:#6e2430;
+    }
 
     body {
-      margin:0;
-      font-family:"Playfair Display",serif;
-      color:var(--text);
-      overflow-x:hidden;
+      margin: 0;
+      font-family: "Playfair Display", serif;
+      color: var(--text);
+      overflow-x: hidden;
       background:
-        radial-gradient(1200px 700px at 8% 12%, rgba(255,236,240,0.42), transparent 40%),
-        radial-gradient(1000px 620px at 92% 84%, rgba(255,230,220,0.36), transparent 38%),
-        radial-gradient(900px 520px at 50% -10%, rgba(255,210,210,0.28), transparent 45%),
+        radial-gradient(1200px 700px at 8% 12%, rgba(255,236,240,0.45), transparent 40%),
+        radial-gradient(1000px 620px at 92% 84%, rgba(255,230,220,0.4), transparent 38%),
         linear-gradient(160deg, #ffe9e6 0%, #ffcdc8 42%, #ffb7b2 70%, #ffa9a9 100%);
-      background-attachment:fixed;
+      background-attachment: fixed;
     }
 
-    header { text-align:center; padding:24px 12px; }
-    .page-title { font-size:48px; margin:0; color:#5a0013; }
+    header {
+      text-align: center;
+      padding: 20px;
+    }
+    .page-title {
+      font-size: 42px;
+      margin: 0;
+      color: #5a0013;
+      text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-links {
+      margin-top: 10px;
+      font-size: 16px;
+    }
     .page-links a {
-      text-decoration:none; 
-      color:#5a0013; 
-      margin:0 10px;
-      padding:8px 16px;
-      background:rgba(255,255,255,0.2);
-      border-radius:20px;
+      text-decoration: none;
+      color: #5a0013;
+      padding: 6px 14px;
+      margin: 0 6px;
+      background: rgba(255, 255, 255, 0.35);
+      border-radius: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
     }
 
-    main { max-width:1200px; margin:auto; padding:20px; }
+    main {
+      max-width: 1200px;
+      margin: auto;
+      padding: 20px;
+    }
 
-    .grid { 
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-      gap:20px;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
     }
 
     .photo-card {
-      background:rgba(255,255,255,0.1);
-      border-radius:16px;
-      padding:10px;
-      box-shadow:0 8px 20px rgba(0,0,0,0.15);
-      transition:transform .3s;
+      background: rgba(255,255,255,0.2);
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+      transition: transform 0.3s;
+      padding: 10px;
     }
-    .photo-card:hover { transform:translateY(-5px); }
-    .photo-card img {
-      width:100%;
-      max-height:380px;
-      object-fit:contain;
-      border-radius:12px;
+    .photo-card:hover {
+      transform: translateY(-5px);
     }
-    .meta {
-      text-align:center;
-      margin-top:8px;
-      font-style:italic;
-      font-size:14px;
-    }
-    .meta:empty { display:none; }
 
-    /* pager */
+    .photo-card img {
+      width: 100%;
+      max-height: 380px;
+      object-fit: contain;
+      border-radius: 12px;
+      cursor: zoom-in;
+      background: #fff9f7;
+    }
+
+    .meta {
+      text-align: center;
+      font-size: 14px;
+      margin-top: 8px;
+      font-style: italic;
+      color: #4b2b2b;
+    }
+    .meta:empty {
+      display: none;
+    }
+
     #pager {
-      text-align:center;
-      margin-top:25px;
+      text-align: center;
+      margin-top: 25px;
     }
     #pager button {
-      padding:10px 18px;
-      margin:0 8px;
-      border:none;
-      background:rgba(255,255,255,0.25);
-      border-radius:8px;
-      cursor:pointer;
-      font-size:15px;
+      padding: 10px 18px;
+      margin: 0 10px;
+      border: none;
+      background: rgba(255,255,255,0.3);
+      border-radius: 10px;
+      cursor: pointer;
+      backdrop-filter: blur(3px);
+      font-size: 15px;
     }
-    #pager button:disabled { opacity:0.3; cursor:default; }
+    #pager button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
 
-    /* Hearts Canvas */
+    /* Floating Hearts Canvas */
     #fxCanvas {
-      position:fixed;
-      left:0;
-      top:0;
-      width:100vw;
-      height:100vh;
-      pointer-events:none;
-      z-index:50;
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 50;
     }
   </style>
 </head>
-
 <body>
   <header>
     <h1 class="page-title">Gallery of Sweet Memories</h1>
@@ -109,7 +138,7 @@
 
   <main>
     <section id="grid" class="grid"></section>
-    <div id="empty" style="display:none;text-align:center;margin-top:40px;">No photos yet 🌸</div>
+    <div id="empty" style="display:none; text-align:center; margin-top:40px;">No photos uploaded yet 🌸</div>
 
     <div id="pager">
       <button id="prevBtn" disabled>← Prev</button>
@@ -117,14 +146,13 @@
     </div>
   </main>
 
-  <!-- Hearts Canvas -->
+  <!-- Floating Hearts -->
   <canvas id="fxCanvas"></canvas>
 
-  <!-- Floating Hearts Script -->
   <script>
   (function () {
     function initHearts(){
-      const c = document.getElementById('fxCanvas');
+      let c = document.getElementById('fxCanvas');
       const ctx = c.getContext('2d');
       const DPR = window.devicePixelRatio || 1;
       let W, H;
@@ -139,7 +167,7 @@
       }
 
       function spawn(){
-        if (hearts.length > 30) return;
+        if (hearts.length > 35) return;
         hearts.push({
           x: Math.random()*W,
           y: H + Math.random()*200,
@@ -158,7 +186,6 @@
         ctx.rotate(h.rot);
         ctx.scale(h.size/50, h.size/50);
         ctx.globalAlpha = h.alpha;
-
         ctx.beginPath();
         ctx.moveTo(0, -0.5);
         ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);
@@ -181,45 +208,96 @@
         requestAnimationFrame(tick);
       }
 
-      window.addEventListener('resize',resize);
       resize(); tick();
+      window.addEventListener('resize', resize);
     }
+
     document.addEventListener('DOMContentLoaded', initHearts);
   })();
   </script>
-
-  <!-- Gallery Logic -->
+  <!-- Gallery (24 per page) + Prev/Next + Lightbox -->
   <script>
-  (function(){
+  (function () {
     const PAGE_SIZE = 24;
-    const grid = document.getElementById('grid');
-    const empty = document.getElementById('empty');
-    const nextBtn = document.getElementById('nextBtn');
+
+    // read/write history stack of previous tokens (so Prev works)
+    const KEY = 'gallery_hist_v1';
+    const readHist = () => { try { return JSON.parse(sessionStorage.getItem(KEY) || '[]'); } catch { return []; } };
+    const writeHist = (v) => { try { sessionStorage.setItem(KEY, JSON.stringify(v)); } catch {} };
+
+    const url   = new URL(location.href);
+    const token = url.searchParams.get('pageToken'); // null on first page
+
+    // if user opened a deep page directly (token present but empty history), allow Prev back to first page
+    let hist = readHist();
+    if (!hist.length && token) { hist = [null]; writeHist(hist); }
+
+    const grid   = document.getElementById('grid');
+    const empty  = document.getElementById('empty');
     const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
 
-    const url = new URL(location.href);
-    const token = url.searchParams.get("pageToken") || null;
-    let trail = JSON.parse(sessionStorage.getItem("trail") || "[]");
+    // ----- Lightbox -----
+    function ensureLightbox(){
+      if (document.getElementById('lightbox')) return;
+      const lb = document.createElement('div');
+      lb.id = 'lightbox';
+      lb.setAttribute('aria-hidden','true');
+      lb.style.cssText = 'position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:200;';
+      lb.innerHTML = `
+        <div id="lbBack" style="position:absolute;inset:0;background:rgba(6,8,10,0.72);backdrop-filter: blur(6px);"></div>
+        <div id="lbContent" role="dialog" aria-modal="true" style="position:relative;max-width:95vw;max-height:92vh;display:flex;flex-direction:column;align-items:center;z-index:201;">
+          <button id="lbClose" aria-label="Close" style="position:absolute;right:-6px;top:-18px;background:rgba(255,255,255,0.9);border-radius:999px;border:none;padding:6px 8px;cursor:pointer;font-size:16px;z-index:202;">✕</button>
+          <img id="lbImage" alt="" style="max-width:100%;max-height:86vh;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.6);" />
+          <div id="lbCaption" style="margin-top:12px;color:#f6efe8;font-size:16px;text-align:center;max-width:90vw;"></div>
+        </div>`;
+      document.body.appendChild(lb);
 
-    if(token && !trail.includes(token)){ trail.push(token); }
-    if(!token) trail = [];
-    sessionStorage.setItem("trail", JSON.stringify(trail));
+      const lbBack  = lb.querySelector('#lbBack');
+      const lbClose = lb.querySelector('#lbClose');
 
+      lbBack.addEventListener('click', closeLightbox);
+      lbClose.addEventListener('click', closeLightbox);
+      document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeLightbox(); });
+    }
+    function openLightbox(src, caption){
+      const lb = document.getElementById('lightbox');
+      const img = document.getElementById('lbImage');
+      const cap = document.getElementById('lbCaption');
+      img.src = src;
+      cap.textContent = (caption && caption.trim()) ? caption.trim() : '';
+      lb.style.display = 'flex';
+      lb.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox(){
+      const lb = document.getElementById('lightbox');
+      const img = document.getElementById('lbImage');
+      img.src = '';
+      lb.style.display = 'none';
+      lb.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+    }
+    ensureLightbox();
+
+    // ----- Card -----
     function makeCard(src, captionText){
-      const caption = captionText?.trim() || "";
-
+      const caption = (captionText && captionText.trim()) ? captionText.trim() : '';
       const card = document.createElement('div');
-      card.className="photo-card";
+      card.className = 'photo-card';
 
       const a = document.createElement('a');
-      a.href = src; a.target="_blank";
-      const img = document.createElement('img');
-      img.src = src;
-      img.alt = caption || "photo";
-      a.appendChild(img);
+      a.href = src; a.target = '_blank'; a.rel = 'noopener noreferrer';
 
+      const img = document.createElement('img');
+      img.src = src; img.alt = caption || 'photo'; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
+
+      img.addEventListener('click', (e)=>{ e.preventDefault(); openLightbox(src, caption); });
+
+      a.appendChild(img);
       card.appendChild(a);
-      if(caption){
+
+      if (caption){
         const meta = document.createElement('div');
         meta.className = 'meta';
         meta.textContent = caption;
@@ -228,58 +306,62 @@
       return card;
     }
 
-    async function loadPage(){
+    // ----- Data -----
+    async function fetchPage(tok){
+      const qs = new URLSearchParams({ pageSize: String(24) });
+      if (tok) qs.set('pageToken', tok);
+      const resp = await fetch(`/api/photos?${qs.toString()}`, { credentials:'include' });
+      if (!resp.ok) throw new Error('HTTP '+resp.status);
+      return resp.json();
+    }
+
+    async function render(){
       try{
-        const qs = new URLSearchParams({ pageSize:PAGE_SIZE });
-        if(token) qs.set("pageToken", token);
+        const { items = [], nextPageToken = null } = await fetchPage(token);
 
-        const r = await fetch(`/api/photos?${qs.toString()}`,{credentials:'include'});
-        const data = await r.json();
-
-        const items = data.items || [];
-        const nextToken = data.nextPageToken || null;
-
-        grid.innerHTML = "";
-        items.forEach(f=>{
-          const src = `/api/file/${f.id}`;
-          grid.appendChild(makeCard(src, f.caption));
+        grid.innerHTML = '';
+        items.forEach(f => {
+          const src = `/api/file/${encodeURIComponent(f.id)}`;
+          grid.appendChild(makeCard(src, f.caption || ''));
         });
 
-        empty.style.display = items.length ? "none" : "block";
+        empty.style.display = items.length ? 'none' : 'block';
 
-        // next & prev button logic
-        nextBtn.disabled = !nextToken;
-        if(nextToken){
-          nextBtn.onclick = ()=>{
-            const u = new URL(location.href);
-            u.searchParams.set("pageToken", nextToken);
-            if(token && !trail.includes(token)) trail.push(token);
-            sessionStorage.setItem("trail", JSON.stringify(trail));
-            location.href = u.toString();
-          };
-        }
-
-        prevBtn.disabled = trail.length <= 1;
-        prevBtn.onclick = ()=>{
-          trail.pop();
-          const prevToken = trail[trail.length-1] || null;
-          sessionStorage.setItem("trail", JSON.stringify(trail));
+        // Next → push current token (can be null) to history, then go
+        nextBtn.disabled = !nextPageToken;
+        nextBtn.onclick = () => {
+          const h = readHist(); h.push(token ?? null); writeHist(h);
           const u = new URL(location.href);
-          if(prevToken) u.searchParams.set("pageToken", prevToken);
-          else u.searchParams.delete("pageToken");
+          if (nextPageToken) u.searchParams.set('pageToken', nextPageToken);
+          else u.searchParams.delete('pageToken');
           location.href = u.toString();
         };
-      }
-      catch(e){
-        empty.style.display="block";
+
+        // Prev → pop and go to previous token
+        const canPrev = readHist().length > 0;
+        prevBtn.disabled = !canPrev;
+        prevBtn.onclick = () => {
+          const h = readHist();
+          if (!h.length) return;
+          const prevTok = h.pop(); writeHist(h);
+          const u = new URL(location.href);
+          if (prevTok) u.searchParams.set('pageToken', prevTok);
+          else u.searchParams.delete('pageToken');
+          location.href = u.toString();
+        };
+      } catch (e){
+        console.warn('Gallery load failed', e);
+        empty.style.display = 'block';
+        nextBtn.disabled = true;
+        prevBtn.disabled = readHist().length === 0;
       }
     }
 
-    loadPage();
+    render();
   })();
   </script>
 
-  <!-- Music Player (unchanged, already working globally) -->
+  <!-- Music (global: runs on all pages except index) -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
 </body>
