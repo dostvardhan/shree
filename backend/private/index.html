@@ -1,113 +1,90 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
-  <!-- CSP (safe for a simple landing page) -->
+  <!-- CSP: allow Auth0 network calls via https -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self';
                  script-src 'self' 'unsafe-inline';
-                 style-src 'self' 'unsafe-inline';
-                 img-src 'self' data:;
-                 connect-src 'self';
-                 media-src 'self'">
+                 style-src  'self' 'unsafe-inline';
+                 img-src    'self' data:;
+                 connect-src 'self' https:;
+                 media-src  'self'">
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Shreshtha • Home</title>
 
-  <!-- Look & feel (same family as private pages) -->
   <style>
     :root{
-      --text:#6e2430;
       --title:#7a2b2b;      /* warm wine tone that matches the bg */
-      --subtitle:#804848;   /* soft brown-pink for body text */
-      --chip:rgba(255,255,255,0.30);
+      --subtitle:#804848;
     }
     *{ box-sizing:border-box }
     html,body{ height:100% }
     body{
       margin:0;
-      font-family: "Playfair Display", serif;
-      color:var(--text);
+      font-family:"Playfair Display",serif;
+      color:#6e2430;
       background:
         radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
         radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,0.18), transparent 18%),
         linear-gradient(160deg, #fff0ef 0%, #ffd6d6 18%, #ffc0be 38%, #ffb3b3 60%, #ffb0b0 100%);
       background-attachment: fixed;
-      overflow-x:hidden;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:28px 16px;
+      display:flex; align-items:center; justify-content:center;
+      padding:28px 16px; overflow-x:hidden;
     }
-
     .card{
-      width:min(860px, 92vw);
-      background: rgba(255,255,255,0.18);
+      width:min(860px,92vw);
+      background:rgba(255,255,255,0.18);
       backdrop-filter: blur(4px);
       border-radius:18px;
-      box-shadow: 0 18px 40px rgba(0,0,0,0.22);
-      padding: 36px 28px 30px;
-      text-align: center;
+      box-shadow:0 18px 40px rgba(0,0,0,0.22);
+      padding:36px 28px 30px;
+      text-align:center;
     }
-
     .title{
-      margin: 4px 0 8px;
-      font-size: 64px;
-      line-height: 1.1;
-      color: var(--title);
-      letter-spacing: 0.5px;
-      text-shadow: 0 4px 8px rgba(0,0,0,0.10);
+      margin:4px 0 8px; font-size:64px; line-height:1.1;
+      color:var(--title); letter-spacing:.5px;
+      text-shadow:0 4px 8px rgba(0,0,0,.10);
     }
-
     .subtitle{
-      margin: 0 0 24px;
-      font-size: 18px;
-      color: var(--subtitle);
+      margin:0 0 22px; font-size:18px; color:var(--subtitle);
     }
-
     .btn{
-      display:inline-block;
-      padding: 12px 18px;
-      border: none;
-      border-radius: 14px;
-      background: #7a2430;
-      color: #fff;
-      font-weight: 700;
-      font-size: 16px;
-      cursor: pointer;
-      box-shadow: 0 10px 22px rgba(0,0,0,0.20);
-      transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+      display:inline-block; padding:12px 18px; border:none; border-radius:14px;
+      background:#7a2430; color:#fff; font-weight:700; font-size:16px;
+      cursor:pointer; box-shadow:0 10px 22px rgba(0,0,0,.20);
+      transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
     }
-    .btn:hover{ transform: translateY(-2px); filter: brightness(1.04); box-shadow: 0 14px 28px rgba(0,0,0,0.24); }
+    .btn:hover{ transform:translateY(-2px); filter:brightness(1.04); box-shadow:0 14px 28px rgba(0,0,0,.24); }
 
-    .mini-links{
-      margin-top: 14px;
-      font-size: 14px;
-      color: #6f3a3a;
-      opacity: .9;
+    .mini{
+      margin-top:14px; font-size:14px; color:#6f3a3a; opacity:.95;
     }
-    .mini-links a{
-      color:#6f3a3a;
-      text-decoration: underline;
+    .mini a{ color:#6f3a3a; text-decoration:underline; }
+
+    .note{
+      margin-top:12px; font-size:14px;
+      background:rgba(255,255,255,.55); border-radius:10px; padding:8px 12px;
+      display:none;
     }
 
     footer{
-      position: fixed;
-      left:0; right:0; bottom:10px;
-      text-align:center;
-      font-size:12px;
-      color:#7b4c4c;
-      opacity:.9;
-      pointer-events:none;
+      position:fixed; left:0; right:0; bottom:10px;
+      text-align:center; font-size:12px; color:#7b4c4c; opacity:.9; pointer-events:none;
     }
 
-    /* responsive tweaks */
     @media (max-width:700px){
-      .title{ font-size: 44px; }
-      .subtitle{ font-size: 16px; }
-      .btn{ font-size: 15px; padding: 11px 16px; }
-      .card{ padding: 28px 18px 24px; }
+      .title{ font-size:44px; }
+      .subtitle{ font-size:16px; }
+      .btn{ font-size:15px; padding:11px 16px; }
+      .card{ padding:28px 18px 24px; }
     }
   </style>
+
+  <!-- Auth0 SDK + your init (must exist) -->
+  <script src="/auth0-spa-js.production.js"></script>
+  <script src="auth-init.js"></script>
 </head>
 <body>
 
@@ -118,18 +95,90 @@
       memories — curated with love.
     </p>
 
-    <!-- Landing action: send to backend /login route -->
-    <button class="btn" onclick="location.href='/welcome.html'">Login to Enter</button>
+    <button class="btn" id="loginBtn" type="button">Login to Enter</button>
+    <div id="inviteMsg" class="note" aria-live="polite"></div>
 
-    <!-- optional soft links (keep or remove) -->
-    <div class="mini-links" aria-hidden="true">
-      <!-- you can remove this entire line if you want only the button -->
-      <!-- Example: <a href="/life.html">Preview Life</a> -->
-    </div>
+    <div class="mini" aria-hidden="true"></div>
   </main>
 
   <footer>© Shreshtha’s Life • crafted with love</footer>
 
-  <!-- No music script on index (by design) -->
+  <!-- Invited-only gate -->
+  <script>
+  (async () => {
+    // 1) Allowed emails (lowercase)
+    const INVITED = [
+      "dostvardhan@gmail.com",
+      "mitravardhan@gmail.com",
+      "jhilmilsiyaadein@gmail.com"
+    ];
+
+    const showMsg = (t) => {
+      const el = document.getElementById('inviteMsg');
+      el.textContent = t; el.style.display = 'block';
+    };
+
+    if (!window.createAuth0Client) {
+      showMsg("Login system missing. Please contact admin.");
+      console.error("Auth0 SDK not found.");
+      return;
+    }
+    if (!window.AUTH0_DOMAIN || !window.AUTH0_CLIENT_ID) {
+      showMsg("Auth settings missing. Please contact admin.");
+      console.error("AUTH0_DOMAIN / AUTH0_CLIENT_ID not found (auth-init.js).");
+      return;
+    }
+
+    const auth0 = await createAuth0Client({
+      domain:  window.AUTH0_DOMAIN,
+      clientId: window.AUTH0_CLIENT_ID,
+      cacheLocation: 'localstorage',
+      useRefreshTokens: true,
+      authorizationParams: {
+        redirect_uri: window.location.origin + '/index.html',
+        scope: 'openid profile email offline_access'
+      }
+    });
+
+    // 2) Finish redirect if we came back from Auth0
+    if (window.location.search.includes('code=')) {
+      try { await auth0.handleRedirectCallback(); }
+      catch (e) { console.error('Auth0 callback error', e); }
+      // clean query
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // 3) Login button
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      try { await auth0.loginWithRedirect(); }
+      catch (e) { console.error('loginWithRedirect failed', e); }
+    });
+
+    // 4) If already logged in → check invite list
+    try {
+      const ok = await auth0.isAuthenticated();
+      if (ok) {
+        const user = await auth0.getUser();
+        const email = (user && user.email ? user.email : '').toLowerCase();
+        if (INVITED.includes(email)) {
+          // Allowed -> go to welcome
+          window.location.href = 'welcome.html';
+        } else {
+          // Not allowed -> message then logout
+          showMsg("Sorry! This account isn't on the invite list.");
+          setTimeout(async () => {
+            try {
+              await auth0.logout({ logoutParams: { returnTo: window.location.origin + '/index.html' } });
+            } catch (e) {}
+          }, 1200);
+        }
+      }
+    } catch (e) {
+      console.warn('auth check failed', e);
+    }
+  })();
+  </script>
+
+  <!-- No music on index -->
 </body>
 </html>
