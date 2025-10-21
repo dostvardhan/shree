@@ -1,346 +1,285 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Shreshtha – Gallery</title>
 
-  <!-- Auth & guards -->
+  <!-- Auth0 -->
   <script src="/auth0-spa-js.production.js"></script>
   <script src="auth-init.js" defer></script>
   <script src="guard-auth.js" defer></script>
 
+  <!-- Page Style -->
   <style>
-    :root{
-      --text:#6e2430;
-      --panel:rgba(255,255,255,.06);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
+    :root { --text:#6e2430; }
+
+    body {
       margin:0;
       font-family:"Playfair Display",serif;
       color:var(--text);
-      /* smoother layered gradient (no banding) */
+      overflow-x:hidden;
       background:
         radial-gradient(1200px 700px at 8% 12%, rgba(255,236,240,0.42), transparent 40%),
         radial-gradient(1000px 620px at 92% 84%, rgba(255,230,220,0.36), transparent 38%),
         radial-gradient(900px 520px at 50% -10%, rgba(255,210,210,0.28), transparent 45%),
         linear-gradient(160deg, #ffe9e6 0%, #ffcdc8 42%, #ffb7b2 70%, #ffa9a9 100%);
-      background-attachment: fixed;
-      overflow-x:hidden;
+      background-attachment:fixed;
     }
 
-    header { text-align:center; padding:24px 12px; position:relative; z-index:100; }
-    nav{ margin-top:8px; }
-    nav a{
-      margin:0 12px; padding:8px 18px; background:rgba(255,255,255,.15);
-      border-radius:999px; text-decoration:none; color:var(--text);
-      box-shadow:0 4px 8px rgba(0,0,0,.12);
+    header { text-align:center; padding:24px 12px; }
+    .page-title { font-size:48px; margin:0; color:#5a0013; }
+    .page-links a {
+      text-decoration:none; 
+      color:#5a0013; 
+      margin:0 10px;
+      padding:8px 16px;
+      background:rgba(255,255,255,0.2);
+      border-radius:20px;
     }
-    nav a:hover{ background:rgba(255,255,255,.28); }
 
-    main { max-width:1200px; margin:30px auto; padding:0 18px; position:relative; z-index:5; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:22px; }
+    main { max-width:1200px; margin:auto; padding:20px; }
 
-    .photo-card{
-      background:var(--panel);
+    .grid { 
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:20px;
+    }
+
+    .photo-card {
+      background:rgba(255,255,255,0.1);
       border-radius:16px;
-      overflow:hidden;
-      box-shadow:0 12px 30px rgba(0,0,0,.14);
-      transition:transform .28s cubic-bezier(.2,.9,.3,1);
-      display:flex; flex-direction:column;
+      padding:10px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.15);
+      transition:transform .3s;
     }
-    .photo-card:hover{ transform:translateY(-6px); }
-    .photo-card a{ display:block; flex:1; }
-    .photo-card img{
+    .photo-card:hover { transform:translateY(-5px); }
+    .photo-card img {
       width:100%;
-      border-radius:12px;
+      max-height:380px;
       object-fit:contain;
-      display:block;
-      max-height:420px;
-      background:#fff9f7;
-      cursor:zoom-in;
+      border-radius:12px;
     }
-    .meta{ padding:10px 12px 14px; text-align:center; font-style:italic; font-size:14px; color:#48242a; }
-    .meta:empty{ display:none; } /* hide empty captions */
-    .empty{ text-align:center; font-size:18px; margin-top:80px; opacity:.95; color:#4b2b2b }
+    .meta {
+      text-align:center;
+      margin-top:8px;
+      font-style:italic;
+      font-size:14px;
+    }
+    .meta:empty { display:none; }
 
-    /* hearts canvas sits above photos but below header */
+    /* pager */
+    #pager {
+      text-align:center;
+      margin-top:25px;
+    }
+    #pager button {
+      padding:10px 18px;
+      margin:0 8px;
+      border:none;
+      background:rgba(255,255,255,0.25);
+      border-radius:8px;
+      cursor:pointer;
+      font-size:15px;
+    }
+    #pager button:disabled { opacity:0.3; cursor:default; }
+
+    /* Hearts Canvas */
     #fxCanvas {
-      position:fixed; left:0; top:0;
-      width:100vw; height:100vh;
+      position:fixed;
+      left:0;
+      top:0;
+      width:100vw;
+      height:100vh;
       pointer-events:none;
-      z-index:60; /* header ~100 */
+      z-index:50;
     }
-
-    /* hide pager completely */
-    #pager{display:none !important;}
   </style>
 </head>
+
 <body>
-  <header class="hero" style="text-align:center;margin-top:24px;margin-bottom:6px;">
-    <h1 class="page-title" style="font-size:48px;margin:0;color:#5a0013;text-shadow:0 6px 10px rgba(0,0,0,0.08);">
-      Gallery of Sweet Memories
-    </h1>
-    <div class="page-links" style="text-align:center;margin:8px 0 18px;font-size:15px;">
-      <a href="life.html">Life</a> &nbsp;|&nbsp;
-      <a href="upload.html">Upload</a> &nbsp;|&nbsp;
+  <header>
+    <h1 class="page-title">Gallery of Sweet Memories</h1>
+    <div class="page-links">
+      <a href="life.html">Life</a> |
+      <a href="upload.html">Upload</a> |
       <a href="logout.html">Logout</a>
     </div>
   </header>
 
   <main>
-    <section id="grid" class="grid" aria-live="polite"></section>
-    <div id="empty" class="empty" style="display:none;">No photos uploaded yet 🌸</div>
+    <section id="grid" class="grid"></section>
+    <div id="empty" style="display:none;text-align:center;margin-top:40px;">No photos yet 🌸</div>
 
-    <!-- pager removed -->
-    <div id="pager" aria-hidden="true"></div>
+    <div id="pager">
+      <button id="prevBtn" disabled>← Prev</button>
+      <button id="nextBtn">Next →</button>
+    </div>
   </main>
 
-  <!-- Lightbox -->
-  <div id="lightbox" aria-hidden="true" style="display:none">
-    <div id="lbBack" style="position:absolute;inset:0;background:rgba(6,8,10,0.72);backdrop-filter: blur(6px);"></div>
-    <div id="lbContent" role="dialog" aria-modal="true" style="position:relative;max-width:95vw;max-height:92vh;z-index:201;display:flex;flex-direction:column;align-items:center;">
-      <button id="lbClose" aria-label="Close" style="position:absolute;right:-6px;top:-18px;background:rgba(255,255,255,0.9);border-radius:999px;border:none;padding:6px 8px;cursor:pointer;font-size:16px;z-index:202;">✕</button>
-      <img id="lbImage" alt="" style="max-width:100%;max-height:86vh;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.6);" />
-      <div id="lbCaption" class="meta" style="color:#f6efe8;"></div>
-    </div>
-  </div>
+  <!-- Hearts Canvas -->
+  <canvas id="fxCanvas"></canvas>
 
-  <!-- Hearts canvas -->
-  <div id="fxRoot"><canvas id="fxCanvas"></canvas></div>
-
-  <!-- Floating hearts (inline, DOM-ready) -->
+  <!-- Floating Hearts Script -->
   <script>
-  (function(){
+  (function () {
     function initHearts(){
       const c = document.getElementById('fxCanvas');
-      if(!c) return;
       const ctx = c.getContext('2d');
-      const DPR = Math.max(1, window.devicePixelRatio || 1);
-      let W=0, H=0;
+      const DPR = window.devicePixelRatio || 1;
+      let W, H;
       let hearts = [];
+      const COLORS = ['#ffd1ea','#fff6a6','#ffd89e','#d6f5c6','#d6e0ff','#ffe3b8'];
 
-      const COLORS = ['#dff7ff','#fff6a6','#ffd89e','#ffb3c6','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
-
-      function R(a,b){ return Math.random()*(b-a)+a; }
       function resize(){
-        W = Math.floor(window.innerWidth * DPR);
-        H = Math.floor(window.innerHeight * DPR);
-        c.width = W; c.height = H;
-        c.style.width = '100vw'; c.style.height = '100vh';
+        W = window.innerWidth * DPR;
+        H = window.innerHeight * DPR;
+        c.width = W;
+        c.height = H;
       }
+
       function spawn(){
-        if (hearts.length > 28) return;
+        if (hearts.length > 30) return;
         hearts.push({
-          x: R(0, W),
-          y: H + R(10*DPR, 140*DPR),
-          s: R(10, 26),
-          vx: R(-8,8),
-          vy: -R(12, 30),
-          a: R(.45, .95),
-          r: R(-.6, .6),
-          vr: R(-.012, .012),
+          x: Math.random()*W,
+          y: H + Math.random()*200,
+          size: 12 + Math.random()*18,
+          vx: (Math.random()*2-1)*0.5,
+          vy: - (1 + Math.random()*2),
+          alpha: 0.6 + Math.random()*0.4,
+          rot: Math.random()*2*Math.PI,
           color: COLORS[Math.floor(Math.random()*COLORS.length)]
         });
       }
-      function drawHeart(px,py,scale,rot,alpha,color){
+
+      function draw(h){
         ctx.save();
-        ctx.translate(px,py); ctx.rotate(rot); ctx.scale(scale, scale);
-        ctx.globalAlpha = Math.min(1, alpha * 1.06);
-        ctx.shadowColor = color; ctx.shadowBlur = 12 * scale;
-        const g = ctx.createRadialGradient(0, -0.12, 0.05, 0, 0.12, 1.0);
-        g.addColorStop(0, color); g.addColorStop(0.6, color); g.addColorStop(1, 'rgba(255,255,255,0.08)');
-        ctx.fillStyle = g;
+        ctx.translate(h.x, h.y);
+        ctx.rotate(h.rot);
+        ctx.scale(h.size/50, h.size/50);
+        ctx.globalAlpha = h.alpha;
+
         ctx.beginPath();
-        ctx.moveTo(0,-0.5);
+        ctx.moveTo(0, -0.5);
         ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);
         ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);
-        ctx.fill();
-        ctx.globalAlpha = 0.6 * alpha;
-        ctx.fillStyle = 'rgba(255,255,255,0.95)';
-        ctx.beginPath();
-        ctx.ellipse(0.18, -0.28, 0.12, 0.06, -0.4, 0, Math.PI*2);
+        ctx.fillStyle = h.color;
         ctx.fill();
         ctx.restore();
-        ctx.shadowBlur = 0;
       }
+
       function tick(){
         ctx.clearRect(0,0,W,H);
-        if (Math.random() < 0.10) spawn();
-        for (let i=0;i<hearts.length;i++){
-          const h=hearts[i];
-          h.x += h.vx * 0.016 * DPR;
-          h.y += h.vy * 0.016 * DPR;
-          h.r += h.vr;
-          h.a -= 0.0009;
-        }
-        hearts = hearts.filter(h => (h.y > -120*DPR) && (h.a > 0.02));
-        hearts.forEach(h => drawHeart(h.x, h.y, (h.s/50)*DPR, h.r, h.a, h.color));
+        if (Math.random() < 0.1) spawn();
+        hearts.forEach(h=>{
+          h.x += h.vx;
+          h.y += h.vy;
+          h.alpha -= 0.003;
+          draw(h);
+        });
+        hearts = hearts.filter(h=> h.alpha > 0 && h.y > -100);
         requestAnimationFrame(tick);
       }
-      window.addEventListener('resize', resize, { passive:true });
+
+      window.addEventListener('resize',resize);
       resize(); tick();
     }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initHearts);
-    else initHearts();
+    document.addEventListener('DOMContentLoaded', initHearts);
   })();
   </script>
 
-  <!-- Gallery logic (auto-load on scroll; no pager/status text) -->
+  <!-- Gallery Logic -->
   <script>
   (function(){
-    const PAGE_SIZE = (() => {
-      const w = window.innerWidth || 0;
-      if (w >= 1400) return 40;
-      if (w >= 1000) return 30;
-      if (w >= 700)  return 24;
-      return 20;
-    })();
+    const PAGE_SIZE = 24;
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('empty');
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
 
-    const grid = document.querySelector("#grid");
-    const emptyEl = document.getElementById("empty");
+    const url = new URL(location.href);
+    const token = url.searchParams.get("pageToken") || null;
+    let trail = JSON.parse(sessionStorage.getItem("trail") || "[]");
 
-    let nextToken = null;
-    let loading = false;
-    let firstLoadDone = false;
+    if(token && !trail.includes(token)){ trail.push(token); }
+    if(!token) trail = [];
+    sessionStorage.setItem("trail", JSON.stringify(trail));
 
-    function makeCard(imgSrc, captionText){
-      const caption = (captionText && captionText.trim()) ? captionText.trim() : '';
+    function makeCard(src, captionText){
+      const caption = captionText?.trim() || "";
 
-      const a = document.createElement("a");
-      a.href = imgSrc; a.target="_blank"; a.rel="noopener noreferrer";
+      const card = document.createElement('div');
+      card.className="photo-card";
 
-      const img = document.createElement("img");
-      img.src = imgSrc; img.alt = caption || 'photo';
-      img.loading = "lazy"; img.referrerPolicy = "no-referrer";
-      img.addEventListener('click', (ev) => { ev.preventDefault(); openLightbox(imgSrc, caption); });
+      const a = document.createElement('a');
+      a.href = src; a.target="_blank";
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = caption || "photo";
       a.appendChild(img);
 
-      const card = document.createElement("div");
-      card.className = "photo-card";
       card.appendChild(a);
-
-      if (caption){
-        const meta = document.createElement("div");
-        meta.className = "meta";
+      if(caption){
+        const meta = document.createElement('div');
+        meta.className = 'meta';
         meta.textContent = caption;
         card.appendChild(meta);
       }
       return card;
     }
 
-    // Lightbox
-    const lb = document.getElementById('lightbox');
-    const lbImg = document.getElementById('lbImage');
-    const lbCaption = document.getElementById('lbCaption');
-    const lbClose = document.getElementById('lbClose');
-    const lbBack = document.getElementById('lbBack');
-    function openLightbox(src, caption){
-      lbImg.src = src;
-      lbCaption.textContent = (caption && caption.trim()) ? caption.trim() : '';
-      lb.style.display = 'flex';
-      lb.setAttribute('aria-hidden','false');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeLightbox(){
-      lbImg.src = '';
-      lb.style.display = 'none';
-      lb.setAttribute('aria-hidden','true');
-      document.body.style.overflow = '';
-    }
-    if (lbClose) lbClose.addEventListener('click', closeLightbox);
-    if (lbBack) lbBack.addEventListener('click', closeLightbox);
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
-
-    async function loadMore(){
-      if (loading) return;
-      loading = true;
+    async function loadPage(){
       try{
-        const qs = new URLSearchParams({ pageSize: String(PAGE_SIZE) });
-        if (nextToken) qs.set("pageToken", nextToken);
-        const resp = await fetch(`/api/photos?${qs.toString()}`, { credentials:'include' });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const data = await resp.json();
+        const qs = new URLSearchParams({ pageSize:PAGE_SIZE });
+        if(token) qs.set("pageToken", token);
+
+        const r = await fetch(`/api/photos?${qs.toString()}`,{credentials:'include'});
+        const data = await r.json();
+
         const items = data.items || [];
-        nextToken = data.nextPageToken || null;
+        const nextToken = data.nextPageToken || null;
 
-        if (!items.length && !firstLoadDone){
-          // fallback to local listing if first server page empty
-          await loadLocalFallback();
-          return;
-        }
-
-        items.forEach(f => {
-          const src = `/api/file/${encodeURIComponent(f.id)}`;
-          const caption = (f.caption && f.caption.trim()) ? f.caption.trim() : '';
-          grid.appendChild(makeCard(src, caption));
+        grid.innerHTML = "";
+        items.forEach(f=>{
+          const src = `/api/file/${f.id}`;
+          grid.appendChild(makeCard(src, f.caption));
         });
 
-        emptyEl.style.display = (grid.children.length === 0) ? 'block' : 'none';
-        firstLoadDone = true;
-      } catch(e){
-        if (!firstLoadDone){
-          await loadLocalFallback();
+        empty.style.display = items.length ? "none" : "block";
+
+        // next & prev button logic
+        nextBtn.disabled = !nextToken;
+        if(nextToken){
+          nextBtn.onclick = ()=>{
+            const u = new URL(location.href);
+            u.searchParams.set("pageToken", nextToken);
+            if(token && !trail.includes(token)) trail.push(token);
+            sessionStorage.setItem("trail", JSON.stringify(trail));
+            location.href = u.toString();
+          };
         }
-      } finally {
-        loading = false;
-        if (!nextToken) observer.disconnect();
+
+        prevBtn.disabled = trail.length <= 1;
+        prevBtn.onclick = ()=>{
+          trail.pop();
+          const prevToken = trail[trail.length-1] || null;
+          sessionStorage.setItem("trail", JSON.stringify(trail));
+          const u = new URL(location.href);
+          if(prevToken) u.searchParams.set("pageToken", prevToken);
+          else u.searchParams.delete("pageToken");
+          location.href = u.toString();
+        };
+      }
+      catch(e){
+        empty.style.display="block";
       }
     }
 
-    async function loadLocalFallback(){
-      try{
-        const j = await fetch('/private/photos.json', { cache: 'no-cache' });
-        let list = [];
-        if (j.ok){
-          const parsed = await j.json();
-          if (Array.isArray(parsed)) list = parsed.map(it => {
-            if (typeof it === 'string') return { url:`/private/photos/${it}`, caption:'' };
-            if (it && it.url) return it;
-            if (it && it.name) return { url:`/private/photos/${it.name}`, caption:(it.caption||'') };
-            return null;
-          }).filter(Boolean);
-        }
-        if (!list.length){
-          const MAX=60, exts=['jpg','jpeg','png','webp'];
-          for (let i=1;i<=MAX;i++){
-            for (const ext of exts){
-              const nm = `photo${i}.${ext}`;
-              const h = await fetch(`/private/photos/${nm}`, { method:'HEAD' });
-              if (h.ok){ list.push({ url:`/private/photos/${nm}`, caption:'' }); break; }
-            }
-          }
-        }
-        grid.innerHTML='';
-        list.forEach(item => grid.appendChild(makeCard(item.url, (item.caption||'') )));
-        emptyEl.style.display = (grid.children.length === 0) ? 'block' : 'none';
-      }catch(e){
-        emptyEl.style.display='block';
-      }
-    }
-
-    // infinite scroll via intersection observer
-    const sentinel = document.createElement('div');
-    sentinel.id = 'sentinel';
-    sentinel.style.height = '1px';
-    document.body.appendChild(sentinel);
-
-    const observer = new IntersectionObserver((entries)=>{
-      entries.forEach(e => {
-        if (e.isIntersecting) loadMore();
-      });
-    }, { root: null, rootMargin: '800px', threshold: 0 });
-
-    // kick off
-    loadMore();
-    observer.observe(sentinel);
+    loadPage();
   })();
   </script>
 
-  <!-- Music (keep your global) -->
+  <!-- Music Player (unchanged, already working globally) -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
 </body>
