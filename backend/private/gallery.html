@@ -13,8 +13,8 @@
 
   <style>
     :root{
-      --cream:#FFE7DA; --peach:#FFB59E; --red:#FF6B6B;
-      --text:#6e2430; --panel:rgba(255,255,255,.05);
+      --text:#6e2430;
+      --panel:rgba(255,255,255,.06);
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -22,12 +22,17 @@
       margin:0;
       font-family:"Playfair Display",serif;
       color:var(--text);
-      background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red));
+      /* smoother layered gradient (no banding) */
+      background:
+        radial-gradient(1200px 700px at 8% 12%, rgba(255,236,240,0.42), transparent 40%),
+        radial-gradient(1000px 620px at 92% 84%, rgba(255,230,220,0.36), transparent 38%),
+        radial-gradient(900px 520px at 50% -10%, rgba(255,210,210,0.28), transparent 45%),
+        linear-gradient(160deg, #ffe9e6 0%, #ffcdc8 42%, #ffb7b2 70%, #ffa9a9 100%);
+      background-attachment: fixed;
       overflow-x:hidden;
     }
 
     header { text-align:center; padding:24px 12px; position:relative; z-index:100; }
-    .logo{ font-family:"Italiao",cursive; font-size:46px; text-shadow:0 2px 10px rgba(0,0,0,.25); }
     nav{ margin-top:8px; }
     nav a{
       margin:0 12px; padding:8px 18px; background:rgba(255,255,255,.15);
@@ -37,7 +42,7 @@
     nav a:hover{ background:rgba(255,255,255,.28); }
 
     main { max-width:1200px; margin:30px auto; padding:0 18px; position:relative; z-index:5; }
-    .grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:22px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:22px; }
 
     .photo-card{
       background:var(--panel);
@@ -62,32 +67,16 @@
     .meta:empty{ display:none; } /* hide empty captions */
     .empty{ text-align:center; font-size:18px; margin-top:80px; opacity:.95; color:#4b2b2b }
 
-    /* Pager */
-    #pager{ display:flex; justify-content:center; gap:12px; align-items:center; margin:18px 0; z-index:6; position:relative; }
-    #pager button{ padding:8px 12px; border-radius:8px; border:1px solid rgba(0,0,0,0.08); cursor:pointer; background:rgba(255,255,255,0.12); }
-    #pager button:disabled{ opacity:0.45; cursor:default; }
-
-    /* Canvas hearts sits above photos but below header */
+    /* hearts canvas sits above photos but below header */
     #fxCanvas {
-      position:fixed;
-      left:0; top:0;
+      position:fixed; left:0; top:0;
       width:100vw; height:100vh;
       pointer-events:none;
-      z-index:60; /* above main/photos, below header (header=100) */
+      z-index:60; /* header ~100 */
     }
 
-    /* lightbox styles */
-    #lightbox { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:200; }
-    #lbBack { position:absolute; inset:0; background:rgba(6,8,10,0.72); backdrop-filter: blur(6px); }
-    #lbContent { position:relative; max-width:95vw; max-height:92vh; z-index:201; display:flex; flex-direction:column; align-items:center; }
-    #lbContent img { max-width:100%; max-height:86vh; border-radius:12px; box-shadow:0 24px 60px rgba(0,0,0,.6); }
-    #lbClose { position:absolute; right:-6px; top:-18px; background:rgba(255,255,255,0.9); border-radius:999px; border:none; padding:6px 8px; cursor:pointer; font-size:16px; z-index:202; }
-    #lbCaption { margin-top:12px; color:#f6efe8; font-size:16px; text-align:center; max-width:90vw; }
-    @media (max-width:600px){
-      .logo{ font-size:34px; }
-      #lbCaption { font-size:14px; }
-      #lbClose{ right:6px; top:6px; }
-    }
+    /* hide pager completely */
+    #pager{display:none !important;}
   </style>
 </head>
 <body>
@@ -106,28 +95,101 @@
     <section id="grid" class="grid" aria-live="polite"></section>
     <div id="empty" class="empty" style="display:none;">No photos uploaded yet 🌸</div>
 
-    <div id="pager" aria-hidden="false">
-      <button id="prevBtn" disabled>← Prev</button>
-      <div id="pageInfo" style="font-weight:600;"></div>
-      <button id="nextBtn">Next →</button>
-    </div>
+    <!-- pager removed -->
+    <div id="pager" aria-hidden="true"></div>
   </main>
 
   <!-- Lightbox -->
-  <div id="lightbox" aria-hidden="true">
-    <div id="lbBack"></div>
-    <div id="lbContent" role="dialog" aria-modal="true">
-      <button id="lbClose" aria-label="Close">✕</button>
-      <img id="lbImage" alt="">
-      <div id="lbCaption" class="meta"></div>
+  <div id="lightbox" aria-hidden="true" style="display:none">
+    <div id="lbBack" style="position:absolute;inset:0;background:rgba(6,8,10,0.72);backdrop-filter: blur(6px);"></div>
+    <div id="lbContent" role="dialog" aria-modal="true" style="position:relative;max-width:95vw;max-height:92vh;z-index:201;display:flex;flex-direction:column;align-items:center;">
+      <button id="lbClose" aria-label="Close" style="position:absolute;right:-6px;top:-18px;background:rgba(255,255,255,0.9);border-radius:999px;border:none;padding:6px 8px;cursor:pointer;font-size:16px;z-index:202;">✕</button>
+      <img id="lbImage" alt="" style="max-width:100%;max-height:86vh;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.6);" />
+      <div id="lbCaption" class="meta" style="color:#f6efe8;"></div>
     </div>
   </div>
 
-  <!-- Hearts canvas root -->
+  <!-- Hearts canvas -->
   <div id="fxRoot"><canvas id="fxCanvas"></canvas></div>
-  <script src="/hearts.js" defer></script>
 
-  <!-- GALLERY: pagination + render + lightbox -->
+  <!-- Floating hearts (inline, DOM-ready) -->
+  <script>
+  (function(){
+    function initHearts(){
+      const c = document.getElementById('fxCanvas');
+      if(!c) return;
+      const ctx = c.getContext('2d');
+      const DPR = Math.max(1, window.devicePixelRatio || 1);
+      let W=0, H=0;
+      let hearts = [];
+
+      const COLORS = ['#dff7ff','#fff6a6','#ffd89e','#ffb3c6','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
+
+      function R(a,b){ return Math.random()*(b-a)+a; }
+      function resize(){
+        W = Math.floor(window.innerWidth * DPR);
+        H = Math.floor(window.innerHeight * DPR);
+        c.width = W; c.height = H;
+        c.style.width = '100vw'; c.style.height = '100vh';
+      }
+      function spawn(){
+        if (hearts.length > 28) return;
+        hearts.push({
+          x: R(0, W),
+          y: H + R(10*DPR, 140*DPR),
+          s: R(10, 26),
+          vx: R(-8,8),
+          vy: -R(12, 30),
+          a: R(.45, .95),
+          r: R(-.6, .6),
+          vr: R(-.012, .012),
+          color: COLORS[Math.floor(Math.random()*COLORS.length)]
+        });
+      }
+      function drawHeart(px,py,scale,rot,alpha,color){
+        ctx.save();
+        ctx.translate(px,py); ctx.rotate(rot); ctx.scale(scale, scale);
+        ctx.globalAlpha = Math.min(1, alpha * 1.06);
+        ctx.shadowColor = color; ctx.shadowBlur = 12 * scale;
+        const g = ctx.createRadialGradient(0, -0.12, 0.05, 0, 0.12, 1.0);
+        g.addColorStop(0, color); g.addColorStop(0.6, color); g.addColorStop(1, 'rgba(255,255,255,0.08)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.moveTo(0,-0.5);
+        ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);
+        ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);
+        ctx.fill();
+        ctx.globalAlpha = 0.6 * alpha;
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.beginPath();
+        ctx.ellipse(0.18, -0.28, 0.12, 0.06, -0.4, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+        ctx.shadowBlur = 0;
+      }
+      function tick(){
+        ctx.clearRect(0,0,W,H);
+        if (Math.random() < 0.10) spawn();
+        for (let i=0;i<hearts.length;i++){
+          const h=hearts[i];
+          h.x += h.vx * 0.016 * DPR;
+          h.y += h.vy * 0.016 * DPR;
+          h.r += h.vr;
+          h.a -= 0.0009;
+        }
+        hearts = hearts.filter(h => (h.y > -120*DPR) && (h.a > 0.02));
+        hearts.forEach(h => drawHeart(h.x, h.y, (h.s/50)*DPR, h.r, h.a, h.color));
+        requestAnimationFrame(tick);
+      }
+      window.addEventListener('resize', resize, { passive:true });
+      resize(); tick();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initHearts);
+    else initHearts();
+  })();
+  </script>
+
+  <!-- Gallery logic (auto-load on scroll; no pager/status text) -->
   <script>
   (function(){
     const PAGE_SIZE = (() => {
@@ -138,49 +200,30 @@
       return 20;
     })();
 
-    const TRAIL_KEY = "gallery_token_trail_v1";
-    const readTrail = () => { try{ return JSON.parse(sessionStorage.getItem(TRAIL_KEY)||"[]"); }catch(e){return [];} }
-    const writeTrail = (arr) => { try{ sessionStorage.setItem(TRAIL_KEY, JSON.stringify(arr)); }catch(e){} }
-
-    const url = new URL(location.href);
-    const token = url.searchParams.get("pageToken") || null;
-    const pageSize = Math.max(1, Number(url.searchParams.get("pageSize")||PAGE_SIZE));
-
     const grid = document.querySelector("#grid");
-    const prevBtn = document.getElementById("prevBtn");
-    const nextBtn = document.getElementById("nextBtn");
-    const pageInfo = document.getElementById("pageInfo");
     const emptyEl = document.getElementById("empty");
 
-    let trail = readTrail();
-    if (token && (trail.length===0 || trail[trail.length-1] !== token)) trail.push(token);
-    if (!token) trail = [];
-    writeTrail(trail);
-
-    function setStatus(t){ if(pageInfo) pageInfo.textContent = t; }
+    let nextToken = null;
+    let loading = false;
+    let firstLoadDone = false;
 
     function makeCard(imgSrc, captionText){
       const caption = (captionText && captionText.trim()) ? captionText.trim() : '';
 
-      const anchor = document.createElement("a");
-      anchor.href = imgSrc;
-      anchor.target = "_blank";
-      anchor.rel = "noopener noreferrer";
+      const a = document.createElement("a");
+      a.href = imgSrc; a.target="_blank"; a.rel="noopener noreferrer";
 
       const img = document.createElement("img");
-      img.src = imgSrc;
-      img.alt = caption || 'photo';
-      img.loading = "lazy";
-      img.referrerPolicy = "no-referrer";
+      img.src = imgSrc; img.alt = caption || 'photo';
+      img.loading = "lazy"; img.referrerPolicy = "no-referrer";
       img.addEventListener('click', (ev) => { ev.preventDefault(); openLightbox(imgSrc, caption); });
-
-      anchor.appendChild(img);
+      a.appendChild(img);
 
       const card = document.createElement("div");
       card.className = "photo-card";
-      card.appendChild(anchor);
+      card.appendChild(a);
 
-      if (caption) {
+      if (caption){
         const meta = document.createElement("div");
         meta.className = "meta";
         meta.textContent = caption;
@@ -194,6 +237,7 @@
     const lbImg = document.getElementById('lbImage');
     const lbCaption = document.getElementById('lbCaption');
     const lbClose = document.getElementById('lbClose');
+    const lbBack = document.getElementById('lbBack');
     function openLightbox(src, caption){
       lbImg.src = src;
       lbCaption.textContent = (caption && caption.trim()) ? caption.trim() : '';
@@ -208,141 +252,95 @@
       document.body.style.overflow = '';
     }
     if (lbClose) lbClose.addEventListener('click', closeLightbox);
-    const lbBack = document.getElementById('lbBack');
     if (lbBack) lbBack.addEventListener('click', closeLightbox);
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
 
-    // Fetch /api/photos (Drive-backed)
-    async function loadFromApi(){
-      try {
-        const qs = new URLSearchParams({ pageSize: String(pageSize) });
-        if (token) qs.set("pageToken", token);
-        const resp = await fetch(`/api/photos?${qs.toString()}`, { credentials: 'include' });
+    async function loadMore(){
+      if (loading) return;
+      loading = true;
+      try{
+        const qs = new URLSearchParams({ pageSize: String(PAGE_SIZE) });
+        if (nextToken) qs.set("pageToken", nextToken);
+        const resp = await fetch(`/api/photos?${qs.toString()}`, { credentials:'include' });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
         const items = data.items || [];
-        const nextToken = data.nextPageToken || null;
-        if (!items.length) throw new Error('no-items');
+        nextToken = data.nextPageToken || null;
 
-        // Render (no filename fallback)
-        grid.innerHTML = '';
+        if (!items.length && !firstLoadDone){
+          // fallback to local listing if first server page empty
+          await loadLocalFallback();
+          return;
+        }
+
         items.forEach(f => {
           const src = `/api/file/${encodeURIComponent(f.id)}`;
           const caption = (f.caption && f.caption.trim()) ? f.caption.trim() : '';
           grid.appendChild(makeCard(src, caption));
         });
 
-        emptyEl.style.display = 'none';
-        setStatus(`Page ${ (trail.length>0) ? (trail.length+1) : 1 } • ${pageSize} per page (Drive)`);
-        setupPager(nextToken);
-        return true;
-      } catch (err) {
-        console.warn('Drive listing failed or returned empty:', err);
-        return false;
+        emptyEl.style.display = (grid.children.length === 0) ? 'block' : 'none';
+        firstLoadDone = true;
+      } catch(e){
+        if (!firstLoadDone){
+          await loadLocalFallback();
+        }
+      } finally {
+        loading = false;
+        if (!nextToken) observer.disconnect();
       }
     }
 
-    // Local fallback: try /private/photos.json then probe /private/photos/
-    async function loadFromLocal(){
-      try {
-        let list = null;
-        try {
-          const j = await fetch('/private/photos.json', { cache: 'no-cache' });
-          if (j.ok) {
-            const parsed = await j.json();
-            if (Array.isArray(parsed) && parsed.length) {
-              list = parsed.map(it => {
-                if (typeof it === 'string') return { url: `/private/photos/${it}`, name: it, caption: '' };
-                if (it && it.url) return it;
-                if (it && it.name) return { url: `/private/photos/${it.name}`, name: it.name, caption: (it.caption||'') };
-                return null;
-              }).filter(Boolean);
-            }
-          }
-        } catch(e){ /* ignore */ }
-
-        if (!list || list.length === 0) {
-          list = [];
-          const MAX = 60;
-          const exts = ['jpg','jpeg','png','webp'];
-          for (let i = 1; i <= MAX; i++){
+    async function loadLocalFallback(){
+      try{
+        const j = await fetch('/private/photos.json', { cache: 'no-cache' });
+        let list = [];
+        if (j.ok){
+          const parsed = await j.json();
+          if (Array.isArray(parsed)) list = parsed.map(it => {
+            if (typeof it === 'string') return { url:`/private/photos/${it}`, caption:'' };
+            if (it && it.url) return it;
+            if (it && it.name) return { url:`/private/photos/${it.name}`, caption:(it.caption||'') };
+            return null;
+          }).filter(Boolean);
+        }
+        if (!list.length){
+          const MAX=60, exts=['jpg','jpeg','png','webp'];
+          for (let i=1;i<=MAX;i++){
             for (const ext of exts){
               const nm = `photo${i}.${ext}`;
-              try {
-                const h = await fetch(`/private/photos/${nm}`, { method: 'HEAD' });
-                if (h.ok) { list.push({ url: `/private/photos/${nm}`, name: nm, caption: '' }); break; }
-              } catch(e){ /* ignore */ }
+              const h = await fetch(`/private/photos/${nm}`, { method:'HEAD' });
+              if (h.ok){ list.push({ url:`/private/photos/${nm}`, caption:'' }); break; }
             }
           }
         }
-
-        if (!list || list.length === 0) throw new Error('no local photos found');
-
-        grid.innerHTML = '';
-        list.forEach(item => {
-          const src = item.url || `/private/photos/${item.name}`;
-          const caption = (item.caption && item.caption.trim()) ? item.caption.trim() : '';
-          grid.appendChild(makeCard(src, caption));
-        });
-
-        emptyEl.style.display = 'none';
-        setStatus(`Showing ${list.length} (Local)`);
-        setupPager(null);
-        return true;
-      } catch (err) {
-        console.warn('Local fallback failed:', err);
-        return false;
+        grid.innerHTML='';
+        list.forEach(item => grid.appendChild(makeCard(item.url, (item.caption||'') )));
+        emptyEl.style.display = (grid.children.length === 0) ? 'block' : 'none';
+      }catch(e){
+        emptyEl.style.display='block';
       }
     }
 
-    function setupPager(nextToken){
-      if (nextBtn) {
-        nextBtn.disabled = !nextToken;
-        nextBtn.onclick = () => {
-          const u = new URL(location.href);
-          u.searchParams.set("pageSize", String(pageSize));
-          if (nextToken) u.searchParams.set("pageToken", nextToken);
-          let t = readTrail();
-          if (token && (t.length===0 || t[t.length-1] !== token)) t.push(token);
-          writeTrail(t);
-          location.href = u.toString();
-        };
-      }
-      if (prevBtn) {
-        prevBtn.disabled = (trail.length <= 1);
-        prevBtn.onclick = () => {
-          let t = readTrail();
-          if (t.length > 0) t.pop();
-          const prevToken = (t.length > 0) ? t[t.length-1] : null;
-          writeTrail(t);
-          const u = new URL(location.href);
-          u.searchParams.set("pageSize", String(pageSize));
-          if (prevToken) u.searchParams.set("pageToken", prevToken); else u.searchParams.delete("pageToken");
-          location.href = u.toString();
-        };
-      }
-    }
+    // infinite scroll via intersection observer
+    const sentinel = document.createElement('div');
+    sentinel.id = 'sentinel';
+    sentinel.style.height = '1px';
+    document.body.appendChild(sentinel);
 
-    async function loadPage(){
-      setStatus("Loading…");
-      if (prevBtn) prevBtn.disabled = (trail.length <= 1);
-      if (nextBtn) nextBtn.disabled = true;
+    const observer = new IntersectionObserver((entries)=>{
+      entries.forEach(e => {
+        if (e.isIntersecting) loadMore();
+      });
+    }, { root: null, rootMargin: '800px', threshold: 0 });
 
-      const okApi = await loadFromApi();
-      if (okApi) return;
-      const okLocal = await loadFromLocal();
-      if (!okLocal) {
-        grid.innerHTML = '';
-        emptyEl.style.display = 'block';
-        setStatus('');
-      }
-    }
-
-    loadPage();
+    // kick off
+    loadMore();
+    observer.observe(sentinel);
   })();
   </script>
 
-  <!-- Music UI & logic already handled globally; keep your includes -->
+  <!-- Music (keep your global) -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
 </body>
