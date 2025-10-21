@@ -1,410 +1,172 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' 'unsafe-inline' 'unsafe-eval';
+                 connect-src 'self' https:;
+                 img-src 'self' data:;
+                 style-src 'self' 'unsafe-inline';
+                 media-src 'self';">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Upload — Shreshtha</title>
 
-  <!-- CSP meta (keep simple for now) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
-
-  <!-- Auth / guard scripts (defer so DOM loads first) -->
+  <!-- Auth -->
   <script src="/auth0-spa-js.production.js"></script>
-  <script src="/auth-init.js?v=6" defer></script>
-  <script src="/guard-auth.js?v=6" defer></script>
+  <script src="auth-init.js" defer></script>
+  <script src="guard-auth.js" defer></script>
 
   <style>
-    :root{--cream:#FFE7DA;--peach:#FFB59E;--red:#FF6B6B;--text:#6e2430}
+    :root{
+      --text:#6e2430;
+      --panel:rgba(255,255,255,0.16);
+      --panel-solid:#ffe1db;
+      --chip:rgba(255,255,255,0.30);
+    }
     *{box-sizing:border-box}
-    body{margin:0;font-family:"Playfair Display",serif;color:var(--text);background:linear-gradient(135deg,var(--cream),var(--peach) 48%,var(--red));min-height:100vh}
-    header{text-align:center;padding:24px 12px}
-    .logo{font-family:"Italiao",cursive;font-size:38px;text-shadow:0 2px 10px rgba(0,0,0,.15)}
-    main{max-width:720px;margin:20px auto;padding:0 18px}
-    form.card{background:rgba(255,255,255,.14);padding:18px;border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.22)}
-    input[type="file"], input[type="text"], textarea{width:100%;padding:10px 12px;margin:0 0 12px;border:0;border-radius:12px}
-    button.primary{background:#6e2430;color:#fff;border:0;border-radius:999px;padding:12px 18px;font-weight:700;cursor:pointer}
-    .msg{margin-top:14px;font-size:14px;color:#3d1b1f}
-    nav{text-align:center;margin-top:12px}nav a{margin:0 12px; color:inherit; text-decoration:underline}
-    .page-links{position:relative; z-index:999; text-align:center; margin:8px 0 18px; font-size:15px}
-    #fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:95;}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Playfair Display",serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
+        radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,0.18), transparent 18%),
+        linear-gradient(160deg, #fff0ef 0%, #ffd6d6 18%, #ffc0be 38%, #ffb3b3 60%, #ffb0b0 100%);
+      background-attachment: fixed;
+      overflow-x:hidden;
+    }
+
+    header{ text-align:center; padding:18px 12px 0; position:relative; z-index:200; }
+    .page-links{ margin:6px 0 10px; font-size:14px; }
+    .page-links a{
+      display:inline-block; padding:6px 10px; margin:0 4px; border-radius:16px;
+      background:var(--chip); color:#5a0013; text-decoration:none;
+      box-shadow:0 4px 8px rgba(0,0,0,0.10);
+    }
+    .page-links a:hover{ background:rgba(255,255,255,0.40); }
+
+    h1{ margin:18px 0 16px; font-size:46px; color:#5a0013; text-shadow:0 6px 10px rgba(0,0,0,0.08); }
+
+    main{ max-width:950px; margin:12px auto 80px; padding:0 18px; position:relative; z-index:110; }
+    .card{
+      background:var(--panel);
+      border-radius:16px;
+      box-shadow:0 12px 30px rgba(0,0,0,0.14);
+      padding:22px 20px 24px;
+      max-width:720px;
+      margin:0 auto;
+      backdrop-filter: blur(4px);
+    }
+    label{ display:block; font-size:18px; margin:8px 0 8px; }
+    input[type="file"]{ font-size:14px; }
+
+    textarea{
+      width:100%; min-height:70px; padding:12px 12px; border-radius:10px; border:1px solid rgba(0,0,0,0.08);
+      background:#fff; font-family:inherit; font-size:15px; color:#4b2b2b;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .btn{
+      display:inline-block; margin-top:16px; padding:10px 16px; border:none; border-radius:12px; cursor:pointer;
+      background:#7a2430; color:#fff; font-weight:600; box-shadow:0 8px 18px rgba(0,0,0,0.14);
+    }
+    .btn:hover{ filter:brightness(1.04); transform: translateY(-1px); }
+
+    /* hearts canvas */
+    #fxCanvas{ position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:120; }
+
+    /* tiny cute music button (page override) */
+    #musicHeartWrap{ right:14px; bottom:14px; z-index:160; opacity:.97; }
+    #musicHeartBtn{
+      width:40px; height:40px; font-size:18px; border:none; border-radius:14px;
+      background: radial-gradient(circle at 35% 30%, #ffe9f2 0%, #ffc9d6 100%);
+      box-shadow: 0 6px 16px rgba(220,80,110,0.14);
+      transition: transform .16s ease, box-shadow .16s ease;
+    }
+    #musicHeartBtn:hover{ transform: translateY(-2px); box-shadow: 0 10px 22px rgba(220,80,110,0.22); }
+    #musicHeartBtn.playing{ transform: scale(1.03); box-shadow:0 12px 26px rgba(220,80,110,0.26); }
+    #musicVolDot{
+      position:absolute; right:-5px; top:-5px;
+      width:14px; height:14px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #fff7d6, #ffd66a);
+      border:2px solid rgba(255,255,255,0.95); box-shadow:0 4px 8px rgba(255,170,100,0.22);
+    }
+    #musicVolPop{ right:8px; bottom:60px; width:190px; padding:8px 10px; border-radius:10px; }
+    #musicVolRange{ height:5px; }
+    #musicMuteBtn{ padding:4px 6px; border-radius:6px; }
   </style>
 </head>
-
 <body>
-  <div class="page-links">
-    <a href="/life.html">Life</a> |
-    <a href="/gallery.html">Gallery</a> |
-    <!-- Prefer server logout route; see server.js below -->
-    <a href="/auth/logout">Logout</a>
-  </div>
+  <!-- Hearts canvas -->
+  <canvas id="fxCanvas" aria-hidden="true"></canvas>
 
   <header>
-    <div class="logo">Upload a Sweet Memory</div>
+    <div class="page-links">
+      <a href="life.html">Life</a> |
+      <a href="gallery.html">Gallery</a> |
+      <a href="logout.html">Logout</a>
+    </div>
+    <h1>Upload a Sweet Memory</h1>
   </header>
 
   <main>
-    <form id="upForm" class="card" enctype="multipart/form-data" novalidate>
-      <label for="photo">Choose photo</label>
-      <input type="file" id="photo" name="photo" accept="image/*" required />
-      <label for="caption">Caption</label>
-      <textarea id="caption" name="caption" placeholder="Write a short caption" rows="2"></textarea>
+    <div class="card">
+      <form id="uploadForm" enctype="multipart/form-data" autocomplete="off">
+        <label for="file">Choose photo</label>
+        <input id="file" name="file" type="file" accept="image/*" required />
 
-      <div style="display:flex;gap:12px;align-items:center;margin-top:8px;">
-        <button id="uploadBtn" class="primary" type="button">Upload</button>
-        <div id="msg" class="msg" aria-live="polite"></div>
-      </div>
-    </form>
+        <label for="caption" style="margin-top:16px;">Caption</label>
+        <textarea id="caption" name="caption" placeholder="Write a short caption"></textarea>
+
+        <button class="btn" type="submit">Upload</button>
+      </form>
+      <div id="msg" style="margin-top:12px;font-size:14px;"></div>
+    </div>
   </main>
 
-  <!-- Minimal client-side auth guard stub (safe) -->
-  <script>
-    // If you have a real requireAuth from guard-auth.js, it will override this stub.
-    window.requireAuth = window.requireAuth || function() {
-      // stub returns "logged in" like object so code relying on requireAuth doesn't throw
-      return Promise.resolve({ email: 'guest@local' });
-    };
-  </script>
-
-  <!-- Single upload handler (fetch to /api/upload). Keeps UI friendly and prevents accidental form.submit -->
-  <script>
-    (function () {
-      const form = document.getElementById('upForm');
-      const btn = document.getElementById('uploadBtn');
-      const msg = document.getElementById('msg');
-
-      async function doUpload() {
-        msg.textContent = '';
-        btn.disabled = true;
-        btn.textContent = 'Uploading…';
-
-        const fileInput = document.getElementById('photo');
-        if (!fileInput.files || fileInput.files.length === 0) {
-          msg.textContent = 'Please choose a photo first.';
-          btn.disabled = false;
-          btn.textContent = 'Upload';
-          return;
-        }
-
-        const fd = new FormData();
-        fd.append('photo', fileInput.files[0]);
-        fd.append('caption', document.getElementById('caption').value || '');
-
-        try {
-          const res = await fetch('/api/upload', {
-            method: 'POST',
-            body: fd,
-            credentials: 'include'
-          });
-
-          if (!res.ok) {
-            // try to get JSON error if provided
-            let txt = await res.text().catch(() => '');
-            throw new Error(`${res.status} ${res.statusText} ${txt}`);
-          }
-
-          const j = await res.json().catch(() => ({}));
-          if (j && j.ok === false) throw new Error(j.error || 'Upload failed');
-
-          msg.textContent = 'Uploaded ✓ — redirecting…';
-          setTimeout(() => window.location.href = '/gallery.html', 700);
-        } catch (err) {
-          console.error('Upload failed', err);
-          msg.textContent = 'Upload failed — try again.';
-          alert('Upload failed: ' + (err.message || err));
-        } finally {
-          btn.disabled = false;
-          btn.textContent = 'Upload';
-        }
-      }
-
-      btn.addEventListener('click', function (e) {
-        e.preventDefault();
-        doUpload();
-      });
-
-      // Optional: allow Enter to submit (from caption)
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        doUpload();
-      });
-
-      // Run auth gate if present
-      document.addEventListener('DOMContentLoaded', () => {
-        try {
-          if (typeof requireAuth === 'function') {
-            requireAuth().catch(e => console.warn('Auth check failed', e));
-          }
-        } catch (e) {
-          console.warn('Auth guard error', e);
-        }
-      });
-    })();
-  </script>
-
-  <!-- Canvas hearts animation (fixed resize logic) -->
-  <div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
+  <!-- floating hearts script (same as life/gallery) -->
   <script>
   (function(){
-    const c = document.getElementById('fxCanvas');
-    if (!c) return;
+    const c = document.getElementById('fxCanvas'); if (!c) return;
     const ctx = c.getContext('2d');
     const DPR = Math.max(1, window.devicePixelRatio || 1);
-    let W = 0, H = 0, hearts = [];
-    const COLORS = ['#dff7ff','#fff9d6','#ffe9d2','#ffdce6','#e9f7e9','#eae8ff','#fff0f6','#fff4de'];
-    function R(a,b){ return Math.random()*(b-a)+a; }
-
-    function resize(){
-      W = Math.max(1, Math.floor(window.innerWidth));
-      H = Math.max(1, Math.floor(window.innerHeight));
-      c.width = Math.floor(W * DPR);
-      c.height = Math.floor(H * DPR);
-      c.style.width = W + 'px';
-      c.style.height = H + 'px';
-      ctx.setTransform(DPR,0,0,DPR,0,0);
-    }
-
-    function spawn(){
-      if(hearts.length > 22) return;
-      hearts.push({
-        x: R(0, W),
-        y: H + R(8,160),
-        s: R(12,34),
-        vx: R(-6,6),
-        vy: -R(12,32),
-        a: R(.55,.98),
-        r: R(-.5,.5),
-        vr: R(-.012,.012),
-        color: COLORS[Math.floor(Math.random()*COLORS.length)]
-      });
-    }
-
-    function drawHeart(px,py,scale,rot,alpha,color){
-      ctx.save();
-      ctx.translate(px,py);
-      ctx.rotate(rot);
-      ctx.scale(scale,scale);
-      ctx.globalAlpha = Math.min(1, alpha * 1.05);
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 14 * scale;
-      const g = ctx.createRadialGradient(0,-0.12,0.05,0,0.12,1.0);
-      g.addColorStop(0,color);
-      g.addColorStop(0.6,color);
-      g.addColorStop(1,'rgba(255,255,255,0.08)');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(0,-0.5);
-      ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);
-      ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);
-      ctx.fill();
-
-      ctx.globalAlpha = 0.55 * alpha;
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.beginPath();
-      ctx.ellipse(0.18,-0.28,0.12,0.06,-0.4,0,Math.PI*2);
-      ctx.fill();
-      ctx.restore();
-      ctx.shadowBlur = 0;
-    }
-
-    function tick(){
-      ctx.clearRect(0,0,W,H);
-      if (Math.random() < 0.11) spawn();
-      for (let i=0;i<hearts.length;i++){
-        const h = hearts[i];
-        h.x += h.vx * 0.016;
-        h.y += h.vy * 0.016;
-        h.r += h.vr;
-        h.a -= 0.0009;
-      }
-      hearts = hearts.filter(h => (h.y > -120) && (h.a > 0.02));
-      for (const h of hearts) drawHeart(h.x,h.y,(h.s/50),h.r,h.a,h.color);
-      requestAnimationFrame(tick);
-    }
-
-    window.addEventListener('resize', resize, { passive:true });
-    resize();
-    tick();
+    let W=0,H=0, hearts=[];
+    const C=['#ffb3c6','#fff6a6','#ffd89e','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
+    const R=(a,b)=>Math.random()*(b-a)+a;
+    function resize(){ W=Math.floor(innerWidth*DPR); H=Math.floor(innerHeight*DPR); c.width=W; c.height=H; c.style.width='100vw'; c.style.height='100vh'; }
+    function spawn(){ if(hearts.length>34) return; hearts.push({x:R(0,W),y:H+R(30*DPR,180*DPR),s:R(14,28),vx:R(-6,6),vy:-R(12,26),a:R(.6,.95),r:R(-.5,.5),vr:R(-.01,.01),col:C[(Math.random()*C.length)|0]}); }
+    function draw(h){ const {x,y,s,r,a,col}=h; ctx.save(); ctx.translate(x,y); ctx.rotate(r); ctx.scale(s/50*DPR,s/50*DPR); ctx.globalAlpha=a; ctx.beginPath(); ctx.moveTo(0,-.5); ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8); ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5); ctx.fillStyle=col; ctx.fill(); ctx.restore(); }
+    function tick(){ ctx.clearRect(0,0,W,H); if(Math.random()<.16) spawn(); hearts.forEach(h=>{h.x+=h.vx*.016*DPR;h.y+=h.vy*.016*DPR;h.r+=h.vr;h.a-=.0009; draw(h)}); hearts=hearts.filter(h=>h.a>.02&&h.y>-140*DPR); requestAnimationFrame(tick); }
+    addEventListener('resize',resize,{passive:true}); resize(); tick();
   })();
   </script>
 
-<!-- MUSIC controls (single consistent implementation) -->
-<style>
-  /* music UI visuals */
-  .music-btn {
-    position: fixed;
-    bottom: 22px;
-    right: 22px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg,#fffafc 0%,#ffeef2 100%);
-    box-shadow: 0 10px 22px rgba(230,100,140,0.18);
-    display:flex;align-items:center;justify-content:center;
-    z-index:160; border:none; cursor:pointer; transition:transform .18s ease,box-shadow .18s ease;
-    backdrop-filter: blur(4px);
-  }
-  .music-btn .heart { width:26px; height:26px; display:block; fill:#ff6b81; transition: transform .18s ease, fill .22s ease; }
-  .music-btn.playing .heart { transform: scale(1.08); fill:#ffd166; }
-
-  .vol-dot {
-    position: absolute;
-    right: -6px;
-    top: -6px;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background: linear-gradient(150deg,#ffd76d,#ffc96a);
-    display:flex;align-items:center;justify-content:center;
-    box-shadow: 0 6px 10px rgba(255,170,100,0.24);
-    border: 2px solid rgba(255,255,255,0.9);
-    cursor:pointer;
-  }
-
-  .vol-pop {
-    position: fixed;
-    bottom: 84px;
-    right: 18px;
-    width: 214px;
-    padding: 10px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
-    border-radius: 12px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-    z-index: 170;
-    display: none;
-    align-items: center;
-    gap: 12px;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  }
-  .vol-pop.show { display:flex; }
-  .vol-range { -webkit-appearance:none; width: 120px; height: 6px; border-radius: 999px; background: linear-gradient(90deg,#ffc1c1,#ffd88a); outline: none; }
-  .vol-range::-webkit-slider-thumb { -webkit-appearance:none; width:16px;height:16px;border-radius:50%; background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border: 3px solid #ffb0a0; }
-  .vol-btn { width:30px;height:30px;border-radius:8px;border:none;background:#fff;border:1px solid rgba(0,0,0,0.06); display:flex;align-items:center;justify-content:center; cursor:pointer; }
-</style>
-
-<!-- Single audio element (id must match scripts) -->
-<audio id="bgMusicFinal" loop preload="auto" style="display:none">
-  <source src="/music/bg.mp3" type="audio/mpeg" />
-</audio>
-
-<!-- heart + vol UI -->
-<div id="musicHeartWrap" style="position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;gap:8px;align-items:center;">
-  <button id="musicHeartBtn" class="music-btn" aria-label="Toggle background music" title="Play / Pause">
-    <svg class="heart" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.9-10-8.1C-1.5 7.5 4.5 3 7.5 5.5 9 6.9 12 10 12 10s3-3.1 4.5-4.5C19.5 3 25.5 7.5 22 12.9 19.5 16.1 12 21 12 21z"/></svg>
-  </button>
-
-  <div id="musicVolDot" class="vol-dot" role="button" tabindex="0" aria-label="Open volume">●</div>
-
-  <div id="musicVolPop" class="vol-pop" aria-hidden="true" role="dialog">
-    <div style="font-size:13px;color:#6b2b2b">Vol</div>
-    <input id="musicVolRange" class="vol-range" type="range" min="0" max="100" step="1" value="60" aria-label="Volume slider" />
-    <button id="musicMuteBtn" class="vol-btn" aria-pressed="false" title="Mute/unmute">M</button>
-  </div>
-</div>
-
-<script>
-(function(){
-  try {
-    const audio = document.getElementById('bgMusicFinal');
-    const btn = document.getElementById('musicHeartBtn');
-    const volDot = document.getElementById('musicVolDot');
-    const volPop = document.getElementById('musicVolPop');
-    const volRange = document.getElementById('musicVolRange');
-    const muteBtn = document.getElementById('musicMuteBtn');
-
-    if (!audio || !btn || !volDot || !volPop || !volRange || !muteBtn) {
-      console.warn('music UI missing elements');
-      return;
-    }
-
-    // restore
-    try {
-      const savedVol = localStorage.getItem('shree_music_volume');
-      if (savedVol !== null) volRange.value = savedVol;
-      audio.volume = (savedVol !== null) ? (Math.max(0, Math.min(100, parseInt(savedVol,10))) / 100) : 0.6;
-    } catch(e){}
-
-    function updateBtn() {
-      const heartSvg = btn.querySelector('.heart');
-      if (!heartSvg) return;
-      if (!audio.paused) {
-        btn.classList.add('playing');
-        btn.setAttribute('aria-pressed','true');
-      } else {
-        btn.classList.remove('playing');
-        btn.setAttribute('aria-pressed','false');
-      }
-    }
-
-    btn.addEventListener('click', function(e){
+  <!-- upload handler (keeps your API; minimal UX) -->
+  <script>
+  (function(){
+    const f = document.getElementById('uploadForm');
+    const msg = document.getElementById('msg');
+    f.addEventListener('submit', async (e)=>{
       e.preventDefault();
-      if (audio.paused) {
-        audio.play().then(()=>{ localStorage.setItem('shree_music_playing','1'); updateBtn(); }).catch(()=>{ updateBtn(); });
-      } else {
-        audio.pause();
-        localStorage.setItem('shree_music_playing','0');
-        updateBtn();
+      msg.textContent = 'Uploading…';
+      const fd = new FormData(f);
+      try{
+        const r = await fetch('/api/upload', { method:'POST', body: fd, credentials:'include' });
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        const j = await r.json().catch(()=>({}));
+        msg.textContent = 'Uploaded ✔';
+        // optional: redirect to gallery after a moment
+        setTimeout(()=> location.href='gallery.html', 700);
+      }catch(err){
+        msg.textContent = 'Upload failed: ' + err.message;
       }
     });
+  })();
+  </script>
 
-    volDot.addEventListener('click', function(e){
-      e.stopPropagation();
-      const show = volPop.classList.toggle('show');
-      volPop.setAttribute('aria-hidden', show ? 'false' : 'true');
-      if (show) setTimeout(()=> volRange.focus(), 40);
-    });
-
-    volDot.addEventListener('keydown', function(e){ if (e.key==='Enter' || e.key===' ') { e.preventDefault(); volDot.click(); } });
-
-    volRange.addEventListener('input', function(){
-      const v = Math.max(0, Math.min(100, parseInt(volRange.value,10)));
-      audio.volume = v/100;
-      try { localStorage.setItem('shree_music_volume', String(v)); } catch(e){}
-      muteBtn.setAttribute('aria-pressed', audio.volume === 0 ? 'true' : 'false');
-    });
-
-    muteBtn.addEventListener('click', function(){
-      if (audio.volume > 0) { volRange.dataset.prev = volRange.value; volRange.value = 0; }
-      else { volRange.value = volRange.dataset.prev || 60; }
-      volRange.dispatchEvent(new Event('input'));
-    });
-
-    document.addEventListener('click', function(e){
-      if (!e.target.closest('.vol-pop') && !e.target.closest('#musicVolDot')) {
-        volPop.classList.remove('show');
-        volPop.setAttribute('aria-hidden','true');
-      }
-    });
-
-    audio.addEventListener('play', updateBtn);
-    audio.addEventListener('pause', updateBtn);
-    audio.addEventListener('volumechange', function(){ try{ localStorage.setItem('shree_music_volume', String(Math.round(audio.volume*100))); }catch(e){} });
-
-    // try autoplay; if blocked, wait for user interaction
-    audio.play().then(()=>{ updateBtn(); }).catch(()=> {
-      function userStart() {
-        audio.play().then(()=>{ localStorage.setItem('shree_music_playing','1'); updateBtn(); }).catch(()=>{});
-        window.removeEventListener('click', userStart, {capture:true});
-        window.removeEventListener('touchstart', userStart, {passive:true});
-        window.removeEventListener('keydown', userStart, {capture:true});
-      }
-      window.addEventListener('click', userStart, {capture:true});
-      window.addEventListener('touchstart', userStart, {passive:true});
-      window.addEventListener('keydown', userStart, {capture:true});
-    });
-
-    // restore visual if previously playing (best-effort)
-    try {
-      if (localStorage.getItem('shree_music_playing') === '1') { audio.play().then(()=>updateBtn()).catch(()=>{}); }
-    } catch(e){}
-
-    updateBtn();
-  } catch(err) { console.warn('music-heart script error', err); }
-})();
-</script>
-
-<!-- local css/js includes (optional fallback) -->
-<link rel="stylesheet" href="/assets/css/music-heart.css">
-<script src="/assets/js/music-heart.js" defer></script>
-
+  <!-- Global music (small cute overrides already in CSS above) -->
+  <link rel="stylesheet" href="/assets/css/music-heart.css">
+  <script src="/assets/js/music-heart.js" defer></script>
 </body>
 </html>
