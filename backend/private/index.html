@@ -5,75 +5,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shreshtha • Home</title>
 
-  <!-- Basic styling -->
   <style>
-    body {
-      margin: 0;
-      font-family: "Playfair Display", serif;
-      background: linear-gradient(160deg, #ffe9e6, #ffcdc8, #ffb7b2);
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #3e2834;
+    :root{
+      --bg1:#ffe9e6; --bg2:#ffcdc8; --bg3:#ffb7b2;
+      --ink:#3e2834; --title:#5a0013; --btn:#6d202f; --btnH:#8c2338;
     }
-    .card {
-      text-align: center;
-      background: rgba(255, 255, 255, 0.55);
-      padding: 40px 50px;
-      border-radius: 20px;
-      box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
-      max-width: 420px;
-      width: 90%;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Playfair Display", serif;
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 700px at 8% 12%, rgba(255,236,240,.45), transparent 40%),
+        radial-gradient(1000px 620px at 92% 84%, rgba(255,230,220,.40), transparent 38%),
+        linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 50%, var(--bg3) 100%);
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden;
     }
-    h1 {
-      font-size: 42px;
-      margin-bottom: 10px;
-      color: #5a0013;
+    .card{
+      text-align:center;
+      background:rgba(255,255,255,0.55);
+      backdrop-filter:saturate(140%) blur(2px);
+      padding:42px 50px;
+      border-radius:24px;
+      box-shadow:0 18px 42px rgba(0,0,0,.12);
+      max-width:520px; width:min(92%, 520px);
     }
-    p {
-      font-size: 15px;
-      line-height: 1.5;
-      margin-bottom: 30px;
+    h1{
+      margin:0 0 10px;
+      font-size:56px;
+      letter-spacing:.5px;
+      color:var(--title);
+      text-shadow: 0 3px 10px rgba(0,0,0,.07);
     }
-    .btn {
-      background: #6d202f;
-      color: white;
-      border: none;
-      padding: 10px 22px;
-      border-radius: 20px;
-      font-size: 15px;
-      cursor: pointer;
-      transition: 0.3s;
+    p{margin:0 0 26px; font-size:15.5px; line-height:1.55}
+    .btn{
+      display:inline-block;
+      background:var(--btn);
+      color:#fff; text-decoration:none;
+      padding:11px 22px; border-radius:22px;
+      font-size:15px; transition:.2s ease;
+      box-shadow:0 8px 20px rgba(109,32,47,.22);
     }
-    .btn:hover {
-      background: #8c2338;
-    }
-    /* Invite message (wrong email) */
-    #inviteMsg {
-      margin-top: 10px;
-      font-size: 13px;
-      color: #a10000;
-      display: none;
+    .btn:hover{ background:var(--btnH); transform:translateY(-1px); }
+    footer{margin-top:26px; font-size:12px; opacity:.8}
+    @media (max-width:420px){
+      h1{font-size:44px}
+      .card{padding:34px 28px}
     }
   </style>
-
-  <!-- Auth0 SDK -->
-  <script src="/auth0-spa-js.production.js"></script>
-  <!-- Our global auth handling -->
-  <script src="auth-init.js"></script>
 </head>
 <body>
-  <div class="card">
-    <h1>Shreshtha</h1>
+  <main class="card" role="main" aria-labelledby="title">
+    <h1 id="title">Shreshtha</h1>
     <p>A little home of smiles, tiny adventures, and the sweetest memories — curated with love.</p>
 
-    <button id="btn-login" class="btn" type="button">Login to Enter</button>
-    <div id="inviteMsg"></div>
+    <!-- Index is PUBLIC. Next page (welcome.html) is PRIVATE and will trigger Auth0 allow-list login. -->
+    <a href="welcome.html" class="btn" id="btn-enter">Login to Enter</a>
 
-    <footer style="margin-top:25px; font-size:12px; opacity:0.8;">
-      © Shreshtha's Life • crafted with love
-    </footer>
-  </div>
+    <footer>© Shreshtha's Life • crafted with love</footer>
+  </main>
 </body>
 </html>
