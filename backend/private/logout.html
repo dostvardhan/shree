@@ -3,194 +3,62 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Logging out…</title>
-  <meta http-equiv="refresh" content="2;url=index.html">
+  <title>Signing out…</title>
   <style>
-    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#6b2b2b;background:
-      radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
-      linear-gradient(160deg,#fff0ef 0%, #ffd6d6 40%, #ffb3b3 100%);}
-    .card{background:rgba(255,255,255,0.9);padding:26px 30px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.08);text-align:center}
+    body{
+      margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#6b2b2b;
+      background:
+        radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
+        linear-gradient(160deg,#fff0ef 0%, #ffd6d6 40%, #ffb3b3 100%);
+    }
+    .card{background:#fff; padding:26px 30px; border-radius:14px;
+      box-shadow:0 12px 30px rgba(0,0,0,.10); text-align:center}
     .muted{font-size:14px;color:#8b4a4a;margin-top:8px}
   </style>
 </head>
 <body>
   <div class="card" role="status" aria-live="polite">
     <h2>Signing out…</h2>
-    <div class="muted">You will be redirected to the homepage shortly.</div>
+    <div class="muted">Taking you to the home page.</div>
   </div>
 
   <script>
-    (async function() {
-      try {
-        // 1) If Auth0 SDK instance is available (common names)
-        if (window.auth0 && typeof window.auth0.logout === 'function') {
-          // Use the SPA logout method if provided
-          try {
-            // try best-effort auth0 logout; do not block if it fails
-            window.auth0.logout({ returnTo: window.location.origin + '/index.html' });
-            return;
-          } catch(e) { console.warn('auth0.logout failed:', e); }
-        }
+    (function(){
+      // --- Auth0 config (same as your project) ---
+      const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
+      const CLIENT_ID    = "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT";
+      const RETURN_TO    = location.origin + "/index.html";
 
-        // 2) If your guard/auth module exposes a global logout helper (common in older setups)
-        if (typeof logout === 'function') {
-          try { logout(); } catch(e){ console.warn('logout() failed:', e); }
-          // redirect after a short delay
-          setTimeout(()=> window.location.href = 'index.html', 800);
-          return;
-        }
+      // 1) Clear local/session state no matter what
+      try { localStorage.clear(); sessionStorage.clear(); } catch(e){}
 
-        // 3) Generic fallback: clear local/session storage and redirect
-        try { localStorage.removeItem('shree_music_playing'); localStorage.removeItem('shree_music_volume'); localStorage.clear(); sessionStorage.clear(); } catch(e) {}
-        setTimeout(()=> { window.location.href = 'index.html'; }, 700);
-      } catch(err) {
-        console.error('Logout error', err);
-        try { window.location.href = 'index.html'; } catch(e){}
-      }
+      // 2) If SPA client already on page, prefer SDK logout
+      const trySpaLogout = async () => {
+        try {
+          // window.auth0Client if you created it global; or window.auth0 from SPA SDKs
+          const client = (window.auth0Client || window.auth0 || null);
+          if (client && typeof client.logout === "function") {
+            client.logout({ logoutParams: { returnTo: RETURN_TO, client_id: CLIENT_ID }});
+            return true;
+          }
+        } catch(e){}
+        return false;
+      };
+
+      // 3) Hard redirect to Auth0 universal logout (always clears Auth0 session)
+      const hardLogout = () => {
+        const url =
+          `https://${AUTH0_DOMAIN}/v2/logout?client_id=${encodeURIComponent(CLIENT_ID)}&returnTo=${encodeURIComponent(RETURN_TO)}`;
+        // replace() so back button से protected pages न खुलें
+        location.replace(url);
+      };
+
+      // kick it off
+      trySpaLogout().then(done => { if (!done) hardLogout(); });
+      // safety net
+      setTimeout(hardLogout, 1500);
     })();
   </script>
-
-
-<!-- MUSIC HEART FIXED -->
-
-
-<script>
-(function(){
- const a=document.getElementById("bgMusicHeart"),b=document.getElementById("musicHeartBtn");
- if(!a||!b)return;
- function u(){b.textContent=a.paused?"♡":"❤";}
- b.onclick=()=>{a.paused?a.play():a.pause();};
- a.onplay=a.onpause=u;
- document.body.addEventListener("click",()=>{a.play().catch(()=>{})},{once:true});
- u();
-})();
-</script>
-<!-- /MUSIC HEART FIXED -->
-
-
-<!-- MUSIC-HEART-FINAL: start -->
-<style id="music-heart-final-style">
-  #musicHeartWrap { position: fixed; right: 18px; bottom: 18px; z-index: 9999; display:flex; gap:8px; align-items:center; }
-  #musicHeartBtn { width:56px;height:56px;border-radius:50%;border:none;cursor:pointer; display:flex;align-items:center;justify-content:center;font-size:22px;
-    background: radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0); box-shadow: 0 8px 28px rgba(220,80,110,0.14); transition: transform .16s ease, box-shadow .16s ease, opacity .18s ease; }
-  #musicHeartBtn:active { transform: scale(.96); }
-  #musicHeartBtn.playing { box-shadow: 0 14px 42px rgba(220,80,110,0.24); transform: scale(1.04); }
-  #musicHeartBtn .heart { pointer-events:none; user-select:none; }
-  .vol-dot { width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    background: linear-gradient(150deg,#ffd76d,#ffc96a); box-shadow:0 6px 10px rgba(255,170,100,0.18); border:2px solid rgba(255,255,255,0.9); cursor:pointer; margin-left:-8px; }
-  .vol-pop { position: absolute; right: 72px; bottom: 10px; width:220px; padding:10px 12px; background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
-    border-radius:12px; box-shadow:0 12px 30px rgba(0,0,0,0.12); display:none; gap:10px; align-items:center; }
-  .vol-pop.show { display:flex; }
-  .vol-range { -webkit-appearance:none; width:130px; height:7px; border-radius:999px; background:linear-gradient(90deg,#ffc1c1,#ffd88a); outline:none; }
-  .vol-range::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:0 4px 10px rgba(0,0,0,0.12); border:3px solid #ffb0a0; }
-</style>
-
-<audio id="bgMusicFinal" loop preload="auto" style="display:none">
-  <source src="/music/bg.mp3" type="audio/mpeg" />
-</audio>
-
-<div id="musicHeartWrap" aria-hidden="false">
-  <button id="musicHeartBtn" aria-label="Toggle background music" title="Play / Pause background music" type="button">
-    <span class="heart" aria-hidden="true">♡</span>
-  </button>
-  <div class="vol-dot" id="musicVolDot" role="button" tabindex="0" aria-label="Volume control" title="Volume"></div>
-
-  <div class="vol-pop" id="musicVolPop" role="dialog" aria-hidden="true">
-    <div style="font-size:13px;color:#6b2b2b;">Vol</div>
-    <input id="musicVolRange" class="vol-range" type="range" min="0" max="100" step="1" value="60" aria-label="Volume slider" />
-    <button id="musicMuteBtn" style="border:none;background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.06);cursor:pointer" aria-pressed="false" title="Mute/unmute">M</button>
-  </div>
-</div>
-
-<script>
-(function(){
-  try {
-    const audio = document.getElementById('bgMusicFinal');
-    const btn = document.getElementById('musicHeartBtn');
-    const volDot = document.getElementById('musicVolDot');
-    const volPop = document.getElementById('musicVolPop');
-    const volRange = document.getElementById('musicVolRange');
-    const muteBtn = document.getElementById('musicMuteBtn');
-
-    if (!audio || !btn || !volDot || !volPop || !volRange || !muteBtn) return;
-
-    try {
-      const savedVol = localStorage.getItem('shree_music_volume');
-      if (savedVol !== null) volRange.value = savedVol;
-      audio.volume = (savedVol !== null) ? (Math.max(0, Math.min(100, parseInt(savedVol,10))) / 100) : 0.6;
-    } catch(e){}
-
-    function updateBtn() {
-      const heart = btn.querySelector('.heart');
-      if (!heart) return;
-      if (!audio.paused) { btn.classList.add('playing'); heart.textContent = '❤'; btn.setAttribute('aria-pressed','true'); }
-      else { btn.classList.remove('playing'); heart.textContent = '♡'; btn.setAttribute('aria-pressed','false'); }
-    }
-
-    btn.addEventListener('click', function(e){
-      e.preventDefault();
-      if (audio.paused) {
-        audio.play().then(()=> { localStorage.setItem('shree_music_playing','1'); updateBtn(); }).catch(()=>{});
-      } else {
-        audio.pause(); localStorage.setItem('shree_music_playing','0'); updateBtn();
-      }
-    });
-
-    volDot.addEventListener('click', function(e){
-      e.stopPropagation();
-      const show = volPop.classList.toggle('show');
-      volPop.setAttribute('aria-hidden', show ? 'false' : 'true');
-      if (show) { setTimeout(()=> volRange.focus(), 40); }
-    });
-
-    volDot.addEventListener('keydown', function(e){ if (e.key==='Enter' || e.key===' ') { e.preventDefault(); volDot.click(); } });
-
-    volRange.addEventListener('input', function(){
-      const v = Math.max(0, Math.min(100, parseInt(volRange.value,10)));
-      audio.volume = v/100;
-      try { localStorage.setItem('shree_music_volume', String(v)); } catch(e){}
-      if (v === 0) muteBtn.setAttribute('aria-pressed','true'); else muteBtn.setAttribute('aria-pressed','false');
-    });
-
-    muteBtn.addEventListener('click', function(){
-      if (audio.volume > 0) { volRange.dataset.prev = volRange.value; volRange.value = 0; } 
-      else { volRange.value = volRange.dataset.prev || 60; }
-      volRange.dispatchEvent(new Event('input'));
-    });
-
-    document.addEventListener('click', function(e){
-      if (!e.target.closest('.vol-pop') && !e.target.closest('#musicVolDot')) { volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true'); }
-    });
-
-    audio.play().then(()=>{ updateBtn(); }).catch(()=> {
-      function userStart() {
-        audio.play().then(()=>{ localStorage.setItem('shree_music_playing','1'); updateBtn(); }).catch(()=>{});
-        window.removeEventListener('click', userStart, {capture:true});
-        window.removeEventListener('touchstart', userStart, {passive:true});
-        window.removeEventListener('keydown', userStart, {capture:true});
-      }
-      window.addEventListener('click', userStart, {capture:true});
-      window.addEventListener('touchstart', userStart, {passive:true});
-      window.addEventListener('keydown', userStart, {capture:true});
-    });
-
-    audio.addEventListener('play', updateBtn);
-    audio.addEventListener('pause', updateBtn);
-    audio.addEventListener('volumechange', function(){ try{ localStorage.setItem('shree_music_volume', String(Math.round(audio.volume*100))); }catch(e){} });
-
-    updateBtn();
-  } catch(err) { console.warn('music heart final snippet error', err); }
-})();
-</script>
-<!-- MUSIC-HEART-FINAL: end -->
-<link rel="stylesheet" href="/assets/css/music-heart.css">
-<script src="/assets/js/music-heart.js" defer></script>
 </body>
 </html>
-
-
-
-
-
-
-
