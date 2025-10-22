@@ -47,24 +47,86 @@
       padding:11px 22px; border-radius:22px;
       font-size:15px; transition:.2s ease;
       box-shadow:0 8px 20px rgba(109,32,47,.22);
+      border:none; cursor:pointer;
     }
     .btn:hover{ background:var(--btnH); transform:translateY(-1px); }
+    .muted{font-size:12px; opacity:.85; margin-top:10px}
+    .err{display:none; color:#a10000; font-size:13px; margin-top:10px}
     footer{margin-top:26px; font-size:12px; opacity:.8}
     @media (max-width:420px){
       h1{font-size:44px}
       .card{padding:34px 28px}
     }
   </style>
+
+  <!-- Auth0 SDK -->
+  <script src="/auth0-spa-js.production.js"></script>
+  <!-- Shared init (domain/client already set here) -->
+  <script src="auth-init.js"></script>
 </head>
 <body>
   <main class="card" role="main" aria-labelledby="title">
     <h1 id="title">Shreshtha</h1>
     <p>A little home of smiles, tiny adventures, and the sweetest memories — curated with love.</p>
 
-    <!-- Index is PUBLIC. Next page (welcome.html) is PRIVATE and will trigger Auth0 allow-list login. -->
-    <a href="welcome.html" class="btn" id="btn-enter">Login to Enter</a>
+    <!-- This button will trigger Auth0 login. -->
+    <button id="btn-login" class="btn" type="button">Login to Enter</button>
+    <div id="msg" class="muted">Only invited people can access.</div>
+    <div id="err" class="err"></div>
 
     <footer>© Shreshtha's Life • crafted with love</footer>
   </main>
+
+  <script>
+    // This page is public. We only kick off Auth0 from here and send users to welcome.html after auth.
+    (function () {
+      // Wait for auth-init.js to create the client
+      const waitForAuth = () => typeof createAuth0Client === "function";
+      function onReady(fn){ if(waitForAuth()) fn(); else setTimeout(()=>onReady(fn), 40); }
+
+      onReady(async () => {
+        try{
+          // Make our own light client so index can login immediately.
+          const auth0 = await createAuth0Client({
+            domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
+            client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT",
+            cacheLocation: "localstorage",
+            useRefreshTokens: true
+          });
+
+          // If already authenticated -> go straight to welcome
+          if (await auth0.isAuthenticated()) {
+            location.href = "welcome.html";
+            return;
+          }
+
+          // Bind button: send user to Auth0 login & come back to welcome.html
+          const btn = document.getElementById("btn-login");
+          const err = document.getElementById("err");
+          btn.addEventListener("click", async () => {
+            err.style.display = "none";
+            try {
+              await auth0.loginWithRedirect({
+                authorizationParams: {
+                  // after login, land on welcome.html (guard there will enforce allow-list)
+                  redirect_uri: `${location.origin}/welcome.html`,
+                  // prompt: "login"  // uncomment if you always want to force login screen
+                }
+              });
+            } catch(e){
+              err.textContent = "Login failed. Please try again.";
+              err.style.display = "block";
+              console.error(e);
+            }
+          });
+        }catch(e){
+          const err = document.getElementById("err");
+          err.textContent = "Auth setup error. Please contact admin.";
+          err.style.display = "block";
+          console.error("index auth init error", e);
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
