@@ -1,85 +1,85 @@
+// backend/private/auth-init.js
 // load AFTER /auth0-spa-js.production.js
 
-// Audience per host
 const AUDIENCE =
-  location.hostname === "shreshthapushkar.com"
+  (location.hostname === "shreshthapushkar.com")
     ? "https://shreshthapushkar.com"
     : "https://shree-drive.onrender.com";
 
-// Our callback route handled by server (or by SPA handler)
 const REDIRECT_URI = `${location.origin}/auth/callback`;
 
 let auth0Client = null;
 
 async function initAuth() {
+  // Create client using v2 shape: authorizationParams inside createAuth0Client
   auth0Client = await createAuth0Client({
     domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
     client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT",
     cacheLocation: "localstorage",
     useRefreshTokens: true,
-
-    // ✅ put everything inside authorizationParams here
     authorizationParams: {
+      redirect_uri: REDIRECT_URI,
       audience: AUDIENCE,
-      scope: "openid profile email offline_access",
-      redirect_uri: REDIRECT_URI
+      scope: "openid profile email offline_access"
     }
   });
 
-  // ✅ Handle Auth0 code/state on callback then go to welcome
+  // handle redirect callback (Auth0 -> our site)
   if (location.search.includes("code=") && location.search.includes("state=")) {
     try {
       await auth0Client.handleRedirectCallback();
     } catch (e) {
       console.error("Auth0 callback error:", e);
     } finally {
+      // replace history so URL is clean and then go to welcome page
       history.replaceState({}, document.title, "/welcome.html");
-      return;
+      location.href = "/welcome.html";
     }
   }
 
-  // If already authenticated and currently on index → go to welcome
-  if (location.pathname === "/" || location.pathname.endsWith("/index.html")) {
+  // If index page and already authed -> go to welcome
+  if (location.pathname === "/" || location.pathname.endsWith("index.html")) {
     try {
-      if (await auth0Client.isAuthenticated()) {
-        location.replace("/welcome.html");
+      const isAuth = await auth0Client.isAuthenticated();
+      if (isAuth) {
+        location.href = "/welcome.html";
         return;
       }
     } catch (e) {
-      console.warn("isAuthenticated error:", e);
+      console.warn("isAuthenticated check failed", e);
     }
   }
 
-  // Login button → clean redirect (no extra params here!)
+  // wire login button to SDK loginWithRedirect (no nested authorizationParams here)
   const loginBtn = document.getElementById("btn-login");
   if (loginBtn) {
     loginBtn.addEventListener("click", async () => {
+      // NOTE: do NOT send an object that will be serialized incorrectly.
+      // Since we passed authorizationParams in createAuth0Client, we can call without args:
       await auth0Client.loginWithRedirect();
     });
   }
 }
 
-// Token helper
 async function getAuthToken() {
   try {
     return auth0Client ? await auth0Client.getTokenSilently() : "";
   } catch (e) {
-    console.warn("Token error:", e);
+    console.warn("Token fetch error:", e);
     return "";
   }
 }
 
-// Hard logout → clear local & Auth0 session → back to index
 async function logoutToHome() {
-  try { localStorage.clear(); sessionStorage.clear(); } catch {}
-  const url =
+  try { localStorage.clear(); sessionStorage.clear(); } catch(e){}
+  // Use universal logout (v2 endpoint)
+  const logoutURL =
     "https://dev-zzhjbmtzoxtgoz31.us.auth0.com/v2/logout" +
-    "?client_id=6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT" +
+    "?client_id=" + encodeURIComponent("6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT") +
     "&returnTo=" + encodeURIComponent(location.origin + "/index.html");
-  location.replace(url);
+  location.href = logoutURL;
 }
 
 window.getAuthToken = getAuthToken;
 window.logoutToHome = logoutToHome;
-
 window.addEventListener("load", initAuth);
