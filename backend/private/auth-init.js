@@ -1,72 +1,82 @@
-// ✅ Load AFTER /auth0-spa-js.production.js
+// load AFTER /auth0-spa-js.production.js
 
-const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
-const CLIENT_ID = "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT";
-
+// Audience per host
 const AUDIENCE =
   location.hostname === "shreshthapushkar.com"
-    ? "https://shree-drive.onrender.com" // ✅ use API identifier
+    ? "https://shreshthapushkar.com"
     : "https://shree-drive.onrender.com";
 
+// Our callback route handled by server (or by SPA handler)
 const REDIRECT_URI = `${location.origin}/auth/callback`;
 
 let auth0Client = null;
 
 async function initAuth() {
   auth0Client = await createAuth0Client({
-    domain: AUTH0_DOMAIN,
-    client_id: CLIENT_ID,
-    audience: AUDIENCE,
+    domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
+    client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT",
     cacheLocation: "localstorage",
-    useRefreshTokens: true
+    useRefreshTokens: true,
+
+    // ✅ put everything inside authorizationParams here
+    authorizationParams: {
+      audience: AUDIENCE,
+      scope: "openid profile email offline_access",
+      redirect_uri: REDIRECT_URI
+    }
   });
 
-  // ✅ Handle login callback from Auth0
+  // ✅ Handle Auth0 code/state on callback then go to welcome
   if (location.search.includes("code=") && location.search.includes("state=")) {
     try {
       await auth0Client.handleRedirectCallback();
     } catch (e) {
       console.error("Auth0 callback error:", e);
     } finally {
-      return (location.href = "/welcome.html");
+      history.replaceState({}, document.title, "/welcome.html");
+      return;
     }
   }
 
-  // ✅ Prevent auto-login after logout
-  if (location.pathname === "/" || location.pathname.endsWith("index.html")) {
-    const isAuth = await auth0Client.isAuthenticated();
-    if (isAuth) return (location.href = "/welcome.html");
+  // If already authenticated and currently on index → go to welcome
+  if (location.pathname === "/" || location.pathname.endsWith("/index.html")) {
+    try {
+      if (await auth0Client.isAuthenticated()) {
+        location.replace("/welcome.html");
+        return;
+      }
+    } catch (e) {
+      console.warn("isAuthenticated error:", e);
+    }
   }
 
-  // ✅ Manual login (button)
+  // Login button → clean redirect (no extra params here!)
   const loginBtn = document.getElementById("btn-login");
   if (loginBtn) {
     loginBtn.addEventListener("click", async () => {
-      await auth0Client.loginWithRedirect({
-        authorizationParams: {
-          redirect_uri: REDIRECT_URI,
-          audience: AUDIENCE,
-          scope: "openid profile email offline_access"
-        }
-      });
+      await auth0Client.loginWithRedirect();
     });
   }
 }
 
-// ✅ Get Access Token
+// Token helper
 async function getAuthToken() {
   try {
-    return await auth0Client.getTokenSilently();
-  } catch {
+    return auth0Client ? await auth0Client.getTokenSilently() : "";
+  } catch (e) {
+    console.warn("Token error:", e);
     return "";
   }
 }
 
-// ✅ Logout Properly (no auto re-login)
+// Hard logout → clear local & Auth0 session → back to index
 async function logoutToHome() {
   try { localStorage.clear(); sessionStorage.clear(); } catch {}
-  location.href =
-    `https://${AUTH0_DOMAIN}/v2/logout?client_id=${CLIENT_ID}&returnTo=${encodeURIComponent(location.origin + "/index.html")}`;
+  const url =
+    "https://dev-zzhjbmtzoxtgoz31.us.auth0.com/v2/logout" +
+    "?client_id=6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT" +
+    "&returnTo=" + encodeURIComponent(location.origin + "/index.html");
+  location.replace(url);
 }
 
 window.getAuthToken = getAuthToken;
