@@ -1,72 +1,113 @@
-// load AFTER /auth0-spa-js.production.js
+// ===============================
+// auth-init.js  (SPA / PKCE only)
+// ===============================
 
-// ✅ Correct API Audience (must match Auth0 "Identifier")
-const AUDIENCE = "https://shree-drive.onrender.com";
+// ---- tenant/app config ----
+const AUTH0_DOMAIN = "dev-zzhjbmtzoxtgoz31.us.auth0.com";
+const CLIENT_ID    = "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT";
 
-// ✅ Redirect after Auth0 login success
-const REDIRECT_URI = `${location.origin}/auth/callback`;
+// If you need API tokens later, keep an audience (optional for cookie-only flows)
+const AUDIENCE =
+  location.hostname === "shreshthapushkar.com"
+    ? "https://shree-drive.onrender.com"
+    : "https://shree-drive.onrender.com"; // same for local
+
+// Where to land after successful login (frontend handles callback)
+const REDIRECT_AFTER_LOGIN = `${location.origin}/welcome.html`;
 
 let auth0Client = null;
 
 async function initAuth() {
+  // Create SPA client (PKCE)
   auth0Client = await createAuth0Client({
-    domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
-    client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT",
-    audience: AUDIENCE,        // ✅ Correct now
+    domain: AUTH0_DOMAIN,
+    clientId: CLIENT_ID,
     cacheLocation: "localstorage",
-    useRefreshTokens: true
+    useRefreshTokens: true,
+    // You can omit audience if you don't need access tokens.
+    authorizationParams: { audience: AUDIENCE }
   });
 
-  // ✅ Handle Auth0 → app redirect
-  if (location.search.includes("code=") && location.search.includes("state=")) {
+  // ----------------------------
+  // Handle Auth0 redirect (code/state) on any page
+  // ----------------------------
+  const qs = new URLSearchParams(location.search);
+  if (qs.has("code") && qs.has("state")) {
     try {
       await auth0Client.handleRedirectCallback();
     } catch (e) {
       console.error("Auth0 callback error:", e);
     } finally {
-      history.replaceState({}, document.title, "/welcome.html");
+      // Clean URL & go to welcome
+      history.replaceState({}, document.title, REDIRECT_AFTER_LOGIN);
+      return;
     }
   }
 
-  // ✅ Prevent auto-login after logout on index.html
-  if (location.pathname === "/" || location.pathname.endsWith("index.html")) {
+  // ----------------------------
+  // If already logged in and on index -> go to welcome
+  // ----------------------------
+  const onIndex =
+    location.pathname === "/" ||
+    location.pathname.endsWith("/index.html");
+
+  try {
     const isAuth = await auth0Client.isAuthenticated();
-    if (isAuth) {
-      return (location.href = "/welcome.html");
+    if (isAuth && onIndex) {
+      location.replace(REDIRECT_AFTER_LOGIN);
+      return;
     }
-  }
+  } catch (_) {}
 
-  // ✅ Login button → Auth0 page
+  // ----------------------------
+  // Wire the "Login" button
+  // ----------------------------
   const loginBtn = document.getElementById("btn-login");
   if (loginBtn) {
     loginBtn.addEventListener("click", async () => {
-      await auth0Client.loginWithRedirect({ redirect_uri: REDIRECT_URI });
+      try {
+        await auth0Client.loginWithRedirect({
+          authorizationParams: {
+            audience: AUDIENCE
+          },
+          redirect_uri: REDIRECT_AFTER_LOGIN
+        });
+      } catch (e) {
+        console.error("loginWithRedirect failed:", e);
+      }
     });
   }
 }
 
+// Get an API token if you need it (safe to call; returns "" on failure)
 async function getAuthToken() {
   try {
-    return auth0Client ? await auth0Client.getTokenSilently() : "";
+    if (!auth0Client) return "";
+    return await auth0Client.getTokenSilently({
+      detailedResponse: false,
+      authorizationParams: { audience: AUDIENCE }
+    });
   } catch (e) {
-    console.warn("Token fetch error:", e);
+    console.warn("getTokenSilently error:", e);
     return "";
   }
 }
 
-// ✅ Full logout (no auto session restore)
+// Hard logout: clear local state + Auth0 session, return to home
 async function logoutToHome() {
-  try { localStorage.clear(); sessionStorage.clear(); } catch (e) {}
-
-  const logoutURL =
-    "https://dev-zzhjbmtzoxtgoz31.us.auth0.com/v2/logout" +
-    "?client_id=6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT" +
-    "&returnTo=" + encodeURIComponent(location.origin + "/index.html");
-
-  location.href = logoutURL;
+  try { localStorage.clear(); sessionStorage.clear(); } catch (_) {}
+  const returnTo = `${location.origin}/index.html`;
+  const url =
+    `https://${AUTH0_DOMAIN}/v2/logout` +
+    `?client_id=${encodeURIComponent(CLIENT_ID)}` +
+    `&returnTo=${encodeURIComponent(returnTo)}`;
+  // Use replace so back button can't return to private pages
+  location.replace(url);
 }
 
+// Expose helpers globally (used by other pages)
 window.getAuthToken = getAuthToken;
 window.logoutToHome = logoutToHome;
 
+// Boot
 window.addEventListener("load", initAuth);
