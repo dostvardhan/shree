@@ -1,54 +1,49 @@
-<!-- /auth0-spa-js.production.js के बाद लोड हो -->
 <script>
-  // === Config ===
+  // Prod vs Local audience
   const AUDIENCE =
-    (location.hostname === "shreshthapushkar.com")
-      ? "https://shree-drive.onrender.com"   // <- यही audience यूज़ करें (Auth0 API identifier)
+    location.hostname === "shreshthapushkar.com"
+      ? "https://shree-drive.onrender.com"   // 👈 API identifier (Auth0 → APIs → “shreshthapushkar new”)
       : "https://shree-drive.onrender.com";
 
-  const REDIRECT_URI = location.origin + "/welcome.html";
+  const REDIRECT_URI = `${location.origin}/auth/callback`;
 
   let auth0Client = null;
 
   async function initAuth() {
     auth0Client = await createAuth0Client({
       domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
-      client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT",  // NOTE: client_id (snake_case)
-      audience: AUDIENCE,
+      client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT",
       cacheLocation: "localstorage",
       useRefreshTokens: true
-      // NOTE: यहाँ authorizationParams नहीं भेजना
     });
 
-    // Callback handle (अगर code/state आए तो)
+    // Handle Auth0 redirect
     if (location.search.includes("code=") && location.search.includes("state=")) {
-      try { await auth0Client.handleRedirectCallback(); }
-      catch (e) { console.error("Auth0 callback error:", e); }
-      finally {
+      try {
+        await auth0Client.handleRedirectCallback();
+      } catch (e) {
+        console.error("Auth0 callback error:", e);
+      } finally {
         history.replaceState({}, document.title, "/welcome.html");
-        return;
       }
     }
 
-    // Index पर already logged-in हो तो welcome भेज दो
+    // Already logged in? (only on index)
     if (location.pathname === "/" || location.pathname.endsWith("index.html")) {
       try {
-        if (await auth0Client.isAuthenticated()) {
-          location.replace("/welcome.html");
-          return;
-        }
-      } catch (e) {}
+        const ok = await auth0Client.isAuthenticated();
+        if (ok) return (location.href = "/welcome.html");
+      } catch {}
     }
 
-    // Login बटन – सही top-level params
+    // Login button → top-level params (NO authorizationParams wrapper)
     const btn = document.getElementById("btn-login");
     if (btn) {
       btn.addEventListener("click", async () => {
         await auth0Client.loginWithRedirect({
-          redirect_uri: REDIRECT_URI,          // top-level
-          audience: AUDIENCE,                  // top-level
-          scope: "openid profile email offline_access"  // top-level
-          // authorizationParams मत भेजो
+          redirect_uri: REDIRECT_URI,
+          audience: AUDIENCE,
+          scope: "openid profile email offline_access"
         });
       });
     }
@@ -57,15 +52,16 @@
   // Token helper
   async function getAuthToken() {
     try { return auth0Client ? await auth0Client.getTokenSilently() : ""; }
-    catch (e) { console.warn("token error", e); return ""; }
+    catch { return ""; }
   }
 
-  // Hard logout (Auth0 session भी clear)
+  // Hard logout → Auth0 session bhi clear
   async function logoutToHome() {
-    try { localStorage.clear(); sessionStorage.clear(); } catch(e) {}
-    const url = "https://dev-zzhjbmtzoxtgoz31.us.auth0.com/v2/logout"
-      + "?client_id=6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT"
-      + "&returnTo=" + encodeURIComponent(location.origin + "/index.html");
+    try { localStorage.clear(); sessionStorage.clear(); } catch {}
+    const url =
+      "https://dev-zzhjbmtzoxtgoz31.us.auth0.com/v2/logout" +
+      "?client_id=6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT" +
+      "&returnTo=" + encodeURIComponent(location.origin + "/index.html");
     location.href = url;
   }
 
