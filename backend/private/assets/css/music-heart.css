@@ -1,9 +1,0 @@
-﻿/* backend\private\assets\css\music-heart.css */
-#musicHeartWrap { position: fixed; right: 18px; bottom: 18px; z-index: 9999; display:flex; gap:8px; align-items:center; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; }
-#musicHeartWrap button { border: none; background: radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0); width:56px; height:56px; border-radius:50%; cursor:pointer; font-size:22px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 28px rgba(220,80,110,0.14); transition: transform .16s ease; }
-#musicHeartWrap button.playing { transform: scale(1.04); box-shadow:0 14px 42px rgba(220,80,110,0.24); }
-#musicVolDot { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; background: linear-gradient(150deg,#ffd76d,#ffc96a); box-shadow:0 6px 10px rgba(255,170,100,0.18); cursor:pointer; color:#6b2b2b; font-weight:700; }
-.vol-pop { position:absolute; right:72px; bottom:10px; width:220px; padding:10px 12px; background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95)); border-radius:12px; box-shadow:0 12px 30px rgba(0,0,0,0.12); display:none; gap:10px; align-items:center; }
-.vol-pop.show { display:flex; }
-.vol-range { -webkit-appearance:none; width:130px; height:7px; border-radius:999px; background: linear-gradient(90deg,#ffc1c1,#ffd88a); outline:none; }
-.vol-range::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:0 4px 10px rgba(0,0,0,0.12); border:3px solid #ffb0a0; }
