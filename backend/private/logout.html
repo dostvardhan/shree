@@ -1,0 +1,15 @@
+﻿<!doctype html><html lang="en"><head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
+<title>Logging outâ€¦</title>
+</head><body style="font-family:system-ui;display:grid;place-items:center;height:100vh">
+  <div>Logging you outâ€¦</div>
+  <script src="/auth0-spa-js.production.js"></script>
+  <script src="/auth-init.js"></script>
+  <script src="/guard-auth.js"></script>
+  <script>
+    // auto-logout when opened directly
+    (async () => { try { await logout(); } catch(e){ location.href="/index.html"; } })();
+  </script>
+</body></html>
+
