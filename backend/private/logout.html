@@ -2,6 +2,10 @@
 <meta charset="utf-8" />
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
 <title>Logging outâ€¦</title>
+<meta http-equiv="Cache-Control" content="no-store, max-age=0, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<script>try{const n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="back_forward")location.replace(location.href);}catch(e){}</script>
 </head><body style="font-family:system-ui;display:grid;place-items:center;height:100vh">
   <div>Logging you outâ€¦</div>
   <script src="/auth0-spa-js.production.js"></script>
@@ -12,4 +16,5 @@
     (async () => { try { await logout(); } catch(e){ location.href="/index.html"; } })();
   </script>
 </body></html>
+
 

@@ -1,55 +1,32 @@
-// backend/private/guard-auth.js
-(() => {
-  // wait for Auth0 client
-  function waitForAuth0(maxMs = 5000) {
-    const start = Date.now();
-    return new Promise((resolve, reject) => {
-      (function check() {
-        if (window.auth0) return resolve(window.auth0);
-        if (Date.now() - start > maxMs) return reject(new Error("auth0 not ready"));
-        setTimeout(check, 50);
-      })();
-    });
+<script>
+window.requireAuth = async function requireAuth() {
+  // getAuth0() तुम्‍हारे auth-init.js से आता है
+  const auth0 = await window.getAuth0();
+
+  // अगर Auth0 ने अभी-अभी redirect callback किया है तो URL साफ़ कर दो
+  if (location.search.includes('code=') && location.search.includes('state=')) {
+    try { await auth0.handleRedirectCallback(); } catch(e) {}
+    history.replaceState({}, document.title, location.pathname);
   }
 
-  // Global: requireAuth used by pages
-  window.requireAuth = async function requireAuth() {
-    const auth0 = await waitForAuth0().catch(() => null);
-    if (!auth0) {
-      // fallback: if auth not ready, push to index
-      location.href = "/index.html";
-      throw new Error("Auth client not ready");
+  // back/forward cache से आये हैं तो hard reload कराओ (ताकि guard चले)
+  try {
+    const nav = performance.getEntriesByType('navigation')[0];
+    if (nav && (nav.type === 'back_forward')) {
+      location.replace(location.href);
+      await new Promise(()=>{}); // आगे का code न चले
     }
-    const isAuth = await auth0.isAuthenticated().catch(() => false);
-    if (!isAuth) {
-      // redirect back to current page after login
-      await auth0.loginWithRedirect({
-        authorizationParams: { redirect_uri: window.location.href }
-      });
-      return false;
-    }
-    return true;
-  };
+  } catch(e){}
 
-  // Global: logout used everywhere
-  window.logout = async function logout() {
-    try {
-      const auth0 = await waitForAuth0().catch(() => null);
-      if (auth0) {
-        auth0.logout({ logoutParams: { returnTo: location.origin + "/index.html" } });
-      } else {
-        location.href = "/index.html";
-      }
-    } catch {
-      location.href = "/index.html";
-    }
-  };
+  // Auth check
+  const ok = await auth0.isAuthenticated();
+  if (ok) return await auth0.getUser();
 
-  // Intercept any <a href="logout.html"> clicks on ANY page
-  document.addEventListener("click", (e) => {
-    const a = e.target && e.target.closest && e.target.closest('a[href="logout.html"], a[href="/logout.html"]');
-    if (!a) return;
-    e.preventDefault();
-    window.logout();
+  // Not authed → उसी page पर वापस आने वाला redirect
+  await auth0.loginWithRedirect({
+    authorizationParams: { redirect_uri: location.href }
   });
-})();
+
+  throw new Error('redirecting');
+};
+</script>
