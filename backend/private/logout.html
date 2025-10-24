@@ -1,20 +1,21 @@
-<!doctype html><html lang="en"><head>
-<meta charset="utf-8" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
+﻿<!doctype html><html lang='en'><head>
+<meta charset='utf-8'/>
+<meta name='viewport' content='width=device-width,initial-scale=1'/>
 <title>Logging out…</title>
-<meta http-equiv="Cache-Control" content="no-store, max-age=0, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
-<script>try{const n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="back_forward")location.replace(location.href);}catch(e){}</script>
-</head><body style="font-family:system-ui;display:grid;place-items:center;height:100vh">
-  <div>Logging you out…</div>
-  <script src="/auth0-spa-js.production.js"></script>
-  <script src="/auth-init.js"></script>
-  <script src="/guard-auth.js"></script>
-  <script>
-    // auto-logout when opened directly
-    (async () => { try { await logout(); } catch(e){ location.href="/index.html"; } })();
-  </script>
+<meta http-equiv='Cache-Control' content='no-store, max-age=0, must-revalidate'/>
+<meta http-equiv='Pragma' content='no-cache'/>
+<meta http-equiv='Expires' content='0'/>
+<style>body{font-family:system-ui;padding:24px}</style>
+</head><body>
+<h3>Logging you out…</h3>
+<script>
+(async () => {
+  try {
+    try{ sessionStorage.clear(); localStorage.removeItem('shree_music_playing'); localStorage.removeItem('shree_music_volume'); }catch(e){}
+    await fetch('/auth/logout',{credentials:'include',cache:'no-store'}).catch(()=>{});
+  } finally {
+    location.replace('/index.html');
+  }
+})();
+</script>
 </body></html>
-
-
