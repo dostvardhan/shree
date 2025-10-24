@@ -10,8 +10,8 @@
 
   <!-- Auth / guard scripts (defer so DOM loads first) -->
   <script src="/auth0-spa-js.production.js"></script>
-  <script src="/auth-init.js?v=6" defer></script>
-  <script src="/guard-auth.js?v=6" defer></script>
+  <script src="/auth-init.js" defer" defer></script>
+  <script src="/guard-auth.js" defer" defer></script>
 
   <style>
     :root{--cream:#FFE7DA;--peach:#FFB59E;--red:#FF6B6B;--text:#6e2430}
@@ -35,7 +35,7 @@
     <a href="/life.html">Life</a> |
     <a href="/gallery.html">Gallery</a> |
     <!-- Prefer server logout route; see server.js below -->
-    <a href="/auth/logout">Logout</a>
+    <a href="/logout.html">Logout</a>
   </div>
 
   <header>
@@ -371,5 +371,6 @@
 </script>
 </body>
 </html>
+
 
 
