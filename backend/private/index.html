@@ -1,132 +1,63 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shreshtha • Home</title>
-
+  <meta charset="UTF-8">
+  <title>Welcome to Shreshtha’s World</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon.png">
   <style>
-    :root{
-      --bg1:#ffe9e6; --bg2:#ffcdc8; --bg3:#ffb7b2;
-      --ink:#3e2834; --title:#5a0013; --btn:#6d202f; --btnH:#8c2338;
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #f7d9d9, #e8f1d4);
+      font-family: 'Poppins', sans-serif;
+      text-align: center;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:"Playfair Display", serif;
-      color:var(--ink);
-      background:
-        radial-gradient(1200px 700px at 8% 12%, rgba(255,236,240,.45), transparent 40%),
-        radial-gradient(1000px 620px at 92% 84%, rgba(255,230,220,.40), transparent 38%),
-        linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 50%, var(--bg3) 100%);
-      display:flex; align-items:center; justify-content:center;
-      overflow:hidden;
+    h1 {
+      color: #444;
+      font-size: 2em;
+      margin-bottom: 10px;
     }
-    .card{
-      text-align:center;
-      background:rgba(255,255,255,0.55);
-      backdrop-filter:saturate(140%) blur(2px);
-      padding:42px 50px;
-      border-radius:24px;
-      box-shadow:0 18px 42px rgba(0,0,0,.12);
-      max-width:520px; width:min(92%, 520px);
+    p {
+      color: #666;
+      font-size: 1em;
+      margin-bottom: 30px;
     }
-    h1{
-      margin:0 0 10px;
-      font-size:56px;
-      letter-spacing:.5px;
-      color:var(--title);
-      text-shadow: 0 3px 10px rgba(0,0,0,.07);
+    button {
+      background-color: #ff6b81;
+      color: white;
+      font-size: 1.1em;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
     }
-    p{margin:0 0 26px; font-size:15.5px; line-height:1.55}
-    .btn{
-      display:inline-block;
-      background:var(--btn);
-      color:#fff; text-decoration:none;
-      padding:11px 22px; border-radius:22px;
-      font-size:15px; transition:.2s ease;
-      box-shadow:0 8px 20px rgba(109,32,47,.22);
-      border:none; cursor:pointer;
+    button:hover {
+      background-color: #ff4757;
+      transform: scale(1.05);
     }
-    .btn:hover{ background:var(--btnH); transform:translateY(-1px); }
-    .muted{font-size:12px; opacity:.85; margin-top:10px}
-    .err{display:none; color:#a10000; font-size:13px; margin-top:10px}
-    footer{margin-top:26px; font-size:12px; opacity:.8}
-    @media (max-width:420px){
-      h1{font-size:44px}
-      .card{padding:34px 28px}
+    footer {
+      position: absolute;
+      bottom: 10px;
+      font-size: 0.9em;
+      color: #888;
     }
   </style>
 
-  <!-- Auth0 SPA JS v2 -->
-<script src="/auth0-spa-js.production.js"></script>
-<script src="/auth-init.js" defer></script>
-
+  <!-- ✅ Auth0 SPA SDK -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script src="/auth-init.js" defer></script>
 </head>
 <body>
-  <main class="card" role="main" aria-labelledby="title">
-    <h1 id="title">Shreshtha</h1>
-    <p>A little home of smiles, tiny adventures, and the sweetest memories — curated with love.</p>
+  <h1>Welcome to Shreshtha’s Memories 💖</h1>
+  <p>Let’s celebrate her smile together. Please log in to continue.</p>
+  <button id="login-btn">Login with Auth0</button>
 
-    <!-- This button will trigger Auth0 login. -->
-    <button id="btn-login" class="btn" type="button">Login to Enter</button>
-    <div id="msg" class="muted">Only invited people can access.</div>
-    <div id="err" class="err"></div>
-
-    <footer>© Shreshtha's Life • crafted with love</footer>
-  </main>
-
-  <script>
-    // This page is public. We only kick off Auth0 from here and send users to welcome.html after auth.
-    (function () {
-      // Wait for auth-init.js to create the client
-      const waitForAuth = () => typeof createAuth0Client === "function";
-      function onReady(fn){ if(waitForAuth()) fn(); else setTimeout(()=>onReady(fn), 40); }
-
-      onReady(async () => {
-        try{
-          // Make our own light client so index can login immediately.
-          const auth0 = await createAuth0Client({
-            domain: "dev-zzhjbmtzoxtgoz31.us.auth0.com",
-            client_id: "6sfOCkf0BFVHsuzfPJCHoLDffZSNJjzT",
-            cacheLocation: "localstorage",
-            useRefreshTokens: true
-          });
-
-          // If already authenticated -> go straight to welcome
-          if (await auth0.isAuthenticated()) {
-            location.href = "welcome.html";
-            return;
-          }
-
-          // Bind button: send user to Auth0 login & come back to welcome.html
-          const btn = document.getElementById("btn-login");
-          const err = document.getElementById("err");
-          btn.addEventListener("click", async () => {
-            err.style.display = "none";
-            try {
-              await auth0.loginWithRedirect({
-                authorizationParams: {
-                  // after login, land on welcome.html (guard there will enforce allow-list)
-                  redirect_uri: `${location.origin}/welcome.html`,
-                  // prompt: "login"  // uncomment if you always want to force login screen
-                }
-              });
-            } catch(e){
-              err.textContent = "Login failed. Please try again.";
-              err.style.display = "block";
-              console.error(e);
-            }
-          });
-        }catch(e){
-          const err = document.getElementById("err");
-          err.textContent = "Auth setup error. Please contact admin.";
-          err.style.display = "block";
-          console.error("index auth init error", e);
-        }
-      });
-    })();
-  </script>
+  <footer>© 2025 Shreshtha’s Private Space</footer>
 </body>
 </html>
