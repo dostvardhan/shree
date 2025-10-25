@@ -24,7 +24,6 @@ const app = express();
 
 
 app.use((req,res,next)=>{
-  // Disable caches everywhere (prevents back-forward cache too)
   res.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');
   res.set('Pragma','no-cache');
   res.set('Expires','0');
@@ -206,23 +205,14 @@ app.get('/auth/callback', async (req, res) => {
 });
 
 app.get('/auth/logout', (req, res) => {
+  try { req.session?.destroy(()=>{}); } catch(e){}
   try {
-    // destroy session on server
-    req.session?.destroy(()=>{});
+    res.clearCookie('connect.sid', { httpOnly:true, sameSite:'lax', secure:true });
   } catch(e){}
-  try {
-    // clear the session cookie (name usually 'connect.sid')
-    const cookieName = (req.session?.cookie?.name) || 'connect.sid';
-    res.clearCookie(cookieName, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: true
-    });
-  } catch(e){}
-  // also advise client to drop storage
-  res.set('Clear-Site-Data','\"cookies\", \"storage\"');
+  res.set('Clear-Site-Data','""cookies"", ""storage""');
   return res.redirect('/index.html');
-});const returnTo = encodeURIComponent(FRONTEND_ORIGIN || `${req.protocol}://${req.get('host')}`);
+});
+  const returnTo = encodeURIComponent(FRONTEND_ORIGIN || `${req.protocol}://${req.get('host')}`);
   res.redirect(`https://${AUTH0_DOMAIN}/v2/logout?client_id=${AUTH0_CLIENT_ID}&returnTo=${returnTo}`);
 });
 
