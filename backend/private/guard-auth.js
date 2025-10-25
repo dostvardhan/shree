@@ -1,33 +1,29 @@
-﻿(function(){
-  function bounce(){
-    try{
-      sessionStorage.removeItem('shree_id_token');
-      localStorage.removeItem('shree_music_playing');
-      localStorage.removeItem('shree_music_volume');
-    }catch(e){}
-    if(location.pathname !== '/index.html'){
-      location.replace('/index.html');
-    }
+cd "C:\Users\Dr. Mishra\Documents\shree"
+
+@"
+(function () {
+  async function checkAuth() {
+    try {
+      const res = await fetch('/api/me', { credentials: 'include', cache: 'no-store' });
+      if (res.ok) {
+        const me = await res.json().catch(()=>({}));
+        if (me && me.email) return me;
+      }
+    } catch(e) {}
+    logoutAndRedirect();
+    throw new Error('Not authenticated');
   }
 
-  window.requireAuth = async function requireAuth(){
-    try{
-      const r = await fetch('/api/me',{credentials:'include',cache:'no-store'});
-      if(r.ok){
-        const me = await r.json().catch(()=>({}));
-        if(me && me.email) return me;
-      }
-      bounce();
-      throw new Error('Not authenticated');
-    }catch(e){
-      bounce();
-      throw e;
-    }
-  };
+  function logoutAndRedirect() {
+    try {
+      sessionStorage.clear();
+      localStorage.removeItem('shree_music_playing');
+      localStorage.removeItem('shree_music_volume');
+    } catch(e){}
+    location.replace('/index.html');
+  }
 
-  document.addEventListener('DOMContentLoaded',()=>{
-    if(typeof window.requireAuth === 'function'){
-      window.requireAuth().catch(()=>{});
-    }
-  });
+  window.requireAuth = async function(){ return checkAuth(); };
+  document.addEventListener('DOMContentLoaded', ()=> { window.requireAuth().catch(()=>{}); });
 })();
+"@ | Set-Content -Encoding UTF8 "C:\Users\Dr. Mishra\Documents\shree\backend\private\guard-auth.js"

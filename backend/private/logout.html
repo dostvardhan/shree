@@ -1,21 +1,19 @@
-﻿<!doctype html><html lang='en'><head>
-<meta charset='utf-8'/>
-<meta name='viewport' content='width=device-width,initial-scale=1'/>
+@"
+<!doctype html><html lang='en'><head>
+<meta charset='utf-8'/><meta name='viewport' content='width=device-width,initial-scale=1'/>
 <title>Logging out…</title>
 <meta http-equiv='Cache-Control' content='no-store, max-age=0, must-revalidate'/>
-<meta http-equiv='Pragma' content='no-cache'/>
-<meta http-equiv='Expires' content='0'/>
-<style>body{font-family:system-ui;padding:24px}</style>
-</head><body>
-<h3>Logging you out…</h3>
+<meta http-equiv='Pragma' content='no-cache'/><meta http-equiv='Expires' content='0'/>
+<style>body{font-family:system-ui;display:grid;place-items:center;height:100vh;color:#333}</style>
+</head><body><div>Logging you out…</div>
 <script>
 (async () => {
   try {
     try{ sessionStorage.clear(); localStorage.removeItem('shree_music_playing'); localStorage.removeItem('shree_music_volume'); }catch(e){}
-    await fetch('/auth/logout',{credentials:'include',cache:'no-store'}).catch(()=>{});
+    await fetch('/auth/logout', { credentials:'include', cache:'no-store' }).catch(()=>{});
   } finally {
     location.replace('/index.html');
   }
 })();
-</script>
-</body></html>
+</script></body></html>
+"@ | Set-Content -Encoding UTF8 "C:\Users\Dr. Mishra\Documents\shree\backend\private\logout.html"
