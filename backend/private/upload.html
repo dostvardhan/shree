@@ -1,21 +1,172 @@
-﻿<script>
-(async () => {
-  try {
-    const auth0 = await window.getAuth0?.();
-    // local/session storage साफ़ (music state वगैरह भी)
-    try { localStorage.clear(); sessionStorage.clear(); } catch(e){}
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' 'unsafe-inline' 'unsafe-eval';
+                 connect-src 'self' https:;
+                 img-src 'self' data:;
+                 style-src 'self' 'unsafe-inline';
+                 media-src 'self';">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Upload — Shreshtha</title>
 
-    if (auth0 && auth0.logout) {
-      await auth0.logout({
-        logoutParams: { returnTo: location.origin + '/index.html' }
-      });
-      return;
+  <!-- Auth -->
+  <script src="/auth0-spa-js.production.js"></script>
+  <script src="auth-init.js" defer></script>
+  <script src="guard-auth.js" defer></script>
+
+  <style>
+    :root{
+      --text:#6e2430;
+      --panel:rgba(255,255,255,0.16);
+      --panel-solid:#ffe1db;
+      --chip:rgba(255,255,255,0.30);
     }
-  } catch (e) {
-    console.warn('logout error', e);
-  }
-  // फॉलबैक
-  location.replace('/index.html');
-})();
-</script>
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Playfair Display",serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
+        radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,0.18), transparent 18%),
+        linear-gradient(160deg, #fff0ef 0%, #ffd6d6 18%, #ffc0be 38%, #ffb3b3 60%, #ffb0b0 100%);
+      background-attachment: fixed;
+      overflow-x:hidden;
+    }
 
+    header{ text-align:center; padding:18px 12px 0; position:relative; z-index:200; }
+    .page-links{ margin:6px 0 10px; font-size:14px; }
+    .page-links a{
+      display:inline-block; padding:6px 10px; margin:0 4px; border-radius:16px;
+      background:var(--chip); color:#5a0013; text-decoration:none;
+      box-shadow:0 4px 8px rgba(0,0,0,0.10);
+    }
+    .page-links a:hover{ background:rgba(255,255,255,0.40); }
+
+    h1{ margin:18px 0 16px; font-size:46px; color:#5a0013; text-shadow:0 6px 10px rgba(0,0,0,0.08); }
+
+    main{ max-width:950px; margin:12px auto 80px; padding:0 18px; position:relative; z-index:110; }
+    .card{
+      background:var(--panel);
+      border-radius:16px;
+      box-shadow:0 12px 30px rgba(0,0,0,0.14);
+      padding:22px 20px 24px;
+      max-width:720px;
+      margin:0 auto;
+      backdrop-filter: blur(4px);
+    }
+    label{ display:block; font-size:18px; margin:8px 0 8px; }
+    input[type="file"]{ font-size:14px; }
+
+    textarea{
+      width:100%; min-height:70px; padding:12px 12px; border-radius:10px; border:1px solid rgba(0,0,0,0.08);
+      background:#fff; font-family:inherit; font-size:15px; color:#4b2b2b;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .btn{
+      display:inline-block; margin-top:16px; padding:10px 16px; border:none; border-radius:12px; cursor:pointer;
+      background:#7a2430; color:#fff; font-weight:600; box-shadow:0 8px 18px rgba(0,0,0,0.14);
+    }
+    .btn:hover{ filter:brightness(1.04); transform: translateY(-1px); }
+
+    /* hearts canvas */
+    #fxCanvas{ position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:120; }
+
+    /* tiny cute music button (page override) */
+    #musicHeartWrap{ right:14px; bottom:14px; z-index:160; opacity:.97; }
+    #musicHeartBtn{
+      width:40px; height:40px; font-size:18px; border:none; border-radius:14px;
+      background: radial-gradient(circle at 35% 30%, #ffe9f2 0%, #ffc9d6 100%);
+      box-shadow: 0 6px 16px rgba(220,80,110,0.14);
+      transition: transform .16s ease, box-shadow .16s ease;
+    }
+    #musicHeartBtn:hover{ transform: translateY(-2px); box-shadow: 0 10px 22px rgba(220,80,110,0.22); }
+    #musicHeartBtn.playing{ transform: scale(1.03); box-shadow:0 12px 26px rgba(220,80,110,0.26); }
+    #musicVolDot{
+      position:absolute; right:-5px; top:-5px;
+      width:14px; height:14px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #fff7d6, #ffd66a);
+      border:2px solid rgba(255,255,255,0.95); box-shadow:0 4px 8px rgba(255,170,100,0.22);
+    }
+    #musicVolPop{ right:8px; bottom:60px; width:190px; padding:8px 10px; border-radius:10px; }
+    #musicVolRange{ height:5px; }
+    #musicMuteBtn{ padding:4px 6px; border-radius:6px; }
+  </style>
+</head>
+<body>
+  <!-- Hearts canvas -->
+  <canvas id="fxCanvas" aria-hidden="true"></canvas>
+
+  <header>
+    <div class="page-links">
+      <a href="life.html">Life</a> |
+      <a href="gallery.html">Gallery</a> |
+      <a href="logout.html">Logout</a>
+    </div>
+    <h1>Upload a Sweet Memory</h1>
+  </header>
+
+  <main>
+    <div class="card">
+      <form id="uploadForm" enctype="multipart/form-data" autocomplete="off">
+        <label for="file">Choose photo</label>
+        <input id="photo" name="photo" type="file" accept="image/*" required />
+
+        <label for="caption" style="margin-top:16px;">Caption</label>
+        <textarea id="caption" name="caption" placeholder="Write a short caption"></textarea>
+
+        <button class="btn" type="submit">Upload</button>
+      </form>
+      <div id="msg" style="margin-top:12px;font-size:14px;"></div>
+    </div>
+  </main>
+
+  <!-- floating hearts script (same as life/gallery) -->
+  <script>
+  (function(){
+    const c = document.getElementById('fxCanvas'); if (!c) return;
+    const ctx = c.getContext('2d');
+    const DPR = Math.max(1, window.devicePixelRatio || 1);
+    let W=0,H=0, hearts=[];
+    const C=['#ffb3c6','#fff6a6','#ffd89e','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
+    const R=(a,b)=>Math.random()*(b-a)+a;
+    function resize(){ W=Math.floor(innerWidth*DPR); H=Math.floor(innerHeight*DPR); c.width=W; c.height=H; c.style.width='100vw'; c.style.height='100vh'; }
+    function spawn(){ if(hearts.length>34) return; hearts.push({x:R(0,W),y:H+R(30*DPR,180*DPR),s:R(14,28),vx:R(-6,6),vy:-R(12,26),a:R(.6,.95),r:R(-.5,.5),vr:R(-.01,.01),col:C[(Math.random()*C.length)|0]}); }
+    function draw(h){ const {x,y,s,r,a,col}=h; ctx.save(); ctx.translate(x,y); ctx.rotate(r); ctx.scale(s/50*DPR,s/50*DPR); ctx.globalAlpha=a; ctx.beginPath(); ctx.moveTo(0,-.5); ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8); ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5); ctx.fillStyle=col; ctx.fill(); ctx.restore(); }
+    function tick(){ ctx.clearRect(0,0,W,H); if(Math.random()<.16) spawn(); hearts.forEach(h=>{h.x+=h.vx*.016*DPR;h.y+=h.vy*.016*DPR;h.r+=h.vr;h.a-=.0009; draw(h)}); hearts=hearts.filter(h=>h.a>.02&&h.y>-140*DPR); requestAnimationFrame(tick); }
+    addEventListener('resize',resize,{passive:true}); resize(); tick();
+  })();
+  </script>
+
+  <!-- upload handler (keeps your API; minimal UX) -->
+  <script>
+  (function(){
+    const f = document.getElementById('uploadForm');
+    const msg = document.getElementById('msg');
+    f.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      msg.textContent = 'Uploading…';
+      const fd = new FormData(f);
+      try{
+        const r = await fetch('/api/upload', { method:'POST', body: fd, credentials:'include' });
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        const j = await r.json().catch(()=>({}));
+        msg.textContent = 'Uploaded ✔';
+        // optional: redirect to gallery after a moment
+        setTimeout(()=> location.href='gallery.html', 700);
+      }catch(err){
+        msg.textContent = 'Upload failed: ' + err.message;
+      }
+    });
+  })();
+  </script>
+
+  <!-- Global music (small cute overrides already in CSS above) -->
+  <link rel="stylesheet" href="/assets/css/music-heart.css">
+  <script src="/assets/js/music-heart.js" defer></script>
+</body>
+</html>

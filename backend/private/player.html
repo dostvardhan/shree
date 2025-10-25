@@ -1,392 +1,102 @@
-﻿<div class="page-links" style="text-align:center;margin:8px 0 18px;font-size:15px;"> <a href="life.html">Back to Life</a> &nbsp;|&nbsp; <a href="gallery.html">Gallery</a> &nbsp;|&nbsp; <a href="upload.html">Upload</a> &nbsp;|&nbsp; <a href="logout.html">Logout</a> </div>
-<!doctype html>
-<html>
+﻿<!doctype html>
+<html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
-<meta charset="utf-8">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Shree Music Player</title>
+
+<!-- fix: connect-src typo and keep CSP simple for now; adjust as needed -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self'">
+
 <style>
-  body{margin:12px;font-family:system-ui,Segoe UI,Roboto;display:flex;align-items:center;gap:12px}
+  body{margin:12px;font-family:system-ui,Segoe UI,Roboto;display:flex;align-items:center;gap:12px;background:transparent}
   button{padding:8px 12px;border-radius:8px;border:none;background:#6e2430;color:white;cursor:pointer}
-  input[type=range]{width:160px}
+  input[type=range]{width:180px}
   .label{font-size:13px;color:#333}
 </style>
-<script src="/auth0-spa-js.production.js"></script>
-<script src="/auth-init.js"" defer></script>
-<script src="/guard-auth.js"" defer></script>
-<meta http-equiv="Cache-Control" content="no-store, max-age=0" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
-<script>try{const n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="back_forward")location.replace(location.href);}catch(e){}</script>
 </head>
 <body>
+
   <button id="playBtn">Play</button>
-  <input id="vol" type="range" min="0" max="1" step="0.01" value="0.6">
+  <input id="vol" type="range" min="0" max="100" step="1" value="60" />
   <span class="label" id="status">Stopped</span>
 
-  <audio id="bg" loop preload="auto"></audio>
+  <!-- WARNING: use the same audio id across site scripts -->
+  <audio id="bgMusicFinal" loop preload="auto" style="display:none">
+    <source src="/music/bg.mp3" type="audio/mpeg" />
+    <!-- If you really serve audio from /api/music change the src attribute to that path. -->
+  </audio>
 
 <script>
-  // Set the audio src here; server should serve /api/music
-  const audio = document.getElementById('bg');
-  audio.src = '/api/music';
+(function(){
+  const KEY = 'shree_music_volume';
+  const KEY_PLAY = 'shree_music_playing';
+
+  const audio = document.getElementById('bgMusicFinal');
   const playBtn = document.getElementById('playBtn');
   const vol = document.getElementById('vol');
   const status = document.getElementById('status');
 
-  // restore volume
-  const savedVol = parseFloat(localStorage.getItem('shree_bg_vol'));
-  audio.volume = !isNaN(savedVol) ? savedVol : 0.6;
-  vol.value = audio.volume;
+  // restore volume (0..100)
+  try {
+    const savedVol = localStorage.getItem(KEY);
+    const v = savedVol !== null ? Math.max(0,Math.min(100,parseInt(savedVol,10))) : 60;
+    audio.volume = v/100;
+    vol.value = v;
+  } catch(e){ vol.value = 60; audio.volume = 0.6; }
 
   function updateUI(){
     status.textContent = audio.paused ? 'Paused' : 'Playing';
     playBtn.textContent = audio.paused ? 'Play' : 'Pause';
   }
+
   playBtn.addEventListener('click', ()=> {
     if (audio.paused) audio.play().catch(()=>{});
     else audio.pause();
     updateUI();
   });
+
   audio.addEventListener('play', updateUI);
   audio.addEventListener('pause', updateUI);
 
   vol.addEventListener('input', (e) => {
-    audio.volume = Number(e.target.value);
-    localStorage.setItem('shree_bg_vol', String(audio.volume));
+    const v = Math.max(0, Math.min(100, parseInt(e.target.value,10)));
+    audio.volume = v/100;
+    try { localStorage.setItem(KEY, String(v)); } catch(e){}
+    // notify opener (launcher) if present
+    try { window.opener && window.opener.postMessage({ from:'shreePlayer', state:{ volume: v } }, location.origin); } catch(e){}
   });
 
   // receive commands from opener via postMessage
   window.addEventListener('message', (ev) => {
-    const cmd = ev.data && ev.data.cmd;
+    // accept only same origin messages (safer)
+    if (!ev || ev.origin !== location.origin) return;
+    const d = ev.data || {};
+    const cmd = d.cmd;
     if (!cmd) return;
     if (cmd === 'play') audio.play().catch(()=>{});
     else if (cmd === 'pause') audio.pause();
     else if (cmd === 'toggle') { if (audio.paused) audio.play().catch(()=>{}); else audio.pause(); }
-    else if (cmd === 'setVol') { audio.volume = Number(ev.data.v); vol.value = audio.volume; localStorage.setItem('shree_bg_vol', String(audio.volume)); }
+    else if (cmd === 'setVolume' && typeof d.value !== 'undefined') {
+      const v = Math.max(0, Math.min(100, parseInt(d.value,10)));
+      audio.volume = v/100;
+      vol.value = v;
+      try { localStorage.setItem(KEY, String(v)); } catch(e){}
+    }
+    // reply current state
+    try {
+      const state = { playing: !audio.paused, volume: Math.round(audio.volume*100) };
+      window.opener && window.opener.postMessage({ from:'shreePlayer', state }, location.origin);
+    } catch(e){}
   }, false);
 
-  // when ready, tell opener that we're ready
-  if (window.opener) window.opener.postMessage({ from:'shreePlayer', ready:true }, '*');
+  // tell opener we're ready
+  try { if (window.opener) window.opener.postMessage({ from:'shreePlayer', ready:true }, location.origin); } catch(e){}
 
-  // try to auto-play if allowed (will be blocked until user interacts)
-  audio.play().catch(()=>{ updateUI(); });
+  // try autoplay (will be blocked until user interacts on many browsers)
+  audio.play().then(()=>{}).catch(()=>{ updateUI(); });
   updateUI();
-</script>
-<!-- Improved Mini Music Player + Volume Popover (replaces older snippet) -->
-<style>
-  /* --- smoother global background for private pages --- */
-  /* Replace old body background lines with this gradient to remove the visible seam */
-  body {
-    background:
-      radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
-      radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,0.18), transparent 18%),
-      linear-gradient(160deg, #fff0ef 0%, #ffd6d6 18%, #ffc0be 38%, #ffb3b3 60%, #ffb0b0 100%);
-    background-attachment: fixed;
-    color: #333;
-  }
-
-  /* --- compact heart player container --- */
-  .music-btn {
-    position: fixed;
-    bottom: 22px;
-    right: 22px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg,#fffafc 0%,#ffeef2 100%);
-    box-shadow: 0 10px 22px rgba(230,100,140,0.18);
-    display:flex;align-items:center;justify-content:center;
-    z-index:160; border:none; cursor:pointer; transition:transform .18s ease,box-shadow .18s ease;
-    backdrop-filter: blur(4px);
-  }
-  .music-btn:hover { transform: translateY(-4px); box-shadow: 0 16px 30px rgba(230,100,140,0.25); }
-
-  .music-btn svg { width:26px; height:26px; display:block; }
-  .music-btn .heart { fill:#ff6b81; transition: transform .18s ease, fill .22s ease; }
-  .music-btn.playing .heart { transform: scale(1.08); fill:#ffd166; filter: drop-shadow(0 6px 12px rgba(255,170,80,0.20)); }
-
-  /* little gold volume dot to the right of the heart (click to open volume popover) */
-  .vol-dot {
-    position: absolute;
-    right: -6px;
-    top: -6px;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background: linear-gradient(150deg,#ffd76d,#ffc96a);
-    display:flex;align-items:center;justify-content:center;
-    box-shadow: 0 6px 10px rgba(255,170,100,0.24);
-    border: 2px solid rgba(255,255,255,0.9);
-    cursor:pointer;
-  }
-  .vol-dot:active { transform: scale(.96); }
-
-  /* volume popover */
-  .vol-pop {
-    position: fixed;
-    bottom: 84px;
-    right: 18px;
-    width: 214px;
-    padding: 10px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
-    border-radius: 12px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-    z-index: 170;
-    display: none;
-    align-items: center;
-    gap: 12px;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  }
-  .vol-pop.show { display: flex; }
-
-  .vol-pop input[type="range"] {
-    -webkit-appearance: none; width: 120px; height: 6px; border-radius: 999px;
-    background: linear-gradient(90deg,#ffc1c1,#ffd88a);
-    outline: none;
-  }
-  .vol-pop input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance:none; width:16px;height:16px;border-radius:50%;
-    background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border: 3px solid #ffb0a0;
-  }
-  .vol-label { font-size:13px; color:#6b2b2b; margin-right:6px; }
-
-  /* small mute button */
-  .vol-btn {
-    width:30px;height:30px;border-radius:8px;border:none;
-    background:#fff;border:1px solid rgba(0,0,0,0.06); cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-  }
-  .vol-btn svg { width:14px; height:14px; fill:#b04a4a; opacity:.95; }
-
-  /* accessible focus */
-  .music-btn:focus, .vol-dot:focus, .vol-btn:focus { outline: 3px solid rgba(255,200,200,0.6); outline-offset:3px; }
-</style>
-
-<!--\ Improved\ Music\ Control\ \(updated\)\ -->\n<style>\n\ \ /\*\ small\ override\ for\ headings\ color\ &\ smoother\ gradient\ \(site-wide\ private\ pages\)\ \*/\n\ \ h1\.site-title,\ \.page-title,\ h1\ \{\ color:\ \#6d232b\ !important;\ text-shadow:\ 0\ 6px\ 22px\ rgba\(0,0,0,0\.12\);\ }\n\n\ \ /\*\ music\ control\ \(prettier\)\ \*/\n\ \ \.music-btn\ \{\n\ \ \ \ position:\ fixed;\n\ \ \ \ bottom:\ 22px;\n\ \ \ \ right:\ 22px;\n\ \ \ \ width:\ 58px;\n\ \ \ \ height:\ 58px;\n\ \ \ \ border-radius:\ 50%;\n\ \ \ \ background:\ linear-gradient\(145deg,\#fff\ 0%,\#ffeff0\ 100%\);\n\ \ \ \ box-shadow:\ 0\ 10px\ 30px\ rgba\(220,90,120,0\.18\);\n\ \ \ \ display:flex;align-items:center;justify-content:center;\n\ \ \ \ z-index:160;\ cursor:pointer;\ border:\ none;\ transition:\ transform\ \.16s\ ease,\ box-shadow\ \.16s\ ease;\n\ \ \ \ backdrop-filter:\ blur\(4px\);\n\ \ }\n\ \ \.music-btn:hover\ \{\ transform:\ translateY\(-3px\);\ box-shadow:\ 0\ 16px\ 36px\ rgba\(220,90,120,0\.25\);\ }\n\n\ \ \.music-btn\ svg\ \{\ width:26px;\ height:26px;\ display:block;\ }\n\ \ \.music-btn\ \.heart\ \{\ fill:\#ff6b81;\ transition:\ transform\ \.18s\ ease,\ fill\ \.22s\ ease;\ }\n\ \ \.music-btn\.playing\ \.heart\ \{\ transform:\ scale\(1\.12\);\ fill:\#ffd166;\ filter:\ drop-shadow\(0\ 8px\ 18px\ rgba\(255,165,70,0\.18\)\);\ }\n\n\ \ /\*\ small\ gold\ badge\ \*/\n\ \ \.music-badge\ \{\n\ \ \ \ position:absolute;\ right:-6px;\ top:-6px;\n\ \ \ \ width:18px;height:18px;border-radius:50%;\n\ \ \ \ background:\ radial-gradient\(circle\ at\ 30%\ 30%,\ \#fff8e6,\ \#ffd76d\);\n\ \ \ \ border:2px\ solid\ rgba\(255,255,255,0\.9\);\n\ \ \ \ box-shadow:0\ 6px\ 14px\ rgba\(255,160,70,0\.18\);\n\ \ }\n\n\ \ \.vol-pop\ \{\ position:\ fixed;\ bottom:\ 88px;\ right:\ 16px;\ width:220px;\ padding:10px\ 12px;\ \n\ \ \ \ \ \ \ \ \ \ \ \ background:\ linear-gradient\(180deg,\ rgba\(255,255,255,0\.98\),\ rgba\(255,250,248,0\.95\)\);\n\ \ \ \ \ \ \ \ \ \ \ \ border-radius:12px;\ box-shadow:0\ 12px\ 30px\ rgba\(0,0,0,0\.12\);\ z-index:170;\ display:none;\ gap:10px;\ align-items:center;\ }\n\ \ \.vol-pop\.show\ \{\ display:flex;\ }\n\ \ \.vol-range\ \{\ -webkit-appearance:none;\ width:130px;\ height:7px;\ border-radius:999px;\ background:\ linear-gradient\(90deg,\#ffc1c1,\#ffd88a\);\ outline:none;\ }\n\ \ \.vol-range::-webkit-slider-thumb\ \{\ -webkit-appearance:none;\ width:16px;height:16px;border-radius:50%;\ background:\#fff;\ box-shadow:0\ 4px\ 10px\ rgba\(0,0,0,0\.12\);\ border:3px\ solid\ \#ffb0a0;\ }\n</style>\n\n<button\ id="musicButton"\ class="music-btn"\ aria-label="Toggle\ music">\n\ \ <svg\ viewBox="0\ 0\ 24\ 24"\ aria-hidden="true"><path\ class="heart"\ d="M12\ 21s-7\.33-4\.94-9\.33-7\.02C\.8\ 11\.9\ 2\.1\ 7\.9\ 5\.5\ 6\.3\ 7\.2\ 5\.4\ 9\.1\ 6\ 10\ 7\.3c\.9-1\.3\ 2\.8-1\.9\ 4\.5-1\ 3\.4\ 1\.6\ 4\.7\ 5\.6\ 2\.8\ 7\.68C19\.33\ 16\.06\ 12\ 21\ 12\ 21z"/></svg>\n\ \ <span\ class="music-badge"\ id="musicBadge"\ aria-hidden="true"></span>\n</button>\n\n<div\ id="volPop"\ class="vol-pop"\ aria-hidden="true">\n\ \ <div\ style="font-size:13px;color:\#6b2b2b">Vol</div>\n\ \ <input\ id="volRange"\ class="vol-range"\ type="range"\ min="0"\ max="100"\ step="1"\ value="60"\ aria-label="Volume"\ />\n\ \ <button\ id="muteBtn"\ style="border:none;background:\#fff;padding:6px;border-radius:8px;box-shadow:0\ 4px\ 8px\ rgba\(0,0,0,0\.06\);cursor:pointer"\ aria-label="Mute/unmute">🔈</button>\n</div>\n\n<audio\ id="bgMusic"\ loop\ preload="auto"><source\ src="/music/bg\.mp3"\ type="audio/mpeg"\ /></audio>\n\n<script>\n\(\(\)\ =>\ \{\n\ \ const\ btn\ =\ document\.getElementById\('musicButton'\),\ badge\ =\ document\.getElementById\('musicBadge'\),\n\ \ \ \ \ \ \ \ volPop\ =\ document\.getElementById\('volPop'\),\ volRange\ =\ document\.getElementById\('volRange'\),\n\ \ \ \ \ \ \ \ muteBtn\ =\ document\.getElementById\('muteBtn'\),\ music\ =\ document\.getElementById\('bgMusic'\);\n\n\ \ function\ setVolume\(v\)\{\ music\.volume\ =\ Math\.max\(0,Math\.min\(100,v\)\)/100;\ try\{localStorage\.setItem\('shree_music_volume',String\(v\)\);}catch\(e\)\{}\ }\n\ \ function\ setPlaying\(p\)\{\n\ \ \ \ if\(p\)\{\ btn\.classList\.add\('playing'\);\ music\.play\(\)\.catch\(\(\)=>\{}\);\ localStorage\.setItem\('shree_music_playing','1'\);\ }\ \n\ \ \ \ else\ \{\ btn\.classList\.remove\('playing'\);\ music\.pause\(\);\ localStorage\.setItem\('shree_music_playing','0'\);\ }\n\ \ }\n\n\ \ //\ restore\ state\n\ \ try\{\ const\ sv\ =\ localStorage\.getItem\('shree_music_volume'\);\ if\(sv!==null\)\ volRange\.value\ =\ sv;\ setVolume\(volRange\.value\);\ }catch\(e\)\{}\n\ \ try\{\ if\(localStorage\.getItem\('shree_music_playing'\)==='1'\)\{\ music\.play\(\)\.then\(\(\)=>btn\.classList\.add\('playing'\)\)\.catch\(\(\)=>\{}\);\ }\ }catch\(e\)\{}\n\n\ \ btn\.addEventListener\('click',\ \(e\)=>\ \{\ if\(e\.target\.id==='musicBadge'\)\ return;\ setPlaying\(!btn\.classList\.contains\('playing'\)\);\ }\);\n\ \ badge\.addEventListener\('click',\ \(e\)=>\ \{\ volPop\.classList\.toggle\('show'\);\ volPop\.setAttribute\('aria-hidden',\ volPop\.classList\.contains\('show'\)\?\ 'false':'true'\);\ e\.stopPropagation\(\);\ }\);\n\ \ volRange\.addEventListener\('input',\ \(\)=>\{\ setVolume\(volRange\.value\);\ }\);\n\ \ muteBtn\.addEventListener\('click',\ \(\)=>\{\ if\(music\.volume>0\)\{\ volRange\.dataset\.prev\ =\ volRange\.value;\ volRange\.value=0;\ }\ else\ \{\ volRange\.value\ =\ volRange\.dataset\.prev\ \|\|\ 60;\ }\ setVolume\(volRange\.value\);\ }\);\n\ \ document\.addEventListener\('click',\ \(e\)=>\{\ if\(!e\.target\.closest\('\.vol-pop'\)\ &&\ !e\.target\.closest\('\#musicBadge'\)\)\{\ volPop\.classList\.remove\('show'\);\ volPop\.setAttribute\('aria-hidden','true'\);\ }}\);\n\ \ music\.addEventListener\('play',\ \(\)=>\ btn\.classList\.add\('playing'\)\);\n\ \ music\.addEventListener\('pause',\ \(\)=>\ btn\.classList\.remove\('playing'\)\);\n}\)\(\);\n</script>
-<!-- Improved Mini Music Player + Volume Popover (replaces older snippet) -->
-<style>
-  /* --- smoother global background for private pages --- */
-  /* Replace old body background lines with this gradient to remove the visible seam */
-  body {
-    background:
-      radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
-      radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,0.18), transparent 18%),
-      linear-gradient(160deg, #fff0ef 0%, #ffd6d6 18%, #ffc0be 38%, #ffb3b3 60%, #ffb0b0 100%);
-    background-attachment: fixed;
-    color: #333;
-  }
-
-  /* --- compact heart player container --- */
-  .music-btn {
-    position: fixed;
-    bottom: 22px;
-    right: 22px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg,#fffafc 0%,#ffeef2 100%);
-    box-shadow: 0 10px 22px rgba(230,100,140,0.18);
-    display:flex;align-items:center;justify-content:center;
-    z-index:160; border:none; cursor:pointer; transition:transform .18s ease,box-shadow .18s ease;
-    backdrop-filter: blur(4px);
-  }
-  .music-btn:hover { transform: translateY(-4px); box-shadow: 0 16px 30px rgba(230,100,140,0.25); }
-
-  .music-btn svg { width:26px; height:26px; display:block; }
-  .music-btn .heart { fill:#ff6b81; transition: transform .18s ease, fill .22s ease; }
-  .music-btn.playing .heart { transform: scale(1.08); fill:#ffd166; filter: drop-shadow(0 6px 12px rgba(255,170,80,0.20)); }
-
-  /* little gold volume dot to the right of the heart (click to open volume popover) */
-  .vol-dot {
-    position: absolute;
-    right: -6px;
-    top: -6px;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background: linear-gradient(150deg,#ffd76d,#ffc96a);
-    display:flex;align-items:center;justify-content:center;
-    box-shadow: 0 6px 10px rgba(255,170,100,0.24);
-    border: 2px solid rgba(255,255,255,0.9);
-    cursor:pointer;
-  }
-  .vol-dot:active { transform: scale(.96); }
-
-  /* volume popover */
-  .vol-pop {
-    position: fixed;
-    bottom: 84px;
-    right: 18px;
-    width: 214px;
-    padding: 10px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
-    border-radius: 12px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-    z-index: 170;
-    display: none;
-    align-items: center;
-    gap: 12px;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  }
-  .vol-pop.show { display: flex; }
-
-  .vol-pop input[type="range"] {
-    -webkit-appearance: none; width: 120px; height: 6px; border-radius: 999px;
-    background: linear-gradient(90deg,#ffc1c1,#ffd88a);
-    outline: none;
-  }
-  .vol-pop input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance:none; width:16px;height:16px;border-radius:50%;
-    background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border: 3px solid #ffb0a0;
-  }
-  .vol-label { font-size:13px; color:#6b2b2b; margin-right:6px; }
-
-  /* small mute button */
-  .vol-btn {
-    width:30px;height:30px;border-radius:8px;border:none;
-    background:#fff;border:1px solid rgba(0,0,0,0.06); cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-  }
-  .vol-btn svg { width:14px; height:14px; fill:#b04a4a; opacity:.95; }
-
-  /* accessible focus */
-  .music-btn:focus, .vol-dot:focus, .vol-btn:focus { outline: 3px solid rgba(255,200,200,0.6); outline-offset:3px; }
-</style>
-
-<button id="musicButton" class="music-btn" aria-pressed="false" aria-label="Play background music" title="Play / Pause music">
-  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-    <path class="heart" d="M12 21s-7.33-4.94-9.33-7.02C.8 11.9 2.1 7.9 5.5 6.3 7.2 5.4 9.1 6 10 7.3c.9-1.3 2.8-1.9 4.5-1 3.4 1.6 4.7 5.6 2.8 7.68C19.33 16.06 12 21 12 21z"/>
-  </svg>
-
-  <span class="vol-dot" id="volDot" role="button" aria-label="Volume control" title="Open volume control"></span>
-</button>
-
-<div id="volPop" class="vol-pop" role="dialog" aria-hidden="true">
-  <div class="vol-label" aria-hidden="true">Vol</div>
-  <input id="volRange" type="range" min="0" max="100" step="1" value="60" aria-label="Volume slider" />
-  <button id="muteBtn" class="vol-btn" aria-pressed="false" title="Mute / unmute" aria-label="Mute or unmute">
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 10v4h4l5 4V6L8 10H4z"/></svg>
-  </button>
-</div>
-
-<audio id="bgMusic" loop preload="auto">
-  <source src="/music/bg.mp3" type="audio/mpeg" />
-</audio>
-
-<script>
-(() => {
-  const btn = document.getElementById('musicButton');
-  const volDot = document.getElementById('volDot');
-  const volPop = document.getElementById('volPop');
-  const volRange = document.getElementById('volRange');
-  const muteBtn = document.getElementById('muteBtn');
-  const music = document.getElementById('bgMusic');
-
-  // restore stored state
-  let playing = false;
-  try {
-    const savedVol = localStorage.getItem('shree_music_volume');
-    if (savedVol !== null) volRange.value = savedVol;
-    const savedPlaying = localStorage.getItem('shree_music_playing');
-    if (savedPlaying === '1') { playing = true; }
-  } catch(e){}
-
-  // set actual audio volume (0..1)
-  function applyVolume() {
-    const v = Math.max(0, Math.min(100, parseInt(volRange.value || 60,10)));
-    music.volume = v/100;
-    if (v === 0) { muteBtn.setAttribute('aria-pressed','true'); } else { muteBtn.setAttribute('aria-pressed','false'); }
-    try { localStorage.setItem('shree_music_volume', String(v)); } catch(e){}
-  }
-  applyVolume();
-
-  function setPlaying(state) {
-    playing = !!state;
-    btn.setAttribute('aria-pressed', playing ? 'true' : 'false');
-    if (playing) {
-      btn.classList.add('playing');
-      music.play().catch(()=>{});
-      try { localStorage.setItem('shree_music_playing','1'); } catch(e){}
-      btn.setAttribute('title','Pause music');
-    } else {
-      btn.classList.remove('playing');
-      music.pause();
-      try { localStorage.setItem('shree_music_playing','0'); } catch(e){}
-      btn.setAttribute('title','Play music');
-    }
-  }
-
-  // initial play state (do not force autoplay; only restore visual if already allowed)
-  if (playing) {
-    // try resume playback if browser allows
-    music.play().then(()=>{ setPlaying(true); }).catch(()=>{ setPlaying(false); });
-  }
-
-  // heart click toggles play/pause
-  btn.addEventListener('click', (e) => {
-    // if click target was the volDot, handled separately
-    if (e.target && (e.target.id === 'volDot' || e.target.closest('#volDot'))) return;
-    setPlaying(!playing);
-  });
-
-  // show/hide volume popover on volDot click
-  volDot.addEventListener('click', (e) => {
-    const showing = volPop.classList.toggle('show');
-    volPop.setAttribute('aria-hidden', showing ? 'false' : 'true');
-    if (showing) { // auto-hide after 6s
-      setTimeout(()=>{ volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true'); }, 6000);
-    }
-    e.stopPropagation();
-  });
-
-  // volume slider changes
-  volRange.addEventListener('input', () => {
-    applyVolume();
-  });
-
-  // mute toggle
-  muteBtn.addEventListener('click', () => {
-    if (music.volume > 0) {
-      volRange.dataset.prev = volRange.value;
-      volRange.value = 0;
-    } else {
-      volRange.value = volRange.dataset.prev || 60;
-    }
-    applyVolume();
-  });
-
-  // close popover when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.vol-pop') && !e.target.closest('#volDot')) {
-      volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true');
-    }
-  });
-
-  // sync UI when audio events happen
-  music.addEventListener('play', ()=> setPlaying(true));
-  music.addEventListener('pause', ()=> setPlaying(false));
-
-  // ensure keyboard accessibility
-  volDot.tabIndex = 0;
-  volDot.addEventListener('keydown', (e)=> { if (e.key==='Enter' || e.key===' ') { e.preventDefault(); volDot.click(); }});
-
 })();
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

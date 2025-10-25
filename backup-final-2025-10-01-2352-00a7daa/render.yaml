@@ -1,0 +1,12 @@
+# render.yaml — place at repository root (C:\Users\Dr. Mishra\Documents\shree\render.yaml)
+services:
+  - type: web
+    name: shree-drive
+    env: node
+    plan: free
+    branch: main
+    buildCommand: "cd backend && npm install"
+    startCommand: "node server.js"
+    envVars:
+      - key: STATIC_DIR
+        value: "private"
