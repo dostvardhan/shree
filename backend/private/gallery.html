@@ -4,137 +4,94 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sweet Memories — Gallery</title>
-
-  <!-- Auth Guard (page stays private) -->
   <script src="/assets/js/guard-auth.js" defer></script>
-
   <style>
     :root{
-      --bg1:#ffe0e7;
-      --bg2:#ffd3df;
-      --ink:#3a2b2e;
-      --muted:#6b5b60;
-      --accent:#ff6b8a;
-      --card:#fff;
-      --ring:rgba(0,0,0,.08);
-      --shadow: 0 24px 48px -30px rgba(0,0,0,.45);
-      --radius: 18px;
+      --bg1:#ffe0e7; --bg2:#ffd3df;
+      --ink:#3a2b2e; --muted:#6b5b60; --accent:#ff6b8a;
+      --ring:rgba(0,0,0,.08); --card:#fff;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{box-sizing:border-box} html,body{height:100%}
     body{
-      margin:0;
-      font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial;
-      color:var(--ink);
+      margin:0; color:var(--ink);
+      font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial;
       background: radial-gradient(1200px 800px at 10% -10%, #ffe9ef 0%, var(--bg1) 40%, var(--bg2) 100%);
       overflow-x:hidden;
     }
 
-    /* floating hearts (subtle) */
-    .hearts{
-      position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.55;
-    }
+    /* subtle floating hearts */
+    .hearts{position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.45}
     .hearts span{
-      position:absolute; width:10px; height:10px; background:#ffc0cb99;
-      transform:rotate(45deg);
-      border-radius:2px;
-      animation: float 10s linear infinite;
-      box-shadow: 0 0 14px #ff8aa633;
+      position:absolute; width:10px; height:10px; background:#ffc0cb99; transform:rotate(45deg); border-radius:2px;
+      animation:float 10s linear infinite; box-shadow:0 0 14px #ff8aa633
     }
-    .hearts span::before, .hearts span::after{
-      content:""; position:absolute; width:10px; height:10px; background:#ffc0cb99; border-radius:50%;
-      left:-6px; top:0;
-    }
-    .hearts span::after{ left:0; top:-6px; }
-    @keyframes float{
-      0%{ transform:translateY(0) rotate(45deg) scale(.9); opacity:.35}
-      100%{ transform:translateY(-120vh) rotate(45deg) scale(1.1); opacity:0}
-    }
+    .hearts span::before,.hearts span::after{content:""; position:absolute; width:10px; height:10px; background:#ffc0cb99; border-radius:50%; left:-6px; top:0}
+    .hearts span::after{left:0; top:-6px}
+    @keyframes float{0%{transform:translateY(0) rotate(45deg) scale(.9);opacity:.35}100%{transform:translateY(-120vh) rotate(45deg) scale(1.1);opacity:0}}
 
-    /* Topbar like life.html */
-    .top{
-      position:sticky; top:0; z-index:5;
-      backdrop-filter: blur(8px);
-      background: #ffe6ecb3;
-      border-bottom:1px solid #f5c8d3;
-    }
-    .wrap{max-width:1100px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; justify-content:space-between;}
+    /* top bar */
+    .top{position:sticky; top:0; z-index:5; backdrop-filter:blur(8px); background:#ffe6ecb3; border-bottom:1px solid #f5c8d3}
+    .wrap{max-width:1200px; margin:0 auto; padding:14px 18px; display:flex; align-items:center; justify-content:space-between}
     .brand{font-weight:800; letter-spacing:.2px}
-    .nav a{
-      display:inline-block; text-decoration:none; color:#7a5e66; font-weight:700;
-      padding:8px 12px; margin-left:8px; border-radius:999px; background:#ffdbe4; border:1px solid #f6c7d2;
-      box-shadow: 0 6px 18px -12px #00000055;
-    }
-    .nav a.active{ background:#fff; }
+    .nav a{display:inline-block; text-decoration:none; color:#7a5e66; font-weight:700; padding:8px 12px; margin-left:8px; border-radius:999px; background:#ffdbe4; border:1px solid #f6c7d2; box-shadow:0 6px 18px -12px #00000055}
+    .nav a.active{background:#fff}
 
-    /* Title */
-    .titlebox{max-width:1100px; margin:22px auto 8px; padding:0 18px; text-align:center; position:relative; z-index:1;}
-    h1{
-      margin:0; font-size: clamp(26px, 3.5vw, 36px);
-      text-shadow: 0 1px 0 #fff, 0 10px 24px #ffb7c84d;
-    }
+    .titlebox{max-width:1200px; margin:18px auto 10px; padding:0 18px; text-align:center; position:relative; z-index:1}
+    h1{margin:0; font-size:clamp(26px,3.5vw,36px); text-shadow:0 1px 0 #fff, 0 10px 24px #ffb7c84d}
     .hint{color:#6f5b60; margin:6px 0 0; font-size:14px}
 
-    /* Grid cards (no-crop) */
-    .grid{
-      max-width:1100px; margin:16px auto 90px; padding:0 18px;
-      display:grid; gap:18px;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      position:relative; z-index:1;
+    /* ===== Masonry layout (no crop) ===== */
+    .masonry{
+      max-width:1200px; margin:10px auto 70px; padding:0 18px;
+      column-gap:14px;
+      column-count:4;
     }
-    .card{
-      background:var(--card);
-      border:1px solid var(--ring);
-      border-radius: var(--radius);
-      overflow:hidden;
-      box-shadow: var(--shadow);
-      transition: transform .12s ease, box-shadow .12s ease;
-    }
-    .card:hover{ transform: translateY(-2px); box-shadow: 0 28px 60px -34px rgba(0,0,0,.55); }
+    @media (max-width:1100px){ .masonry{column-count:3} }
+    @media (max-width:760px){ .masonry{column-count:2} }
+    @media (max-width:520px){ .masonry{column-count:1} }
 
-    .imgwrap{ background:#fff7f9; }
-    .imgwrap img{
-      display:block; width:100%; height:auto; object-fit:contain; /* NO CROP */
+    .card{
+      display:inline-block; /* required for columns */
+      width:100%; margin:0 0 14px; position:relative;
+      background:var(--card); border:1px solid var(--ring); border-radius:18px; overflow:hidden;
+      box-shadow:0 22px 50px -28px rgba(0,0,0,.45);
+      break-inside:avoid; -webkit-column-break-inside:avoid; page-break-inside:avoid;
+      transition:transform .12s ease, box-shadow .12s ease;
     }
-    .caption{
-      padding:10px 12px 12px; font-size:14px; color:#3c2f34;
-      display:flex; align-items:flex-start; gap:8px; background: #fff; border-top:1px solid #f5e3e8;
+    .card:hover{ transform:translateY(-2px); box-shadow:0 28px 60px -34px rgba(0,0,0,.55) }
+
+    .imgwrap{ background:#fff7f9 }
+    .imgwrap img{ display:block; width:100%; height:auto; object-fit:contain } /* NO CROP */
+
+    /* tiny caption chip over image bottom */
+    .capchip{
+      position:absolute; left:10px; bottom:10px; max-width:85%;
+      background:#ffffffd8; backdrop-filter:blur(4px);
+      border:1px solid #f5e3e8; color:#3c2f34;
+      padding:6px 10px; font-size:12px; line-height:1.3; border-radius:999px;
+      display:flex; align-items:center; gap:6px;
+      box-shadow:0 8px 24px -12px rgba(0,0,0,.35);
     }
     .heart{
-      width:14px; height:14px; margin-top:2px; flex:0 0 auto; background: var(--accent);
-      transform: rotate(45deg); border-radius:2px; position:relative; opacity:.9;
+      width:12px; height:12px; transform:rotate(45deg); background:var(--accent); border-radius:2px; position:relative; flex:0 0 auto
     }
-    .heart::before, .heart::after{
-      content:""; position:absolute; width:14px; height:14px; background: var(--accent); border-radius:50%;
-      left:-7px; top:0;
-    }
-    .heart::after{ left:0; top:-7px; }
-    .captext{ white-space:pre-wrap; word-wrap:break-word; }
+    .heart::before,.heart::after{content:""; position:absolute; width:12px; height:12px; background:var(--accent); border-radius:50%; left:-6px; top:0}
+    .heart::after{left:0; top:-6px}
 
-    /* Pager */
-    .pager{
-      max-width:1100px; margin:8px auto 40px; padding:0 18px; display:flex; align-items:center; justify-content:center; gap:10px; z-index:1; position:relative;
-    }
-    .pager button{
-      padding:10px 14px; border-radius:999px; border:1px solid #f0c8d4; background:#fff; cursor:pointer; font-weight:700;
-      box-shadow: 0 10px 24px -18px rgba(0,0,0,.4);
-    }
-    .pager button[disabled]{ opacity:.45; cursor:not-allowed; }
-    .pinfo{
-      padding:8px 12px; border:1px solid #f0c8d4; background:#ffeef2; border-radius:999px; font-weight:700; color:#6a5258;
-    }
+    /* pager */
+    .pager{ max-width:1200px; margin:4px auto 40px; padding:0 18px; display:flex; align-items:center; justify-content:center; gap:10px; position:relative; z-index:1}
+    .pager button{ padding:10px 14px; border-radius:999px; border:1px solid #f0c8d4; background:#fff; cursor:pointer; font-weight:700; box-shadow:0 10px 24px -18px rgba(0,0,0,.4) }
+    .pager button[disabled]{ opacity:.45; cursor:not-allowed }
+    .pinfo{ padding:8px 12px; border:1px solid #f0c8d4; background:#ffeef2; border-radius:999px; font-weight:700; color:#6a5258 }
 
-    /* small skeletons (initial) */
-    .skeleton{ height:240px; border-radius:var(--radius); border:1px solid var(--ring);
-      background: linear-gradient(90deg, #ffeef3, #fff7f9, #ffeef3); background-size: 200% 100%; animation: sk 1.2s infinite; }
+    /* skeleton */
+    .skeleton{ display:inline-block; width:100%; height:240px; border-radius:18px; border:1px solid var(--ring); background:linear-gradient(90deg,#ffeef3,#fff7f9,#ffeef3); background-size:200% 100%; animation:sk 1.2s infinite; break-inside:avoid; margin:0 0 14px }
     @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
   </style>
 </head>
 <body>
-  <!-- subtle floating hearts -->
   <div class="hearts" aria-hidden="true" id="hearts"></div>
 
-  <!-- topbar -->
   <header class="top">
     <div class="wrap">
       <div class="brand">Sweet Memories</div>
@@ -146,27 +103,25 @@
     </div>
   </header>
 
-  <!-- title -->
   <section class="titlebox">
     <h1>All Memories</h1>
-    <p class="hint">No-crop • 16 per page • Tap to open full view</p>
+    <p class="hint">Life-style theme • No-crop • 16 per page</p>
   </section>
 
-  <!-- grid -->
-  <main class="grid" id="grid" aria-live="polite">
-    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
-    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+  <!-- Masonry container -->
+  <main class="masonry" id="masonry" aria-live="polite">
+    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
   </main>
 
-  <!-- pager -->
   <div class="pager">
     <button id="prevBtn">‹ Prev</button>
     <span class="pinfo" id="pinfo">Page 1 / 1</span>
     <button id="nextBtn">Next ›</button>
   </div>
 
-  <!-- lightbox -->
-  <div class="lightbox" id="lightbox" aria-modal="true" role="dialog" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); align-items:center; justify-content:center; z-index:6;">
+  <!-- Lightbox -->
+  <div id="lightbox" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); align-items:center; justify-content:center; z-index:6;">
     <button id="lbClose" style="position:absolute; top:20px; right:20px; background:#ffffff26; color:#fff; border:1px solid #ffffff33; border-radius:999px; padding:10px 12px; font-weight:700; cursor:pointer;">Close ✕</button>
     <button id="lbPrev"  style="position:absolute; left:16px; top:50%; transform:translateY(-50%); background:#ffffff26; color:#fff; border:1px solid #ffffff33; border-radius:999px; padding:10px 12px; font-weight:700; cursor:pointer;">‹</button>
     <img id="lbImg" alt="Full view" style="max-width:95vw; max-height:88vh; border-radius:12px; box-shadow:0 0 0 1px rgba(255,255,255,.08), 0 30px 80px -40px rgba(0,0,0,.9);" />
@@ -174,155 +129,102 @@
   </div>
 
   <script>
-  // --- subtle floating hearts like life page ---
-  (function spawnHearts(){
-    const root = document.getElementById('hearts');
-    const N = 22; // light density
-    for(let i=0;i<N;i++){
-      const s = document.createElement('span');
-      const left = Math.random()*100;
-      const delay = Math.random()*8;
-      const size = 8 + Math.random()*8;
-      s.style.left = left+'vw';
-      s.style.bottom = (-10 - Math.random()*40)+'vh';
-      s.style.animationDelay = delay+'s';
-      s.style.width = size+'px'; s.style.height = size+'px';
-      s.style.opacity = (0.18 + Math.random()*0.25).toFixed(2);
+  // hearts
+  (function(){
+    const root=document.getElementById('hearts'); const N=20;
+    for(let i=0;i<N;i++){ const s=document.createElement('span'); const left=Math.random()*100; const delay=Math.random()*8; const size=8+Math.random()*8;
+      s.style.left=left+'vw'; s.style.bottom=(-10-Math.random()*40)+'vh'; s.style.animationDelay=delay+'s'; s.style.width=size+'px'; s.style.height=size+'px'; s.style.opacity=(0.18+Math.random()*0.25).toFixed(2);
       root.appendChild(s);
     }
   })();
 
-  // --- auth guard (graceful) ---
+  // auth guard
   document.addEventListener('DOMContentLoaded', () => {
-    if (window.authGuard && typeof window.authGuard.protect === 'function') {
-      window.authGuard.protect({ redirectTo: '/index.html' });
-    }
+    if (window.authGuard?.protect) window.authGuard.protect({ redirectTo: '/index.html' });
   });
 
-  // --- gallery with pagination (16 per page) ---
+  // gallery (16 per page) + masonry
   (function(){
-    const PAGE_SIZE = 16;
-    const grid = document.getElementById('grid');
-    const pinfo = document.getElementById('pinfo');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
+    const PAGE_SIZE=16;
+    const cont=document.getElementById('masonry');
+    const pinfo=document.getElementById('pinfo');
+    const prevBtn=document.getElementById('prevBtn');
+    const nextBtn=document.getElementById('nextBtn');
 
     // lightbox
-    const lb = document.getElementById('lightbox');
-    const lbImg = document.getElementById('lbImg');
-    const lbPrev = document.getElementById('lbPrev');
-    const lbNext = document.getElementById('lbNext');
-    const lbClose = document.getElementById('lbClose');
+    const lb=document.getElementById('lightbox'), img=document.getElementById('lbImg');
+    const lbPrev=document.getElementById('lbPrev'), lbNext=document.getElementById('lbNext'), lbClose=document.getElementById('lbClose');
+    let all=[], page=getPageFromURL(), currentIndexOnPage=-1;
 
-    let all = [];
-    let page = getPageFromURL();
-    let currentIndexOnPage = -1; // for lightbox inside page
+    function getPageFromURL(){ const u=new URL(location.href); const p=parseInt(u.searchParams.get('page')||'1',10); return (Number.isFinite(p)&&p>0)?p:1 }
+    function setPageInURL(p){ const u=new URL(location.href); u.searchParams.set('page',p); history.replaceState(null,'',u.toString()) }
+    function removeSkeletons(){ cont.querySelectorAll('.skeleton').forEach(el=>el.remove()) }
 
-    function getPageFromURL(){
-      const u = new URL(window.location.href);
-      const p = parseInt(u.searchParams.get('page') || '1', 10);
-      return Number.isFinite(p) && p>0 ? p : 1;
-    }
-    function setPageInURL(p){
-      const u = new URL(window.location.href);
-      u.searchParams.set('page', p);
-      history.replaceState(null, '', u.toString());
-    }
-
-    function removeSkeletons(){
-      [...grid.querySelectorAll('.skeleton')].forEach(el => el.remove());
-    }
-
-    function cardTemplate(item, index){
-      const fig = document.createElement('figure');
-      fig.className = 'card';
-      fig.innerHTML = `
+    function card(item, index){
+      const fig=document.createElement('figure'); fig.className='card';
+      fig.innerHTML=`
         <div class="imgwrap">
-          <img loading="lazy" src="/api/file/${encodeURIComponent(item.id)}" alt="${(item.caption||'Memory').replace(/"/g,'&quot;')}"/>
+          <img loading="lazy" src="/api/file/${encodeURIComponent(item.id)}" alt="${(item.caption||'Memory').replace(/"/g,'&quot;')}">
         </div>
-        <figcaption class="caption">
-          <span class="heart" aria-hidden="true"></span>
-          <span class="captext">${(item.caption||'').replace(/</g,'&lt;')}</span>
-        </figcaption>`;
-      fig.querySelector('img').addEventListener('click', () => openLightbox(index));
+      `;
+      // caption chip (only if caption present)
+      const cap=(item.caption||'').trim();
+      if(cap){
+        const chip=document.createElement('div');
+        chip.className='capchip';
+        chip.innerHTML = '<span class="heart" aria-hidden="true"></span><span>'+cap.replace(/</g,'&lt;')+'</span>';
+        fig.appendChild(chip);
+      }
+      fig.querySelector('img').addEventListener('click',()=>openLightbox(index));
       return fig;
     }
 
     function renderPage(){
-      removeSkeletons();
-      grid.innerHTML = '';
-      const total = all.length;
-      const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-      if (page > totalPages) page = totalPages;
-
-      const start = (page - 1) * PAGE_SIZE;
-      const end = Math.min(start + PAGE_SIZE, total);
-      const slice = all.slice(start, end);
-
-      const frag = document.createDocumentFragment();
-      slice.forEach((item, i) => frag.appendChild(cardTemplate(item, i)));
-      grid.appendChild(frag);
-
-      // pager state
-      pinfo.textContent = `Page ${page} / ${totalPages} — ${slice.length} of ${total} photos`;
-      prevBtn.disabled = (page <= 1);
-      nextBtn.disabled = (page >= totalPages);
+      removeSkeletons(); cont.innerHTML='';
+      const total=all.length, totalPages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+      if(page>totalPages) page=totalPages;
+      const start=(page-1)*PAGE_SIZE, end=Math.min(start+PAGE_SIZE,total);
+      const slice=all.slice(start,end);
+      const frag=document.createDocumentFragment();
+      slice.forEach((it,i)=>frag.appendChild(card(it,i)));
+      cont.appendChild(frag);
+      pinfo.textContent=`Page ${page} / ${totalPages} — ${slice.length} of ${total} photos`;
+      prevBtn.disabled=(page<=1); nextBtn.disabled=(page>=totalPages);
       setPageInURL(page);
     }
 
     function openLightbox(i){
-      currentIndexOnPage = i;
-      const globalIndex = (page-1)*PAGE_SIZE + currentIndexOnPage;
-      lbImg.src = `/api/file/${encodeURIComponent(all[globalIndex].id)}`;
-      lb.style.display = 'flex';
+      currentIndexOnPage=i;
+      const globalIndex=(page-1)*PAGE_SIZE+currentIndexOnPage;
+      img.src = `/api/file/${encodeURIComponent(all[globalIndex].id)}`;
+      lb.style.display='flex';
     }
-    function closeLightbox(){
-      lb.style.display = 'none';
-      lbImg.src = '';
+    function closeLightbox(){ lb.style.display='none'; img.src='' }
+    function step(dir){
+      if(currentIndexOnPage<0) return;
+      const total=all.length;
+      const start=(page-1)*PAGE_SIZE, end=Math.min(start+PAGE_SIZE,total);
+      const gi=start+currentIndexOnPage+dir;
+      if(gi<start || gi>=end) return; // stay in page
+      currentIndexOnPage+=dir; img.src=`/api/file/${encodeURIComponent(all[start+currentIndexOnPage].id)}`;
     }
-    function stepLightbox(dir){
-      if (currentIndexOnPage < 0) return;
-      const total = all.length;
-      const globalIndex = (page-1)*PAGE_SIZE + currentIndexOnPage + dir;
-      const pageStart = (page-1)*PAGE_SIZE;
-      const pageEndEx = Math.min(pageStart + PAGE_SIZE, total);
-
-      // keep navigation inside the same page
-      if (globalIndex < pageStart || globalIndex >= pageEndEx) return;
-
-      currentIndexOnPage += dir;
-      const idx = pageStart + currentIndexOnPage;
-      lbImg.src = `/api/file/${encodeURIComponent(all[idx].id)}`;
-    }
-
-    prevBtn.addEventListener('click', () => { page = Math.max(1, page-1); renderPage(); });
-    nextBtn.addEventListener('click', () => { page = page+1; renderPage(); });
-    lbClose.addEventListener('click', closeLightbox);
-    lbPrev.addEventListener('click', () => stepLightbox(-1));
-    lbNext.addEventListener('click', () => stepLightbox(1));
-    lb.addEventListener('click', e => { if (e.target === lb) closeLightbox(); });
-    window.addEventListener('keydown', e => {
-      if (lb.style.display !== 'flex') return;
-      if (e.key === 'Escape') closeLightbox();
-      if (e.key === 'ArrowLeft') stepLightbox(-1);
-      if (e.key === 'ArrowRight') stepLightbox(1);
-    });
+    prevBtn.onclick=()=>{ page=Math.max(1,page-1); renderPage() };
+    nextBtn.onclick=()=>{ page=page+1; renderPage() };
+    lbClose.onclick=closeLightbox; lbPrev.onclick=()=>step(-1); lbNext.onclick=()=>step(1);
+    lb.addEventListener('click',e=>{ if(e.target===lb) closeLightbox() });
+    window.addEventListener('keydown',e=>{ if(lb.style.display!=='flex')return; if(e.key==='Escape')closeLightbox(); if(e.key==='ArrowLeft')step(-1); if(e.key==='ArrowRight')step(1) });
 
     async function fetchList(){
       try{
-        const res = await fetch('/api/list', { credentials: 'include' });
+        const res=await fetch('/api/list',{credentials:'include'});
         if(!res.ok) throw new Error('Failed to load list');
-        const data = await res.json();
-        // Newest first (remove .reverse() if you want chronological)
+        const data=await res.json();
         all = Array.isArray(data) ? data.slice().reverse() : [];
         renderPage();
-      }catch(err){
-        console.error(err);
-        removeSkeletons();
-        const msg = document.createElement('div');
-        msg.style.padding='24px'; msg.style.background='#fff'; msg.style.border='1px solid #f5c8d3'; msg.style.borderRadius='14px';
-        msg.textContent='Could not load gallery. Please try again.';
-        grid.appendChild(msg);
+      }catch(e){
+        console.error(e); removeSkeletons();
+        const msg=document.createElement('div'); msg.style.display='inline-block'; msg.style.padding='24px'; msg.style.background='#fff'; msg.style.border='1px solid #f5c8d3'; msg.style.borderRadius='14px';
+        msg.textContent='Could not load gallery. Please try again.'; cont.appendChild(msg);
       }
     }
     fetchList();
