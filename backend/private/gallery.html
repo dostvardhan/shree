@@ -3,137 +3,102 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Gallery — Photo Stacks</title>
+<title>Gallery — Aurora Masonry</title>
 <meta name="color-scheme" content="light only" />
 <style>
   :root{
-    --ink:#2b2225;
+    --ink:#23181b;
+    --glass:#ffffffcc;
     --ring:rgba(0,0,0,.10);
     --fab-bg:#ffffffd8;
-    --fab-border:#f0c8d4;
-    --card-bg:#fff;
+    --fab-border:#e9c7d4;
+    --gap:18px;
+    --col-min:240px; /* minimum tile width */
+    --row:8px;       /* masonry row height unit */
   }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
     margin:0; color:var(--ink);
     font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial;
-    /* smooth pink + animated bokeh base (no banding) */
-    background:
-      radial-gradient(1400px 900px at 12% -10%, #fff5fa 0%, #ffdbe9 40%, #ffc2d6 85%, #ffb2ca 100%),
-      radial-gradient(1200px 750px at 85% 110%, #ffe6f0 0%, #ffd4e3 60%, #ffb7ce 100%),
-      linear-gradient(180deg, #ffffff00 0%, #ffffff40 45%, #ffffff00 100%);
     overflow-x:hidden;
+    background: radial-gradient(1200px 800px at 20% -15%, #ffeef7 0%, #ffd6e6 45%, #ffc3d9 70%, #ffb6d1 100%);
   }
+  /* aurora layer */
+  .aurora{
+    position:fixed; inset:-20vmax; z-index:0; pointer-events:none; filter: blur(80px) saturate(1.05);
+    opacity:.65; mix-blend-mode:soft-light;
+    background:
+      conic-gradient(from 0deg at 30% 40%, #ffd7e6, #ffb4c9, #ffd7e6),
+      conic-gradient(from 180deg at 70% 60%, #ffc6db, #ffe4f1, #ffc6db);
+    animation: swirl 28s linear infinite;
+  }
+  @keyframes swirl{ to{ transform:rotate(360deg) } }
 
-  /* moving bokeh blobs */
-  .bokeh{position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden}
-  .blob{position:absolute; width:220px; height:220px; border-radius:50%;
-        filter: blur(40px); opacity:.22; animation: drift var(--dur,26s) ease-in-out infinite alternate}
-  .blob:nth-child(1){background:#ffd2e4; left:-80px; top:20vh; --dur:28s}
-  .blob:nth-child(2){background:#ffc4da; right: -60px; top:55vh; --dur:24s}
-  .blob:nth-child(3){background:#ff9fc3; left:35vw; top:-90px; --dur:30s}
-  @keyframes drift{
-    from{ transform: translateY(0) translateX(0) }
-    to  { transform: translateY(-40px) translateX(30px) }
+  /* super light grain */
+  .grain{
+    position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.06;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="120" height="120" filter="url(%23n)" opacity="0.25"/></svg>');
+    background-size: 180px 180px;
   }
 
   /* top tiny nav */
   .topbar{
-    position:sticky; top:0; z-index:6;
+    position:sticky; top:0; z-index:5;
     display:flex; justify-content:center; gap:10px; padding:10px;
-    background:#ffecf2c7; backdrop-filter:blur(8px);
-    border-bottom:1px solid #f4c6d3;
+    background:#fff0f6c9; backdrop-filter:blur(10px); border-bottom:1px solid #f3c6d3;
   }
   .topbar a{
-    text-decoration:none; color:#6f5560; font-weight:700; font-size:14px;
-    padding:7px 12px; border-radius:999px; background:#ffdbe4; border:1px solid #f6c7d2;
-    box-shadow:0 6px 18px -12px #00000033;
+    text-decoration:none; color:#6d525c; font-weight:700; font-size:14px;
+    padding:7px 12px; border-radius:999px; background:#ffe0ea; border:1px solid #f2c3d1;
+    box-shadow:0 8px 20px -14px #0005;
   }
   .topbar a.active{ background:#fff }
 
-  /* rainbow hearts (slow, glow) */
-  .hearts{ position:fixed; inset:0; pointer-events:none; z-index:2; mix-blend-mode:screen }
-  .heart{
-    position:absolute; transform:rotate(45deg);
-    width: var(--size,16px); height: var(--size,16px); border-radius:3px;
-    background: linear-gradient(145deg,
-              hsl(var(--hue,330) 95% 65% / .95),
-              hsl(var(--hue,330) 95% 55% / .95));
-    filter: drop-shadow(0 0 6px hsl(var(--hue,330) 95% 60% / .85))
-            drop-shadow(0 0 14px hsl(var(--hue,330) 95% 55% / .55));
-    animation: float var(--dur,24s) linear infinite;
-    will-change: transform;
-    opacity:.65;
-  }
-  .heart::before,.heart::after{
-    content:""; position:absolute; width:100%; height:100%; border-radius:50%;
-    background:inherit; left:-50%; top:0; filter:inherit;
-  }
-  .heart::after{ left:0; top:-50% }
-  @keyframes float{
-    0%   { transform: translate(var(--x,0), 0) rotate(45deg) scale(.95); opacity:.55 }
-    50%  { transform: translate(calc(var(--x,0) * -1), -65vh) rotate(45deg) scale(1); opacity:.75 }
-    100% { transform: translate(var(--x,0), -130vh) rotate(45deg) scale(1.05); opacity:0 }
+  /* particles (clean alternative to hearts) */
+  .particles{ position:fixed; inset:0; pointer-events:none; z-index:2; mix-blend-mode:screen }
+  .dot{ position:absolute; width:6px; height:6px; border-radius:50%; background:radial-gradient(circle, #fff8, #fff0 60%); animation: drift var(--dur,18s) ease-in-out infinite }
+  @keyframes drift{
+    0%{ transform:translate(0,0) scale(.9); opacity:.6 }
+    100%{ transform:translate(var(--dx,20px), var(--dy,-60px)) scale(1.1); opacity:0 }
   }
 
-  /* grid */
+  /* Masonry container */
+  .wrap{ max-width:1240px; margin:20px auto 120px; padding:0 18px; position:relative; z-index:3 }
   .grid{
-    max-width:1200px; margin:22px auto 120px; padding:0 18px;
-    display:grid; gap:26px;
-    grid-template-columns: repeat(3, 1fr);
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(var(--col-min),1fr));
+    grid-auto-rows: var(--row); grid-auto-flow:dense; gap:var(--gap);
   }
-  @media (max-width:1000px){ .grid{grid-template-columns: repeat(3, 1fr)} }
-  @media (max-width:900px){ .grid{grid-template-columns: repeat(2, 1fr)} }
-  @media (max-width:560px){ .grid{grid-template-columns: 1fr} }
 
-  /* PHOTO STACK card (tilt) */
-  .stack{
-    --tilt: 0deg;
-    position:relative; aspect-ratio:3/4; border-radius:28px; overflow:visible;
-    transform: rotate(var(--tilt));
-    transition: transform .25s ease, filter .25s ease;
-    filter: drop-shadow(0 26px 60px rgba(0,0,0,.30));
-  }
-  .stack:hover{ transform: rotate(0deg) translateY(-2px) scale(1.01); filter: drop-shadow(0 34px 90px rgba(0,0,0,.35)) }
-
-  /* paper layers */
-  .paper{
-    position:absolute; inset:0; border-radius:28px; background:var(--card-bg);
+  /* card */
+  .card{
+    position:relative; border-radius:20px; overflow:hidden; background:var(--glass);
     border:1px solid var(--ring);
-    box-shadow: 0 18px 40px -22px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.85);
+    box-shadow: 0 24px 60px -36px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.85);
+    transition: transform .18s ease, box-shadow .18s ease;
+    will-change: transform;
   }
-  .paper.s2{ inset:10px 12px 14px 14px; border-radius:24px; opacity:.9 }
-  .paper.s3{ inset:18px; border-radius:20px; opacity:.95; background:linear-gradient(180deg,#fff,#fff7fb) }
+  .card:hover{ transform: translateY(-3px); box-shadow:0 36px 88px -48px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.95) }
 
-  /* photo area */
-  .photo{
-    position:absolute; inset:26px; border-radius:16px; background:#fff;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
-    overflow:hidden;
+  .ph{
+    position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+    background:#fff; border-radius:16px; margin:10px; overflow:hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,.05);
   }
-  .photo img{
-    max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; display:block; border-radius:12px;
-    transform:scale(1); transition: transform .28s ease;
+  .ph img{
+    width:100%; height:100%; object-fit:contain; display:block; transform:scale(1); transition:transform .28s ease;
   }
-  .stack:hover .photo img{ transform:scale(1.07) } /* hover zoom */
+  .card:hover .ph img{ transform:scale(1.06) } /* zoom */
 
   /* pager */
-  .pager{
-    position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:7;
-    display:flex; gap:10px;
-  }
+  .pager{ position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:4; display:flex; gap:10px }
   .pbtn{
-    width:44px; height:44px; border-radius:999px;
-    border:1px solid var(--fab-border); background:#fff;
-    box-shadow:0 12px 30px -18px rgba(0,0,0,.45); cursor:pointer;
-    font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center;
+    width:44px; height:44px; border-radius:999px; border:1px solid var(--fab-border); background:#fff;
+    box-shadow:0 12px 30px -18px rgba(0,0,0,.45); cursor:pointer; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center;
   }
   .pbtn[disabled]{ opacity:.45; cursor:not-allowed }
 
   /* FABs */
-  .fab-wrap{ position:fixed; right:16px; bottom:16px; z-index:7; display:flex; flex-direction:column; gap:10px }
+  .fab-wrap{ position:fixed; right:16px; bottom:16px; z-index:4; display:flex; flex-direction:column; gap:10px }
   .fab{
     width:46px; height:46px; border-radius:999px; display:flex; align-items:center; justify-content:center;
     background:var(--fab-bg); border:1px solid var(--fab-border); box-shadow:0 10px 28px -16px rgba(0,0,0,.45);
@@ -141,21 +106,18 @@
   }
   .fab:hover{ transform:translateY(-1px) }
 
-  /* skeletons */
-  .skeleton{ aspect-ratio:3/4; border-radius:28px; border:1px solid var(--ring);
+  /* skeleton */
+  .skel{ border-radius:20px; border:1px solid var(--ring); height:260px;
     background:linear-gradient(90deg,#ffeef3,#fff7f9,#ffeef3); background-size:200% 100%; animation:sk 1.2s infinite }
   @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
-
   .sr{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden }
 </style>
 </head>
 <body>
-  <!-- bokeh -->
-  <div class="bokeh" aria-hidden="true">
-    <div class="blob"></div><div class="blob"></div><div class="blob"></div>
-  </div>
+  <div class="aurora" aria-hidden="true"></div>
+  <div class="grain"  aria-hidden="true"></div>
 
-  <!-- tiny nav -->
+  <!-- nav -->
   <nav class="topbar">
     <a href="/life.html">Life</a>
     <a href="/upload.html">Upload</a>
@@ -163,26 +125,27 @@
     <a href="/auth/logout">Logout</a>
   </nav>
 
-  <!-- rainbow hearts -->
-  <div class="hearts" id="hearts" aria-hidden="true"></div>
+  <!-- particles -->
+  <div class="particles" id="particles" aria-hidden="true"></div>
 
-  <!-- grid -->
-  <main class="grid" id="grid" aria-live="polite">
-    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
-    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
-  </main>
+  <!-- content -->
+  <div class="wrap">
+    <div id="grid" class="grid" aria-live="polite">
+      <div class="skel"></div><div class="skel"></div><div class="skel"></div>
+    </div>
+  </div>
 
   <!-- pager -->
   <div class="pager">
     <button id="prevBtn" class="pbtn" title="Prev">‹</button>
     <button id="nextBtn" class="pbtn" title="Next">›</button>
-    <span id="pinfo" class="sr" aria-live="polite"></span>
+    <span id="pinfo" class="sr"></span>
   </div>
 
   <!-- FABs -->
   <div class="fab-wrap">
     <button class="fab" id="musicBtn" title="Play/Pause">♪</button>
-    <button class="fab" id="heartsBtn" title="Hearts">❤</button>
+    <button class="fab" id="fxBtn"    title="Effects">✦</button>
   </div>
 
   <!-- music -->
@@ -191,7 +154,7 @@
   </audio>
 
 <script>
-  /* soft auth */
+  /* ---------- soft auth ---------- */
   (async function(){
     try{
       const r = await fetch('/api/diag',{credentials:'include',cache:'no-store'});
@@ -199,29 +162,36 @@
     }catch{ location.href='/index.html'; }
   })();
 
-  /* rainbow hearts spawn (slow, glowy) */
-  (function(){
-    const root = document.getElementById('hearts');
-    const N = 34;
+  /* ---------- particles (bokeh dots) ---------- */
+  (function spawnParticles(){
+    const root=document.getElementById('particles');
+    const N=42;
     for(let i=0;i<N;i++){
-      const h = document.createElement('div');
-      h.className = 'heart';
-      const hue = Math.floor(Math.random()*360);
-      const dur = 18 + Math.random()*14;       // 18–32s
-      const size = 14 + Math.random()*12;
-      const xDrift = (Math.random()*40 - 20) + 'px';
-      h.style.setProperty('--hue', hue);
-      h.style.setProperty('--dur', dur+'s');
-      h.style.setProperty('--size', size+'px');
-      h.style.setProperty('--x', xDrift);
-      h.style.left = (Math.random()*100)+'vw';
-      h.style.bottom = (-20 - Math.random()*50)+'vh';
-      h.style.animationDelay = (Math.random()*10)+'s';
-      root.appendChild(h);
+      const d=document.createElement('div'); d.className='dot';
+      d.style.left = (Math.random()*100)+'vw';
+      d.style.top  = (Math.random()*100)+'vh';
+      d.style.setProperty('--dx', (Math.random()*80-40)+'px');
+      d.style.setProperty('--dy', (-40 - Math.random()*100)+'px');
+      d.style.setProperty('--dur', (16+Math.random()*18)+'s');
+      d.style.animationDelay = (Math.random()*10)+'s';
+      root.appendChild(d);
     }
   })();
 
-  /* Gallery — 18 per page, recent-first, Photo-Stacks */
+  /* ---------- masonry helpers ---------- */
+  function applyMasonrySpan(card, img){
+    const row = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--row')) || 8;
+    const padding = 20 + 20; // .ph margins total (inset 10 + 10 each side)
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+    const columnWidth = card.clientWidth;
+    if(!w || !h || !columnWidth) return;
+    const displayHeight = (h * columnWidth) / w; // contain
+    const rowSpan = Math.ceil((displayHeight + padding) / row);
+    card.style.gridRowEnd = `span ${rowSpan}`;
+  }
+
+  /* ---------- gallery logic (18/page, recent-first) ---------- */
   (function(){
     const PAGE_SIZE=18;
     const grid=document.getElementById('grid');
@@ -229,40 +199,36 @@
     const nextBtn=document.getElementById('nextBtn');
     const pinfo=document.getElementById('pinfo');
 
-    // lightbox
+    // lightbox (minimal)
     const lb=document.createElement('div');
-    lb.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;z-index:8;';
+    lb.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;z-index:6;';
     lb.innerHTML=`<button id="lbClose" style="position:absolute;top:20px;right:20px;background:#ffffff26;color:#fff;border:1px solid #ffffff33;border-radius:999px;padding:10px 12px;font-weight:700;cursor:pointer;">✕</button>
-      <button id="lbPrev" style="position:absolute;left:16px;top:50%;transform:translateY(-50%);background:#ffffff26;color:#fff;border:1px solid #ffffff33;border-radius:999px;padding:10px 12px;font-weight:700;cursor:pointer;">‹</button>
-      <img id="lbImg" alt="" style="max-width:95vw;max-height:88vh;border-radius:12px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 30px 80px -40px rgba(0,0,0,.9);" />
-      <button id="lbNext" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:#ffffff26;color:#fff;border:1px solid #ffffff33;border-radius:999px;padding:10px 12px;font-weight:700;cursor:pointer;">›</button>`;
+      <img id="lbImg" alt="" style="max-width:95vw;max-height:88vh;border-radius:12px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 30px 80px -40px rgba(0,0,0,.9);" />`;
     document.body.appendChild(lb);
-    const lbImg=lb.querySelector('#lbImg'), lbPrev=lb.querySelector('#lbPrev'), lbNext=lb.querySelector('#lbNext'), lbClose=lb.querySelector('#lbClose');
+    const lbImg=lb.querySelector('#lbImg'), lbClose=lb.querySelector('#lbClose');
+    lbClose.onclick=()=>{ lb.style.display='none'; lbImg.src='' };
+    lb.addEventListener('click',e=>{ if(e.target===lb) lbClose.onclick(); });
+    window.addEventListener('keydown',e=>{ if(lb.style.display==='flex' && e.key==='Escape') lbClose.onclick(); });
 
-    let all=[], page=getPage(), currentIndexOnPage=-1;
+    let all=[], page=getPage();
 
     function getPage(){ const u=new URL(location.href); const v=parseInt(u.searchParams.get('page')||'1',10); return (Number.isFinite(v)&&v>0)?v:1 }
     function setPage(p){ const u=new URL(location.href); u.searchParams.set('page',p); history.replaceState(null,'',u.toString()) }
-    function clear(){ grid.innerHTML='' }
 
-    // generate alternating tilt values to get moodboard look
-    const tilts = [-2.2, 1.8, -1.4, 1.2, -0.8, 0.6];
+    function clear(){ grid.innerHTML=''; }
 
-    function card(item, index){
-      const fig=document.createElement('figure'); fig.className='stack';
-      fig.style.setProperty('--tilt', tilts[index % tilts.length] + 'deg');
+    function makeCard(item){
+      const fig=document.createElement('figure'); fig.className='card';
+      const ph = document.createElement('div'); ph.className='ph';
+      const img=document.createElement('img'); img.loading='lazy'; img.alt='Memory';
+      img.src=`/api/file/${encodeURIComponent(item.id)}?v=${Date.now()}`;
+      ph.appendChild(img); fig.appendChild(ph);
 
-      const p1=document.createElement('div'); p1.className='paper s1';
-      const p2=document.createElement('div'); p2.className='paper s2';
-      const p3=document.createElement('div'); p3.className='paper s3';
-      const box=document.createElement('div'); box.className='photo';
-      const image=document.createElement('img');
-      image.loading='lazy'; image.alt='Memory';
-      image.referrerPolicy='same-origin';
-      image.src=`/api/file/${encodeURIComponent(item.id)}?v=${Date.now()}`; // cache-bust
-      box.appendChild(image);
-      fig.appendChild(p1); fig.appendChild(p2); fig.appendChild(p3); fig.appendChild(box);
-      fig.addEventListener('click',()=>open(index));
+      img.addEventListener('load',()=>applyMasonrySpan(fig, img));
+      fig.addEventListener('click',()=>{ lbImg.src=img.src; lb.style.display='flex'; });
+
+      // temporary span in case load slow
+      fig.style.gridRowEnd = `span ${Math.ceil(260 / (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--row'))||8))}`;
       return fig;
     }
 
@@ -272,31 +238,12 @@
       if(page>pages) page=pages;
       const start=(page-1)*PAGE_SIZE, end=Math.min(start+PAGE_SIZE,total);
       const frag=document.createDocumentFragment();
-      all.slice(start,end).forEach((it,i)=>frag.appendChild(card(it,i)));
+      all.slice(start,end).forEach(it=>frag.appendChild(makeCard(it)));
       grid.appendChild(frag);
       prevBtn.disabled=(page<=1); nextBtn.disabled=(page>=pages);
       pinfo.textContent=`${page}/${pages}`;
       setPage(page);
     }
-
-    function open(i){
-      currentIndexOnPage=i;
-      const gi=(page-1)*PAGE_SIZE+i;
-      lbImg.src=`/api/file/${encodeURIComponent(all[gi].id)}?v=${Date.now()}`;
-      lb.style.display='flex';
-    }
-    function close(){ lb.style.display='none'; lbImg.src='' }
-    function step(d){
-      if(currentIndexOnPage<0) return;
-      const start=(page-1)*PAGE_SIZE, end=Math.min(start+PAGE_SIZE, all.length);
-      const gi=start+currentIndexOnPage+d;
-      if(gi<start || gi>=end) return;
-      currentIndexOnPage+=d;
-      lbImg.src=`/api/file/${encodeURIComponent(all[start+currentIndexOnPage].id)}?v=${Date.now()}`;
-    }
-    lbClose.onclick=close; lbPrev.onclick=()=>step(-1); lbNext.onclick=()=>step(1);
-    lb.addEventListener('click',e=>{ if(e.target===lb) close(); });
-    window.addEventListener('keydown',e=>{ if(lb.style.display!=='flex') return; if(e.key==='Escape') close(); if(e.key==='ArrowLeft') step(-1); if(e.key==='ArrowRight') step(1); });
 
     function extractTime(o){
       const keys=['createdAt','uploadedAt','time','timestamp','ts','date'];
@@ -305,19 +252,23 @@
       return 0;
     }
 
-    (async function fetchList(){
+    (async function load(){
       try{
         const r=await fetch('/api/list',{credentials:'include',cache:'no-store'});
         if(!r.ok) throw new Error('list failed');
         const data=await r.json();
-        all=(Array.isArray(data)?data.slice():[]);
+        all = Array.isArray(data) ? data.slice() : [];
         all.sort((a,b)=>extractTime(b)-extractTime(a)); // recent first
         render();
+        // Recalculate spans after first paint for safety
+        setTimeout(()=>document.querySelectorAll('.card').forEach(c=>{
+          const img=c.querySelector('img'); if(img && img.complete) applyMasonrySpan(c,img);
+        }), 300);
       }catch(e){
         clear();
-        const msg=document.createElement('div'); msg.style.padding='24px'; msg.style.background:'#fff'; msg.style.border='1px solid #f0c8d4'; msg.style.borderRadius='14px';
+        const msg=document.createElement('div'); msg.style.padding='24px'; msg.style.background='#fff'; msg.style.border='1px solid #f0c8d4'; msg.style.borderRadius='14px';
         msg.textContent='Could not load gallery.'; grid.appendChild(msg);
-        console.error('Gallery load error:', e);
+        console.error(e);
       }
     })();
 
@@ -325,28 +276,30 @@
     nextBtn.onclick=()=>{ page=page+1; render(); };
   })();
 
-  /* music + hearts with persisted state */
+  /* ---------- music + effects (persist state) ---------- */
   (function(){
     const audio=document.getElementById('bgMusic');
     const musicBtn=document.getElementById('musicBtn');
-    const heartsBtn=document.getElementById('heartsBtn');
-    const hearts=document.getElementById('hearts');
+    const fxBtn=document.getElementById('fxBtn');
+    const particles=document.getElementById('particles');
 
-    let heartsOn = localStorage.getItem('heartsOn') !== 'false'; // default true
-    let musicOn  = localStorage.getItem('musicOn') === 'true';
+    let fxOn   = localStorage.getItem('fxOn')   !== 'false'; // default true
+    let musicOn= localStorage.getItem('musicOn')=== 'true';
 
-    hearts.style.display = heartsOn ? 'block' : 'none';
-    heartsBtn.addEventListener('click', ()=>{
-      heartsOn = !heartsOn; hearts.style.display = heartsOn ? 'block' : 'none';
-      localStorage.setItem('heartsOn', heartsOn);
+    particles.style.display = fxOn ? 'block' : 'none';
+
+    fxBtn.addEventListener('click', ()=>{
+      fxOn = !fxOn;
+      particles.style.display = fxOn ? 'block' : 'none';
+      localStorage.setItem('fxOn', fxOn);
     });
 
-    const tryResume = () => { if(musicOn) audio.play().catch(()=>{}); document.removeEventListener('pointerdown', tryResume); };
-    document.addEventListener('pointerdown', tryResume, { once:true });
+    const resume = () => { if(musicOn) audio.play().catch(()=>{}); document.removeEventListener('pointerdown', resume); };
+    document.addEventListener('pointerdown', resume, {once:true});
 
     musicBtn.addEventListener('click', ()=>{
-      if(audio.paused){ audio.play().then(()=>{ musicOn = true; localStorage.setItem('musicOn','true'); }).catch(()=>{}); }
-      else { audio.pause(); musicOn = false; localStorage.setItem('musicOn','false'); }
+      if(audio.paused){ audio.play().then(()=>{ musicOn=true; localStorage.setItem('musicOn','true'); }).catch(()=>{}); }
+      else { audio.pause(); musicOn=false; localStorage.setItem('musicOn','false'); }
     });
   })();
 </script>
