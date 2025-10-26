@@ -1,572 +1,229 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; coect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Welcome  Shreshtha</title>
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' 'unsafe-inline' 'unsafe-eval';
+                 connect-src 'self' https:;
+                 img-src 'self' data:;
+                 style-src 'self' 'unsafe-inline';
+                 media-src 'self';
+                 font-src 'self';">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Welcome • Shreshtha</title>
 
-<!-- Auth0 scripts (guard to ensure login) -->
-<script src="/auth0-spa-js.production.js"></script>
-<script src="/auth-init.jsv=7" defer></script>
-<script src="/guard-auth.jsv=7" defer></script>
+  <script src="/auth0-spa-js.production.js"></script>
+  <script src="/auth-init.js?v=7" defer></script>
+  <script src="/guard-auth.js?v=7" defer></script>
 
-<style>
-  body{
-    margin:0;
-    background:linear-gradient(135deg,#FFE7DA,#FFB59E 48%,#FF6B6B);
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
-    font-family:"Italiao",cursive;
-    color:#6e2430;
-    text-align:center;
-  }
-  h1{
-    font-size:48px;
-    text-shadow:0 2px 12px rgba(0,0,0,.25);
-    margin-bottom:40px;
-    padding:0 12px;
-  }
-  a.enter-btn{
-    font-family:sans-serif;
-    font-size:20px;
-    background:#6e2430;
-    color:#fff;
-    padding:14px 32px;
-    border-radius:40px;
-    text-decoration:none;
-    box-shadow:0 6px 20px rgba(0,0,0,.25);
-    transition:transform .2s;
-  }
-  a.enter-btn:hover{ transform:scale(1.06); }
+  <style>
+    :root{
+      --bg-1:#fff0ef;
+      --bg-2:#ffd6d6;
+      --bg-3:#ffc0be;
+      --text:#6e2430;
+      --btn:#6e2430;
+      --btn-shadow:rgba(0,0,0,.22);
+      --heart-1:#ffd6e0; --heart-2:#ffe8cc; --heart-3:#ffe9ec;
+      --heart-4:#ffd1fa; --heart-5:#fbd1d1; --heart-6:#ffe0e0;
+    }
+    html,body{height:100%}
+    body{
+      margin:0; display:flex; align-items:center; justify-content:center; flex-direction:column;
+      color:var(--text); text-align:center;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Comic Sans MS", cursive;
+      background:
+        radial-gradient(1200px 600px at 12% 10%, rgba(255,236,240,0.25), transparent 20%),
+        radial-gradient(900px 500px at 92% 88%, rgba(255,240,230,0.18), transparent 18%),
+        linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 18%, var(--bg-3) 60%, #ffb0b0 100%);
+      background-attachment: fixed; overflow:hidden;
+    }
+    body::after{
+      content:""; position:fixed; inset:0; pointer-events:none;
+      background:
+        radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,.25), transparent 60%),
+        radial-gradient(120% 120% at 50% 110%, rgba(0,0,0,.08), transparent 50%);
+      z-index:0;
+    }
+    .wrap{ position:relative; z-index:2; transform: translateY(-2vh); padding: 0 18px; }
+    h1{ margin:0 0 28px; font-weight:700; font-size: clamp(28px, 5vw, 56px); letter-spacing:.5px;
+        text-shadow: 0 2px 12px rgba(0,0,0,.18); }
+    .tag{ display:inline-block; margin-bottom:34px; font-size: clamp(13px, 2.6vw, 16px); opacity:.85; }
+    a.enter-btn{
+      display:inline-block; font-size:18px; background:var(--btn); color:#fff;
+      padding:14px 28px; border-radius:42px; text-decoration:none;
+      box-shadow: 0 10px 26px var(--btn-shadow);
+      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+    }
+    a.enter-btn:hover{ transform:translateY(-2px); box-shadow:0 16px 36px rgba(0,0,0,.24);}
+    a.enter-btn:active{ transform:scale(.98); }
+    @keyframes floatUp { 0%{transform:translateY(0) scale(1);opacity:.95;} 100%{transform:translateY(-110vh) scale(1.45);opacity:0;} }
+    .floating-heart{
+      position:fixed; bottom:-10px; left:0; font-size:18px; opacity:.9; pointer-events:none;
+      animation: floatUp linear forwards; filter: drop-shadow(0 4px 10px rgba(255,120,140,.18));
+      z-index:1; user-select:none;
+    }
 
-  /* hidden warm-up trigger (optional manual click if needed) */
-  button#warm-btn{
-    display:none;
-    margin-top:20px;
-    padding:10px 22px;
-    font-size:16px;
-    border:none;
-    border-radius:28px;
-    background:#6e2430;
-    color:#fff;
-    box-shadow:0 4px 12px rgba(0,0,0,.2);
-    cursor:pointer;
-  }
-
-#fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:95;} 
-</style>
+    #musicHeartWrap { position: fixed; right: 18px; bottom: 18px; z-index: 10; display:flex; gap:8px; align-items:center; }
+    #musicHeartBtn{
+      width:56px;height:56px;border:none;border-radius:50%;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;font-size:22px; line-height:1;
+      background: radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0);
+      box-shadow: 0 8px 28px rgba(220,80,110,0.18);
+      transition: transform .16s ease, box-shadow .16s ease, opacity .18s ease;
+    }
+    #musicHeartBtn:active{ transform:scale(.96); }
+    #musicHeartBtn.playing{ box-shadow:0 14px 42px rgba(220,80,110,0.28); transform:scale(1.04); }
+    #musicHeartBtn .heart{ pointer-events:none; user-select:none; }
+    .vol-dot{
+      width:18px;height:18px;border-radius:50%;
+      background: linear-gradient(150deg,#ffd76d,#ffc96a);
+      box-shadow:0 6px 10px rgba(255,170,100,0.22);
+      border:2px solid rgba(255,255,255,0.95);
+      cursor:pointer; margin-left:-8px;
+    }
+    .vol-pop{
+      position:absolute; right:72px; bottom:10px; width:220px; padding:10px 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
+      border-radius:12px; box-shadow:0 12px 30px rgba(0,0,0,0.12);
+      display:none; gap:10px; align-items:center;
+    }
+    .vol-pop.show{ display:flex; }
+    .vol-range{ -webkit-appearance:none; width:130px;height:7px;border-radius:999px;background:linear-gradient(90deg,#ffc1c1,#ffd88a); outline:none;}
+    .vol-range::-webkit-slider-thumb{ -webkit-appearance:none; width:14px;height:14px;border-radius:50%; background:#fff; box-shadow:0 4px 10px rgba(0,0,0,.12); border:3px solid #ffb0a0; }
+    #warm-btn{ display:none; margin-top:16px; padding:10px 22px; font-size:16px; border:none; border-radius:28px; background:#6e2430; color:#fff; box-shadow:0 4px 12px rgba(0,0,0,.2); cursor:pointer; }
+  </style>
 </head>
 <body>
 
-  <h1>Welcome to Shreshthas Life of Happiness</h1><a href="life.html" class="enter-btn">Enter Memories</a>
-  <button id="warm-btn">Wake Up Server</button>
+  <div class="wrap" role="main" aria-label="Welcome">
+    <h1>Welcome to Shreshtha’s Life of Happiness</h1>
+    <div class="tag">Sweet memories live here ✨</div><br/>
+    <a class="enter-btn" href="/life.html">Enter Memories</a>
+    <button id="warm-btn">Wake Up Server</button>
+  </div>
 
-<script>
-/* Automatically ping the backend to avoid long cold-start delays */
-(async()=>{
-  try {
-    await fetch("/health",{mode:"no-cors"});
-  } catch(e) {
-    console.warn("Warm-up ping failed:",e);
-    // if needed, you can unhide the manual button for retry
-    document.getElementById("warm-btn").style.display="inline-block";
-  }
-})();
+  <audio id="bgMusic" loop preload="auto" style="display:none">
+    <source src="/music/bg.mp3" type="audio/mpeg" />
+  </audio>
 
-/* Manual warm-up if backend was sleeping */
-document.getElementById("warm-btn").addEventListener("click",async()=>{
-  try{
-    await fetch("/health",{mode:"no-cors"});
-    alert("Server warmed up!");
-  }catch(e){alert("Still waking");}
-});
-</script>
+  <div id="musicHeartWrap" aria-hidden="false">
+    <button id="musicHeartBtn" aria-label="Toggle background music" title="Play / Pause background music" type="button">
+      <span class="heart" aria-hidden="true">♡</span>
+    </button>
+    <div class="vol-dot" id="musicVolDot" role="button" tabindex="0" aria-label="Volume control" title="Volume"></div>
+    <div class="vol-pop" id="musicVolPop" role="dialog" aria-hidden="true">
+      <div style="font-size:13px;color:#6b2b2b;">Vol</div>
+      <input id="musicVolRange" class="vol-range" type="range" min="0" max="100" step="1" value="60" aria-label="Volume slider" />
+      <button id="musicMuteBtn" style="border:none;background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.06);cursor:pointer" aria-pressed="false" title="Mute/unmute">M</button>
+    </div>
+  </div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const reveal = () => { const gate = document.getElementById("auth-gate"); if (gate) gate.remove(); };
-      try {
-        if (typeof requireAuth === "function") {
-          Promise.resolve(requireAuth()).then(reveal).catch(e => { console.error("Auth failed:", e); reveal(); });
-        } else {
-          console.error("requireAuth not found"); reveal();
-        }
-      } catch(e){ console.error("Auth error:", e); reveal(); }
+    (()=>{
+      const COLORS=['var(--heart-1)','var(--heart-2)','var(--heart-3)','var(--heart-4)','var(--heart-5)','var(--heart-6)'];
+      function spawnHeart(){
+        const h=document.createElement('div');
+        h.className='floating-heart';
+        h.textContent='❤';
+        h.style.left = (Math.random()*100) + 'vw';
+        h.style.color = COLORS[Math.floor(Math.random()*COLORS.length)];
+        h.style.fontSize = (16 + Math.random()*18) + 'px';
+        h.style.animationDuration = (8 + Math.random()*6) + 's';
+        document.body.appendChild(h);
+        setTimeout(()=>h.remove(),15000);
+      }
+      for(let i=0;i<10;i++) spawnHeart();
+      setInterval(spawnHeart, 900);
+    })();
+  </script>
+
+  <script>
+    (async()=>{
+      try{ await fetch("/health",{mode:"no-cors"}); }
+      catch(e){ document.getElementById("warm-btn").style.display="inline-block"; }
+    })();
+    document.getElementById("warm-btn").addEventListener("click", async()=>{
+      try{ await fetch("/health",{mode:"no-cors"}); alert("Server warmed!"); }catch(e){ alert("Still waking"); }
     });
   </script>
 
-<!-- Hearts Start -->
-<div id='heartsContainer'></div>
-<style>
-  @keyframes floatUp {
-    0% { transform: translateY(0) scale(1); opacity: 0.95; }
-    100% { transform: translateY(-110vh) scale(1.4); opacity: 0; }
-  }
-  .floating-heart {
-    position: fixed;
-    bottom: -10px;
-    font-size: 18px;
-    opacity: 0.9;
-    pointer-events: none;
-    animation: floatUp linear forwards;
-    z-index: 90;
-  }
-</style>
-<script>
-(() => {
-  const COLORS = ['#ffd6e0','#ffe8cc','#ffe9ec','#d6f5ff','#c6e5ff','#e5d6ff','#ffd1fa'];
-  function spawnHeart(){
-    const heart = document.createElement('div');
-    heart.className = 'floating-heart';
-    heart.textContent = '❤';
-    heart.style.left = Math.random()*100 + 'vw';
-    heart.style.color = COLORS[Math.floor(Math.random()*COLORS.length)];
-    heart.style.fontSize = (16 + Math.random()*16) + 'px';
-    heart.style.animationDuration = (8 + Math.random()*6) + 's';
-    document.body.appendChild(heart);
-    setTimeout(()=>heart.remove(),15000);
-  }
-  for(let i=0;i<10;i++) spawnHeart();
-  setInterval(spawnHeart,900);
-})();
-</script>
-<!-- Hearts End -->
-<!-- Improved Mini Music Player + Volume Popover (replaces older snippet) -->
-<style>
-  /* --- smoother global background for private pages --- */
-  /* Replace old body background lines with this gradient to remove the visible seam */
-  body {
-    background:
-      radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
-      radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,0.18), transparent 18%),
-      linear-gradient(160deg, #fff0ef 0%, #ffd6d6 18%, #ffc0be 38%, #ffb3b3 60%, #ffb0b0 100%);
-    background-attachment: fixed;
-    color: #333;
-  }
+  <script>
+    document.addEventListener("DOMContentLoaded", ()=>{
+      try{
+        if(typeof requireAuth === "function"){
+          Promise.resolve(requireAuth({silent:true})).catch(()=>{});
+        }
+      }catch(e){}
+    });
+  </script>
 
-  /* --- compact heart player container --- */
-  .music-btn {
-    position: fixed;
-    bottom: 22px;
-    right: 22px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg,#fffafc 0%,#ffeef2 100%);
-    box-shadow: 0 10px 22px rgba(230,100,140,0.18);
-    display:flex;align-items:center;justify-content:center;
-    z-index:160; border:none; cursor:pointer; transition:transform .18s ease,box-shadow .18s ease;
-    backdrop-filter: blur(4px);
-  }
-  .music-btn:hover { transform: translateY(-4px); box-shadow: 0 16px 30px rgba(230,100,140,0.25); }
+  <script>
+    (function(){
+      const audio = document.getElementById('bgMusic');
+      const btn = document.getElementById('musicHeartBtn');
+      const volDot = document.getElementById('musicVolDot');
+      const volPop = document.getElementById('musicVolPop');
+      const volRange = document.getElementById('musicVolRange');
+      const muteBtn = document.getElementById('musicMuteBtn');
+      if(!audio||!btn||!volDot||!volPop||!volRange||!muteBtn) return;
 
-  .music-btn svg { width:26px; height:26px; display:block; }
-  .music-btn .heart { fill:#ff6b81; transition: transform .18s ease, fill .22s ease; }
-  .music-btn.playing .heart { transform: scale(1.08); fill:#ffd166; filter: drop-shadow(0 6px 12px rgba(255,170,80,0.20)); }
-
-  /* little gold volume dot to the right of the heart (click to open volume popover) */
-  .vol-dot {
-    position: absolute;
-    right: -6px;
-    top: -6px;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background: linear-gradient(150deg,#ffd76d,#ffc96a);
-    display:flex;align-items:center;justify-content:center;
-    box-shadow: 0 6px 10px rgba(255,170,100,0.24);
-    border: 2px solid rgba(255,255,255,0.9);
-    cursor:pointer;
-  }
-  .vol-dot:active { transform: scale(.96); }
-
-  /* volume popover */
-  .vol-pop {
-    position: fixed;
-    bottom: 84px;
-    right: 18px;
-    width: 214px;
-    padding: 10px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
-    border-radius: 12px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-    z-index: 170;
-    display: none;
-    align-items: center;
-    gap: 12px;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  }
-  .vol-pop.show { display: flex; }
-
-  .vol-pop input[type="range"] {
-    -webkit-appearance: none; width: 120px; height: 6px; border-radius: 999px;
-    background: linear-gradient(90deg,#ffc1c1,#ffd88a);
-    outline: none;
-  }
-  .vol-pop input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance:none; width:16px;height:16px;border-radius:50%;
-    background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border: 3px solid #ffb0a0;
-  }
-  .vol-label { font-size:13px; color:#6b2b2b; margin-right:6px; }
-
-  /* small mute button */
-  .vol-btn {
-    width:30px;height:30px;border-radius:8px;border:none;
-    background:#fff;border:1px solid rgba(0,0,0,0.06); cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-  }
-  .vol-btn svg { width:14px; height:14px; fill:#b04a4a; opacity:.95; }
-
-  /* accessible focus */
-  .music-btn:focus, .vol-dot:focus, .vol-btn:focus { outline: 3px solid rgba(255,200,200,0.6); outline-offset:3px; }
-</style>
-
-<!--\ Improved\ Music\ Control\ \(updated\)\ --><style>\ \ /\*\ small\ override\ for\ headings\ color\ &\ smoother\ gradient\ \(site-wide\ private\ pages\)\ \*/\ \ h1\.site-title,\ \.page-title,\ h1\ \{\ color:\ \#6d232b\ !important;\ text-shadow:\ 0\ 6px\ 22px\ rgba\(0,0,0,0\.12\);\ }\ \ /\*\ music\ control\ \(prettier\)\ \*/\ \ \.music-btn\ \{\ \ \ \ position:\ fixed;\ \ \ \ bottom:\ 22px;\ \ \ \ right:\ 22px;\ \ \ \ width:\ 58px;\ \ \ \ height:\ 58px;\ \ \ \ border-radius:\ 50%;\ \ \ \ background:\ linear-gradient\(145deg,\#fff\ 0%,\#ffeff0\ 100%\);\ \ \ \ box-shadow:\ 0\ 10px\ 30px\ rgba\(220,90,120,0\.18\);\ \ \ \ display:flex;align-items:center;justify-content:center;\ \ \ \ z-index:160;\ cursor:pointer;\ border:\ none;\ transition:\ transform\ \.16s\ ease,\ box-shadow\ \.16s\ ease;\ \ \ \ backdrop-filter:\ blur\(4px\);\ \ }\ \ \.music-btn:hover\ \{\ transform:\ translateY\(-3px\);\ box-shadow:\ 0\ 16px\ 36px\ rgba\(220,90,120,0\.25\);\ }\ \ \.music-btn\ svg\ \{\ width:26px;\ height:26px;\ display:block;\ }\ \ \.music-btn\ \.heart\ \{\ fill:\#ff6b81;\ transition:\ transform\ \.18s\ ease,\ fill\ \.22s\ ease;\ }\ \ \.music-btn\.playing\ \.heart\ \{\ transform:\ scale\(1\.12\);\ fill:\#ffd166;\ filter:\ drop-shadow\(0\ 8px\ 18px\ rgba\(255,165,70,0\.18\)\);\ }\ \ /\*\ small\ gold\ badge\ \*/\ \ \.music-badge\ \{\ \ \ \ position:absolute;\ right:-6px;\ top:-6px;\ \ \ \ width:18px;height:18px;border-radius:50%;\ \ \ \ background:\ radial-gradient\(circle\ at\ 30%\ 30%,\ \#fff8e6,\ \#ffd76d\);\ \ \ \ border:2px\ solid\ rgba\(255,255,255,0\.9\);\ \ \ \ box-shadow:0\ 6px\ 14px\ rgba\(255,160,70,0\.18\);\ \ }\ \ \.vol-pop\ \{\ position:\ fixed;\ bottom:\ 88px;\ right:\ 16px;\ width:220px;\ padding:10px\ 12px;\ \ \ \ \ \ \ \ \ \ \ \ \ background:\ linear-gradient\(180deg,\ rgba\(255,255,255,0\.98\),\ rgba\(255,250,248,0\.95\)\);\ \ \ \ \ \ \ \ \ \ \ \ border-radius:12px;\ box-shadow:0\ 12px\ 30px\ rgba\(0,0,0,0\.12\);\ z-index:170;\ display:none;\ gap:10px;\ align-items:center;\ }\ \ \.vol-pop\.show\ \{\ display:flex;\ }\ \ \.vol-range\ \{\ -webkit-appearance:none;\ width:130px;\ height:7px;\ border-radius:999px;\ background:\ linear-gradient\(90deg,\#ffc1c1,\#ffd88a\);\ outline:none;\ }\ \ \.vol-range::-webkit-slider-thumb\ \{\ -webkit-appearance:none;\ width:16px;height:16px;border-radius:50%;\ background:\#fff;\ box-shadow:0\ 4px\ 10px\ rgba\(0,0,0,0\.12\);\ border:3px\ solid\ \#ffb0a0;\ }</style><div\ id="volPop"\ class="vol-pop"\ aria-hidden="true">\ \ <div\ style="font-size:13px;color:\#6b2b2b">Vol</div>\ \ <input\ id="volRange"\ class="vol-range"\ type="range"\ min="0"\ max="100"\ step="1"\ value="60"\ aria-label="Volume"\ />\ \ <button\ id="muteBtn"\ style="border:none;background:\#fff;padding:6px;border-radius:8px;box-shadow:0\ 4px\ 8px\ rgba\(0,0,0,0\.06\);cursor:pointer"\ aria-label="Mute/unmute">🔈</button></div><script>\(\(\)\ =>\ \{\ \ const\ btn\ =\ document\.getElementById\('musicButton'\),\ badge\ =\ document\.getElementById\('musicBadge'\),\ \ \ \ \ \ \ \ volPop\ =\ document\.getElementById\('volPop'\),\ volRange\ =\ document\.getElementById\('volRange'\),\ \ \ \ \ \ \ \ muteBtn\ =\ document\.getElementById\('muteBtn'\),\ music\ =\ document\.getElementById\('bgMusic'\);\ \ function\ setVolume\(v\)\{\ music\.volume\ =\ Math\.max\(0,Math\.min\(100,v\)\)/100;\ try\{localStorage\.setItem\('shree_music_volume',String\(v\)\);}catch\(e\)\{}\ }\ \ function\ setPlaying\(p\)\{\ \ \ \ if\(p\)\{\ btn\.classList\.add\('playing'\);\ music\.play\(\)\.catch\(\(\)=>\{}\);\ localStorage\.setItem\('shree_music_playing','1'\);\ }\ \ \ \ \ else\ \{\ btn\.classList\.remove\('playing'\);\ music\.pause\(\);\ localStorage\.setItem\('shree_music_playing','0'\);\ }\ \ }\ \ //\ restore\ state\ \ try\{\ const\ sv\ =\ localStorage\.getItem\('shree_music_volume'\);\ if\(sv!==null\)\ volRange\.value\ =\ sv;\ setVolume\(volRange\.value\);\ }catch\(e\)\{}\ \ try\{\ if\(localStorage\.getItem\('shree_music_playing'\)==='1'\)\{\ music\.play\(\)\.then\(\(\)=>btn\.classList\.add\('playing'\)\)\.catch\(\(\)=>\{}\);\ }\ }catch\(e\)\{}\ \ btn\.addEventListener\('click',\ \(e\)=>\ \{\ if\(e\.target\.id==='musicBadge'\)\ return;\ setPlaying\(!btn\.classList\.contains\('playing'\)\);\ }\);\ \ badge\.addEventListener\('click',\ \(e\)=>\ \{\ volPop\.classList\.toggle\('show'\);\ volPop\.setAttribute\('aria-hidden',\ volPop\.classList\.contains\('show'\)\?\ 'false':'true'\);\ e\.stopPropagation\(\);\ }\);\ \ volRange\.addEventListener\('input',\ \(\)=>\{\ setVolume\(volRange\.value\);\ }\);\ \ muteBtn\.addEventListener\('click',\ \(\)=>\{\ if\(music\.volume>0\)\{\ volRange\.dataset\.prev\ =\ volRange\.value;\ volRange\.value=0;\ }\ else\ \{\ volRange\.value\ =\ volRange\.dataset\.prev\ \|\|\ 60;\ }\ setVolume\(volRange\.value\);\ }\);\ \ document\.addEventListener\('click',\ \(e\)=>\{\ if\(!e\.target\.closest\('\.vol-pop'\)\ &&\ !e\.target\.closest\('\#musicBadge'\)\)\{\ volPop\.classList\.remove\('show'\);\ volPop\.setAttribute\('aria-hidden','true'\);\ }}\);\ \ music\.addEventListener\('play',\ \(\)=>\ btn\.classList\.add\('playing'\)\);\ \ music\.addEventListener\('pause',\ \(\)=>\ btn\.classList\.remove\('playing'\)\);}\)\(\);</script>
-<!-- Improved Mini Music Player + Volume Popover (replaces older snippet) -->
-<style>
-  /* --- smoother global background for private pages --- */
-  /* Replace old body background lines with this gradient to remove the visible seam */
-  body {
-    background:
-      radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
-      radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,0.18), transparent 18%),
-      linear-gradient(160deg, #fff0ef 0%, #ffd6d6 18%, #ffc0be 38%, #ffb3b3 60%, #ffb0b0 100%);
-    background-attachment: fixed;
-    color: #333;
-  }
-
-  /* --- compact heart player container --- */
-  .music-btn {
-    position: fixed;
-    bottom: 22px;
-    right: 22px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg,#fffafc 0%,#ffeef2 100%);
-    box-shadow: 0 10px 22px rgba(230,100,140,0.18);
-    display:flex;align-items:center;justify-content:center;
-    z-index:160; border:none; cursor:pointer; transition:transform .18s ease,box-shadow .18s ease;
-    backdrop-filter: blur(4px);
-  }
-  .music-btn:hover { transform: translateY(-4px); box-shadow: 0 16px 30px rgba(230,100,140,0.25); }
-
-  .music-btn svg { width:26px; height:26px; display:block; }
-  .music-btn .heart { fill:#ff6b81; transition: transform .18s ease, fill .22s ease; }
-  .music-btn.playing .heart { transform: scale(1.08); fill:#ffd166; filter: drop-shadow(0 6px 12px rgba(255,170,80,0.20)); }
-
-  /* little gold volume dot to the right of the heart (click to open volume popover) */
-  .vol-dot {
-    position: absolute;
-    right: -6px;
-    top: -6px;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background: linear-gradient(150deg,#ffd76d,#ffc96a);
-    display:flex;align-items:center;justify-content:center;
-    box-shadow: 0 6px 10px rgba(255,170,100,0.24);
-    border: 2px solid rgba(255,255,255,0.9);
-    cursor:pointer;
-  }
-  .vol-dot:active { transform: scale(.96); }
-
-  /* volume popover */
-  .vol-pop {
-    position: fixed;
-    bottom: 84px;
-    right: 18px;
-    width: 214px;
-    padding: 10px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
-    border-radius: 12px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-    z-index: 170;
-    display: none;
-    align-items: center;
-    gap: 12px;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  }
-  .vol-pop.show { display: flex; }
-
-  .vol-pop input[type="range"] {
-    -webkit-appearance: none; width: 120px; height: 6px; border-radius: 999px;
-    background: linear-gradient(90deg,#ffc1c1,#ffd88a);
-    outline: none;
-  }
-  .vol-pop input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance:none; width:16px;height:16px;border-radius:50%;
-    background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border: 3px solid #ffb0a0;
-  }
-  .vol-label { font-size:13px; color:#6b2b2b; margin-right:6px; }
-
-  /* small mute button */
-  .vol-btn {
-    width:30px;height:30px;border-radius:8px;border:none;
-    background:#fff;border:1px solid rgba(0,0,0,0.06); cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-  }
-  .vol-btn svg { width:14px; height:14px; fill:#b04a4a; opacity:.95; }
-
-  /* accessible focus */
-  .music-btn:focus, .vol-dot:focus, .vol-btn:focus { outline: 3px solid rgba(255,200,200,0.6); outline-offset:3px; }
-</style>
-
-
-
-<div id="volPop" class="vol-pop" role="dialog" aria-hidden="true">
-  <div class="vol-label" aria-hidden="true">Vol</div>
-  <input id="volRange" type="range" min="0" max="100" step="1" value="60" aria-label="Volume slider" />
-  <button id="muteBtn" class="vol-btn" aria-pressed="false" title="Mute / unmute" aria-label="Mute or unmute">
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 10v4h4l5 4V6L8 10H4z"/></svg>
-  </button>
-</div><script>
-(() => {
-  const btn = document.getElementById('musicButton');
-  const volDot = document.getElementById('volDot');
-  const volPop = document.getElementById('volPop');
-  const volRange = document.getElementById('volRange');
-  const muteBtn = document.getElementById('muteBtn');
-  const music = document.getElementById('bgMusic');
-
-  // restore stored state
-  let playing = false;
-  try {
-    const savedVol = localStorage.getItem('shree_music_volume');
-    if (savedVol !== null) volRange.value = savedVol;
-    const savedPlaying = localStorage.getItem('shree_music_playing');
-    if (savedPlaying === '1') { playing = true; }
-  } catch(e){}
-
-  // set actual audio volume (0..1)
-  function applyVolume() {
-    const v = Math.max(0, Math.min(100, parseInt(volRange.value || 60,10)));
-    music.volume = v/100;
-    if (v === 0) { muteBtn.setAttribute('aria-pressed','true'); } else { muteBtn.setAttribute('aria-pressed','false'); }
-    try { localStorage.setItem('shree_music_volume', String(v)); } catch(e){}
-  }
-  applyVolume();
-
-  function setPlaying(state) {
-    playing = !!state;
-    btn.setAttribute('aria-pressed', playing ? 'true' : 'false');
-    if (playing) {
-      btn.classList.add('playing');
-      music.play().catch(()=>{});
-      try { localStorage.setItem('shree_music_playing','1'); } catch(e){}
-      btn.setAttribute('title','Pause music');
-    } else {
-      btn.classList.remove('playing');
-      music.pause();
-      try { localStorage.setItem('shree_music_playing','0'); } catch(e){}
-      btn.setAttribute('title','Play music');
-    }
-  }
-
-  // initial play state (do not force autoplay; only restore visual if already allowed)
-  if (playing) {
-    // try resume playback if browser allows
-    music.play().then(()=>{ setPlaying(true); }).catch(()=>{ setPlaying(false); });
-  }
-
-  // heart click toggles play/pause
-  btn.addEventListener('click', (e) => {
-    // if click target was the volDot, handled separately
-    if (e.target && (e.target.id === 'volDot' || e.target.closest('#volDot'))) return;
-    setPlaying(!playing);
-  });
-
-  // show/hide volume popover on volDot click
-  volDot.addEventListener('click', (e) => {
-    const showing = volPop.classList.toggle('show');
-    volPop.setAttribute('aria-hidden', showing ? 'false' : 'true');
-    if (showing) { // auto-hide after 6s
-      setTimeout(()=>{ volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true'); }, 6000);
-    }
-    e.stopPropagation();
-  });
-
-  // volume slider changes
-  volRange.addEventListener('input', () => {
-    applyVolume();
-  });
-
-  // mute toggle
-  muteBtn.addEventListener('click', () => {
-    if (music.volume > 0) {
-      volRange.dataset.prev = volRange.value;
-      volRange.value = 0;
-    } else {
-      volRange.value = volRange.dataset.prev || 60;
-    }
-    applyVolume();
-  });
-
-  // close popover when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.vol-pop') && !e.target.closest('#volDot')) {
-      volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true');
-    }
-  });
-
-  // sync UI when audio events happen
-  music.addEventListener('play', ()=> setPlaying(true));
-  music.addEventListener('pause', ()=> setPlaying(false));
-
-  // ensure keyboard accessibility
-  volDot.tabIndex = 0;
-  volDot.addEventListener('keydown', (e)=> { if (e.key==='Enter' || e.key===' ') { e.preventDefault(); volDot.click(); }});
-
-})();
-</script>
-
-
-<!-- MUSIC HEART FIXED -->
-
-
-<script>
-(function(){
- const a=document.getElementById("bgMusicHeart"),b=document.getElementById("musicHeartBtn");
- if(!a||!b)return;
- function u(){b.textContent=a.paused?"♡":"❤";}
- b.onclick=()=>{a.paused?a.play():a.pause();};
- a.onplay=a.onpause=u;
- document.body.addEventListener("click",()=>{a.play().catch(()=>{})},{once:true});
- u();
-})();
-</script>
-<!-- /MUSIC HEART FIXED -->
-
-
-<!-- MUSIC-HEART-FINAL: start -->
-<style id="music-heart-final-style">
-  #musicHeartWrap { position: fixed; right: 18px; bottom: 18px; z-index: 9999; display:flex; gap:8px; align-items:center; }
-  #musicHeartBtn { width:56px;height:56px;border-radius:50%;border:none;cursor:pointer; display:flex;align-items:center;justify-content:center;font-size:22px;
-    background: radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0); box-shadow: 0 8px 28px rgba(220,80,110,0.14); transition: transform .16s ease, box-shadow .16s ease, opacity .18s ease; }
-  #musicHeartBtn:active { transform: scale(.96); }
-  #musicHeartBtn.playing { box-shadow: 0 14px 42px rgba(220,80,110,0.24); transform: scale(1.04); }
-  #musicHeartBtn .heart { pointer-events:none; user-select:none; }
-  .vol-dot { width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    background: linear-gradient(150deg,#ffd76d,#ffc96a); box-shadow:0 6px 10px rgba(255,170,100,0.18); border:2px solid rgba(255,255,255,0.9); cursor:pointer; margin-left:-8px; }
-  .vol-pop { position: absolute; right: 72px; bottom: 10px; width:220px; padding:10px 12px; background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
-    border-radius:12px; box-shadow:0 12px 30px rgba(0,0,0,0.12); display:none; gap:10px; align-items:center; }
-  .vol-pop.show { display:flex; }
-  .vol-range { -webkit-appearance:none; width:130px; height:7px; border-radius:999px; background:linear-gradient(90deg,#ffc1c1,#ffd88a); outline:none; }
-  .vol-range::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:0 4px 10px rgba(0,0,0,0.12); border:3px solid #ffb0a0; }
-</style>
-
-<audio id="bgMusicFinal" loop preload="auto" style="display:none">
-  <source src="/music/bg.mp3" type="audio/mpeg" />
-</audio>
-
-<div id="musicHeartWrap" aria-hidden="false">
-  <button id="musicHeartBtn" aria-label="Toggle background music" title="Play / Pause background music" type="button">
-    <span class="heart" aria-hidden="true">♡</span>
-  </button>
-  <div class="vol-dot" id="musicVolDot" role="button" tabindex="0" aria-label="Volume control" title="Volume"></div>
-
-  <div class="vol-pop" id="musicVolPop" role="dialog" aria-hidden="true">
-    <div style="font-size:13px;color:#6b2b2b;">Vol</div>
-    <input id="musicVolRange" class="vol-range" type="range" min="0" max="100" step="1" value="60" aria-label="Volume slider" />
-    <button id="musicMuteBtn" style="border:none;background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.06);cursor:pointer" aria-pressed="false" title="Mute/unmute">M</button>
-  </div>
-</div>
-
-<script>
-(function(){
-  try {
-    const audio = document.getElementById('bgMusicFinal');
-    const btn = document.getElementById('musicHeartBtn');
-    const volDot = document.getElementById('musicVolDot');
-    const volPop = document.getElementById('musicVolPop');
-    const volRange = document.getElementById('musicVolRange');
-    const muteBtn = document.getElementById('musicMuteBtn');
-
-    if (!audio || !btn || !volDot || !volPop || !volRange || !muteBtn) return;
-
-    try {
-      const savedVol = localStorage.getItem('shree_music_volume');
-      if (savedVol !== null) volRange.value = savedVol;
-      audio.volume = (savedVol !== null) ? (Math.max(0, Math.min(100, parseInt(savedVol,10))) / 100) : 0.6;
-    } catch(e){}
-
-    function updateBtn() {
-      const heart = btn.querySelector('.heart');
-      if (!heart) return;
-      if (!audio.paused) { btn.classList.add('playing'); heart.textContent = '❤'; btn.setAttribute('aria-pressed','true'); }
-      else { btn.classList.remove('playing'); heart.textContent = '♡'; btn.setAttribute('aria-pressed','false'); }
-    }
-
-    btn.addEventListener('click', function(e){
-      e.preventDefault();
-      if (audio.paused) {
-        audio.play().then(()=> { localStorage.setItem('shree_music_playing','1'); updateBtn(); }).catch(()=>{});
-      } else {
-        audio.pause(); localStorage.setItem('shree_music_playing','0'); updateBtn();
+      function updateBtn(){
+        const heart = btn.querySelector('.heart');
+        if(!heart) return;
+        if(!audio.paused){ btn.classList.add('playing'); heart.textContent='❤'; btn.setAttribute('aria-pressed','true'); }
+        else{ btn.classList.remove('playing'); heart.textContent='♡'; btn.setAttribute('aria-pressed','false'); }
       }
-    });
 
-    volDot.addEventListener('click', function(e){
-      e.stopPropagation();
-      const show = volPop.classList.toggle('show');
-      volPop.setAttribute('aria-hidden', show ? 'false' : 'true');
-      if (show) { setTimeout(()=> volRange.focus(), 40); }
-    });
+      try{
+        const sv = localStorage.getItem('shree_music_volume');
+        if(sv!==null){ const v=Math.max(0,Math.min(100,parseInt(sv,10))); audio.volume=v/100; volRange.value=v; }
+        else{ audio.volume=0.6; }
+      }catch(e){ audio.volume=0.6; }
 
-    volDot.addEventListener('keydown', function(e){ if (e.key==='Enter' || e.key===' ') { e.preventDefault(); volDot.click(); } });
+      const savedPlaying = (()=>{ try{return localStorage.getItem('shree_music_playing')==='1';}catch(e){return false;} })();
 
-    volRange.addEventListener('input', function(){
-      const v = Math.max(0, Math.min(100, parseInt(volRange.value,10)));
-      audio.volume = v/100;
-      try { localStorage.setItem('shree_music_volume', String(v)); } catch(e){}
-      if (v === 0) muteBtn.setAttribute('aria-pressed','true'); else muteBtn.setAttribute('aria-pressed','false');
-    });
+      btn.addEventListener('click', e=>{
+        e.preventDefault();
+        if(audio.paused){ audio.play().then(()=>{ localStorage.setItem('shree_music_playing','1'); updateBtn(); }).catch(()=>{}); }
+        else{ audio.pause(); localStorage.setItem('shree_music_playing','0'); updateBtn(); }
+      });
 
-    muteBtn.addEventListener('click', function(){
-      if (audio.volume > 0) { volRange.dataset.prev = volRange.value; volRange.value = 0; } 
-      else { volRange.value = volRange.dataset.prev || 60; }
-      volRange.dispatchEvent(new Event('input'));
-    });
+      volDot.addEventListener('click', e=>{
+        e.stopPropagation();
+        const show = volPop.classList.toggle('show');
+        volPop.setAttribute('aria-hidden', show ? 'false' : 'true');
+        if(show) setTimeout(()=>volRange.focus(), 40);
+      });
+      volDot.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); volDot.click(); }});
 
-    document.addEventListener('click', function(e){
-      if (!e.target.closest('.vol-pop') && !e.target.closest('#musicVolDot')) { volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true'); }
-    });
+      volRange.addEventListener('input', ()=>{
+        const v=Math.max(0,Math.min(100,parseInt(volRange.value||60,10)));
+        audio.volume=v/100;
+        try{ localStorage.setItem('shree_music_volume', String(v)); }catch(e){}
+        muteBtn.setAttribute('aria-pressed', v===0 ? 'true':'false');
+      });
 
-    audio.play().then(()=>{ updateBtn(); }).catch(()=> {
-      function userStart() {
-        audio.play().then(()=>{ localStorage.setItem('shree_music_playing','1'); updateBtn(); }).catch(()=>{});
-        window.removeEventListener('click', userStart, {capture:true});
-        window.removeEventListener('touchstart', userStart, {passive:true});
-        window.removeEventListener('keydown', userStart, {capture:true});
+      muteBtn.addEventListener('click', ()=>{
+        if(audio.volume>0){ volRange.dataset.prev=volRange.value; volRange.value=0; }
+        else{ volRange.value=volRange.dataset.prev||60; }
+        volRange.dispatchEvent(new Event('input'));
+      });
+
+      document.addEventListener('click', e=>{
+        if(!e.target.closest('.vol-pop') && !e.target.closest('#musicVolDot')){
+          volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true');
+        }
+      });
+
+      if(savedPlaying){
+        audio.play().then(updateBtn).catch(()=>{});
       }
-      window.addEventListener('click', userStart, {capture:true});
-      window.addEventListener('touchstart', userStart, {passive:true});
-      window.addEventListener('keydown', userStart, {capture:true});
-    });
-
-    audio.addEventListener('play', updateBtn);
-    audio.addEventListener('pause', updateBtn);
-    audio.addEventListener('volumechange', function(){ try{ localStorage.setItem('shree_music_volume', String(Math.round(audio.volume*100))); }catch(e){} });
-
-    updateBtn();
-  } catch(err) { console.warn('music heart final snippet error', err); }
-})();
-</script>
-<!-- MUSIC-HEART-FINAL: end -->
-<link rel="stylesheet" href="/assets/css/music-heart.css">
-<script src="/assets/js/music-heart.js" defer></script>
+      audio.addEventListener('play', updateBtn);
+      audio.addEventListener('pause', updateBtn);
+      updateBtn();
+    })();
+  </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
