@@ -1,7 +1,5 @@
 ﻿// backend/server.js
 // Node + Express backend for Shreshtha site
-// Requires: express, cookie-parser, express-session, axios, jsonwebtoken, multer, googleapis
-// Install locally: npm i express cookie-parser express-session axios jsonwebtoken multer googleapis
 
 const express = require('express');
 const cookieParser = require('cookie-parser');
@@ -22,7 +20,7 @@ const access = util.promisify(fs.access);
 
 const app = express();
 
-
+// Disable caching
 app.use((req,res,next)=>{
   res.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');
   res.set('Pragma','no-cache');
@@ -30,12 +28,11 @@ app.use((req,res,next)=>{
   res.set('Vary','Cookie');
   next();
 });
-// ----------------- ENV / CONFIG -----------------
+
+// -------- ENV CONFIG ----------
 const {
   PORT = 4000,
   NODE_ENV = 'production',
-
-  // Auth0
   AUTH0_DOMAIN,
   AUTH0_CLIENT_ID,
   AUTH0_CLIENT_SECRET,
@@ -44,24 +41,16 @@ const {
   SESSION_SECRET,
   FRONTEND_ORIGIN = '',
   ALLOWED_USERS = '',
-
-  // Google Drive
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
   GOOGLE_REFRESH_TOKEN,
   GOOGLE_DRIVE_FOLDER_ID,
-
   MAKE_PUBLIC = 'false',
-
-  // Static & listing
   STATIC_DIR = 'private',
-  DRIVE_LIST_MODE = 'drive', // 'drive' = list from Drive; otherwise fall back to photos.json
-
-  // Fallback JSON (used only if not listing from Drive)
+  DRIVE_LIST_MODE = 'drive',
   PHOTOS_JSON = path.join(__dirname, 'photos.json')
 } = process.env;
 
-// Validate required envs (Auth0)
 const required = {
   AUTH0_DOMAIN,
   AUTH0_CLIENT_ID,
@@ -72,15 +61,18 @@ const required = {
 };
 const missing = Object.keys(required).filter(k => !required[k]);
 if (missing.length) {
-  console.error('❌ Missing required env vars:', missing.join(', '));
+  console.error('❌ Missing env vars:', missing.join(', '));
   process.exit(1);
 }
 
-// boolean flags
-const isDriveConfigured =
-  !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REFRESH_TOKEN && GOOGLE_DRIVE_FOLDER_ID);
+const isDriveConfigured = !!(
+  GOOGLE_CLIENT_ID &&
+  GOOGLE_CLIENT_SECRET &&
+  GOOGLE_REFRESH_TOKEN &&
+  GOOGLE_DRIVE_FOLDER_ID
+);
 
-// ----------------- MIDDLEWARE -----------------
+// -------- MIDDLEWARE ----------
 app.use(express.json());
 app.use(cookieParser());
 app.use(session({
@@ -96,59 +88,47 @@ app.use(session({
   }
 }));
 
-// ----------------- PATHS -----------------
-// Resolve publicDir and fall back to project root if missing
+// -------- STATIC PATHS ----------
 let publicDir = path.join(__dirname, STATIC_DIR || 'private');
 if (!fs.existsSync(publicDir)) {
-  console.warn(`⚠️ STATIC_DIR "${STATIC_DIR}" not found at ${publicDir}. Falling back to project root.`);
+  console.warn(`⚠️ STATIC_DIR "${STATIC_DIR}" not found, falling back to root.`);
   publicDir = path.join(__dirname);
 }
-const uploadsDir = path.join(__dirname, 'uploads'); // private uploads (fallback) - NOT inside publicDir
+const uploadsDir = path.join(__dirname, 'uploads');
+fs.promises.mkdir(uploadsDir, { recursive: true }).catch(()=>{});
 
-console.log('Resolved publicDir:', publicDir);
+console.log("✅ Resolved publicDir:", publicDir);
 
-// ensure uploads dir exists
-fs.promises.mkdir(uploadsDir, { recursive: true }).catch(() => {});
-
-// ----------------- AUTH HELPERS -----------------
+// -------- AUTH HELPERS ----------
 const allowedSet = new Set(ALLOWED_USERS.split(',').map(s => s.trim()).filter(Boolean));
 
 function createSessionToken(payload) {
   return jwt.sign(payload, SESSION_SECRET, { algorithm: 'HS256', expiresIn: '12h' });
 }
 function verifySessionToken(token) {
-  try { return jwt.verify(token, SESSION_SECRET); } catch { return null; }
+  try { return jwt.verify(token, SESSION_SECRET); }
+  catch { return null; }
 }
 
-// Improved requireAuth: returns 401 JSON for API/XHR requests, redirects for page requests
 function requireAuth(req, res, next) {
-  const token = req.cookies && req.cookies['shree_session'];
+  const token = req.cookies?.['shree_session'];
   if (!token) {
-    // If request is for API or expects JSON, return 401 instead of redirect
-    const wantsJson = (req.xhr === true)
-      || (req.headers['accept'] && req.headers['accept'].includes('application/json'))
-      || req.path.startsWith('/api/');
-    if (wantsJson) {
-      return res.status(401).json({ error: 'unauthenticated' });
-    }
+    const wantsJson = req.xhr ||
+      (req.headers['accept']?.includes('application/json')) ||
+      req.path.startsWith('/api/');
+    if (wantsJson) return res.status(401).json({ error: 'unauthenticated' });
     return res.redirect('/index.html');
   }
   const user = verifySessionToken(token);
   if (!user) {
     res.clearCookie('shree_session');
-    const wantsJson = (req.xhr === true)
-      || (req.headers['accept'] && req.headers['accept'].includes('application/json'))
-      || req.path.startsWith('/api/');
-    if (wantsJson) {
-      return res.status(401).json({ error: 'invalid_session' });
-    }
     return res.redirect('/index.html');
   }
   req.user = user;
   next();
 }
 
-// ----------------- AUTH0 FLOW -----------------
+// -------- AUTH0 LOGIN ----------
 app.get('/auth/login', (req, res) => {
   const state = Math.random().toString(36).slice(2);
   const params = new URLSearchParams({
@@ -162,6 +142,7 @@ app.get('/auth/login', (req, res) => {
   res.redirect(`https://${AUTH0_DOMAIN}/authorize?${params.toString()}`);
 });
 
+// -------- AUTH0 CALLBACK ----------
 app.get('/auth/callback', async (req, res) => {
   try {
     const { code } = req.query;
@@ -177,15 +158,15 @@ app.get('/auth/callback', async (req, res) => {
 
     const { id_token } = tokenResp.data;
     const decoded = jwt.decode(id_token);
-    const userEmail = decoded && decoded.email;
-    if (!userEmail) return res.status(400).send('No email in token');
+    const email = decoded?.email;
+    if (!email) return res.status(400).send('No email in token');
 
-    if (allowedSet.size > 0 && !allowedSet.has(userEmail)) {
+    if (allowedSet.size > 0 && !allowedSet.has(email)) {
       return res.status(403).send('User not allowed');
     }
 
     const sessionToken = createSessionToken({
-      email: userEmail,
+      email,
       name: decoded.name || '',
       sub: decoded.sub
     });
@@ -199,24 +180,16 @@ app.get('/auth/callback', async (req, res) => {
 
     return res.redirect('/welcome.html');
   } catch (err) {
-    console.error('Auth callback error:', err.response ? err.response.data : err.message);
-    return res.status(500).send('Authentication failed');
+    console.error('Auth callback error:', err?.response?.data || err);
+    res.status(500).send('Authentication failed');
   }
 });
 
+// -------- ✅ FIXED AUTH LOGOUT ----------
 app.get('/auth/logout', (req, res) => {
-  try { req.session?.destroy(()=>{}); } catch(e){}
-  try {
-    res.clearCookie('connect.sid', { httpOnly:true, sameSite:'lax', secure:true });
-  } catch(e){}
-  res.set('Clear-Site-Data','""cookies"", ""storage""');
-  return res.redirect('/index.html');
-});
-  const returnTo = encodeURIComponent(FRONTEND_ORIGIN || `${req.protocol}://${req.get('host')}`);
-  res.redirect(`https://${AUTH0_DOMAIN}/v2/logout?client_id=${AUTH0_CLIENT_ID}&returnTo=${returnTo}`);
-});
-
-// ----------------- GOOGLE DRIVE -----------------
+  try { req.session?.destroy(() => {}); } catch {}
+  try { res.clearCookie('shree_session', { httpOnly: true,_
+// -------- GOOGLE DRIVE CONFIG ----------
 let driveClient;
 if (isDriveConfigured) {
   const oauth2Client = new google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET);
@@ -224,10 +197,10 @@ if (isDriveConfigured) {
   driveClient = google.drive({ version: 'v3', auth: oauth2Client });
   console.log('✅ Google Drive client configured.');
 } else {
-  console.warn('⚠️ Google Drive env vars missing — uploads/listing from Drive will not work.');
+  console.warn('⚠️ Google Drive not fully configured. Falling back to local uploads/photos.json.');
 }
 
-// ----------------- FALLBACK photos.json (only if not listing from Drive) -----------------
+// -------- FALLBACK photos.json ----------
 async function ensurePhotosJson(filePath) {
   try { await access(filePath, fs.constants.F_OK); }
   catch { await writeFile(filePath, JSON.stringify([]), 'utf8'); }
@@ -240,38 +213,30 @@ async function writePhotos(filePath, arr) {
   await writeFile(filePath, JSON.stringify(arr, null, 2), 'utf8');
 }
 
-// ----------------- MULTER UPLOAD -----------------
-const uploadDir = os.tmpdir();
+// -------- MULTER TEMP STORAGE ----------
+const tempDir = os.tmpdir();
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
+  destination: (req, file, cb) => cb(null, tempDir),
   filename: (req, file, cb) =>
     cb(null, `${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`)
 });
 const upload = multer({ storage, limits: { fileSize: 15 * 1024 * 1024 } });
 
-// ----------------- PROTECTED PAGES -----------------
-// NOTE: Register these BEFORE express.static so unauthenticated users can’t bypass via static.
+// -------- PROTECTED PAGES ----------
 const protectedPages = [
-  '/life.html','/upload.html','/gallery.html',
-  '/photo1.html','/photo2.html','/photo3.html','/photo4.html','/photo5.html',
-  '/photo6.html','/photo7.html','/photo8.html','/photo9.html',
-  '/welcome.html'
+  '/life.html','/upload.html','/gallery.html','/welcome.html',
+  '/photo1.html','/photo2.html','/photo3.html','/photo4.html',
+  '/photo5.html','/photo6.html','/photo7.html','/photo8.html','/photo9.html'
 ];
-
 app.get(protectedPages, requireAuth, (req, res) => {
-  const target = path.join(publicDir, req.path);
-  console.log(`Protected page request for ${req.path} → file ${target}`);
-  if (!fs.existsSync(target)) {
-    console.warn(`Protected file not found: ${target}`);
-    return res.status(404).send('Not found');
-  }
-  return res.sendFile(target);
+  const filePath = path.join(publicDir, req.path);
+  if (!fs.existsSync(filePath)) return res.status(404).send('Not found');
+  return res.sendFile(filePath);
 });
 
-// ----------------- API: UPLOAD -----------------
-// Temporary public GET endpoint for sanity checking while debugging (safe to remove later)
+// -------- API: UPLOAD ----------
 app.get('/api/upload', (req, res) => {
-  return res.json({ ok: true, msg: 'upload endpoint reachable (GET) - auth required for POST' });
+  res.json({ ok: true, msg: 'upload endpoint reachable (GET)' });
 });
 
 app.post('/api/upload', requireAuth, upload.single('photo'), async (req, res) => {
@@ -279,29 +244,22 @@ app.post('/api/upload', requireAuth, upload.single('photo'), async (req, res) =>
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
     const caption = (req.body.caption || '').trim();
-    const uploader = (req.user && req.user.email) || 'unknown';
+    const uploader = req.user?.email || 'unknown';
 
     if (driveClient) {
-      // Upload to Drive with caption in metadata
       const fileMetadata = {
         name: req.file.originalname,
-        description: caption,    // visible in Drive UI
-        appProperties: {         // machine-friendly for our API
-          caption,
-          uploadedBy: uploader
-        },
+        description: caption,
+        appProperties: { caption, uploadedBy: uploader },
         parents: GOOGLE_DRIVE_FOLDER_ID ? [GOOGLE_DRIVE_FOLDER_ID] : undefined
       };
-
       const media = { mimeType: req.file.mimetype, body: fs.createReadStream(req.file.path) };
-
-      const createRes = await driveClient.files.create({
+      const result = await driveClient.files.create({
         requestBody: fileMetadata,
         media,
-        fields: 'id,name,mimeType,description,appProperties,createdTime'
+        fields: 'id,name,mimeType,createdTime,appProperties'
       });
-
-      const fileId = createRes.data.id;
+      const fileId = result.data.id;
 
       if ((MAKE_PUBLIC + '').toLowerCase() === 'true') {
         try {
@@ -309,59 +267,52 @@ app.post('/api/upload', requireAuth, upload.single('photo'), async (req, res) =>
             fileId,
             requestBody: { role: 'reader', type: 'anyone' }
           });
-        } catch (e) {
-          console.warn('Could not set public permission:', e.message || e);
-        }
+        } catch {}
       }
 
-      // cleanup tmp
-      await unlink(req.file.path).catch(() => {});
+      await unlink(req.file.path).catch(()=>{});
 
-      // Also write to fallback JSON (optional)
       const photos = await readPhotos(PHOTOS_JSON);
       photos.unshift({
         id: fileId,
-        name: createRes.data.name,
-        mimeType: createRes.data.mimeType,
+        name: result.data.name,
+        mimeType: result.data.mimeType,
         caption,
         uploadedBy: uploader,
-        uploadedAt: createRes.data.createdTime || new Date().toISOString()
+        uploadedAt: result.data.createdTime
       });
       await writePhotos(PHOTOS_JSON, photos);
 
       return res.json({ ok: true, entry: { id: fileId, caption } });
     }
 
-    // Fallback: save into private uploads (not served statically)
-    await fs.promises.mkdir(uploadsDir, { recursive: true });
+    // Fallback to local
     const dest = path.join(uploadsDir, path.basename(req.file.path));
     await fs.promises.copyFile(req.file.path, dest);
-    await unlink(req.file.path).catch(() => {});
+    await unlink(req.file.path).catch(()=>{});
     const photos = await readPhotos(PHOTOS_JSON);
     photos.unshift({
-      id: `local:${path.basename(dest)}`,
+      id: 'local:' + path.basename(dest),
       name: path.basename(dest),
       caption,
       uploadedBy: uploader,
       uploadedAt: new Date().toISOString()
-      // intentionally no 'url' pointing to publicDir
     });
     await writePhotos(PHOTOS_JSON, photos);
-    return res.json({ ok: true, entry: { id: `local:${path.basename(dest)}`, caption } });
+
+    res.json({ ok: true, entry: { id: 'local:' + path.basename(dest), caption } });
   } catch (err) {
-    console.error('Upload error:', err && err.response ? err.response.data : err.message || err);
-    return res.status(500).json({ error: 'Upload failed' });
+    console.error('Upload error:', err);
+    res.status(500).json({ error: 'Upload failed' });
   }
 });
 
-// ----------------- API: LIST (Drive-first, reads caption) -----------------
+// -------- API: LIST FILES ----------
 app.get('/api/list', requireAuth, async (req, res) => {
   try {
-    if (driveClient && (DRIVE_LIST_MODE + '').toLowerCase() === 'drive') {
+    if (driveClient && DRIVE_LIST_MODE === 'drive') {
       let q = "trashed = false";
-      if (GOOGLE_DRIVE_FOLDER_ID) {
-        q += ` and '${GOOGLE_DRIVE_FOLDER_ID}' in parents`;
-      }
+      if (GOOGLE_DRIVE_FOLDER_ID) q += ` and '${GOOGLE_DRIVE_FOLDER_ID}' in parents`;
 
       const files = [];
       let pageToken;
@@ -370,12 +321,11 @@ app.get('/api/list', requireAuth, async (req, res) => {
           q,
           pageSize: 50,
           fields: 'nextPageToken, files(id,name,mimeType,description,appProperties,createdTime)',
-          orderBy: 'createdTime desc',
           pageToken,
           supportsAllDrives: true,
           includeItemsFromAllDrives: true
         });
-        files.push(...(resp.data.files || []));
+        files.push(...resp.data.files);
         pageToken = resp.data.nextPageToken;
       } while (pageToken);
 
@@ -383,185 +333,83 @@ app.get('/api/list', requireAuth, async (req, res) => {
         id: f.id,
         name: f.name,
         mimeType: f.mimeType,
-        caption: (f.appProperties && f.appProperties.caption) || f.description || '',
-        uploadedBy: (f.appProperties && f.appProperties.uploadedBy) || '',
+        caption: f.appProperties?.caption || f.description || '',
+        uploadedBy: f.appProperties?.uploadedBy || '',
         uploadedAt: f.createdTime
       }));
-
       return res.json(mapped);
     }
 
-    // Fallback (non-persistent on Render unless using a disk)
     const photos = await readPhotos(PHOTOS_JSON);
-    return res.json(photos);
+    res.json(photos);
   } catch (err) {
-    console.error('/api/list error:', err && err.message ? err.message : err);
-    res.status(500).json({ error: 'Failed to list photos' });
+    console.error('/api/list error:', err);
+    res.status(500).json({ error: 'Failed to list' });
   }
 });
 
-// ----------------- API: STREAM FILE -----------------
+// -------- API: STREAM FILE ----------
 app.get('/api/file/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
   if (!id) return res.status(400).send('Missing id');
 
-  // local file (private uploads)
   if (id.startsWith('local:')) {
-    const filename = id.replace('local:', '');
-    const filePath = path.join(uploadsDir, filename);
+    const file = id.replace('local:', '');
+    const filePath = path.join(uploadsDir, file);
     if (!fs.existsSync(filePath)) return res.status(404).send('Not found');
-
-    // Inline display and private caching
-    res.setHeader('Content-Disposition', `inline; filename="${path.basename(filePath).replace(/"/g,'')}"`);
-    res.setHeader('Cache-Control', 'private, max-age=0, must-revalidate');
-
+    res.setHeader('Content-Disposition', `inline; filename="${file}"`);
     return res.sendFile(filePath);
   }
 
   if (!driveClient) return res.status(500).send('Drive not configured');
 
   try {
-    // fetch metadata (mimeType + name) for headers
     const meta = await driveClient.files.get({ fileId: id, fields: 'mimeType,name' });
     res.setHeader('Content-Type', meta.data.mimeType || 'application/octet-stream');
-
-    const safeName = (meta.data.name || 'file').replace(/["\\]/g, '');
-    res.setHeader('Content-Disposition', `inline; filename="${safeName}"`);
-    res.setHeader('Cache-Control', 'private, max-age=0, must-revalidate');
-
-    const driveRes = await driveClient.files.get({ fileId: id, alt: 'media' }, { responseType: 'stream' });
-    driveRes.data.on('error', err => {
-      console.error('Drive stream error:', err);
-      if (!res.headersSent) res.status(500).send('Stream error');
-    });
+    res.setHeader('Content-Disposition', `inline; filename="${meta.data.name}"`);
+    const driveRes = await driveClient.files.get(
+      { fileId: id, alt: 'media' },
+      { responseType: 'stream' }
+    );
     driveRes.data.pipe(res);
   } catch (err) {
-    console.error('/api/file error:', err && err.message ? err.message : err);
+    console.error('/api/file error:', err);
     res.status(500).send('Stream error');
   }
 });
 
-// ----------------- API: PAGINATED PHOTOS (Drive) -----------------
-/**
- * GET /api/photos?pageSize=20&pageToken=XYZ
- * Returns: { items: [...], nextPageToken: "..." | null }
- */
-app.get('/api/photos', requireAuth, async (req, res) => {
-  try {
-    if (!driveClient) return res.status(500).json({ error: 'Drive not configured' });
-    if (!GOOGLE_DRIVE_FOLDER_ID) return res.status(500).json({ error: 'Folder ID missing' });
-
-    const pageSize = Math.min(Number(req.query.pageSize) || 20, 100);
-    const pageToken = req.query.pageToken || undefined;
-
-    const q = `'${GOOGLE_DRIVE_FOLDER_ID}' in parents and mimeType contains 'image/' and trashed = false`;
-    const fields = "nextPageToken, files(id,name,createdTime,mimeType,thumbnailLink,webContentLink,webViewLink,description,appProperties)";
-    const resp = await driveClient.files.list({
-      q,
-      pageSize,
-      pageToken,
-      fields,
-      orderBy: "createdTime desc",
-      supportsAllDrives: true,
-      includeItemsFromAllDrives: true
-    });
-
-    const files = resp.data.files || [];
-    const items = files.map(f => {
-      const caption = (f.appProperties && f.appProperties.caption) || f.description || '';
-      return {
-        id: f.id,
-        name: f.name,
-        mimeType: f.mimeType,
-        caption,
-        uploadedAt: f.createdTime,
-        // point frontend to the secure streaming endpoint
-        thumbnailLink: `/api/file/${f.id}`,
-        driveWebViewLink: f.webViewLink || null,
-        driveWebContentLink: f.webContentLink || null
-      };
-    });
-
-    return res.json({
-      items,
-      nextPageToken: resp.data.nextPageToken || null
-    });
-  } catch (err) {
-    console.error('photos pagination error:', err?.response?.data || err);
-    return res.status(500).json({ error: 'Failed to list photos' });
-  }
-});
-
-// ----------------- API: MUSIC (private) -----------------
-// Streams background music only to authenticated users.
-// Place your music file at: backend/uploads/music.mp3
-app.get('/api/music', requireAuth, async (req, res) => {
-  try {
-    const musicPath = path.join(uploadsDir, 'music.mp3');
-    if (!fs.existsSync(musicPath)) return res.status(404).send('Music not found');
-
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Content-Disposition', `inline; filename="${path.basename(musicPath)}"`);
-    res.setHeader('Cache-Control', 'private, max-age=0, must-revalidate');
-
-    return res.sendFile(musicPath);
-  } catch (err) {
-    console.error('/api/music error:', err && err.message ? err.message : err);
-    return res.status(500).send('Music stream error');
-  }
-});
-
-// ----------------- DIAG & HEALTH -----------------
+// -------- DIAG + HEALTH ----------
 app.get('/api/diag', (req, res) => res.json({ status: 'ok', ts: Date.now() }));
 
-// Lightweight health endpoint (fast, unauthenticated)
 app.get('/health', (req, res) => {
-  return res.status(200).json({ status: 'ok', uptime: process.uptime(), ts: Date.now() });
+  res.status(200).json({ status: 'ok', uptime: process.uptime(), ts: Date.now() });
 });
 
-// ----------------- ROOT -----------------
+// -------- ROOT ----------
 app.get('/', (req, res) => res.redirect('/index.html'));
 
-// ----------------- STATIC FILES (PUBLIC) -----------------
-// Mount static AFTER registering protected routes so unauthenticated users can't bypass them.
+// -------- STATIC FILES ----------
 app.use(express.static(publicDir));
 
-// ----------------- START SERVER -----------------
-// Use the port provided by the environment (Render sets process.env.PORT)
-// Bind to 0.0.0.0 so external probes can reach the server.
+// -------- START SERVER ----------
 const listenPort = Number(process.env.PORT || PORT || 4000);
 const server = app.listen(listenPort, '0.0.0.0', () => {
-  console.log(`✅ Server listening on port ${listenPort} - NODE_ENV=${NODE_ENV}`);
-  console.log(`Static dir: ${publicDir}`);
-  console.log(`Uploads dir (private): ${uploadsDir}`);
-  console.log(`Drive configured: ${isDriveConfigured ? 'yes' : 'no'}`);
-  console.log(`DRIVE_LIST_MODE=${DRIVE_LIST_MODE}`);
+  console.log(`✅ Server running on port ${listenPort} | ENV=${NODE_ENV}`);
 });
 
-// ----------------- GRACEFUL SHUTDOWN -----------------
+// -------- GRACEFUL SHUTDOWN ----------
 function shutdown(signal) {
-  console.log(`Received ${signal}. Closing server...`);
-  // stop accepting new connections
-  server.close(() => {
-    console.log('Server closed. Exiting process.');
-    process.exit(0);
-  });
-  // Force exit after 10s
-  setTimeout(() => {
-    console.error('Forcing shutdown after timeout.');
-    process.exit(1);
-  }, 10000).unref();
+  console.log(`Received ${signal}, shutting down...`);
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(1), 10000).unref();
 }
-
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
-// Optional: log uncaught exceptions / unhandled rejections to help debugging
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught exception:', err && err.stack ? err.stack : err);
+process.on('uncaughtException', err => {
+  console.error('Uncaught exception:', err);
   process.exit(1);
 });
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('Unhandled rejection:', reason);
 });
-
