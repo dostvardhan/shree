@@ -3,18 +3,15 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Gallery — Aurora Masonry</title>
+<title>Gallery — Floral Parchment</title>
 <meta name="color-scheme" content="light only" />
 <style>
   :root{
     --ink:#23181b;
-    --glass:#ffffffcc;
-    --ring:rgba(0,0,0,.10);
+    --ring:rgba(0,0,0,.08);
     --fab-bg:#ffffffd8;
-    --fab-border:#e9c7d4;
-    --gap:18px;
-    --col-min:240px; /* minimum tile width */
-    --row:8px;       /* masonry row height unit */
+    --fab-border:#ecc7d5;
+    --gap:20px;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -22,31 +19,21 @@
     margin:0; color:var(--ink);
     font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial;
     overflow-x:hidden;
-    background: radial-gradient(1200px 800px at 20% -15%, #ffeef7 0%, #ffd6e6 45%, #ffc3d9 70%, #ffb6d1 100%);
-  }
-  /* aurora layer */
-  .aurora{
-    position:fixed; inset:-20vmax; z-index:0; pointer-events:none; filter: blur(80px) saturate(1.05);
-    opacity:.65; mix-blend-mode:soft-light;
-    background:
-      conic-gradient(from 0deg at 30% 40%, #ffd7e6, #ffb4c9, #ffd7e6),
-      conic-gradient(from 180deg at 70% 60%, #ffc6db, #ffe4f1, #ffc6db);
-    animation: swirl 28s linear infinite;
-  }
-  @keyframes swirl{ to{ transform:rotate(360deg) } }
-
-  /* super light grain */
-  .grain{
-    position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.06;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="120" height="120" filter="url(%23n)" opacity="0.25"/></svg>');
-    background-size: 180px 180px;
+    background:#f6eadc; /* parchment base (fallback) */
   }
 
-  /* top tiny nav */
+  /* ---------- FIXED FLORAL PARchment (pure SVG/CSS, no image) ---------- */
+  .floral-bg{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+  }
+  .floral-bg svg{ width:100%; height:100%; display:block }
+  /* top nav */
   .topbar{
-    position:sticky; top:0; z-index:5;
+    position:sticky; top:0; z-index:4;
     display:flex; justify-content:center; gap:10px; padding:10px;
-    background:#fff0f6c9; backdrop-filter:blur(10px); border-bottom:1px solid #f3c6d3;
+    background:linear-gradient(#fff8f1cc,#fff8f1cc);
+    backdrop-filter: blur(10px);
+    border-bottom:1px solid #e7c9b8;
   }
   .topbar a{
     text-decoration:none; color:#6d525c; font-weight:700; font-size:14px;
@@ -55,69 +42,163 @@
   }
   .topbar a.active{ background:#fff }
 
-  /* particles (clean alternative to hearts) */
-  .particles{ position:fixed; inset:0; pointer-events:none; z-index:2; mix-blend-mode:screen }
-  .dot{ position:absolute; width:6px; height:6px; border-radius:50%; background:radial-gradient(circle, #fff8, #fff0 60%); animation: drift var(--dur,18s) ease-in-out infinite }
-  @keyframes drift{
-    0%{ transform:translate(0,0) scale(.9); opacity:.6 }
-    100%{ transform:translate(var(--dx,20px), var(--dy,-60px)) scale(1.1); opacity:0 }
+  /* hearts (soft rainbow, optional) */
+  .hearts{ position:fixed; inset:0; pointer-events:none; z-index:1; mix-blend-mode:screen }
+  .heart{
+    position:absolute; transform:rotate(45deg);
+    width: var(--size,14px); height: var(--size,14px); border-radius:3px;
+    background: linear-gradient(145deg,
+              hsl(var(--hue,330) 90% 65% / .9),
+              hsl(var(--hue,330) 90% 55% / .9));
+    filter: drop-shadow(0 0 6px hsl(var(--hue,330) 90% 60% / .7))
+            drop-shadow(0 0 14px hsl(var(--hue,330) 90% 55% / .45));
+    animation: float var(--dur,26s) linear infinite;
+    opacity:.5;
+  }
+  .heart::before,.heart::after{ content:""; position:absolute; width:100%; height:100%; border-radius:50%; background:inherit; left:-50%; top:0; filter:inherit }
+  .heart::after{ left:0; top:-50% }
+  @keyframes float{
+    0%{ transform:translate(var(--x,0),0) rotate(45deg) scale(.95); opacity:.42 }
+    50%{ transform:translate(calc(var(--x,0)*-1),-65vh) rotate(45deg) scale(1); opacity:.62 }
+    100%{ transform:translate(var(--x,0),-130vh) rotate(45deg) scale(1.05); opacity:0 }
   }
 
-  /* Masonry container */
-  .wrap{ max-width:1240px; margin:20px auto 120px; padding:0 18px; position:relative; z-index:3 }
-  .grid{
-    display:grid; grid-template-columns:repeat(auto-fill, minmax(var(--col-min),1fr));
-    grid-auto-rows: var(--row); grid-auto-flow:dense; gap:var(--gap);
-  }
+  /* --------- Poster Grid (reliable, no pillars) --------- */
+  .wrap{ max-width:1220px; margin:22px auto 120px; padding:0 18px; position:relative; z-index:2 }
+  .grid{ display:grid; gap:var(--gap); grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
 
-  /* card */
   .card{
-    position:relative; border-radius:20px; overflow:hidden; background:var(--glass);
+    position:relative; border-radius:22px; overflow:hidden; background:#fffaf3;
     border:1px solid var(--ring);
-    box-shadow: 0 24px 60px -36px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.85);
-    transition: transform .18s ease, box-shadow .18s ease;
-    will-change: transform;
+    box-shadow:
+      0 26px 70px -40px rgba(77,48,42,.45),
+      inset 0 0 0 1px rgba(255,255,255,.9);
+    transition: transform .2s ease, box-shadow .2s ease;
   }
-  .card:hover{ transform: translateY(-3px); box-shadow:0 36px 88px -48px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.95) }
+  .card:hover{ transform:translateY(-3px); box-shadow:0 36px 96px -56px rgba(77,48,42,.55), inset 0 0 0 1px rgba(255,255,255,1) }
 
-  .ph{
-    position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center;
-    background:#fff; border-radius:16px; margin:10px; overflow:hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,.05);
+  /* 4:5 poster with blurred fill (no white gaps + no crop feel) */
+  .poster{ position:relative; width:100%; aspect-ratio:4/5; }
+  .fill{
+    position:absolute; inset:0;
+    background-position:center; background-size:cover;
+    filter: blur(16px) saturate(1.05) brightness(.98);
+    transform:scale(1.08);
   }
-  .ph img{
-    width:100%; height:100%; object-fit:contain; display:block; transform:scale(1); transition:transform .28s ease;
+  .photo{
+    position:absolute; inset:12px; border-radius:16px; background:#fff;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
   }
-  .card:hover .ph img{ transform:scale(1.06) } /* zoom */
+  .photo img{
+    max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; display:block;
+    transform:scale(1); transition:transform .28s ease;
+  }
+  .card:hover .photo img{ transform:scale(1.06) }
 
   /* pager */
   .pager{ position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:4; display:flex; gap:10px }
-  .pbtn{
-    width:44px; height:44px; border-radius:999px; border:1px solid var(--fab-border); background:#fff;
-    box-shadow:0 12px 30px -18px rgba(0,0,0,.45); cursor:pointer; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center;
-  }
+  .pbtn{ width:44px; height:44px; border-radius:999px; border:1px solid var(--fab-border); background:#fff; box-shadow:0 12px 30px -18px rgba(0,0,0,.45); cursor:pointer; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center }
   .pbtn[disabled]{ opacity:.45; cursor:not-allowed }
 
   /* FABs */
   .fab-wrap{ position:fixed; right:16px; bottom:16px; z-index:4; display:flex; flex-direction:column; gap:10px }
-  .fab{
-    width:46px; height:46px; border-radius:999px; display:flex; align-items:center; justify-content:center;
-    background:var(--fab-bg); border:1px solid var(--fab-border); box-shadow:0 10px 28px -16px rgba(0,0,0,.45);
-    cursor:pointer; user-select:none; font-weight:800;
-  }
+  .fab{ width:46px; height:46px; border-radius:999px; display:flex; align-items:center; justify-content:center; background:var(--fab-bg); border:1px solid var(--fab-border); box-shadow:0 10px 28px -16px rgba(0,0,0,.45); cursor:pointer; user-select:none; font-weight:800 }
   .fab:hover{ transform:translateY(-1px) }
 
-  /* skeleton */
-  .skel{ border-radius:20px; border:1px solid var(--ring); height:260px;
-    background:linear-gradient(90deg,#ffeef3,#fff7f9,#ffeef3); background-size:200% 100%; animation:sk 1.2s infinite }
+  /* skeletons */
+  .skel{ height:320px; border-radius:22px; border:1px solid var(--ring); background:linear-gradient(90deg,#ffeef3,#fff7f9,#ffeef3); background-size:200% 100%; animation:sk 1.2s infinite }
   @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
   .sr{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden }
 </style>
 </head>
 <body>
-  <div class="aurora" aria-hidden="true"></div>
-  <div class="grain"  aria-hidden="true"></div>
 
-  <!-- nav -->
+  <!-- PURE SVG floral parchment bg -->
+  <div class="floral-bg" aria-hidden="true">
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="none">
+      <defs>
+        <!-- paper texture -->
+        <filter id="paper">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n"/>
+          <feColorMatrix in="n" type="matrix"
+            values="0 0 0 0 0.93
+                    0 0 0 0 0.86
+                    0 0 0 0 0.79
+                    0 0 0 0.25 0" />
+          <feBlend mode="multiply" in2="SourceGraphic" />
+        </filter>
+
+        <!-- soft wash -->
+        <radialGradient id="washL" cx="0" cy="1" r="1">
+          <stop offset="0" stop-color="#f7e1d0"/>
+          <stop offset="1" stop-color="#f6eadc" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="washR" cx="1" cy="0" r="1">
+          <stop offset="0" stop-color="#ffd4e4"/>
+          <stop offset="1" stop-color="#f6eadc" stop-opacity="0"/>
+        </radialGradient>
+
+        <!-- watercolor bloom -->
+        <filter id="bloom">
+          <feGaussianBlur stdDeviation="18"/>
+          <feComponentTransfer>
+            <feFuncA type="gamma" amplitude="0.9" exponent="0.9" offset="0"/>
+          </feComponentTransfer>
+        </filter>
+
+        <!-- leaf/flower strokes -->
+        <linearGradient id="leaf" x1="0" x2="1">
+          <stop offset="0" stop-color="#6e8c63"/>
+          <stop offset="1" stop-color="#9cb38e"/>
+        </linearGradient>
+        <linearGradient id="petal" x1="0" x2="1">
+          <stop offset="0" stop-color="#f9a16c"/>
+          <stop offset="1" stop-color="#ff6f7f"/>
+        </linearGradient>
+      </defs>
+
+      <!-- parchment base + stains -->
+      <rect x="0" y="0" width="1920" height="1080" fill="#f6eadc"/>
+      <rect x="0" y="0" width="1920" height="1080" fill="url(#washL)"/>
+      <rect x="0" y="0" width="1920" height="1080" fill="url(#washR)"/>
+      <g filter="url(#paper)">
+        <rect x="0" y="0" width="1920" height="1080" fill="transparent"/>
+      </g>
+
+      <!-- left-bottom flowers/leaves -->
+      <g opacity="0.95">
+        <g filter="url(#bloom)" opacity="0.6">
+          <circle cx="200" cy="900" r="180" fill="#ffb3c2"/>
+          <circle cx="360" cy="940" r="140" fill="#ffcaa7"/>
+        </g>
+        <path d="M160,900 C220,760 300,720 360,650" stroke="url(#leaf)" stroke-width="24" fill="none" stroke-linecap="round" opacity="0.35"/>
+        <path d="M210,950 C260,880 320,860 390,820" stroke="url(#leaf)" stroke-width="18" fill="none" stroke-linecap="round" opacity="0.4"/>
+        <!-- petals -->
+        <g opacity="0.85">
+          <path d="M260,980 c-60,-40 -60,-110 0,-140 c60,-30 120,10 110,60 c-10,50 -50,80 -110,80z" fill="url(#petal)"/>
+          <path d="M330,970 c-40,-30 -30,-90 20,-110 c50,-20 90,20 80,60 c-10,40 -50,70 -100,50z" fill="#ffa98a"/>
+        </g>
+      </g>
+
+      <!-- right-top cluster -->
+      <g opacity="0.9">
+        <g filter="url(#bloom)" opacity="0.6">
+          <circle cx="1680" cy="180" r="160" fill="#ffc3d4"/>
+          <circle cx="1500" cy="140" r="120" fill="#ffd9a8"/>
+        </g>
+        <path d="M1600,160 C1700,200 1780,240 1860,320" stroke="#e7738a" stroke-width="16" fill="none" stroke-linecap="round" opacity="0.5"/>
+        <circle cx="1750" cy="260" r="8" fill="#e65b76" />
+        <circle cx="1778" cy="290" r="6" fill="#d9416a" />
+        <circle cx="1724" cy="210" r="7" fill="#ff7a59" />
+      </g>
+    </svg>
+  </div>
+
+  <!-- hearts -->
+  <div class="hearts" id="hearts" aria-hidden="true"></div>
+
+  <!-- tiny nav -->
   <nav class="topbar">
     <a href="/life.html">Life</a>
     <a href="/upload.html">Upload</a>
@@ -125,14 +206,11 @@
     <a href="/auth/logout">Logout</a>
   </nav>
 
-  <!-- particles -->
-  <div class="particles" id="particles" aria-hidden="true"></div>
-
-  <!-- content -->
+  <!-- grid -->
   <div class="wrap">
-    <div id="grid" class="grid" aria-live="polite">
+    <section id="grid" class="grid" aria-live="polite">
       <div class="skel"></div><div class="skel"></div><div class="skel"></div>
-    </div>
+    </section>
   </div>
 
   <!-- pager -->
@@ -145,7 +223,7 @@
   <!-- FABs -->
   <div class="fab-wrap">
     <button class="fab" id="musicBtn" title="Play/Pause">♪</button>
-    <button class="fab" id="fxBtn"    title="Effects">✦</button>
+    <button class="fab" id="heartsBtn" title="Hearts">❤</button>
   </div>
 
   <!-- music -->
@@ -156,42 +234,31 @@
 <script>
   /* ---------- soft auth ---------- */
   (async function(){
-    try{
-      const r = await fetch('/api/diag',{credentials:'include',cache:'no-store'});
-      if(!r.ok) location.href='/index.html';
-    }catch{ location.href='/index.html'; }
+    try{ const r=await fetch('/api/diag',{credentials:'include',cache:'no-store'}); if(!r.ok) location.href='/index.html'; }
+    catch{ location.href='/index.html'; }
   })();
 
-  /* ---------- particles (bokeh dots) ---------- */
-  (function spawnParticles(){
-    const root=document.getElementById('particles');
-    const N=42;
+  /* ---------- hearts ---------- */
+  (function(){
+    const root=document.getElementById('hearts'), N=26;
     for(let i=0;i<N;i++){
-      const d=document.createElement('div'); d.className='dot';
-      d.style.left = (Math.random()*100)+'vw';
-      d.style.top  = (Math.random()*100)+'vh';
-      d.style.setProperty('--dx', (Math.random()*80-40)+'px');
-      d.style.setProperty('--dy', (-40 - Math.random()*100)+'px');
-      d.style.setProperty('--dur', (16+Math.random()*18)+'s');
-      d.style.animationDelay = (Math.random()*10)+'s';
-      root.appendChild(d);
+      const h=document.createElement('div'); h.className='heart';
+      const hue=Math.floor(Math.random()*360);
+      const dur=18+Math.random()*16;
+      const size=12+Math.random()*10;
+      const x=(Math.random()*40-20)+'px';
+      h.style.setProperty('--hue',hue);
+      h.style.setProperty('--dur',dur+'s');
+      h.style.setProperty('--size',size+'px');
+      h.style.setProperty('--x',x);
+      h.style.left=(Math.random()*100)+'vw';
+      h.style.bottom=(-20-Math.random()*50)+'vh';
+      h.style.animationDelay=(Math.random()*10)+'s';
+      root.appendChild(h);
     }
   })();
 
-  /* ---------- masonry helpers ---------- */
-  function applyMasonrySpan(card, img){
-    const row = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--row')) || 8;
-    const padding = 20 + 20; // .ph margins total (inset 10 + 10 each side)
-    const w = img.naturalWidth || img.width;
-    const h = img.naturalHeight || img.height;
-    const columnWidth = card.clientWidth;
-    if(!w || !h || !columnWidth) return;
-    const displayHeight = (h * columnWidth) / w; // contain
-    const rowSpan = Math.ceil((displayHeight + padding) / row);
-    card.style.gridRowEnd = `span ${rowSpan}`;
-  }
-
-  /* ---------- gallery logic (18/page, recent-first) ---------- */
+  /* ---------- Poster grid (18/page, recent-first) ---------- */
   (function(){
     const PAGE_SIZE=18;
     const grid=document.getElementById('grid');
@@ -199,36 +266,31 @@
     const nextBtn=document.getElementById('nextBtn');
     const pinfo=document.getElementById('pinfo');
 
-    // lightbox (minimal)
+    // lightbox
     const lb=document.createElement('div');
     lb.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;z-index:6;';
     lb.innerHTML=`<button id="lbClose" style="position:absolute;top:20px;right:20px;background:#ffffff26;color:#fff;border:1px solid #ffffff33;border-radius:999px;padding:10px 12px;font-weight:700;cursor:pointer;">✕</button>
       <img id="lbImg" alt="" style="max-width:95vw;max-height:88vh;border-radius:12px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 30px 80px -40px rgba(0,0,0,.9);" />`;
     document.body.appendChild(lb);
-    const lbImg=lb.querySelector('#lbImg'), lbClose=lb.querySelector('#lbClose');
-    lbClose.onclick=()=>{ lb.style.display='none'; lbImg.src='' };
-    lb.addEventListener('click',e=>{ if(e.target===lb) lbClose.onclick(); });
-    window.addEventListener('keydown',e=>{ if(lb.style.display==='flex' && e.key==='Escape') lbClose.onclick(); });
+    const lbImg=lb.querySelector('#lbImg'); lb.querySelector('#lbClose').onclick=()=>{ lb.style.display='none'; lbImg.src='' };
+    lb.addEventListener('click',e=>{ if(e.target===lb) lb.querySelector('#lbClose').onclick(); });
+    window.addEventListener('keydown',e=>{ if(lb.style.display==='flex' && e.key==='Escape') lb.querySelector('#lbClose').onclick(); });
 
     let all=[], page=getPage();
-
     function getPage(){ const u=new URL(location.href); const v=parseInt(u.searchParams.get('page')||'1',10); return (Number.isFinite(v)&&v>0)?v:1 }
     function setPage(p){ const u=new URL(location.href); u.searchParams.set('page',p); history.replaceState(null,'',u.toString()) }
-
     function clear(){ grid.innerHTML=''; }
 
-    function makeCard(item){
+    function card(item){
+      const id=encodeURIComponent(item.id);
+      const url=`/api/file/${id}?v=${Date.now()}`;
       const fig=document.createElement('figure'); fig.className='card';
-      const ph = document.createElement('div'); ph.className='ph';
-      const img=document.createElement('img'); img.loading='lazy'; img.alt='Memory';
-      img.src=`/api/file/${encodeURIComponent(item.id)}?v=${Date.now()}`;
-      ph.appendChild(img); fig.appendChild(ph);
-
-      img.addEventListener('load',()=>applyMasonrySpan(fig, img));
-      fig.addEventListener('click',()=>{ lbImg.src=img.src; lb.style.display='flex'; });
-
-      // temporary span in case load slow
-      fig.style.gridRowEnd = `span ${Math.ceil(260 / (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--row'))||8))}`;
+      const poster=document.createElement('div'); poster.className='poster';
+      const fill=document.createElement('div'); fill.className='fill'; fill.style.backgroundImage=`url('${url}')`;
+      const ph=document.createElement('div'); ph.className='photo';
+      const img=document.createElement('img'); img.loading='lazy'; img.alt='Memory'; img.src=url;
+      ph.appendChild(img); poster.appendChild(fill); poster.appendChild(ph); fig.appendChild(poster);
+      fig.addEventListener('click',()=>{ lbImg.src=url; lb.style.display='flex'; });
       return fig;
     }
 
@@ -238,7 +300,7 @@
       if(page>pages) page=pages;
       const start=(page-1)*PAGE_SIZE, end=Math.min(start+PAGE_SIZE,total);
       const frag=document.createDocumentFragment();
-      all.slice(start,end).forEach(it=>frag.appendChild(makeCard(it)));
+      all.slice(start,end).forEach(it=>frag.appendChild(card(it)));
       grid.appendChild(frag);
       prevBtn.disabled=(page<=1); nextBtn.disabled=(page>=pages);
       pinfo.textContent=`${page}/${pages}`;
@@ -248,7 +310,7 @@
     function extractTime(o){
       const keys=['createdAt','uploadedAt','time','timestamp','ts','date'];
       for(const k of keys){ if(o[k]){ const d=new Date(o[k]); if(!isNaN(d)) return d.getTime(); } }
-      if (typeof o.id==='string' && /^\d{10,}$/.test(o.id)) return parseInt(o.id,10);
+      if(typeof o.id==='string' && /^\d{10,}$/.test(o.id)) return parseInt(o.id,10);
       return 0;
     }
 
@@ -257,16 +319,12 @@
         const r=await fetch('/api/list',{credentials:'include',cache:'no-store'});
         if(!r.ok) throw new Error('list failed');
         const data=await r.json();
-        all = Array.isArray(data) ? data.slice() : [];
+        all = Array.isArray(data)?data.slice():[];
         all.sort((a,b)=>extractTime(b)-extractTime(a)); // recent first
         render();
-        // Recalculate spans after first paint for safety
-        setTimeout(()=>document.querySelectorAll('.card').forEach(c=>{
-          const img=c.querySelector('img'); if(img && img.complete) applyMasonrySpan(c,img);
-        }), 300);
       }catch(e){
         clear();
-        const msg=document.createElement('div'); msg.style.padding='24px'; msg.style.background='#fff'; msg.style.border='1px solid #f0c8d4'; msg.style.borderRadius='14px';
+        const msg=document.createElement('div'); msg.style.padding='24px'; msg.style.background:'#fff'; msg.style.border='1px solid #f0c8d4'; msg.style.borderRadius='14px';
         msg.textContent='Could not load gallery.'; grid.appendChild(msg);
         console.error(e);
       }
@@ -276,30 +334,28 @@
     nextBtn.onclick=()=>{ page=page+1; render(); };
   })();
 
-  /* ---------- music + effects (persist state) ---------- */
+  /* ---------- music + hearts (persist state) ---------- */
   (function(){
     const audio=document.getElementById('bgMusic');
     const musicBtn=document.getElementById('musicBtn');
-    const fxBtn=document.getElementById('fxBtn');
-    const particles=document.getElementById('particles');
+    const heartsBtn=document.getElementById('heartsBtn');
+    const hearts=document.getElementById('hearts');
 
-    let fxOn   = localStorage.getItem('fxOn')   !== 'false'; // default true
-    let musicOn= localStorage.getItem('musicOn')=== 'true';
+    let heartsOn = localStorage.getItem('heartsOn') !== 'false'; // default true
+    let musicOn  = localStorage.getItem('musicOn') === 'true';
 
-    particles.style.display = fxOn ? 'block' : 'none';
-
-    fxBtn.addEventListener('click', ()=>{
-      fxOn = !fxOn;
-      particles.style.display = fxOn ? 'block' : 'none';
-      localStorage.setItem('fxOn', fxOn);
+    hearts.style.display = heartsOn ? 'block' : 'none';
+    heartsBtn.addEventListener('click', ()=>{
+      heartsOn = !heartsOn; hearts.style.display = heartsOn ? 'block' : 'none';
+      localStorage.setItem('heartsOn', heartsOn);
     });
 
     const resume = () => { if(musicOn) audio.play().catch(()=>{}); document.removeEventListener('pointerdown', resume); };
     document.addEventListener('pointerdown', resume, {once:true});
 
     musicBtn.addEventListener('click', ()=>{
-      if(audio.paused){ audio.play().then(()=>{ musicOn=true; localStorage.setItem('musicOn','true'); }).catch(()=>{}); }
-      else { audio.pause(); musicOn=false; localStorage.setItem('musicOn','false'); }
+      if(audio.paused){ audio.play().then(()=>{ musicOn = true; localStorage.setItem('musicOn','true'); }).catch(()=>{}); }
+      else { audio.pause(); musicOn = false; localStorage.setItem('musicOn','false'); }
     });
   })();
 </script>
