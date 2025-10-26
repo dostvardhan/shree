@@ -5,30 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Gallery</title>
 <meta name="color-scheme" content="light only" />
-
 <style>
   :root{
     --ink:#2b2225;
     --ring:rgba(0,0,0,.10);
     --accent:#ff6b8a;
-    --card:#fff;
+    --fab-bg:#ffffffd8;
+    --fab-border:#f0c8d4;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
     margin:0; color:var(--ink);
     font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial;
-    /* --- Smooth pink blend + soft grain (no bands) --- */
+    /* Smooth blended pink + micro noise (no visible lines) */
     background:
-      radial-gradient(1400px 900px at 12% -10%, #fff4f9 0%, #ffd9e7 40%, #ffc1d4 85%, #ffb0c8 100%),
-      radial-gradient(1300px 800px at 90% 110%, #ffe0eb 0%, #ffd0e0 60%, #ffb6cd 100%),
-      linear-gradient(180deg, #ffffff00 0%, #ffffff50 45%, #ffffff00 100%),
-      repeating-linear-gradient(45deg, #0000, #0000 6px, #00000008 6px, #00000008 7px); /* micro grain */
+      radial-gradient(1400px 900px at 12% -10%, #fff5fa 0%, #ffdbe9 40%, #ffc2d6 85%, #ffb2ca 100%),
+      radial-gradient(1200px 750px at 85% 110%, #ffe6f0 0%, #ffd4e3 60%, #ffb7ce 100%),
+      linear-gradient(180deg, #ffffff00 0%, #ffffff40 45%, #ffffff00 100%),
+      repeating-linear-gradient(0deg, #0000, #0000 9px, #00000007 9px, #00000007 10px);
     background-blend-mode: normal, normal, soft-light, overlay;
     overflow-x:hidden;
   }
 
-  /* ---------- Tiny top nav ---------- */
+  /* Top tiny nav */
   .topbar{
     position:sticky; top:0; z-index:6;
     display:flex; justify-content:center; gap:10px; padding:10px;
@@ -42,16 +42,18 @@
   }
   .topbar a.active{ background:#fff }
 
-  /* ---------- Floating hearts (elegant) ---------- */
+  /* Hearts (rainbow + slower) */
   .hearts{ position:fixed; inset:0; pointer-events:none; z-index:0; }
   .heart{
     position:absolute; width:12px; height:12px; transform:rotate(45deg); border-radius:2px;
-    background:#ff88a5cc; box-shadow:0 0 10px #ff8aa655;
-    animation: float 12s linear infinite;
+    background:hsla(var(--hue,330), 80%, 70%, .75);
+    box-shadow:0 0 10px hsla(var(--hue,330), 80%, 60%, .5);
+    animation: float var(--dur,22s) linear infinite;
   }
   .heart::before,.heart::after{
-    content:""; position:absolute; width:12px; height:12px; background:#ff88a5cc; border-radius:50%;
-    left:-6px; top:0;
+    content:""; position:absolute; width:12px; height:12px; border-radius:50%;
+    background:inherit; left:-6px; top:0;
+    box-shadow:inherit;
   }
   .heart::after{ left:0; top:-6px }
   @keyframes float{
@@ -59,7 +61,7 @@
     100%{ transform:translateY(-130vh) rotate(45deg) scale(1.05); opacity:0 }
   }
 
-  /* ---------- Grid (bigger, tidy) ---------- */
+  /* Grid */
   .grid{
     max-width:1120px; margin:18px auto 110px; padding:0 18px;
     display:grid; gap:22px;
@@ -68,17 +70,13 @@
   @media (max-width:900px){ .grid{grid-template-columns: repeat(2, 1fr)} }
   @media (max-width:560px){ .grid{grid-template-columns: 1fr} }
 
-  /* Scrapbook frame card */
   .card{
     position:relative; aspect-ratio:3/4; border-radius:26px; overflow:hidden;
-    background: var(--card);
-    border:1px solid var(--ring);
-    box-shadow:
-      0 28px 70px -40px rgba(0,0,0,.55),
-      inset 0 0 0 1px rgba(255,255,255,.85);
+    background:#fff; border:1px solid var(--ring);
+    box-shadow:0 28px 70px -40px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.9);
     transition: transform .12s ease, box-shadow .12s ease;
   }
-  .card:hover{ transform:translateY(-2px); box-shadow:0 34px 90px -50px rgba(0,0,0,.65), inset 0 0 0 1px rgba(255,255,255,.9) }
+  .card:hover{ transform:translateY(-2px); box-shadow:0 34px 90px -50px rgba(0,0,0,.65), inset 0 0 0 1px rgba(255,255,255,1) }
 
   .paper{
     position:absolute; inset:12px; border-radius:20px;
@@ -95,43 +93,38 @@
     width:auto; height:auto; object-fit:contain; display:block; border-radius:12px;
   }
 
-  /* ---------- Minimal pager (icons only) ---------- */
+  /* Pager */
   .pager{
     position:fixed; left:50%; bottom:18px; transform:translateX(-50%); z-index:7;
     display:flex; gap:10px;
   }
   .pbtn{
     width:44px; height:44px; border-radius:999px;
-    border:1px solid #f0c8d4; background:#fff;
+    border:1px solid var(--fab-border); background:#fff;
     box-shadow:0 12px 30px -18px rgba(0,0,0,.45); cursor:pointer;
     font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center;
   }
   .pbtn[disabled]{ opacity:.45; cursor:not-allowed }
 
-  /* ---------- Music + Hearts Glassy Pill ---------- */
-  .controls{
-    position:fixed; right:16px; bottom:16px; z-index:7;
-    display:flex; gap:8px; padding:6px; border-radius:999px;
-    background:#ffffffd6; backdrop-filter:blur(8px);
-    border:1px solid #f0c8d4; box-shadow:0 10px 28px -16px rgba(0,0,0,.45);
+  /* FABs — same as Life page look (round buttons) */
+  .fab-wrap{ position:fixed; right:16px; bottom:16px; z-index:7; display:flex; flex-direction:column; gap:10px }
+  .fab{
+    width:46px; height:46px; border-radius:999px; display:flex; align-items:center; justify-content:center;
+    background:var(--fab-bg); border:1px solid var(--fab-border); box-shadow:0 10px 28px -16px rgba(0,0,0,.45);
+    cursor:pointer; user-select:none; font-weight:800;
   }
-  .ctl{
-    width:40px; height:40px; border-radius:999px; border:1px solid #efd0da; background:#fff;
-    display:flex; align-items:center; justify-content:center; font-weight:800; cursor:pointer;
-  }
-  .ctl:hover{ transform: translateY(-1px) }
+  .fab:hover{ transform:translateY(-1px) }
 
-  /* Skeletons (initial load) */
+  /* Skeletons */
   .skeleton{ aspect-ratio:3/4; border-radius:26px; border:1px solid var(--ring);
     background:linear-gradient(90deg,#ffeef3,#fff7f9,#ffeef3); background-size:200% 100%; animation:sk 1.2s infinite }
   @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-  /* screen reader only */
   .sr{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden }
 </style>
 </head>
 <body>
-  <!-- tiny nav -->
+  <!-- top nav -->
   <nav class="topbar">
     <a href="/life.html">Life</a>
     <a href="/upload.html">Upload</a>
@@ -139,7 +132,7 @@
     <a href="/auth/logout">Logout</a>
   </nav>
 
-  <!-- floating hearts layer -->
+  <!-- hearts -->
   <div class="hearts" id="hearts" aria-hidden="true"></div>
 
   <!-- grid -->
@@ -155,19 +148,19 @@
     <span id="pinfo" class="sr" aria-live="polite"></span>
   </div>
 
-  <!-- glassy pill controls -->
-  <div class="controls">
-    <button id="musicBtn" class="ctl" title="Play/Pause">♪</button>
-    <button id="heartsBtn" class="ctl" title="Hearts">❤</button>
+  <!-- FABs (same as life) -->
+  <div class="fab-wrap">
+    <button class="fab" id="musicBtn" title="Play/Pause">♪</button>
+    <button class="fab" id="heartsBtn" title="Hearts">❤</button>
   </div>
 
-  <!-- music from your folder -->
+  <!-- music file -->
   <audio id="bgMusic" preload="auto" loop>
     <source src="/music/bg.mp3" type="audio/mpeg">
   </audio>
 
 <script>
-  /* ------- inline guard: verify session via /api/diag ------- */
+  /* Soft auth */
   (async function(){
     try{
       const r = await fetch('/api/diag',{credentials:'include',cache:'no-store'});
@@ -175,22 +168,26 @@
     }catch{ location.href='/index.html'; }
   })();
 
-  /* ------- spawn elegant hearts ------- */
+  /* Rainbow hearts (slower random duration 16–28s) */
   (function(){
-    const root=document.getElementById('hearts');
-    const N=22; // density
+    const root=document.getElementById('hearts'), N=28;
     for(let i=0;i<N;i++){
       const h=document.createElement('div'); h.className='heart';
-      h.style.left=Math.random()*100+'vw';
-      h.style.bottom=(-12-Math.random()*45)+'vh';
-      h.style.animationDelay=(Math.random()*9)+'s';
-      const size=9+Math.random()*11; h.style.width=size+'px'; h.style.height=size+'px';
+      const hue = Math.floor(Math.random()*360);            // rainbow
+      const dur = 16 + Math.random()*12;                    // 16–28s
+      const size= 9 + Math.random()*12;
+      h.style.setProperty('--hue', hue);
+      h.style.setProperty('--dur', dur+'s');
+      h.style.left = (Math.random()*100)+'vw';
+      h.style.bottom = (-12 - Math.random()*45)+'vh';
+      h.style.width=size+'px'; h.style.height=size+'px';
       h.style.opacity=(0.22+Math.random()*0.3).toFixed(2);
+      h.style.animationDelay=(Math.random()*9)+'s';
       root.appendChild(h);
     }
   })();
 
-  /* ------- gallery (16/page, recent-first) ------- */
+  /* Gallery (16/page, recent-first) */
   (function(){
     const PAGE_SIZE=16;
     const grid=document.getElementById('grid');
@@ -198,7 +195,7 @@
     const nextBtn=document.getElementById('nextBtn');
     const pinfo=document.getElementById('pinfo');
 
-    // lightweight lightbox
+    // lightbox
     const lb=document.createElement('div');
     lb.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;z-index:8;';
     lb.innerHTML=`<button id="lbClose" style="position:absolute;top:20px;right:20px;background:#ffffff26;color:#fff;border:1px solid #ffffff33;border-radius:999px;padding:10px 12px;font-weight:700;cursor:pointer;">✕</button>
@@ -211,7 +208,6 @@
     let all=[], page=getPage(), currentIndexOnPage=-1;
     function getPage(){ const u=new URL(location.href); const v=parseInt(u.searchParams.get('page')||'1',10); return (Number.isFinite(v)&&v>0)?v:1 }
     function setPage(p){ const u=new URL(location.href); u.searchParams.set('page',p); history.replaceState(null,'',u.toString()) }
-
     function clear(){ grid.innerHTML='' }
 
     function card(item, index){
@@ -286,15 +282,34 @@
     nextBtn.onclick=()=>{ page=page+1; render(); };
   })();
 
-  /* ------- music + hearts (single glassy pill) ------- */
+  /* Music + hearts (same FAB look as Life) + state sync across pages */
   (function(){
     const audio=document.getElementById('bgMusic');
     const musicBtn=document.getElementById('musicBtn');
     const heartsBtn=document.getElementById('heartsBtn');
     const hearts=document.getElementById('hearts');
-    let heartsOn=true;
-    heartsBtn.addEventListener('click', ()=>{ heartsOn=!heartsOn; hearts.style.display=heartsOn?'block':'none'; });
-    musicBtn.addEventListener('click', ()=>{ if(audio.paused){ audio.play().catch(()=>{}); } else { audio.pause(); } });
+
+    // restore previous state
+    let heartsOn = localStorage.getItem('heartsOn') !== 'false'; // default true
+    let musicOn  = localStorage.getItem('musicOn') === 'true';
+
+    // apply hearts immediately
+    hearts.style.display = heartsOn ? 'block' : 'none';
+
+    heartsBtn.addEventListener('click', ()=>{
+      heartsOn = !heartsOn;
+      hearts.style.display = heartsOn ? 'block' : 'none';
+      localStorage.setItem('heartsOn', heartsOn);
+    });
+
+    // autoplay policy safe: start music on first user gesture if previously ON
+    const tryResume = () => { if(musicOn) audio.play().catch(()=>{}); document.removeEventListener('pointerdown', tryResume); };
+    document.addEventListener('pointerdown', tryResume, { once:true });
+
+    musicBtn.addEventListener('click', ()=>{
+      if(audio.paused){ audio.play().then(()=>{ musicOn = true; localStorage.setItem('musicOn','true'); }).catch(()=>{}); }
+      else { audio.pause(); musicOn = false; localStorage.setItem('musicOn','false'); }
+    });
   })();
 </script>
 </body>
