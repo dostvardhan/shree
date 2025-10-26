@@ -1,311 +1,80 @@
-﻿<!doctype html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- CSP fixed (connect-src spelling right) -->
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self';
-                 script-src 'self' 'unsafe-inline' 'unsafe-eval';
-                 connect-src 'self' https:;
-                 img-src 'self' data:;
-                 style-src 'self' 'unsafe-inline';
-                 media-src 'self';">
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shreshtha – Gallery</title>
-
-  <!-- Auth & guards -->
-  <script src="/auth0-spa-js.production.js"></script>
-  <script src="auth-init.js" defer></script>
-  <script src="guard-auth.js" defer></script>
-
-  <style>
-    :root { --text:#6e2430; }
-
-    /* Smooth background, matches other private pages */
-    body{
-      margin:0;
-      font-family:"Playfair Display",serif;
-      color:var(--text);
-      overflow-x:hidden;
-      background:
-        radial-gradient(1200px 700px at 8% 12%, rgba(255,236,240,0.45), transparent 40%),
-        radial-gradient(1000px 620px at 92% 84%, rgba(255,230,220,0.40), transparent 38%),
-        linear-gradient(160deg, #ffe9e6 0%, #ffcdc8 42%, #ffb7b2 70%, #ffa9a9 100%);
-      background-attachment: fixed;
-    }
-
-    header{ text-align:center; padding:20px 12px; position:relative; z-index:200; }
-    .page-title{ font-size:40px; margin:0; color:#5a0013; text-shadow:0 4px 10px rgba(0,0,0,.08); }
-
-    /* Smaller chips like life.html/upload.html */
-    .page-links{ margin-top:10px; font-size:14px; }
-    .page-links a{
-      display:inline-block;
-      text-decoration:none; color:#5a0013;
-      padding:6px 12px; margin:0 6px;
-      background:rgba(255,255,255,0.28);
-      border-radius:18px;
-      box-shadow:0 4px 10px rgba(0,0,0,0.10);
-    }
-    .page-links a:hover{ background:rgba(255,255,255,0.38); }
-
-    main{ max-width:1200px; margin:28px auto; padding:0 18px; position:relative; z-index:110; }
-    .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:20px; }
-
-    .photo-card{
-      background:rgba(255,255,255,0.18);
-      border-radius:16px; padding:10px;
-      box-shadow:0 12px 28px rgba(0,0,0,0.12);
-      transition:transform .28s ease;
-    }
-    .photo-card:hover{ transform:translateY(-5px); }
-    .photo-card a{ display:block; }
-    .photo-card img{
-      width:100%; max-height:380px; object-fit:contain;
-      border-radius:12px; background:#fff9f7; cursor:zoom-in;
-    }
-    .meta{ text-align:center; margin-top:8px; font-style:italic; font-size:14px; color:#4b2b2b; }
-    .meta:empty{ display:none; }
-    .empty{ text-align:center; margin-top:40px; opacity:.95; color:#4b2b2b; }
-
-    /* Minimal pager (no status text) */
-    #pager{ display:flex; justify-content:center; gap:12px; align-items:center; margin:22px 0; }
-    #pager button{
-      padding:9px 14px; border-radius:10px; border:1px solid rgba(0,0,0,0.08);
-      cursor:pointer; background:rgba(255,255,255,0.22); backdrop-filter:blur(3px); font-size:14px;
-    }
-    #pager button:disabled{ opacity:.45; cursor:default; }
-
-    /* Hearts canvas ABOVE content (so always visible), BELOW header */
-    #fxCanvas{
-      position:fixed; inset:0;
-      width:100vw; height:100vh; pointer-events:none;
-      z-index:120;
-    }
-
-    @media (max-width:600px){
-      .page-title{ font-size:32px; }
-      .page-links{ font-size:13px; }
-    }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Gallery • Shreshtha</title>
+<style>
+  :root{
+    --bg1:#ffe6ee; --bg2:#ffd1e0; --ink:#523043; --muted:#775362;
+    --card:rgba(255,255,255,.5); --shadow:0 12px 32px rgba(82,48,67,.18);
+  }
+  *{box-sizing:border-box} html,body{height:100%;margin:0}
+  body{
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+    color:var(--ink);
+    background: linear-gradient(160deg,var(--bg1),var(--bg2));
+    background-attachment: fixed;
+  }
+  header{padding:20px 16px;text-align:center}
+  h1{margin:0;font-size:clamp(24px,4vw,34px)}
+  .wrap{max-width:1100px;margin:0 auto;padding:10px 16px 40px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+  .card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .thumb{width:100%;height:220px;object-fit:cover;display:block;background:#fff}
+  .cap{padding:10px 12px;font-size:14px;color:var(--muted)}
+  .empty{margin:40px auto;text-align:center;color:var(--muted)}
+  .btn{display:inline-block;margin-top:12px;padding:10px 16px;border-radius:999px;background:#6d2a47;color:#fff;text-decoration:none;font-weight:700}
+</style>
 </head>
 <body>
-  <header>
-    <h1 class="page-title">Gallery of Sweet Memories</h1>
-    <div class="page-links">
-      <a href="life.html">Life</a> |
-      <a href="upload.html">Upload</a> |
-      <a href="/logout.html">Logout</a>
-    </div>
-  </header>
-
-  <main>
-    <section id="grid" class="grid" aria-live="polite"></section>
-    <div id="empty" class="empty" style="display:none;">No photos uploaded yet 🌸</div>
-
-    <div id="pager" aria-hidden="false">
-      <button id="prevBtn" disabled>← Prev</button>
-      <button id="nextBtn">Next →</button>
-    </div>
-  </main>
-
-  <!-- Lightbox (created once) -->
-  <div id="lightbox" aria-hidden="true" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:300;">
-    <div id="lbBack" style="position:absolute;inset:0;background:rgba(6,8,10,0.72);backdrop-filter: blur(6px);"></div>
-    <div id="lbContent" role="dialog" aria-modal="true" style="position:relative;max-width:95vw;max-height:92vh;z-index:301;display:flex;flex-direction:column;align-items:center;">
-      <button id="lbClose" aria-label="Close" style="position:absolute;right:-6px;top:-18px;background:rgba(255,255,255,0.9);border-radius:999px;border:none;padding:6px 8px;cursor:pointer;font-size:16px;z-index:302;">✕</button>
-      <img id="lbImage" alt="" style="max-width:100%;max-height:86vh;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.6);" />
-      <div id="lbCaption" class="meta" style="color:#f6efe8;"></div>
-    </div>
+  <header><h1>Gallery</h1></header>
+  <div class="wrap">
+    <div id="status" class="empty">Loading photos…</div>
+    <div id="grid" class="grid" hidden></div>
   </div>
 
-  <!-- Hearts Canvas -->
-  <canvas id="fxCanvas"></canvas>
+<script>
+(async function(){
+  const status = document.getElementById('status');
+  const grid = document.getElementById('grid');
 
-  <!-- Floating Hearts (DOM-ready + bright + self-heal) -->
-  <script>
-  (function(){
-    function initHearts(){
-      var c = document.getElementById('fxCanvas');
-      if (!c) { c = document.createElement('canvas'); c.id='fxCanvas'; document.body.appendChild(c); }
-      var ctx = c.getContext('2d');
-      var DPR = Math.max(1, window.devicePixelRatio || 1);
-      var W=0, H=0, hearts=[];
-
-      var COLORS = ['#ffb3c6','#fff6a6','#ffd89e','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
-      function R(a,b){ return Math.random()*(b-a)+a; }
-
-      function resize(){
-        W = Math.floor(window.innerWidth * DPR);
-        H = Math.floor(window.innerHeight * DPR);
-        c.width = W; c.height = H;
-        c.style.width='100vw'; c.style.height='100vh';
-      }
-
-      function spawn(){
-        if (hearts.length > 34) return;
-        hearts.push({
-          x:R(0,W), y:H + R(40*DPR, 200*DPR),
-          s:R(14,28), vx:R(-6,6), vy:-R(12,26),
-          a:R(.65,.95), r:R(-.5,.5), vr:R(-.01,.01),
-          color:COLORS[(Math.random()*COLORS.length)|0]
-        });
-      }
-
-      function draw(px,py,scale,rot,alpha,color){
-        ctx.save();
-        ctx.translate(px,py); ctx.rotate(rot); ctx.scale(scale,scale);
-
-        // luminous heart body
-        ctx.globalCompositeOperation='lighter';
-        ctx.globalAlpha = Math.min(1, alpha*1.05);
-        ctx.shadowColor = color; ctx.shadowBlur = 16*scale;
-
-        var g = ctx.createRadialGradient(0,-0.12,0.05, 0,0.12,1.0);
-        g.addColorStop(0, color);
-        g.addColorStop(0.55, color);
-        g.addColorStop(1, 'rgba(255,255,255,0.08)');
-        ctx.fillStyle = g;
-
-        ctx.beginPath();
-        ctx.moveTo(0,-0.5);
-        ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);
-        ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);
-        ctx.fill();
-
-        // highlight
-        ctx.globalAlpha = 0.7*alpha; ctx.fillStyle='rgba(255,255,255,0.95)';
-        ctx.beginPath(); ctx.ellipse(0.18,-0.28,0.12,0.06,-0.4,0,Math.PI*2); ctx.fill();
-
-        ctx.restore();
-        ctx.shadowBlur=0; ctx.globalCompositeOperation='source-over';
-      }
-
-      function tick(){
-        ctx.clearRect(0,0,W,H);
-        if (Math.random() < 0.16) spawn();
-        for (var i=0;i<hearts.length;i++){
-          var h = hearts[i];
-          h.x += h.vx * 0.016 * DPR;
-          h.y += h.vy * 0.016 * DPR;
-          h.r += h.vr;
-          h.a -= 0.0009;
-        }
-        hearts = hearts.filter(function(h){ return (h.y > -140*DPR) && (h.a > 0.02); });
-        hearts.forEach(function(h){ draw(h.x,h.y,(h.s/50)*DPR,h.r,h.a,h.color); });
-        requestAnimationFrame(tick);
-      }
-
-      addEventListener('resize', resize, {passive:true});
-      resize(); tick();
+  try {
+    const res = await fetch('/api/list', { headers: { 'Accept':'application/json' } });
+    if (res.status === 401) {
+      status.innerHTML = `You need to log in to view the gallery.<br/><a class="btn" href="/auth/login">Log in</a>`;
+      return;
     }
-    if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', initHearts);
-    else initHearts();
-  })();
-  </script>
+    if (!res.ok) throw new Error('List failed');
+    const items = await res.json();
 
-  <!-- Gallery: 24/page + Prev/Next with working history + captions only -->
-  <script>
-  (function(){
-    const PAGE_SIZE = 24;
-
-    // history of previous pageTokens so Prev works even on deep link
-    const KEY='gallery_hist_v1';
-    const readHist=()=>{ try{return JSON.parse(sessionStorage.getItem(KEY)||'[]');}catch(e){return[];} };
-    const writeHist=(v)=>{ try{sessionStorage.setItem(KEY,JSON.stringify(v));}catch(e){} };
-
-    const url = new URL(location.href);
-    const token = url.searchParams.get('pageToken');
-
-    let hist = readHist();
-    if (!hist.length && token) { hist=[null]; writeHist(hist); } // allow Prev to first page
-
-    const grid = document.getElementById('grid');
-    const empty = document.getElementById('empty');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-
-    // Lightbox helpers
-    const lb = document.getElementById('lightbox');
-    const lbImg = document.getElementById('lbImage');
-    const lbCaption = document.getElementById('lbCaption');
-    const lbClose = document.getElementById('lbClose');
-    const lbBack = document.getElementById('lbBack');
-    function openLightbox(src, caption){
-      lbImg.src = src; lbCaption.textContent = (caption && caption.trim()) ? caption.trim() : '';
-      lb.style.display='flex'; lb.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
-    }
-    function closeLightbox(){ lbImg.src=''; lb.style.display='none'; lb.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
-    lbClose.addEventListener('click', closeLightbox);
-    lbBack.addEventListener('click', closeLightbox);
-    addEventListener('keydown', (e)=>{ if (e.key==='Escape') closeLightbox(); });
-
-    function makeCard(src, captionText){
-      const caption = (captionText && captionText.trim()) ? captionText.trim() : '';
-      const card = document.createElement('div'); card.className='photo-card';
-      const a = document.createElement('a'); a.href=src; a.target='_blank'; a.rel='noopener noreferrer';
-      const img = document.createElement('img'); img.src=src; img.alt = caption || 'photo'; img.loading='lazy'; img.referrerPolicy='no-referrer';
-      img.addEventListener('click', (ev)=>{ ev.preventDefault(); openLightbox(src, caption); });
-      a.appendChild(img); card.appendChild(a);
-      if (caption){ const meta = document.createElement('div'); meta.className='meta'; meta.textContent=caption; card.appendChild(meta); }
-      return card;
+    if (!Array.isArray(items) || items.length === 0) {
+      status.innerHTML = 'No photos yet.';
+      return;
     }
 
-    async function fetchPage(tok){
-      const qs = new URLSearchParams({ pageSize:String(PAGE_SIZE) });
-      if (tok) qs.set('pageToken', tok);
-      const r = await fetch(`/api/photos?${qs.toString()}`, { credentials:'include' });
-      if (!r.ok) throw new Error('HTTP '+r.status);
-      return r.json();
-    }
-
-    async function render(){
-      try{
-        const { items = [], nextPageToken = null } = await fetchPage(token);
-        grid.innerHTML='';
-
-        items.forEach(f=>{
-          const src = `/api/file/${encodeURIComponent(f.id)}`;
-          grid.appendChild(makeCard(src, f.caption || ''));
-        });
-
-        empty.style.display = items.length ? 'none' : 'block';
-
-        // Next: push current token to history, then go
-        nextBtn.disabled = !nextPageToken;
-        nextBtn.onclick = ()=>{
-          const h = readHist(); h.push(token ?? null); writeHist(h);
-          const u = new URL(location.href);
-          if (nextPageToken) u.searchParams.set('pageToken', nextPageToken);
-          else u.searchParams.delete('pageToken');
-          location.href = u.toString();
-        };
-
-        // Prev: pop from history and go
-        const canPrev = readHist().length > 0;
-        prevBtn.disabled = !canPrev;
-        prevBtn.onclick = ()=>{
-          const h = readHist(); if (!h.length) return;
-          const prevTok = h.pop(); writeHist(h);
-          const u = new URL(location.href);
-          if (prevTok) u.searchParams.set('pageToken', prevTok);
-          else u.searchParams.delete('pageToken');
-          location.href = u.toString();
-        };
-      } catch(e){
-        console.warn('Gallery load failed', e);
-        grid.innerHTML=''; empty.style.display='block';
-        nextBtn.disabled = true; prevBtn.disabled = readHist().length === 0;
-      }
-    }
-
-    render();
-  })();
-  </script>
-
-  <!-- Global music (works on all private pages; index is skipped in JS) -->
-  <link rel="stylesheet" href="/assets/css/music-heart.css">
-  <script src="/assets/js/music-heart.js" defer></script>
+    status.hidden = true; grid.hidden = false;
+    items.forEach(it => {
+      const card = document.createElement('article');
+      card.className = 'card';
+      const img = document.createElement('img');
+      img.className = 'thumb';
+      img.loading = 'lazy';
+      img.alt = it.caption || it.name || 'photo';
+      // We stream securely from backend
+      img.src = `/api/file/${it.id}`;
+      const cap = document.createElement('div');
+      cap.className = 'cap';
+      cap.textContent = it.caption || '';
+      card.appendChild(img);
+      card.appendChild(cap);
+      grid.appendChild(card);
+    });
+  } catch (e) {
+    status.textContent = 'Something went wrong loading the gallery.';
+    console.error(e);
+  }
+})();
+</script>
 </body>
 </html>
-

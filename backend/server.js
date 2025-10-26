@@ -115,15 +115,29 @@ const verifySessionToken = token => {
 
 function requireAuth(req, res, next) {
   const token = req.cookies?.['shree_session'];
-  if (!token) return res.redirect('/index.html');
+
+  // helper: does the client expect JSON / is this an API call?
+  const wantsJson =
+    req.path.startsWith('/api/') ||
+    req.xhr === true ||
+    (req.headers.accept && req.headers.accept.includes('application/json'));
+
+  if (!token) {
+    if (wantsJson) return res.status(401).json({ error: 'unauthenticated' });
+    return res.redirect('/index.html');
+  }
+
   const user = verifySessionToken(token);
   if (!user) {
     res.clearCookie('shree_session');
+    if (wantsJson) return res.status(401).json({ error: 'invalid_session' });
     return res.redirect('/index.html');
   }
+
   req.user = user;
   next();
 }
+
 
 // ✅ AUTH — LOGIN
 app.get('/auth/login', (req, res) => {
