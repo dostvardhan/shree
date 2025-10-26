@@ -3,78 +3,107 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Gallery • Shreshtha</title>
+<title>Sweet Memories — Shreshtha</title>
 <style>
   :root{
-    --bg1:#ffe6ee; --bg2:#ffd1e0; --ink:#523043; --muted:#775362;
-    --card:rgba(255,255,255,.5); --shadow:0 12px 32px rgba(82,48,67,.18);
+    --bg1:#ffe6ee; --bg2:#ffd1e0;
+    --ink:#5a3446; --muted:#856573;
+    --card:rgba(255,255,255,.62);
+    --shadow:0 18px 40px rgba(90,52,70,.20);
+    --pill:#f7c8d6; --pill-text:#6b2a47;
+    --radius:22px; --gap:26px; --accent:#6d2a47;
   }
   *{box-sizing:border-box} html,body{height:100%;margin:0}
   body{
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
     color:var(--ink);
-    background: linear-gradient(160deg,var(--bg1),var(--bg2));
+    background: radial-gradient(1200px 600px at 10% 10%, rgba(255,255,255,.35), transparent 25%),
+                linear-gradient(160deg,var(--bg1),var(--bg2));
     background-attachment: fixed;
   }
-  header{padding:20px 16px;text-align:center}
-  h1{margin:0;font-size:clamp(24px,4vw,34px)}
-  .wrap{max-width:1100px;margin:0 auto;padding:10px 16px 40px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
-  .card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
-  .thumb{width:100%;height:220px;object-fit:cover;display:block;background:#fff}
-  .cap{padding:10px 12px;font-size:14px;color:var(--muted)}
-  .empty{margin:40px auto;text-align:center;color:var(--muted)}
-  .btn{display:inline-block;margin-top:12px;padding:10px 16px;border-radius:999px;background:#6d2a47;color:#fff;text-decoration:none;font-weight:700}
+
+  header{padding:26px 16px 8px;text-align:center}
+  h1{margin:0 0 10px;font-size:clamp(28px,5vw,44px);font-family: ui-serif, Georgia, "Times New Roman", serif;}
+  .tabs{display:inline-flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:18px}
+  .tab{padding:8px 14px;border-radius:999px;background:var(--card);backdrop-filter:blur(8px);
+       box-shadow:0 8px 20px rgba(0,0,0,.08);text-decoration:none;color:var(--ink);font-weight:600}
+  .tab.primary{background:var(--accent);color:#fff}
+
+  .wrap{max-width:1200px;margin:0 auto;padding:0 18px 60px}
+  .grid{
+    display:grid;gap:var(--gap);
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  }
+  .card{
+    background:var(--card);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden;
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .card:hover{transform:translateY(-4px);box-shadow:0 24px 46px rgba(90,52,70,.26)}
+  .thumb{width:100%;height:340px;object-fit:cover;display:block;background:#fff}
+  .cap-wrap{padding:12px 16px 18px;text-align:center}
+  .cap{
+    display:inline-block;max-width:90%;
+    background:var(--pill);color:var(--pill-text);
+    padding:8px 14px;border-radius:999px;
+    font-style:italic;font-size:15px;
+    box-shadow:0 10px 22px rgba(0,0,0,.08);
+  }
+  .empty{margin:60px auto;text-align:center;color:var(--muted)}
+  .btn{display:inline-block;margin-top:12px;padding:10px 16px;border-radius:999px;background:var(--accent);
+       color:#fff;text-decoration:none;font-weight:700}
 </style>
 </head>
 <body>
-  <header><h1>Gallery</h1></header>
-  <div class="wrap">
-    <div id="status" class="empty">Loading photos…</div>
+  <header>
+    <h1>Sweet Memories of Shreshtha’s Life</h1>
+    <nav class="tabs">
+      <a class="tab primary" href="/gallery.html">Gallery</a>
+      <a class="tab" href="/upload.html">Upload</a>
+      <a class="tab" href="/auth/logout">Logout</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <div id="status" class="empty">Loading memories…</div>
     <div id="grid" class="grid" hidden></div>
-  </div>
+  </main>
 
-<script>
-(async function(){
-  const status = document.getElementById('status');
-  const grid = document.getElementById('grid');
-
-  try {
-    const res = await fetch('/api/list', { headers: { 'Accept':'application/json' } });
-    if (res.status === 401) {
-      status.innerHTML = `You need to log in to view the gallery.<br/><a class="btn" href="/auth/login">Log in</a>`;
-      return;
+  <script>
+  (async()=>{
+    const status=document.getElementById('status');
+    const grid=document.getElementById('grid');
+    try{
+      const res=await fetch('/api/list',{headers:{'Accept':'application/json'}});
+      if(res.status===401){
+        status.innerHTML=`Please log in to view the gallery.<br><a class="btn" href="/auth/login">Log in</a>`;
+        return;
+      }
+      if(!res.ok) throw new Error('list failed');
+      const items=await res.json();
+      if(!Array.isArray(items)||!items.length){
+        status.textContent='No photos yet.'; return;
+      }
+      status.hidden=true; grid.hidden=false;
+      items.forEach(it=>{
+        const card=document.createElement('article'); card.className='card';
+        const img=document.createElement('img'); img.className='thumb';
+        img.loading='lazy'; img.src=`/api/file/${it.id}`;
+        img.alt=it.caption||it.name||'photo';
+        const wrap=document.createElement('div'); wrap.className='cap-wrap';
+        const cap=document.createElement('span'); cap.className='cap';
+        cap.textContent=it.caption||'';
+        wrap.appendChild(cap); card.appendChild(img); card.appendChild(wrap);
+        grid.appendChild(card);
+      });
+    }catch(e){
+      console.error(e); status.textContent='Something went wrong.';
     }
-    if (!res.ok) throw new Error('List failed');
-    const items = await res.json();
+  })();
+  </script>
 
-    if (!Array.isArray(items) || items.length === 0) {
-      status.innerHTML = 'No photos yet.';
-      return;
-    }
-
-    status.hidden = true; grid.hidden = false;
-    items.forEach(it => {
-      const card = document.createElement('article');
-      card.className = 'card';
-      const img = document.createElement('img');
-      img.className = 'thumb';
-      img.loading = 'lazy';
-      img.alt = it.caption || it.name || 'photo';
-      // We stream securely from backend
-      img.src = `/api/file/${it.id}`;
-      const cap = document.createElement('div');
-      cap.className = 'cap';
-      cap.textContent = it.caption || '';
-      card.appendChild(img);
-      card.appendChild(cap);
-      grid.appendChild(card);
-    });
-  } catch (e) {
-    status.textContent = 'Something went wrong loading the gallery.';
-    console.error(e);
-  }
-})();
-</script>
+  <!-- Effects only on private pages -->
+  <script src="fx-hearts.js" defer></script>
+  <script src="music-control.js" defer></script>
 </body>
 </html>

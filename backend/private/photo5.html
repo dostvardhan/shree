@@ -1,487 +1,136 @@
-﻿<div class="page-links" style="text-align:center;margin:8px 0 18px;font-size:15px;"> <a href="life.html">Life</a> &nbsp;|&nbsp; <a href="gallery.html">Gallery</a> &nbsp;|&nbsp; <a href="upload.html">Upload</a> &nbsp;|&nbsp; <a href="/logout.html">Logout</a> </div>
-<!DOCTYPE html><html lang="en"><head>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; coect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">  <meta charset="UTF-8">  <title>Shreshtha ? Memory</title>  <meta name="viewport" content="width=device-width, initial-scale=1" />  <script src="/auth0-spa-js.production.js"></script>  <script src="/auth-init.js?v=6" defer></script>  <script src="/guard-auth.js?v=6" defer></script>  <style>    body{background:
-      radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
-      radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,0.18), transparent 18%),
-      linear-gradient(160deg, #fff0ef 0%, #ffd6d6 18%, #ffc0be 38%, #ffb3b3 60%, #ffb0b0 100%);margin:0;font-family:Arial,sans-serif;color:#333;overflow-x:hidden;overflow-y:auto;text-align:center}    .photo-wrap{width:100%;display:flex;justify-content:center;align-items:center;margin:12px 0 6px}    .photo-wrap img{max-width:100%;height:auto;display:block;margin:0 auto}    .quote{margin:12px auto 8px;font-style:italic;color:#5a0013;max-width:92%;font-size:16px}    .bottom-links{display:flex;gap:16px;justify-content:center;align-items:center;margin:6px 0 20px}    .bottom-links a{background:#5a0013;color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;font-weight:600}    .heart-float{position:fixed;font-size:18px;opacity:.75;animation:floatUp linear infinite;pointer-events:none;z-index:1}    @keyframes floatUp{0%{transform:translateY(0) scale(1);opacity:.9}100%{transform:translateY(-120vh) scale(1.6);opacity:0}}    .nav-heart{position:fixed;top:50%;transform:translateY(-50%);font-size:44px;text-decoration:none;z-index:3;transition:transform .2s ease,opacity .2s ease;opacity:.9;user-select:none}    .nav-heart:hover{transform:translateY(-50%) scale(1.08);opacity:1}    .nav-left{left:16px}.nav-right{right:16px}    .nav-heart span{display:inline-block;text-shadow:0 2px 10px rgba(0,0,0,.35)}    .nav-heart:focus{outline:3px solid rgba(255,255,255,.6);outline-offset:4px;border-radius:999px}  #fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:95;} </style>  </head><body>  <a id="prevHeart" class="nav-heart nav-left" href="#"><span style="color:#ff6f91">&#10084;</span></a>  <a id="nextHeart" class="nav-heart nav-right" href="#"><span style="color:#ffd166">&#10084;</span></a>  <div class="photo-wrap"><img id="photo" src="/photos/photo5.jpg" alt="Photo 5" /></div>  <div id="quote" class="quote"></div><script>    document.addEventListener("DOMContentLoaded", () => {      const reveal = () => { const gate = document.getElementById("auth-gate"); if (gate) gate.remove(); };      try {        if (typeof requireAuth === "function") {          Promise.resolve(requireAuth()).then(reveal).catch(e => { console.error("Auth failed:", e); reveal(); });        } else {          console.error("requireAuth not found"); reveal();        }      } catch(e){ console.error("Auth error:", e); reveal(); }    });  </script><!--  START: Canvas Hearts (light pastel + shiny floating hearts) --><div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div><script>(() => {  const c = document.getElementById('fxCanvas');  if (!c) return;  const ctx = c.getContext('2d');  const DPR = Math.max(1, window.devicePixelRatio || 1);  let W = 0, H = 0, hearts = [];  const COLORS = ['#dff7ff','#fff9d6','#ffe9d2','#ffdce6','#e9f7e9','#eae8ff','#fff0f6','#fff4de'];  function R(a,b){ return Math.random()*(b-a)+a; }  function resize(){    W = ierWidth * DPR;    H = ierHeight * DPR;    c.width = W; c.height = H;    c.style.width = '100vw'; c.style.height = '100vh';  }  function spawn(){    if (hearts.length > 22) return;    hearts.push({      x: R(0, W), y: H + R(8*DPR, 160*DPR),      s: R(12, 34), vx: R(-6,6), vy: -R(12, 32),      a: R(.55, .98), r: R(-.5, .5), vr: R(-.012, .012),      color: COLORS[Math.floor(Math.random()*COLORS.length)]    });  }  function drawHeart(px,py,scale,rot,alpha,color){    ctx.save();    ctx.translate(px,py); ctx.rotate(rot); ctx.scale(scale, scale);    ctx.globalAlpha = Math.min(1, alpha * 1.05);    ctx.shadowColor = color; ctx.shadowBlur = 14 * scale;    const g = ctx.createRadialGradient(0, -0.12, 0.05, 0, 0.12, 1.0);    g.addColorStop(0, color); g.addColorStop(0.6, color); g.addColorStop(1, 'rgba(255,255,255,0.08)');    ctx.fillStyle = g;    ctx.beginPath();    ctx.moveTo(0,-0.5);    ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);    ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);    ctx.fill();    ctx.globalAlpha = 0.55 * alpha;    ctx.fillStyle = 'rgba(255,255,255,0.9)';    ctx.beginPath();    ctx.ellipse(0.18, -0.28, 0.12, 0.06, -0.4, 0, Math.PI*2);    ctx.fill();    ctx.restore(); ctx.shadowBlur = 0;  }  function tick(){    ctx.clearRect(0,0,W,H);    if (Math.random() < 0.11) spawn();    hearts.forEach(h => { h.x += h.vx * 0.016; h.y += h.vy * 0.016; h.r += h.vr; h.a -= 0.0009; });    hearts = hearts.filter(h => h.y > -120*DPR && h.a > 0.02);    hearts.forEach(h => drawHeart(h.x, h.y, (h.s/50)*DPR, h.r, h.a, h.color));    requestAnimationFrame(tick);  }  addEventListener('resize', resize, { passive:true });  resize(); tick();})();</script><!--  END: Canvas Hearts --><script src="hearts.js" defer></script><!-- Hearts Start --><div id='heartsContainer'></div><style>  @keyframes floatUp {    0% { transform: translateY(0) scale(1); opacity: 0.95; }    100% { transform: translateY(-110vh) scale(1.4); opacity: 0; }  }  .floating-heart {    position: fixed;    bottom: -10px;    font-size: 18px;    opacity: 0.9;    pointer-events: none;    animation: floatUp linear forwards;    z-index: 90;  }</style><script>(() => {  const COLORS = ['#ffd6e0','#ffe8cc','#ffe9ec','#d6f5ff','#c6e5ff','#e5d6ff','#ffd1fa'];  function spawnHeart(){    const heart = document.createElement('div');    heart.className = 'floating-heart';    heart.ierHTML = '&#10084;';    heart.style.left = Math.random()*100 + 'vw';    heart.style.color = COLORS[Math.floor(Math.random()*COLORS.length)] || '#ff6f91';    heart.style.fontSize = (18 + Math.random()*22) + 'px';    heart.style.animationDuration = (8 + Math.random()*6) + 's';    document.body.appendChild(heart);    setTimeout(()=>heart.remove(),15000);  }  for(let i=0;i<10;i++) spawnHeart();  setInterval(spawnHeart,900);})();</script><!-- Hearts End --><script>
-(() => {
-  function getCurrentIndex() {
-    // try img src first (robust)
-    const img = document.getElementById('photo');
-    if (img && img.src) {
-      const m = img.src.match(/photo(\d+)\.jpg/i);
-      if (m && m[1]) return parseInt(m[1],10);
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shreshtha • Memory</title>
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval';
+                 connect-src 'self' https:; img-src 'self' data:;
+                 style-src 'self' 'unsafe-inline'; media-src 'self';">
+  <style>
+    :root{--bg1:#fff0ef;--bg2:#ffd6d6;--ink:#5a0013;--card:rgba(255,255,255,.62);
+          --shadow:0 18px 40px rgba(0,0,0,.18);--pill:#f8d2da;--pill-text:#6b2a3a;
+          --radius:22px;--accent:#6d2a47}
+    *{box-sizing:border-box} html,body{height:100%;margin:0}
+    body{
+      font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,.25), transparent 20%),
+        radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,.18), transparent 18%),
+        linear-gradient(160deg,var(--bg1),var(--bg2));
+      background-attachment:fixed; text-align:center;
     }
-    // fallback to pathname (photoN.html)
-    const p = (location.pathname||'').match(/photo(\d+)\.html/i);
-    if (p && p[1]) return parseInt(p[1],10);
-    return 1;
-  }
-
-  const total = 9;
-  const cur = getCurrentIndex();
-  const prev = cur > 1 ? cur - 1 : total;
-  const next = cur < total ? cur + 1 : 1;
-
-  const prevLink = document.getElementById('prevHeart');
-  const nextLink = document.getElementById('nextHeart');
-
-  // set stable hrefs (so middle-click / open in new works)
-  if (prevLink) prevLink.href = 'photo' + prev + '.html';
-  if (nextLink) nextLink.href = 'photo' + next + '.html';
-
-  // also attach click handlers (prevents weird # or race conditions)
-  if (prevLink) prevLink.addEventListener('click', (e) => { e.preventDefault(); location.href = prevLink.href; });
-  if (nextLink) nextLink.addEventListener('click', (e) => { e.preventDefault(); location.href = nextLink.href; });
-})();
-</script>
-<!-- Improved Mini Music Player + Volume Popover (replaces older snippet) -->
-<style>
-  /* --- smoother global background for private pages --- */
-  /* Replace old body background lines with this gradient to remove the visible seam */
-  body {
-    background:
-      radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
-      radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,0.18), transparent 18%),
-      linear-gradient(160deg, #fff0ef 0%, #ffd6d6 18%, #ffc0be 38%, #ffb3b3 60%, #ffb0b0 100%);
-    background-attachment: fixed;
-    color: #333;
-  }
-
-  /* --- compact heart player container --- */
-  .music-btn {
-    position: fixed;
-    bottom: 22px;
-    right: 22px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg,#fffafc 0%,#ffeef2 100%);
-    box-shadow: 0 10px 22px rgba(230,100,140,0.18);
-    display:flex;align-items:center;justify-content:center;
-    z-index:160; border:none; cursor:pointer; transition:transform .18s ease,box-shadow .18s ease;
-    backdrop-filter: blur(4px);
-  }
-  .music-btn:hover { transform: translateY(-4px); box-shadow: 0 16px 30px rgba(230,100,140,0.25); }
-
-  .music-btn svg { width:26px; height:26px; display:block; }
-  .music-btn .heart { fill:#ff6b81; transition: transform .18s ease, fill .22s ease; }
-  .music-btn.playing .heart { transform: scale(1.08); fill:#ffd166; filter: drop-shadow(0 6px 12px rgba(255,170,80,0.20)); }
-
-  /* little gold volume dot to the right of the heart (click to open volume popover) */
-  .vol-dot {
-    position: absolute;
-    right: -6px;
-    top: -6px;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background: linear-gradient(150deg,#ffd76d,#ffc96a);
-    display:flex;align-items:center;justify-content:center;
-    box-shadow: 0 6px 10px rgba(255,170,100,0.24);
-    border: 2px solid rgba(255,255,255,0.9);
-    cursor:pointer;
-  }
-  .vol-dot:active { transform: scale(.96); }
-
-  /* volume popover */
-  .vol-pop {
-    position: fixed;
-    bottom: 84px;
-    right: 18px;
-    width: 214px;
-    padding: 10px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
-    border-radius: 12px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-    z-index: 170;
-    display: none;
-    align-items: center;
-    gap: 12px;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  }
-  .vol-pop.show { display: flex; }
-
-  .vol-pop input[type="range"] {
-    -webkit-appearance: none; width: 120px; height: 6px; border-radius: 999px;
-    background: linear-gradient(90deg,#ffc1c1,#ffd88a);
-    outline: none;
-  }
-  .vol-pop input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance:none; width:16px;height:16px;border-radius:50%;
-    background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border: 3px solid #ffb0a0;
-  }
-  .vol-label { font-size:13px; color:#6b2b2b; margin-right:6px; }
-
-  /* small mute button */
-  .vol-btn {
-    width:30px;height:30px;border-radius:8px;border:none;
-    background:#fff;border:1px solid rgba(0,0,0,0.06); cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-  }
-  .vol-btn svg { width:14px; height:14px; fill:#b04a4a; opacity:.95; }
-
-  /* accessible focus */
-  .music-btn:focus, .vol-dot:focus, .vol-btn:focus { outline: 3px solid rgba(255,200,200,0.6); outline-offset:3px; }
-</style>
-
-<!--\ Improved\ Music\ Control\ \(updated\)\ -->\n<style>\n\ \ /\*\ small\ override\ for\ headings\ color\ &\ smoother\ gradient\ \(site-wide\ private\ pages\)\ \*/\n\ \ h1\.site-title,\ \.page-title,\ h1\ \{\ color:\ \#6d232b\ !important;\ text-shadow:\ 0\ 6px\ 22px\ rgba\(0,0,0,0\.12\);\ }\n\n\ \ /\*\ music\ control\ \(prettier\)\ \*/\n\ \ \.music-btn\ \{\n\ \ \ \ position:\ fixed;\n\ \ \ \ bottom:\ 22px;\n\ \ \ \ right:\ 22px;\n\ \ \ \ width:\ 58px;\n\ \ \ \ height:\ 58px;\n\ \ \ \ border-radius:\ 50%;\n\ \ \ \ background:\ linear-gradient\(145deg,\#fff\ 0%,\#ffeff0\ 100%\);\n\ \ \ \ box-shadow:\ 0\ 10px\ 30px\ rgba\(220,90,120,0\.18\);\n\ \ \ \ display:flex;align-items:center;justify-content:center;\n\ \ \ \ z-index:160;\ cursor:pointer;\ border:\ none;\ transition:\ transform\ \.16s\ ease,\ box-shadow\ \.16s\ ease;\n\ \ \ \ backdrop-filter:\ blur\(4px\);\n\ \ }\n\ \ \.music-btn:hover\ \{\ transform:\ translateY\(-3px\);\ box-shadow:\ 0\ 16px\ 36px\ rgba\(220,90,120,0\.25\);\ }\n\n\ \ \.music-btn\ svg\ \{\ width:26px;\ height:26px;\ display:block;\ }\n\ \ \.music-btn\ \.heart\ \{\ fill:\#ff6b81;\ transition:\ transform\ \.18s\ ease,\ fill\ \.22s\ ease;\ }\n\ \ \.music-btn\.playing\ \.heart\ \{\ transform:\ scale\(1\.12\);\ fill:\#ffd166;\ filter:\ drop-shadow\(0\ 8px\ 18px\ rgba\(255,165,70,0\.18\)\);\ }\n\n\ \ /\*\ small\ gold\ badge\ \*/\n\ \ \.music-badge\ \{\n\ \ \ \ position:absolute;\ right:-6px;\ top:-6px;\n\ \ \ \ width:18px;height:18px;border-radius:50%;\n\ \ \ \ background:\ radial-gradient\(circle\ at\ 30%\ 30%,\ \#fff8e6,\ \#ffd76d\);\n\ \ \ \ border:2px\ solid\ rgba\(255,255,255,0\.9\);\n\ \ \ \ box-shadow:0\ 6px\ 14px\ rgba\(255,160,70,0\.18\);\n\ \ }\n\n\ \ \.vol-pop\ \{\ position:\ fixed;\ bottom:\ 88px;\ right:\ 16px;\ width:220px;\ padding:10px\ 12px;\ \n\ \ \ \ \ \ \ \ \ \ \ \ background:\ linear-gradient\(180deg,\ rgba\(255,255,255,0\.98\),\ rgba\(255,250,248,0\.95\)\);\n\ \ \ \ \ \ \ \ \ \ \ \ border-radius:12px;\ box-shadow:0\ 12px\ 30px\ rgba\(0,0,0,0\.12\);\ z-index:170;\ display:none;\ gap:10px;\ align-items:center;\ }\n\ \ \.vol-pop\.show\ \{\ display:flex;\ }\n\ \ \.vol-range\ \{\ -webkit-appearance:none;\ width:130px;\ height:7px;\ border-radius:999px;\ background:\ linear-gradient\(90deg,\#ffc1c1,\#ffd88a\);\ outline:none;\ }\n\ \ \.vol-range::-webkit-slider-thumb\ \{\ -webkit-appearance:none;\ width:16px;height:16px;border-radius:50%;\ background:\#fff;\ box-shadow:0\ 4px\ 10px\ rgba\(0,0,0,0\.12\);\ border:3px\ solid\ \#ffb0a0;\ }\n</style>\n\n\n\n<div\ id="volPop"\ class="vol-pop"\ aria-hidden="true">\n\ \ <div\ style="font-size:13px;color:\#6b2b2b">Vol</div>\n\ \ <input\ id="volRange"\ class="vol-range"\ type="range"\ min="0"\ max="100"\ step="1"\ value="60"\ aria-label="Volume"\ />\n\ \ <button\ id="muteBtn"\ style="border:none;background:\#fff;padding:6px;border-radius:8px;box-shadow:0\ 4px\ 8px\ rgba\(0,0,0,0\.06\);cursor:pointer"\ aria-label="Mute/unmute">??</button>\n</div>\n\n\n\n<script>\n\(\(\)\ =>\ \{\n\ \ const\ btn\ =\ document\.getElementById\('musicButton'\),\ badge\ =\ document\.getElementById\('musicBadge'\),\n\ \ \ \ \ \ \ \ volPop\ =\ document\.getElementById\('volPop'\),\ volRange\ =\ document\.getElementById\('volRange'\),\n\ \ \ \ \ \ \ \ muteBtn\ =\ document\.getElementById\('muteBtn'\),\ music\ =\ document\.getElementById\('bgMusic'\);\n\n\ \ function\ setVolume\(v\)\{\ music\.volume\ =\ Math\.max\(0,Math\.min\(100,v\)\)/100;\ try\{localStorage\.setItem\('shree_music_volume',String\(v\)\);}catch\(e\)\{}\ }\n\ \ function\ setPlaying\(p\)\{\n\ \ \ \ if\(p\)\{\ btn\.classList\.add\('playing'\);\ music\.play\(\)\.catch\(\(\)=>\{}\);\ localStorage\.setItem\('shree_music_playing','1'\);\ }\ \n\ \ \ \ else\ \{\ btn\.classList\.remove\('playing'\);\ music\.pause\(\);\ localStorage\.setItem\('shree_music_playing','0'\);\ }\n\ \ }\n\n\ \ //\ restore\ state\n\ \ try\{\ const\ sv\ =\ localStorage\.getItem\('shree_music_volume'\);\ if\(sv!==null\)\ volRange\.value\ =\ sv;\ setVolume\(volRange\.value\);\ }catch\(e\)\{}\n\ \ try\{\ if\(localStorage\.getItem\('shree_music_playing'\)==='1'\)\{\ music\.play\(\)\.then\(\(\)=>btn\.classList\.add\('playing'\)\)\.catch\(\(\)=>\{}\);\ }\ }catch\(e\)\{}\n\n\ \ btn\.addEventListener\('click',\ \(e\)=>\ \{\ if\(e\.target\.id==='musicBadge'\)\ return;\ setPlaying\(!btn\.classList\.contains\('playing'\)\);\ }\);\n\ \ badge\.addEventListener\('click',\ \(e\)=>\ \{\ volPop\.classList\.toggle\('show'\);\ volPop\.setAttribute\('aria-hidden',\ volPop\.classList\.contains\('show'\)\?\ 'false':'true'\);\ e\.stopPropagation\(\);\ }\);\n\ \ volRange\.addEventListener\('input',\ \(\)=>\{\ setVolume\(volRange\.value\);\ }\);\n\ \ muteBtn\.addEventListener\('click',\ \(\)=>\{\ if\(music\.volume>0\)\{\ volRange\.dataset\.prev\ =\ volRange\.value;\ volRange\.value=0;\ }\ else\ \{\ volRange\.value\ =\ volRange\.dataset\.prev\ \|\|\ 60;\ }\ setVolume\(volRange\.value\);\ }\);\n\ \ document\.addEventListener\('click',\ \(e\)=>\{\ if\(!e\.target\.closest\('\.vol-pop'\)\ &&\ !e\.target\.closest\('\#musicBadge'\)\)\{\ volPop\.classList\.remove\('show'\);\ volPop\.setAttribute\('aria-hidden','true'\);\ }}\);\n\ \ music\.addEventListener\('play',\ \(\)=>\ btn\.classList\.add\('playing'\)\);\n\ \ music\.addEventListener\('pause',\ \(\)=>\ btn\.classList\.remove\('playing'\)\);\n}\)\(\);\n</script>
-<!-- Improved Mini Music Player + Volume Popover (replaces older snippet) -->
-<style>
-  /* --- smoother global background for private pages --- */
-  /* Replace old body background lines with this gradient to remove the visible seam */
-  body {
-    background:
-      radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
-      radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,0.18), transparent 18%),
-      linear-gradient(160deg, #fff0ef 0%, #ffd6d6 18%, #ffc0be 38%, #ffb3b3 60%, #ffb0b0 100%);
-    background-attachment: fixed;
-    color: #333;
-  }
-
-  /* --- compact heart player container --- */
-  .music-btn {
-    position: fixed;
-    bottom: 22px;
-    right: 22px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg,#fffafc 0%,#ffeef2 100%);
-    box-shadow: 0 10px 22px rgba(230,100,140,0.18);
-    display:flex;align-items:center;justify-content:center;
-    z-index:160; border:none; cursor:pointer; transition:transform .18s ease,box-shadow .18s ease;
-    backdrop-filter: blur(4px);
-  }
-  .music-btn:hover { transform: translateY(-4px); box-shadow: 0 16px 30px rgba(230,100,140,0.25); }
-
-  .music-btn svg { width:26px; height:26px; display:block; }
-  .music-btn .heart { fill:#ff6b81; transition: transform .18s ease, fill .22s ease; }
-  .music-btn.playing .heart { transform: scale(1.08); fill:#ffd166; filter: drop-shadow(0 6px 12px rgba(255,170,80,0.20)); }
-
-  /* little gold volume dot to the right of the heart (click to open volume popover) */
-  .vol-dot {
-    position: absolute;
-    right: -6px;
-    top: -6px;
-    width:18px;
-    height:18px;
-    border-radius:50%;
-    background: linear-gradient(150deg,#ffd76d,#ffc96a);
-    display:flex;align-items:center;justify-content:center;
-    box-shadow: 0 6px 10px rgba(255,170,100,0.24);
-    border: 2px solid rgba(255,255,255,0.9);
-    cursor:pointer;
-  }
-  .vol-dot:active { transform: scale(.96); }
-
-  /* volume popover */
-  .vol-pop {
-    position: fixed;
-    bottom: 84px;
-    right: 18px;
-    width: 214px;
-    padding: 10px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
-    border-radius: 12px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-    z-index: 170;
-    display: none;
-    align-items: center;
-    gap: 12px;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  }
-  .vol-pop.show { display: flex; }
-
-  .vol-pop input[type="range"] {
-    -webkit-appearance: none; width: 120px; height: 6px; border-radius: 999px;
-    background: linear-gradient(90deg,#ffc1c1,#ffd88a);
-    outline: none;
-  }
-  .vol-pop input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance:none; width:16px;height:16px;border-radius:50%;
-    background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border: 3px solid #ffb0a0;
-  }
-  .vol-label { font-size:13px; color:#6b2b2b; margin-right:6px; }
-
-  /* small mute button */
-  .vol-btn {
-    width:30px;height:30px;border-radius:8px;border:none;
-    background:#fff;border:1px solid rgba(0,0,0,0.06); cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-  }
-  .vol-btn svg { width:14px; height:14px; fill:#b04a4a; opacity:.95; }
-
-  /* accessible focus */
-  .music-btn:focus, .vol-dot:focus, .vol-btn:focus { outline: 3px solid rgba(255,200,200,0.6); outline-offset:3px; }
-</style>
-
-
-
-<div id="volPop" class="vol-pop" role="dialog" aria-hidden="true">
-  <div class="vol-label" aria-hidden="true">Vol</div>
-  <input id="volRange" type="range" min="0" max="100" step="1" value="60" aria-label="Volume slider" />
-  <button id="muteBtn" class="vol-btn" aria-pressed="false" title="Mute / unmute" aria-label="Mute or unmute">
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 10v4h4l5 4V6L8 10H4z"/></svg>
-  </button>
-</div><script>
-(() => {
-  const btn = document.getElementById('musicButton');
-  const volDot = document.getElementById('volDot');
-  const volPop = document.getElementById('volPop');
-  const volRange = document.getElementById('volRange');
-  const muteBtn = document.getElementById('muteBtn');
-  const music = document.getElementById('bgMusic');
-
-  // restore stored state
-  let playing = false;
-  try {
-    const savedVol = localStorage.getItem('shree_music_volume');
-    if (savedVol !== null) volRange.value = savedVol;
-    const savedPlaying = localStorage.getItem('shree_music_playing');
-    if (savedPlaying === '1') { playing = true; }
-  } catch(e){}
-
-  // set actual audio volume (0..1)
-  function applyVolume() {
-    const v = Math.max(0, Math.min(100, parseInt(volRange.value || 60,10)));
-    music.volume = v/100;
-    if (v === 0) { muteBtn.setAttribute('aria-pressed','true'); } else { muteBtn.setAttribute('aria-pressed','false'); }
-    try { localStorage.setItem('shree_music_volume', String(v)); } catch(e){}
-  }
-  applyVolume();
-
-  function setPlaying(state) {
-    playing = !!state;
-    btn.setAttribute('aria-pressed', playing ? 'true' : 'false');
-    if (playing) {
-      btn.classList.add('playing');
-      music.play().catch(()=>{});
-      try { localStorage.setItem('shree_music_playing','1'); } catch(e){}
-      btn.setAttribute('title','Pause music');
-    } else {
-      btn.classList.remove('playing');
-      music.pause();
-      try { localStorage.setItem('shree_music_playing','0'); } catch(e){}
-      btn.setAttribute('title','Play music');
-    }
-  }
-
-  // initial play state (do not force autoplay; only restore visual if already allowed)
-  if (playing) {
-    // try resume playback if browser allows
-    music.play().then(()=>{ setPlaying(true); }).catch(()=>{ setPlaying(false); });
-  }
-
-  // heart click toggles play/pause
-  btn.addEventListener('click', (e) => {
-    // if click target was the volDot, handled separately
-    if (e.target && (e.target.id === 'volDot' || e.target.closest('#volDot'))) return;
-    setPlaying(!playing);
-  });
-
-  // show/hide volume popover on volDot click
-  volDot.addEventListener('click', (e) => {
-    const showing = volPop.classList.toggle('show');
-    volPop.setAttribute('aria-hidden', showing ? 'false' : 'true');
-    if (showing) { // auto-hide after 6s
-      setTimeout(()=>{ volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true'); }, 6000);
-    }
-    e.stopPropagation();
-  });
-
-  // volume slider changes
-  volRange.addEventListener('input', () => {
-    applyVolume();
-  });
-
-  // mute toggle
-  muteBtn.addEventListener('click', () => {
-    if (music.volume > 0) {
-      volRange.dataset.prev = volRange.value;
-      volRange.value = 0;
-    } else {
-      volRange.value = volRange.dataset.prev || 60;
-    }
-    applyVolume();
-  });
-
-  // close popover when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.vol-pop') && !e.target.closest('#volDot')) {
-      volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true');
-    }
-  });
-
-  // sync UI when audio events happen
-  music.addEventListener('play', ()=> setPlaying(true));
-  music.addEventListener('pause', ()=> setPlaying(false));
-
-  // ensure keyboard accessibility
-  volDot.tabIndex = 0;
-  volDot.addEventListener('keydown', (e)=> { if (e.key==='Enter' || e.key===' ') { e.preventDefault(); volDot.click(); }});
-
-})();
-</script>
-
-
-<!-- MUSIC HEART FIXED -->
-
-
-<script>
-(function(){
- const a=document.getElementById("bgMusicHeart"),b=document.getElementById("musicHeartBtn");
- if(!a||!b)return;
- function u(){b.textContent=a.paused?"♡":"❤";}
- b.onclick=()=>{a.paused?a.play():a.pause();};
- a.onplay=a.onpause=u;
- document.body.addEventListener("click",()=>{a.play().catch(()=>{})},{once:true});
- u();
-})();
-</script>
-<!-- /MUSIC HEART FIXED -->
-
-
-<!-- MUSIC-HEART-FINAL: start -->
-<style id="music-heart-final-style">
-  #musicHeartWrap { position: fixed; right: 18px; bottom: 18px; z-index: 9999; display:flex; gap:8px; align-items:center; }
-  #musicHeartBtn { width:56px;height:56px;border-radius:50%;border:none;cursor:pointer; display:flex;align-items:center;justify-content:center;font-size:22px;
-    background: radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0); box-shadow: 0 8px 28px rgba(220,80,110,0.14); transition: transform .16s ease, box-shadow .16s ease, opacity .18s ease; }
-  #musicHeartBtn:active { transform: scale(.96); }
-  #musicHeartBtn.playing { box-shadow: 0 14px 42px rgba(220,80,110,0.24); transform: scale(1.04); }
-  #musicHeartBtn .heart { pointer-events:none; user-select:none; }
-  .vol-dot { width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    background: linear-gradient(150deg,#ffd76d,#ffc96a); box-shadow:0 6px 10px rgba(255,170,100,0.18); border:2px solid rgba(255,255,255,0.9); cursor:pointer; margin-left:-8px; }
-  .vol-pop { position: absolute; right: 72px; bottom: 10px; width:220px; padding:10px 12px; background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
-    border-radius:12px; box-shadow:0 12px 30px rgba(0,0,0,0.12); display:none; gap:10px; align-items:center; }
-  .vol-pop.show { display:flex; }
-  .vol-range { -webkit-appearance:none; width:130px; height:7px; border-radius:999px; background:linear-gradient(90deg,#ffc1c1,#ffd88a); outline:none; }
-  .vol-range::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:0 4px 10px rgba(0,0,0,0.12); border:3px solid #ffb0a0; }
-</style>
-
-<audio id="bgMusicFinal" loop preload="auto" style="display:none">
-  <source src="/music/bg.mp3" type="audio/mpeg" />
-</audio>
-
-<div id="musicHeartWrap" aria-hidden="false">
-  <button id="musicHeartBtn" aria-label="Toggle background music" title="Play / Pause background music" type="button">
-    <span class="heart" aria-hidden="true">♡</span>
-  </button>
-  <div class="vol-dot" id="musicVolDot" role="button" tabindex="0" aria-label="Volume control" title="Volume"></div>
-
-  <div class="vol-pop" id="musicVolPop" role="dialog" aria-hidden="true">
-    <div style="font-size:13px;color:#6b2b2b;">Vol</div>
-    <input id="musicVolRange" class="vol-range" type="range" min="0" max="100" step="1" value="60" aria-label="Volume slider" />
-    <button id="musicMuteBtn" style="border:none;background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.06);cursor:pointer" aria-pressed="false" title="Mute/unmute">M</button>
+    header{padding:24px 14px 10px}
+    h1{margin:0;font-family:ui-serif,Georgia,serif;font-size:clamp(26px,5vw,40px)}
+    .links{margin:16px 0 8px;font-size:15px}
+    .links a{color:var(--accent);text-decoration:none;font-weight:600}
+    .links .sep{opacity:.6;margin:0 8px}
+    .wrap{max-width:1150px;margin:0 auto;padding:0 18px 50px}
+    .frame{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;padding:14px}
+    .hero{width:100%;height:72vh;min-height:420px;object-fit:cover;display:block;background:#fff;border-radius:16px}
+    .cap-area{display:flex;justify-content:center;margin-top:12px}
+    .cap{background:var(--pill);color:var(--pill-text);padding:8px 14px;border-radius:999px;font-style:italic;font-size:15px;box-shadow:0 10px 22px rgba(0,0,0,.08)}
+    .actions{margin-top:12px}
+    .pill{display:inline-block;margin:0 6px 8px;padding:8px 14px;border-radius:999px;background:var(--card);text-decoration:none;color:var(--ink);font-weight:600;box-shadow:0 8px 20px rgba(0,0,0,.08)}
+    .pill.primary{background:var(--accent);color:#fff}
+    .nav-heart{position:fixed;top:50%;transform:translateY(-50%);font-size:42px;text-decoration:none;z-index:5;opacity:.9;user-select:none}
+    .nav-heart:hover{transform:translateY(-50%) scale(1.06)}
+    .nav-left{left:16px}.nav-right{right:16px}
+  </style>
+</head>
+<body>
+  <div class="links">
+    <a href="life.html">Life</a><span class="sep">|</span>
+    <a href="gallery.html">Gallery</a><span class="sep">|</span>
+    <a href="upload.html">Upload</a><span class="sep">|</span>
+    <a href="/logout.html">Logout</a>
   </div>
-</div>
 
-<script>
-(function(){
-  try {
-    const audio = document.getElementById('bgMusicFinal');
-    const btn = document.getElementById('musicHeartBtn');
-    const volDot = document.getElementById('musicVolDot');
-    const volPop = document.getElementById('musicVolPop');
-    const volRange = document.getElementById('musicVolRange');
-    const muteBtn = document.getElementById('musicMuteBtn');
+  <a id="prevHeart" class="nav-heart nav-left" href="photo4.html" aria-label="Previous">❤</a>
+  <a id="nextHeart" class="nav-heart nav-right" href="photo6.html" aria-label="Next">❤</a>
 
-    if (!audio || !btn || !volDot || !volPop || !volRange || !muteBtn) return;
+  <header><h1>Memory</h1></header>
 
-    try {
-      const savedVol = localStorage.getItem('shree_music_volume');
-      if (savedVol !== null) volRange.value = savedVol;
-      audio.volume = (savedVol !== null) ? (Math.max(0, Math.min(100, parseInt(savedVol,10))) / 100) : 0.6;
-    } catch(e){}
+  <main class="wrap">
+    <article class="frame">
+      <!-- paste photo5.html and change: -->
+<img class="hero" src="/photos/photo5.jpg" alt="Memory 5" />
+<div class="cap-area"><span class="cap">“Candid laughs, cosiest vibes.”</span></div>
 
-    function updateBtn() {
-      const heart = btn.querySelector('.heart');
-      if (!heart) return;
-      if (!audio.paused) { btn.classList.add('playing'); heart.textContent = '❤'; btn.setAttribute('aria-pressed','true'); }
-      else { btn.classList.remove('playing'); heart.textContent = '♡'; btn.setAttribute('aria-pressed','false'); }
-    }
+      <div class="actions">
+        <a class="pill" href="/gallery.html">Back to Gallery</a>
+        <a class="pill primary" href="/life.html">Sweet Memories</a>
+        <a class="pill" href="/auth/logout">Logout</a>
+      </div>
+    </article>
+  </main>
 
-    btn.addEventListener('click', function(e){
-      e.preventDefault();
-      if (audio.paused) {
-        audio.play().then(()=> { localStorage.setItem('shree_music_playing','1'); updateBtn(); }).catch(()=>{});
-      } else {
-        audio.pause(); localStorage.setItem('shree_music_playing','0'); updateBtn();
-      }
-    });
+  <script>
+    (function(){
+      const m=(location.pathname||'').match(/photo(\d+)\.html/i), total=9; if(!m)return;
+      const cur=parseInt(m[1],10), prev=cur>1?cur-1:total, next=cur<total?cur+1:1;
+      const L=document.getElementById('prevHeart'), R=document.getElementById('nextHeart');
+      if(L) L.href='photo'+prev+'.html'; if(R) R.href='photo'+next+'.html';
+    })();
+  </script>
 
-    volDot.addEventListener('click', function(e){
-      e.stopPropagation();
-      const show = volPop.classList.toggle('show');
-      volPop.setAttribute('aria-hidden', show ? 'false' : 'true');
-      if (show) { setTimeout(()=> volRange.focus(), 40); }
-    });
+  <script src="/hearts.js" defer></script>
 
-    volDot.addEventListener('keydown', function(e){ if (e.key==='Enter' || e.key===' ') { e.preventDefault(); volDot.click(); } });
+  <style>
+    #musicHeartWrap{position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;gap:8px;align-items:center}
+    #musicHeartBtn{width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;
+      background:radial-gradient(circle at 30% 30%,#ffd6e0,#ff9fb0);box-shadow:0 8px 28px rgba(220,80,110,.14);transition:transform .16s ease,box-shadow .16s ease}
+    #musicHeartBtn:active{transform:scale(.96)} #musicHeartBtn.playing{box-shadow:0 14px 42px rgba(220,80,110,.24);transform:scale(1.04)}
+    #musicHeartBtn .heart{pointer-events:none;user-select:none}
+    .vol-dot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(150deg,#ffd76d,#ffc96a);
+      box-shadow:0 6px 10px rgba(255,170,100,.18);border:2px solid rgba(255,255,255,.9);cursor:pointer;margin-left:-8px}
+    .vol-pop{position:absolute;right:72px;bottom:10px;width:220px;padding:10px 12px;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,250,248,.95));
+      border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.12);display:none;gap:10px;align-items:center}
+    .vol-pop.show{display:flex}
+    .vol-range{-webkit-appearance:none;width:130px;height:7px;border-radius:999px;background:linear-gradient(90deg,#ffc1c1,#ffd88a);outline:none}
+    .vol-range::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 4px 10px rgba(0,0,0,.12);border:3px solid #ffb0a0}
+  </style>
 
-    volRange.addEventListener('input', function(){
-      const v = Math.max(0, Math.min(100, parseInt(volRange.value,10)));
-      audio.volume = v/100;
-      try { localStorage.setItem('shree_music_volume', String(v)); } catch(e){}
-      if (v === 0) muteBtn.setAttribute('aria-pressed','true'); else muteBtn.setAttribute('aria-pressed','false');
-    });
+  <audio id="bgMusicFinal" loop preload="auto" style="display:none">
+    <source src="/music/bg.mp3" type="audio/mpeg" />
+  </audio>
 
-    muteBtn.addEventListener('click', function(){
-      if (audio.volume > 0) { volRange.dataset.prev = volRange.value; volRange.value = 0; } 
-      else { volRange.value = volRange.dataset.prev || 60; }
-      volRange.dispatchEvent(new Event('input'));
-    });
+  <div id="musicHeartWrap" aria-hidden="false">
+    <button id="musicHeartBtn" aria-label="Toggle background music" title="Play / Pause background music" type="button">
+      <span class="heart" aria-hidden="true">♡</span>
+    </button>
+    <div class="vol-dot" id="musicVolDot" role="button" tabindex="0" aria-label="Volume control" title="Volume"></div>
+    <div class="vol-pop" id="musicVolPop" role="dialog" aria-hidden="true">
+      <div style="font-size:13px;color:#6b2b2b;">Vol</div>
+      <input id="musicVolRange" class="vol-range" type="range" min="0" max="100" step="1" value="60" aria-label="Volume slider" />
+      <button id="musicMuteBtn" style="border:none;background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,.06);cursor:pointer" aria-pressed="false" title="Mute/unmute">M</button>
+    </div>
+  </div>
 
-    document.addEventListener('click', function(e){
-      if (!e.target.closest('.vol-pop') && !e.target.closest('#musicVolDot')) { volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true'); }
-    });
-
-    audio.play().then(()=>{ updateBtn(); }).catch(()=> {
-      function userStart() {
-        audio.play().then(()=>{ localStorage.setItem('shree_music_playing','1'); updateBtn(); }).catch(()=>{});
-        window.removeEventListener('click', userStart, {capture:true});
-        window.removeEventListener('touchstart', userStart, {passive:true});
-        window.removeEventListener('keydown', userStart, {capture:true});
-      }
-      window.addEventListener('click', userStart, {capture:true});
-      window.addEventListener('touchstart', userStart, {passive:true});
-      window.addEventListener('keydown', userStart, {capture:true});
-    });
-
-    audio.addEventListener('play', updateBtn);
-    audio.addEventListener('pause', updateBtn);
-    audio.addEventListener('volumechange', function(){ try{ localStorage.setItem('shree_music_volume', String(Math.round(audio.volume*100))); }catch(e){} });
-
-    updateBtn();
-  } catch(err) { console.warn('music heart final snippet error', err); }
-})();
-</script>
-<!-- MUSIC-HEART-FINAL: end -->
-<link rel="stylesheet" href="/assets/css/music-heart.css">
-<script src="/assets/js/music-heart.js" defer></script>
-</body></html><!-- Force sync: 2025-10-14 05:00:21 -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  <script>
+    (function(){
+      const A=document.getElementById('bgMusicFinal'),B=document.getElementById('musicHeartBtn'),
+            D=document.getElementById('musicVolDot'),P=document.getElementById('musicVolPop'),
+            R=document.getElementById('musicVolRange'),M=document.getElementById('musicMuteBtn');
+      if(!A||!B||!D||!P||!R||!M) return;
+      try{const v=localStorage.getItem('shree_music_volume'); if(v!==null){R.value=v; A.volume=Math.max(0,Math.min(100,parseInt(v,10)))/100;} else A.volume=.6;}catch(e){}
+      function u(){const h=B.querySelector('.heart'); if(!h)return; if(!A.paused){B.classList.add('playing');h.textContent='❤';B.setAttribute('aria-pressed','true');}
+        else{B.classList.remove('playing');h.textContent='♡';B.setAttribute('aria-pressed','false');}}
+      B.addEventListener('click',e=>{e.preventDefault(); if(A.paused){A.play().then(()=>{localStorage.setItem('shree_music_playing','1');u();}).catch(()=>{});}else{A.pause();localStorage.setItem('shree_music_playing','0');u();}});
+      D.addEventListener('click',e=>{e.stopPropagation(); const s=P.classList.toggle('show'); P.setAttribute('aria-hidden', s?'false':'true'); if(s) setTimeout(()=>R.focus(),40);});
+      D.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();D.click();}});
+      function apply(){const v=Math.max(0,Math.min(100,parseInt(R.value,10))); A.volume=v/100; try{localStorage.setItem('shree_music_volume',String(v));}catch(e){} M.setAttribute('aria-pressed',v===0?'true':'false');}
+      R.addEventListener('input',apply); apply();
+      M.addEventListener('click',()=>{ if(A.volume>0){R.dataset.prev=R.value;R.value=0;} else {R.value=R.dataset.prev||60;} R.dispatchEvent(new Event('input'));});
+      document.addEventListener('click',e=>{ if(!e.target.closest('.vol-pop') && !e.target.closest('#musicVolDot')){P.classList.remove('show');P.setAttribute('aria-hidden','true');}});
+      A.addEventListener('play',u); A.addEventListener('pause',u); A.addEventListener('volumechange',()=>{try{localStorage.setItem('shree_music_volume',String(Math.round(A.volume*100)));}catch(e){}});
+      A.play().then(u).catch(()=>{const start=()=>{A.play().then(()=>{localStorage.setItem('shree_music_playing','1');u();}).catch(()=>{}); cleanup();};
+        const cleanup=()=>{window.removeEventListener('click',start,{capture:true});window.removeEventListener('touchstart',start,{passive:true});window.removeEventListener('keydown',start,{capture:true});};
+        window.addEventListener('click',start,{capture:true});window.addEventListener('touchstart',start,{passive:true});window.addEventListener('keydown',start,{capture:true});});
+      u();
+    })();
+  </script>
+</body>
+</html>
