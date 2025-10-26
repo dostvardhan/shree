@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Gallery</title>
+<title>Gallery — Photo Stacks</title>
 <meta name="color-scheme" content="light only" />
 <style>
   :root{
@@ -11,20 +11,31 @@
     --ring:rgba(0,0,0,.10);
     --fab-bg:#ffffffd8;
     --fab-border:#f0c8d4;
+    --card-bg:#fff;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
     margin:0; color:var(--ink);
     font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial;
-    /* smooth pink blend + micro noise */
+    /* smooth pink + animated bokeh base (no banding) */
     background:
       radial-gradient(1400px 900px at 12% -10%, #fff5fa 0%, #ffdbe9 40%, #ffc2d6 85%, #ffb2ca 100%),
       radial-gradient(1200px 750px at 85% 110%, #ffe6f0 0%, #ffd4e3 60%, #ffb7ce 100%),
-      linear-gradient(180deg, #ffffff00 0%, #ffffff40 45%, #ffffff00 100%),
-      repeating-linear-gradient(0deg, #0000, #0000 9px, #00000007 9px, #00000007 10px);
-    background-blend-mode: normal, normal, soft-light, overlay;
+      linear-gradient(180deg, #ffffff00 0%, #ffffff40 45%, #ffffff00 100%);
     overflow-x:hidden;
+  }
+
+  /* moving bokeh blobs */
+  .bokeh{position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden}
+  .blob{position:absolute; width:220px; height:220px; border-radius:50%;
+        filter: blur(40px); opacity:.22; animation: drift var(--dur,26s) ease-in-out infinite alternate}
+  .blob:nth-child(1){background:#ffd2e4; left:-80px; top:20vh; --dur:28s}
+  .blob:nth-child(2){background:#ffc4da; right: -60px; top:55vh; --dur:24s}
+  .blob:nth-child(3){background:#ff9fc3; left:35vw; top:-90px; --dur:30s}
+  @keyframes drift{
+    from{ transform: translateY(0) translateX(0) }
+    to  { transform: translateY(-40px) translateX(30px) }
   }
 
   /* top tiny nav */
@@ -41,8 +52,8 @@
   }
   .topbar a.active{ background:#fff }
 
-  /* rainbow hearts (bigger, slow, glow) */
-  .hearts{ position:fixed; inset:0; pointer-events:none; z-index:3; mix-blend-mode:screen }
+  /* rainbow hearts (slow, glow) */
+  .hearts{ position:fixed; inset:0; pointer-events:none; z-index:2; mix-blend-mode:screen }
   .heart{
     position:absolute; transform:rotate(45deg);
     width: var(--size,16px); height: var(--size,16px); border-radius:3px;
@@ -53,6 +64,7 @@
             drop-shadow(0 0 14px hsl(var(--hue,330) 95% 55% / .55));
     animation: float var(--dur,24s) linear infinite;
     will-change: transform;
+    opacity:.65;
   }
   .heart::before,.heart::after{
     content:""; position:absolute; width:100%; height:100%; border-radius:50%;
@@ -61,46 +73,51 @@
   .heart::after{ left:0; top:-50% }
   @keyframes float{
     0%   { transform: translate(var(--x,0), 0) rotate(45deg) scale(.95); opacity:.55 }
-    50%  { transform: translate(calc(var(--x,0) * -1), -65vh) rotate(45deg) scale(1); opacity:.65 }
+    50%  { transform: translate(calc(var(--x,0) * -1), -65vh) rotate(45deg) scale(1); opacity:.75 }
     100% { transform: translate(var(--x,0), -130vh) rotate(45deg) scale(1.05); opacity:0 }
   }
 
   /* grid */
   .grid{
-    max-width:1200px; margin:18px auto 110px; padding:0 18px;
-    display:grid; gap:22px;
+    max-width:1200px; margin:22px auto 120px; padding:0 18px;
+    display:grid; gap:26px;
     grid-template-columns: repeat(3, 1fr);
   }
   @media (max-width:1000px){ .grid{grid-template-columns: repeat(3, 1fr)} }
   @media (max-width:900px){ .grid{grid-template-columns: repeat(2, 1fr)} }
   @media (max-width:560px){ .grid{grid-template-columns: 1fr} }
 
-  /* photo card with hover zoom */
-  .card{
-    position:relative; aspect-ratio:3/4; border-radius:26px; overflow:hidden;
-    background:#fff; border:1px solid var(--ring);
-    box-shadow:0 28px 70px -40px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.9);
-    transition: transform .18s ease, box-shadow .18s ease;
+  /* PHOTO STACK card (tilt) */
+  .stack{
+    --tilt: 0deg;
+    position:relative; aspect-ratio:3/4; border-radius:28px; overflow:visible;
+    transform: rotate(var(--tilt));
+    transition: transform .25s ease, filter .25s ease;
+    filter: drop-shadow(0 26px 60px rgba(0,0,0,.30));
   }
-  .card:hover{ transform:translateY(-2px); box-shadow:0 34px 90px -50px rgba(0,0,0,.65), inset 0 0 0 1px rgba(255,255,255,1) }
+  .stack:hover{ transform: rotate(0deg) translateY(-2px) scale(1.01); filter: drop-shadow(0 34px 90px rgba(0,0,0,.35)) }
 
+  /* paper layers */
   .paper{
-    position:absolute; inset:12px; border-radius:20px;
-    background: linear-gradient(180deg,#ffffff,#fff7fb);
-    box-shadow: inset 0 2px 30px rgba(0,0,0,.06);
+    position:absolute; inset:0; border-radius:28px; background:var(--card-bg);
+    border:1px solid var(--ring);
+    box-shadow: 0 18px 40px -22px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.85);
   }
+  .paper.s2{ inset:10px 12px 14px 14px; border-radius:24px; opacity:.9 }
+  .paper.s3{ inset:18px; border-radius:20px; opacity:.95; background:linear-gradient(180deg,#fff,#fff7fb) }
+
+  /* photo area */
   .photo{
-    position:absolute; inset:20px; border-radius:16px; z-index:1;
+    position:absolute; inset:26px; border-radius:16px; background:#fff;
     display:flex; align-items:center; justify-content:center;
-    background:#fff; box-shadow: inset 0 0 0 1px rgba(0,0,0,.05);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
     overflow:hidden;
   }
   .photo img{
-    max-width:100%; max-height:100%;
-    width:auto; height:auto; object-fit:contain; display:block; border-radius:12px;
-    transform:scale(1); transition: transform .25s ease;
+    max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; display:block; border-radius:12px;
+    transform:scale(1); transition: transform .28s ease;
   }
-  .card:hover .photo img{ transform:scale(1.05) }  /* HOVER ZOOM */
+  .stack:hover .photo img{ transform:scale(1.07) } /* hover zoom */
 
   /* pager */
   .pager{
@@ -115,7 +132,7 @@
   }
   .pbtn[disabled]{ opacity:.45; cursor:not-allowed }
 
-  /* FABs — same rounded style */
+  /* FABs */
   .fab-wrap{ position:fixed; right:16px; bottom:16px; z-index:7; display:flex; flex-direction:column; gap:10px }
   .fab{
     width:46px; height:46px; border-radius:999px; display:flex; align-items:center; justify-content:center;
@@ -125,7 +142,7 @@
   .fab:hover{ transform:translateY(-1px) }
 
   /* skeletons */
-  .skeleton{ aspect-ratio:3/4; border-radius:26px; border:1px solid var(--ring);
+  .skeleton{ aspect-ratio:3/4; border-radius:28px; border:1px solid var(--ring);
     background:linear-gradient(90deg,#ffeef3,#fff7f9,#ffeef3); background-size:200% 100%; animation:sk 1.2s infinite }
   @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
@@ -133,7 +150,12 @@
 </style>
 </head>
 <body>
-  <!-- top nav -->
+  <!-- bokeh -->
+  <div class="bokeh" aria-hidden="true">
+    <div class="blob"></div><div class="blob"></div><div class="blob"></div>
+  </div>
+
+  <!-- tiny nav -->
   <nav class="topbar">
     <a href="/life.html">Life</a>
     <a href="/upload.html">Upload</a>
@@ -141,7 +163,7 @@
     <a href="/auth/logout">Logout</a>
   </nav>
 
-  <!-- hearts -->
+  <!-- rainbow hearts -->
   <div class="hearts" id="hearts" aria-hidden="true"></div>
 
   <!-- grid -->
@@ -163,7 +185,7 @@
     <button class="fab" id="heartsBtn" title="Hearts">❤</button>
   </div>
 
-  <!-- music file -->
+  <!-- music -->
   <audio id="bgMusic" preload="auto" loop>
     <source src="/music/bg.mp3" type="audio/mpeg">
   </audio>
@@ -177,15 +199,15 @@
     }catch{ location.href='/index.html'; }
   })();
 
-  /* rainbow hearts spawn (dense, slow) */
+  /* rainbow hearts spawn (slow, glowy) */
   (function(){
     const root = document.getElementById('hearts');
-    const N = 36;
+    const N = 34;
     for(let i=0;i<N;i++){
       const h = document.createElement('div');
       h.className = 'heart';
       const hue = Math.floor(Math.random()*360);
-      const dur = 18 + Math.random()*14;     // 18–32s
+      const dur = 18 + Math.random()*14;       // 18–32s
       const size = 14 + Math.random()*12;
       const xDrift = (Math.random()*40 - 20) + 'px';
       h.style.setProperty('--hue', hue);
@@ -199,7 +221,7 @@
     }
   })();
 
-  /* gallery (18/page, recent-first) */
+  /* Gallery — 18 per page, recent-first, Photo-Stacks */
   (function(){
     const PAGE_SIZE=18;
     const grid=document.getElementById('grid');
@@ -218,19 +240,28 @@
     const lbImg=lb.querySelector('#lbImg'), lbPrev=lb.querySelector('#lbPrev'), lbNext=lb.querySelector('#lbNext'), lbClose=lb.querySelector('#lbClose');
 
     let all=[], page=getPage(), currentIndexOnPage=-1;
+
     function getPage(){ const u=new URL(location.href); const v=parseInt(u.searchParams.get('page')||'1',10); return (Number.isFinite(v)&&v>0)?v:1 }
     function setPage(p){ const u=new URL(location.href); u.searchParams.set('page',p); history.replaceState(null,'',u.toString()) }
     function clear(){ grid.innerHTML='' }
 
+    // generate alternating tilt values to get moodboard look
+    const tilts = [-2.2, 1.8, -1.4, 1.2, -0.8, 0.6];
+
     function card(item, index){
-      const fig=document.createElement('figure'); fig.className='card';
-      const paper=document.createElement('div'); paper.className='paper';
+      const fig=document.createElement('figure'); fig.className='stack';
+      fig.style.setProperty('--tilt', tilts[index % tilts.length] + 'deg');
+
+      const p1=document.createElement('div'); p1.className='paper s1';
+      const p2=document.createElement('div'); p2.className='paper s2';
+      const p3=document.createElement('div'); p3.className='paper s3';
       const box=document.createElement('div'); box.className='photo';
       const image=document.createElement('img');
       image.loading='lazy'; image.alt='Memory';
       image.referrerPolicy='same-origin';
       image.src=`/api/file/${encodeURIComponent(item.id)}?v=${Date.now()}`; // cache-bust
-      box.appendChild(image); fig.appendChild(paper); fig.appendChild(box);
+      box.appendChild(image);
+      fig.appendChild(p1); fig.appendChild(p2); fig.appendChild(p3); fig.appendChild(box);
       fig.addEventListener('click',()=>open(index));
       return fig;
     }
@@ -284,7 +315,7 @@
         render();
       }catch(e){
         clear();
-        const msg=document.createElement('div'); msg.style.padding='24px'; msg.style.background='#fff'; msg.style.border='1px solid #f0c8d4'; msg.style.borderRadius='14px';
+        const msg=document.createElement('div'); msg.style.padding='24px'; msg.style.background:'#fff'; msg.style.border='1px solid #f0c8d4'; msg.style.borderRadius='14px';
         msg.textContent='Could not load gallery.'; grid.appendChild(msg);
         console.error('Gallery load error:', e);
       }
@@ -294,7 +325,7 @@
     nextBtn.onclick=()=>{ page=page+1; render(); };
   })();
 
-  /* music + hearts (state persists across pages) */
+  /* music + hearts with persisted state */
   (function(){
     const audio=document.getElementById('bgMusic');
     const musicBtn=document.getElementById('musicBtn');
