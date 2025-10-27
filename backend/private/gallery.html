@@ -7,65 +7,142 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg-start:#f7cdbf;  --bg-end:#efb9aa;  --frame:#f2c3b6;  --shadow:#d99a8d;
-    --text:#8c2f31; --heart:#e4716f; --heart-gloss:rgba(255,255,255,.55);
-    --ring:rgba(0,0,0,.08); --fab-bg:#ffffffde; --fab-border:#f0c4cc;
+    /* Wall + frame palette tuned to the reference */
+    --wall-1:#f7e7de; /* center */
+    --wall-2:#f0c9be; /* mid */
+    --wall-3:#e4b1a6; /* outer */
+    --vignette: rgba(120,60,50,.28);
+
+    --frame-edge:#f4d5c9;
+    --frame-bevel:#eec4b6;
+    --frame-shadow: rgba(0,0,0,.18);
+    --inset-shadow: rgba(0,0,0,.20);
+
+    --text:#713e3f;
+    --ring:rgba(0,0,0,.08);
+
+    --heart:#e4716f;
+    --heart-dots:#ffefef;
   }
+
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0; display:grid; place-items:center; overflow-x:hidden; color:var(--text);
+    margin:0;
+    color:var(--text);
     font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-    background:radial-gradient(1200px 800px at 50% 40%,var(--bg-start),var(--bg-end));
+    display:grid; place-items:center;
+    overflow-x:hidden;
+    /* WALL like the image: warm radial + vignette */
+    background:
+      radial-gradient(1200px 800px at 50% 35%, var(--wall-1) 0%, var(--wall-2) 55%, var(--wall-3) 100%);
+    position:relative;
+  }
+  /* vignette layer */
+  body::after{
+    content:"";
+    position:fixed; inset:0;
+    pointer-events:none;
+    background:
+      radial-gradient(1200px 800px at 50% 35%, transparent 0 70%, var(--vignette) 100%);
+    mix-blend-mode:multiply;
   }
 
   /* tiny top nav */
-  .topbar{position:fixed; top:8px; left:50%; transform:translateX(-50%); z-index:5;
-    display:flex; gap:8px; padding:6px 8px; border-radius:999px; background:#fff4; backdrop-filter:blur(8px);
-    border:1px solid #ffffff7a; box-shadow:0 10px 24px -18px rgba(0,0,0,.35);}
-  .topbar a{ text-decoration:none; padding:6px 10px; border-radius:999px; font-size:13px; font-weight:700;
-    color:#6d535b; background:#ffdfeb; border:1px solid #f2c3d1;}
+  .topbar{
+    position:fixed; top:10px; left:50%; transform:translateX(-50%); z-index:8;
+    display:flex; gap:8px; padding:6px 8px; border-radius:999px;
+    background:#ffffff50; backdrop-filter:blur(8px);
+    border:1px solid #ffffff80;
+    box-shadow:0 10px 24px -18px rgba(0,0,0,.35);
+  }
+  .topbar a{
+    text-decoration:none; padding:6px 10px; border-radius:999px; font-size:13px; font-weight:700;
+    color:#6d535b; background:#ffdfeb; border:1px solid #f2c3d1;
+  }
   .topbar a.active{background:#fff}
 
-  /* welcome-style scene */
-  .scene{ position:relative; width:min(1000px,94vw); aspect-ratio:3/2; filter:drop-shadow(0 20px 40px rgba(0,0,0,.08)); }
+  /* The big scene */
+  .scene{ position:relative; width:min(1100px,94vw); aspect-ratio:3/2; }
 
-  /* static decor hearts (left/right) */
+  /* Sprinkled hearts on the WALL (behind frame) */
   .sprinkles{ position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:1; }
-  .heart{ position:absolute; width:clamp(26px,5vw,58px); aspect-ratio:1/1;
-    background: radial-gradient(120% 120% at 35% 30%, var(--heart-gloss) 0 18%, transparent 19%),
-                radial-gradient(140% 140% at 70% 75%, rgba(0,0,0,.20), transparent 40%),
-                linear-gradient(180deg, #f38b89, var(--heart));
-    transform:rotate(-45deg); border-radius:14% 58% 14% 58% / 14% 58% 14% 58%;
-    box-shadow:0 4px 10px rgba(0,0,0,.10), inset 0 8px 14px rgba(255,255,255,.45), inset 0 -8px 18px rgba(0,0,0,.08);}
-  .heart::before,.heart::after{content:""; position:absolute; inset:0; background:inherit; border-radius:50%}
-  .heart::before{ transform: translate(45%, -30%) rotate(45deg) }
-  .heart::after { transform: translate(-30%, 45%) rotate(45deg) }
-  .dot{ position:absolute; width:clamp(5px,1vw,8px); height:clamp(5px,1vw,8px);
-    background:linear-gradient(180deg,#f8a3a0,var(--heart)); border-radius:30% 70% 70% 30% / 30% 30% 70% 70%;
-    transform:rotate(-45deg); box-shadow:inset 0 1px 2px rgba(255,255,255,.7); opacity:.85}
-  .h1{left:-2%; top:12%}.h2{left:6%; top:34%}.h3{left:2%; top:58%}.h4{left:14%; top:78%}
-  .h5{right:-1%; top:8%}.h6{right:9%; top:30%}.h7{right:2%; top:56%}.h8{right:12%; top:78%}
-  .d1{left:13%; top:8%}.d2{left:10%; top:22%}.d3{left:18%; top:48%}.d4{left:10%; top:68%}.d5{left:6%; top:86%}
-  .d6{right:15%; top:10%}.d7{right:8%; top:22%}.d8{right:6%; top:44%}.d9{right:14%; top:66%}.d10{right:8%; top:86%}
-
-  .fg-heart{ position:absolute; right:clamp(64px,10vw,110px); bottom:clamp(10px,1.5vw,16px);
-    width:clamp(80px,14vw,150px); filter:drop-shadow(0 18px 24px rgba(0,0,0,.18)); z-index:1; pointer-events:none; }
-
-  /* frame container (title removed) */
-  .frame{
-    position:absolute; inset:clamp(24px,5.5vw,48px);
-    background:linear-gradient(180deg,#f6d2c7,#f6d2c7) padding-box,
-               linear-gradient(180deg,#f0beb0,#e6b2a5) border-box;
-    border:clamp(10px,1.2vw,16px) solid transparent; border-radius:10px;
-    box-shadow:0 14px 24px rgba(0,0,0,.10), 0 3px 0 0 var(--shadow) inset, 0 0 0 999px rgba(255,255,255,.28) inset;
-    display:grid; grid-template-rows:1fr auto; gap:10px; z-index:2;
+  .heart, .dheart{
+    position:absolute; transform:rotate(-45deg);
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,.12));
   }
-  .frame::after{ content:""; position:absolute; inset:0; border-radius:inherit;
-    box-shadow:inset 0 10px 18px rgba(0,0,0,.09), inset 0 -12px 18px rgba(0,0,0,.06); pointer-events:none; }
+  /* smooth heart */
+  .heart{
+    width:clamp(26px,5vw,56px); aspect-ratio:1/1;
+    background:
+      radial-gradient(120% 120% at 35% 30%, rgba(255,255,255,.55) 0 18%, transparent 19%),
+      radial-gradient(140% 140% at 70% 75%, rgba(0,0,0,.20), transparent 40%),
+      linear-gradient(180deg, #f38b89, var(--heart));
+    border-radius:14% 58% 14% 58% / 14% 58% 14% 58%;
+  }
+  .heart::before,.heart::after,
+  .dheart::before,.dheart::after{
+    content:""; position:absolute; inset:0; border-radius:50%; background:inherit;
+  }
+  .heart::before{ transform: translate(45%,-30%) rotate(45deg) }
+  .heart::after { transform: translate(-30%,45%) rotate(45deg) }
+
+  /* dotted heart (texture like the photo) */
+  .dheart{
+    width:clamp(22px,4.6vw,52px); aspect-ratio:1/1;
+    background:
+      radial-gradient(closest-side, var(--heart-dots) 40%, transparent 42%) 0 0/6px 6px,
+      linear-gradient(180deg, #e88480, #d95f5b);
+    border-radius:14% 58% 14% 58% / 14% 58% 14% 58%;
+  }
+
+  /* positions (left stack & right stack) */
+  .l1{left:2%; top:10%} .l2{left:6%; top:28%} .l3{left:3%; top:46%}
+  .l4{left:10%; top:64%} .l5{left:5%; top:82%}
+  .r1{right:2%; top:6%} .r2{right:8%; top:24%} .r3{right:4%; top:44%}
+  .r4{right:11%; top:66%} .r5{right:6%; top:84%}
+
+  /* Foreground big heart sitting on frame edge */
+  .fg-heart{
+    position:absolute; z-index:4; pointer-events:none;
+    right:clamp(70px,10vw,120px); bottom:clamp(-6px,1vw,8px);
+    width:clamp(90px,14vw,160px);
+    transform:rotate(-12deg);
+    filter: drop-shadow(0 18px 24px rgba(0,0,0,.22));
+    background:
+      radial-gradient(120% 120% at 35% 30%, rgba(255,255,255,.6) 0 18%, transparent 19%),
+      linear-gradient(180deg, #ff8f8b, #d95f5b);
+    border-radius:14% 58% 14% 58% / 14% 58% 14% 58%;
+  }
+  .fg-heart::before,.fg-heart::after{content:""; position:absolute; inset:0; background:inherit; border-radius:50%}
+  .fg-heart::before{ transform: translate(45%,-30%) rotate(45deg) }
+  .fg-heart::after { transform: translate(-30%,45%) rotate(45deg) }
+
+  /* FRAME — central 3D box with inner recess */
+  .frame{
+    position:absolute; inset:clamp(28px,6vw,54px);
+    border-radius:10px;
+    background:
+      linear-gradient(#f7ddd2,#f7ddd2) padding-box,
+      linear-gradient(180deg, var(--frame-edge), var(--frame-bevel)) border-box;
+    border:clamp(12px,1.3vw,16px) solid transparent;
+    box-shadow:
+      0 12px 24px var(--frame-shadow),
+      0 20px 60px rgba(0,0,0,.12);
+    display:grid; grid-template-rows:1fr auto; gap:10px; z-index:3;
+  }
+  /* inner recess (like the blank area in the photo) */
+  .frame::before{
+    content:""; position:absolute; inset:clamp(12px,1.2vw,14px);
+    border-radius:6px;
+    background:
+      radial-gradient(900px 600px at 50% 30%, #f6e2d9 0%, #f1cdc1 65%);
+    box-shadow: inset 0 18px 26px var(--inset-shadow), inset 0 -18px 22px rgba(0,0,0,.06);
+    z-index:0;
+  }
 
   /* grid inside frame */
-  .inner{ position:relative; padding:clamp(10px,2vw,16px); overflow:auto; }
+  .inner{ position:relative; padding:clamp(12px,1.8vw,18px); overflow:auto; z-index:1; }
   .grid{ display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); align-content:start; }
   .card{ position:relative; border-radius:14px; background:#fff7f2; border:1px solid var(--ring);
          box-shadow:0 26px 80px -46px rgba(0,0,0,.5); overflow:hidden; }
@@ -76,14 +153,15 @@
           overflow:hidden; box-shadow:inset 0 0 0 1px rgba(0,0,0,.06); }
   .photo img{ max-width:100%; max-height:100%; object-fit:contain; transition:transform .26s ease; }
   .card:hover .photo img{ transform:scale(1.05) }
+  .cap{ padding:8px 10px 12px; font-size:13px; color:#6b3a3c; background:#fff7f2; border-top:1px solid var(--ring); }
 
-  .pager{ display:flex; justify-content:center; gap:10px; padding:0 0 clamp(6px,1.5vw,8px) 0; }
-  .pbtn{ width:40px; height:40px; border-radius:999px; border:1px solid var(--fab-border); background:#fff;
+  .pager{ display:flex; justify-content:center; gap:10px; padding:0 0 clamp(6px,1.5vw,8px) 0; z-index:2; }
+  .pbtn{ width:40px; height:40px; border-radius:999px; border:1px solid rgba(0,0,0,.08); background:#fff;
          box-shadow:0 10px 24px -16px rgba(0,0,0,.45); font-weight:800; cursor:pointer; }
   .pbtn[disabled]{ opacity:.45; cursor:not-allowed; }
 
-  /* floating animated hearts layer */
-  .float-hearts{ position:fixed; inset:0; pointer-events:none; z-index:3; mix-blend-mode:screen }
+  /* floating animated hearts layer (kept) */
+  .float-hearts{ position:fixed; inset:0; pointer-events:none; z-index:6; mix-blend-mode:screen }
   .aheart{ position:absolute; width:14px; height:14px; border-radius:3px; transform:rotate(45deg);
     background:linear-gradient(145deg,hsl(var(--h,330) 92% 68%/.85),hsl(var(--h,330) 92% 58%/.85));
     filter:drop-shadow(0 0 6px hsl(var(--h,330) 92% 60%/.7)) drop-shadow(0 0 14px hsl(var(--h,330) 92% 55%/.45));
@@ -97,15 +175,27 @@
   }
 
   /* FABs */
-  .fab-wrap{ position:fixed; right:14px; bottom:14px; z-index:6; display:flex; flex-direction:column; gap:10px; }
+  .fab-wrap{ position:fixed; right:14px; bottom:14px; z-index:9; display:flex; flex-direction:column; gap:10px; }
   .fab{ width:46px; height:46px; border-radius:999px; display:flex; align-items:center; justify-content:center;
-    background:var(--fab-bg); border:1px solid var(--fab-border); box-shadow:0 10px 28px -16px rgba(0,0,0,.45); font-weight:800; cursor:pointer; }
+    background:#ffffffde; border:1px solid #f0c4cc; box-shadow:0 10px 28px -16px rgba(0,0,0,.45); font-weight:800; cursor:pointer; }
 
   @media (max-width:640px){
-    .scene{ width:min(1000px,98vw) }
+    .scene{ width:min(1100px,98vw) }
     .grid{ grid-template-columns:repeat(auto-fit,minmax(140px,1fr)) }
   }
 </style>
+
+<!-- Guard (server session) -->
+<script>
+  (async function ensureSignedIn(){
+    try {
+      const r = await fetch('/api/diag', { credentials:'include', cache:'no-store' });
+      if (!r.ok) throw 0;
+    } catch {
+      location.href = '/index.html';
+    }
+  })();
+</script>
 </head>
 <body>
 
@@ -116,23 +206,24 @@
   <a href="/auth/logout">Logout</a>
 </nav>
 
-<!-- animated floating hearts -->
+<!-- floating hearts (toggleable) -->
 <div class="float-hearts" id="floatHearts" aria-hidden="true"></div>
 
 <div class="scene">
-  <!-- static décor hearts like welcome -->
+  <!-- WALL sprinkles (behind frame) -->
   <div class="sprinkles" aria-hidden="true">
-    <div class="heart h1"></div><div class="heart h2" style="width:clamp(34px,6vw,70px)"></div>
-    <div class="heart h3" style="width:clamp(42px,7vw,78px)"></div><div class="heart h4" style="width:clamp(34px,6vw,70px)"></div>
-    <div class="heart h5" style="width:clamp(34px,6vw,70px)"></div><div class="heart h6"></div>
-    <div class="heart h7" style="width:clamp(42px,7vw,78px)"></div><div class="heart h8"></div>
-    <div class="dot d1"></div><div class="dot d2"></div><div class="dot d3"></div><div class="dot d4"></div><div class="dot d5"></div>
-    <div class="dot d6"></div><div class="dot d7"></div><div class="dot d8"></div><div class="dot d9"></div><div class="dot d10"></div>
+    <!-- left -->
+    <div class="dheart l1"></div><div class="heart l2"></div><div class="dheart l3"></div>
+    <div class="heart l4"></div><div class="dheart l5"></div>
+    <!-- right -->
+    <div class="heart r1"></div><div class="dheart r2"></div><div class="heart r3"></div>
+    <div class="dheart r4"></div><div class="heart r5"></div>
   </div>
 
-  <div class="heart fg-heart"></div>
+  <!-- foreground big heart touching the frame -->
+  <div class="fg-heart"></div>
 
-  <!-- FRAME (title removed) -->
+  <!-- FRAME -->
   <div class="frame">
     <div class="inner">
       <section id="grid" class="grid" aria-live="polite">
@@ -177,7 +268,7 @@
 
 /* lightbox */
 const lb=(()=>{const el=document.createElement('div');
-  el.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;z-index:9;';
+  el.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;z-index:12;';
   el.innerHTML=`<button id="x" style="position:absolute;top:20px;right:20px;background:#ffffff26;color:#fff;border:1px solid #ffffff33;border-radius:999px;padding:10px 12px;font-weight:700;cursor:pointer;">✕</button>
   <img id="im" style="max-width:95vw;max-height:88vh;border-radius:12px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 30px 80px -40px rgba(0,0,0,.9);">`;
   document.body.appendChild(el);const im=el.querySelector('#im'),x=el.querySelector('#x');
@@ -189,49 +280,84 @@ const lb=(()=>{const el=document.createElement('div');
 /* gallery (18/page, recent-first) */
 (function(){
   const GRID=document.getElementById('grid'), PREV=document.getElementById('prevBtn'), NEXT=document.getElementById('nextBtn');
-  const PAGE=18, ts=()=>Date.now();
-  function urlOf(i){
-    const id=i?.id ?? i?._id; if(id) return `/api/file/${encodeURIComponent(String(id))}?v=${ts()}`;
-    const p=i?.path ?? i?.url ?? i?.src;
-    if(typeof p==='string'){ if(/^https?:\/\//i.test(p) || p.startsWith('/')) return `${p}${p.includes('?')?'&':'?'}v=${ts()}`;
-      return `/${p}${p.includes('?')?'&':'?'}v=${ts()}` }
-    return null;
+  const PAGE=18;
+
+  function getWhen(i){
+    for (const k of ['createdAt','uploadedAt','time','timestamp','ts','date']) {
+      if (i?.[k]) { const d=new Date(i[k]); if(!isNaN(d)) return d.getTime(); }
+    }
+    return 0;
   }
-  function when(i){
-    for(const k of ['createdAt','uploadedAt','time','timestamp','ts','date']){
-      if(i?.[k]){const d=new Date(i[k]); if(!isNaN(d)) return d.getTime();}
-    } if(i?.id && /^\d{10,}$/.test(String(i.id))) return parseInt(i.id,10); return 0;
-  }
-  function card(i){
+  function captionOf(i){ return i?.caption || i?.title || i?.name || ''; }
+
+  function cardSkeleton(){
     const fig=document.createElement('figure'); fig.className='card';
     const poster=document.createElement('div'); poster.className='poster';
     const fill=document.createElement('div'); fill.className='fill';
     const ph=document.createElement('div'); ph.className='photo';
     const img=document.createElement('img'); img.loading='lazy'; img.alt='';
-    const u=urlOf(i); if(u){ img.src=u; fill.style.backgroundImage=`url('${u}')`; }
-    else { fill.style.background='linear-gradient(135deg,#ffe3ea,#fff)'; }
-    img.onerror=()=>{ ph.style.background='#fff4f6'; ph.style.opacity='.85'; };
     ph.appendChild(img); poster.appendChild(fill); poster.appendChild(ph); fig.appendChild(poster);
+    const cap=document.createElement('figcaption'); cap.className='cap'; fig.appendChild(cap);
+    return {fig, fill, img, cap};
+  }
+
+  async function makeCard(item){
+    const id = String(item?.id ?? item?._id ?? '');
+    const {fig, fill, img, cap} = cardSkeleton();
+    cap.textContent = captionOf(item);
+    fill.style.background = 'linear-gradient(135deg,#ffe3ea,#fff)';
+
+    if (id) {
+      try {
+        const r = await fetch(`/api/file/${encodeURIComponent(id)}`, { credentials:'include', cache:'no-store' });
+        if (r.status === 401) { location.href='/index.html'; return fig; }
+        if (!r.ok) throw new Error('img');
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        img.src = url;
+        img.onload = () => setTimeout(()=>URL.revokeObjectURL(url), 2500);
+        fill.style.backgroundImage = `url('${url}')`;
+      } catch { /* leave placeholder */ }
+    }
     fig.onclick=()=>{ if(img.src) lb.open(img.src); };
     return fig;
   }
-  function render(arr,page){
-    GRID.innerHTML=''; const total=arr.length, pages=Math.max(1,Math.ceil(total/PAGE)); if(page>pages) page=pages;
-    const s=(page-1)*PAGE, e=Math.min(s+PAGE,total); const frag=document.createDocumentFragment();
-    arr.slice(s,e).forEach(it=>frag.appendChild(card(it))); GRID.appendChild(frag);
-    PREV.disabled=(page<=1); NEXT.disabled=(page>=pages);
-    const u=new URL(location.href); u.searchParams.set('page',page); history.replaceState(null,'',u.toString());
+
+  function render(items, page){
+    GRID.innerHTML='';
+    const total=items.length, pages=Math.max(1, Math.ceil(total/PAGE));
+    if (page>pages) page=pages;
+    const s=(page-1)*PAGE, e=Math.min(s+PAGE,total);
+    Promise.all(items.slice(s,e).map(makeCard)).then(nodes=>{
+      const frag=document.createDocumentFragment(); nodes.forEach(n=>frag.appendChild(n)); GRID.appendChild(frag);
+    });
+    PREV.disabled = (page<=1); NEXT.disabled = (page>=pages);
+    const u=new URL(location.href); u.searchParams.set('page', page); history.replaceState(null,'',u.toString());
   }
-  let items=[], page=parseInt(new URL(location.href).searchParams.get('page')||'1',10); if(!(page>0)) page=1;
-  (async()=>{ try{
-      const r=await fetch('/api/list',{credentials:'include',cache:'no-store'});
-      const data = r.ok ? await r.json() : [];
-      const arr = Array.isArray(data)?data:(Array.isArray(data?.items)?data.items:[]);
-      items=arr.filter(Boolean); items.sort((a,b)=>when(b)-when(a)); render(items,page);
-    }catch(e){ GRID.innerHTML='<div style="padding:14px;background:#fff;border:1px solid #f3c6d3;border-radius:10px">Could not load gallery.</div>'; }
+
+  let items=[], page=parseInt(new URL(location.href).searchParams.get('page')||'1',10);
+  if(!(page>0)) page=1;
+
+  (async()=>{
+    try{
+      const r = await fetch('/api/list', { credentials:'include', cache:'no-store' });
+      if (r.status === 401) { location.href='/index.html'; return; }
+      if (!r.ok) throw 0;
+      const data = await r.json();
+      const arr = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
+      items = arr.filter(Boolean).sort((a,b)=>getWhen(b)-getWhen(a));
+      if (items.length === 0) {
+        GRID.innerHTML = '<div style="padding:14px;background:#fff;border:1px solid #f3c6d3;border-radius:10px">No photos yet. Try uploading from the Upload page.</div>';
+      } else {
+        render(items, page);
+      }
+    }catch(e){
+      GRID.innerHTML='<div style="padding:14px;background:#fff;border:1px solid #f3c6d3;border-radius:10px">Could not load gallery.</div>';
+    }
   })();
-  PREV.onclick=()=>{ page=Math.max(1,page-1); render(items,page); };
-  NEXT.onclick=()=>{ page=page+1; render(items,page); };
+
+  document.getElementById('prevBtn').onclick=()=>{ page=Math.max(1,page-1); render(items,page); };
+  document.getElementById('nextBtn').onclick=()=>{ page=page+1; render(items,page); };
 })();
 
 /* music + hearts */
