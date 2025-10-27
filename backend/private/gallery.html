@@ -3,424 +3,455 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gallery — Floral Canvas</title>
-  <meta name="color-scheme" content="light only" />
+  <title>Gallery — Frame Style</title>
+
+  <!-- Fonts (same vibe as welcome) -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
   <style>
     :root{
-      --ink:#2a2124;
-      --gap:22px;
-      --frame:#fff7ee;
-      --shadow:0 36px 110px -60px rgba(0,0,0,.7);
-      --fab-bg:#ffffffdb;
-      --fab-border:#e5c1cd;
-      --bg-url: none; /* Background image dynamically loaded */
+      /* easy theme tweaks */
+      --bg-start:#f7cdbf;       /* light peach */
+      --bg-end:#efb9aa;         /* peach-pink */
+      --frame:#f2c3b6;          /* frame color */
+      --shadow:#d99a8d;         /* frame shadow color */
+      --text:#8c2f31;           /* soft burgundy */
+      --heart:#e4716f;          /* light-ish red hearts */
+      --heart-gloss:rgba(255,255,255,.55);
+
+      --grid-gap: 16px;
+      --card-shadow: 0 26px 80px -46px rgba(0,0,0,.50);
+      --ring: rgba(0,0,0,.08);
+      --fab-bg: #ffffffde;
+      --fab-border: #f0c4cc;
     }
-    *{box-sizing:border-box;}
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
     body{
       margin:0;
-      color:var(--ink);
-      font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial;
+      display:grid;
+      place-items:center;
+      background: radial-gradient(1200px 800px at 50% 40%, var(--bg-start), var(--bg-end));
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
       overflow-x:hidden;
-      background: var(--bg-url, #e9d7bf) center/cover no-repeat fixed;
     }
-    body::before{
-      content:"";
-      position:fixed;
-      inset:0;
-      z-index:0;
+
+    /* ======== SCENE (same as welcome) ======== */
+    .scene{
+      position:relative;
+      width:min(1000px, 94vw);
+      aspect-ratio: 3 / 2;
+      filter: drop-shadow(0 20px 40px rgba(0,0,0,.08));
+    }
+
+    /* static side hearts/dots (decor like welcome) */
+    .sprinkles{
+      position:absolute; inset:0;
       pointer-events:none;
-      background:
-        radial-gradient(1400px 900px at 50% 115%, rgba(0,0,0,.18), transparent 60%),
-        radial-gradient(1400px 900px at 50% -15%, rgba(0,0,0,.16), transparent 55%),
-        linear-gradient(#fff0,#fff5 45%,#fff0 55%);
-      mix-blend-mode:multiply;
-      opacity:.4;
+      overflow:hidden;
+      z-index:1;
     }
-    body::after{
-      content:"";
-      position:fixed;
-      inset:0;
-      z-index:0;
-      pointer-events:none;
-      opacity:.12;
-      background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.95" numOctaves="2" stitchTiles="stitch"/><rect width="160" height="160" filter="url(%23n)" opacity="0.45"/></svg>');
-      background-size:280px 280px;
-    }
-    .topbar{
-      position:sticky;
-      top:0; z-index:5;
-      display:flex; justify-content:center; gap:10px;
-      padding:10px;
-      background:#fff6edcc;
-      backdrop-filter:blur(10px);
-      border-bottom:1px solid #e3c5b5;
-    }
-    .topbar a{
-      text-decoration:none;
-      color:#6d535b;
-      font-weight:700;
-      font-size:14px;
-      padding:7px 12px;
-      border-radius:999px;
-      background:#ffe0ea;
-      border:1px solid #f2c3d1;
-      box-shadow:0 8px 20px -14px #0005;
-    }
-    .topbar a.active{background:#fff;}
-    .hearts{position:fixed; inset:0; z-index:1; pointer-events:none; mix-blend-mode:screen;}
     .heart{
       position:absolute;
-      transform:rotate(45deg);
-      width:var(--size,14px);
-      height:var(--size,14px);
-      border-radius:3px;
-      background:linear-gradient(145deg,hsl(var(--hue,330) 92% 68%/.9),hsl(var(--hue,330) 92% 58%/.9));
-      filter:drop-shadow(0 0 6px hsl(var(--hue,330) 92% 60%/.7))
-             drop-shadow(0 0 14px hsl(var(--hue,330) 92% 55%/.45));
-      animation:float var(--dur,26s) linear infinite;
-      opacity:.48;
+      width: clamp(26px, 5vw, 58px);
+      aspect-ratio:1/1;
+      background: radial-gradient(120% 120% at 35% 30%, var(--heart-gloss) 0 18%, transparent 19%),
+                  radial-gradient(140% 140% at 70% 75%, rgba(0,0,0,.20), transparent 40%),
+                  linear-gradient(180deg, #f38b89, var(--heart));
+      transform: rotate(-45deg);
+      border-radius: 14% 58% 14% 58% / 14% 58% 14% 58%;
+      box-shadow: 0 4px 10px rgba(0,0,0,.10),
+                  inset 0 8px 14px rgba(255,255,255,.45),
+                  inset 0 -8px 18px rgba(0,0,0,.08);
     }
-    .heart::before,.heart::after{
-      content:"";
-      position:absolute;
-      width:100%; height:100%;
-      border-radius:50%;
-      background:inherit;
-      left:-50%; top:0;
-      filter:inherit;
-    }
+    .heart::before,
     .heart::after{
-      left:0; top:-50%;
+      content:"";
+      position:absolute; inset:0; background:inherit; border-radius:50%;
     }
-    @keyframes float{
-      0%{transform:translate(var(--x,0),0) rotate(45deg) scale(.95); opacity:.4;}
-      50%{transform:translate(calc(var(--x,0)*-1),-65vh) rotate(45deg) scale(1); opacity:.62;}
-      100%{transform:translate(var(--x,0),-130vh) rotate(45deg) scale(1.05); opacity:0;}
+    .heart::before{ transform: translate(45%, -30%) rotate(45deg); }
+    .heart::after { transform: translate(-30%, 45%) rotate(45deg); }
+
+    .dot{
+      position:absolute;
+      width: clamp(5px, 1vw, 8px);
+      height: clamp(5px, 1vw, 8px);
+      background: linear-gradient(180deg, #f8a3a0, var(--heart));
+      border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+      transform: rotate(-45deg);
+      box-shadow: inset 0 1px 2px rgba(255,255,255,.7);
+      opacity:.85;
     }
-    .wrap{
-      max-width:1240px;
-      margin:22px auto 120px;
-      padding:0 18px;
-      position:relative;
+
+    /* positions to match welcome composition */
+    .h1{left:-2%; top:12%}
+    .h2{left:6%; top:34%}
+    .h3{left:2%; top:58%}
+    .h4{left:14%; top:78%}
+    .h5{right:-1%; top:8%}
+    .h6{right:9%; top:30%}
+    .h7{right:2%; top:56%}
+    .h8{right:12%; top:78%}
+    .d1{left:13%; top:8%}
+    .d2{left:10%; top:22%}
+    .d3{left:18%; top:48%}
+    .d4{left:10%; top:68%}
+    .d5{left:6%;  top:86%}
+    .d6{right:15%; top:10%}
+    .d7{right:8%;  top:22%}
+    .d8{right:6%;  top:44%}
+    .d9{right:14%; top:66%}
+    .d10{right:8%; top:86%}
+
+    /* big foreground heart — moved behind content to avoid blocking clicks */
+    .fg-heart{
+      position:absolute;
+      right: clamp(64px, 10vw, 110px);
+      bottom: clamp(10px, 1.5vw, 16px);
+      width: clamp(80px, 14vw, 150px);
+      filter: drop-shadow(0 18px 24px rgba(0,0,0,.18));
+      z-index:1; /* behind the frame content */
+      pointer-events:none;
+    }
+
+    /* ======== FRAME (container for gallery) ======== */
+    .frame{
+      position:absolute;
+      inset:clamp(24px, 5.5vw, 48px);
+      background: linear-gradient(180deg, #f6d2c7, #f6d2c7) padding-box,
+                  linear-gradient(180deg, #f0beb0, #e6b2a5) border-box;
+      border: clamp(10px, 1.2vw, 16px) solid transparent;
+      border-radius: 10px;
+      box-shadow: 0 14px 24px rgba(0,0,0,.10),
+                  0 3px 0 0 var(--shadow) inset,
+                  0 0 0 999px rgba(255,255,255,.28) inset;
+      display:grid;
+      grid-template-rows: 1fr auto; /* grid + pager */
+      gap: 10px;
       z-index:2;
+    }
+    .frame::after{
+      content:"";
+      position:absolute; inset:0; border-radius:inherit;
+      box-shadow: inset 0 10px 18px rgba(0,0,0,.09), inset 0 -12px 18px rgba(0,0,0,.06);
+      pointer-events:none;
+    }
+
+    /* ======== GALLERY GRID (inside frame) ======== */
+    .inner{
+      position:relative;
+      padding: clamp(10px, 2vw, 16px);
+      overflow:auto;
     }
     .grid{
       display:grid;
-      gap:var(--gap);
-      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap: var(--grid-gap);
+      grid-template-columns: repeat( auto-fit, minmax(180px, 1fr) );
+      align-content:start;
     }
+
+    /* photo cards (poster style; no-crop using blurred fill) */
     .card{
-      position:relative;
-      border-radius:18px;
-      background:var(--frame);
-      border:1px solid rgba(0,0,0,.08);
-      box-shadow:var(--shadow);
-      overflow:hidden;
-      transition:transform .18s ease, box-shadow .18s ease;
+      position:relative; border-radius:14px; background:#fff7f2;
+      border:1px solid var(--ring); box-shadow: var(--card-shadow);
+      overflow:hidden; transition: transform .18s ease, box-shadow .18s ease;
     }
-    .card:hover{
-      transform:translateY(-3px);
-      box-shadow:0 44px 120px -60px rgba(0,0,0,.75);
-    }
-    .poster{
-      position:relative;
-      width:100%;
-      aspect-ratio:4/5;
-    }
+    .card:hover{ transform: translateY(-2px); box-shadow: 0 34px 90px -46px rgba(0,0,0,.58); }
+
+    .poster{ position:relative; width:100%; aspect-ratio:4/5; }
     .fill{
-      position:absolute;
-      inset:0;
-      background-position:center;
-      background-size:cover;
-      filter:blur(16px) saturate(1.05) brightness(.98);
-      transform:scale(1.08);
+      position:absolute; inset:0; background-position:center; background-size:cover;
+      filter: blur(14px) saturate(1.05) brightness(.98); transform: scale(1.06);
     }
     .photo{
-      position:absolute;
-      inset:12px;
-      border-radius:12px;
-      background:#fff;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
+      position:absolute; inset:10px; border-radius:10px; background:#fff;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+      display:flex; align-items:center; justify-content:center; overflow:hidden;
     }
-    .photo img{
-      max-width:100%;
-      max-height:100%;
-      object-fit:contain;
-      transition:transform .28s ease;
-    }
-    .card:hover img{
-      transform:scale(1.06);
-    }
+    .photo img{ max-width:100%; max-height:100%; object-fit:contain; display:block; transition:transform .26s ease; }
+    .card:hover .photo img{ transform: scale(1.05); }
+
+    /* pager (inside frame bottom) */
     .pager{
-      position:fixed;
-      left:50%;
-      bottom:18px;
-      transform:translateX(-50%);
-      z-index:3;
-      display:flex;
-      gap:10px;
+      display:flex; justify-content:center; gap:10px; padding: 0 0 clamp(6px,1.5vw,8px) 0;
     }
     .pbtn{
-      width:44px; height:44px;
-      border-radius:999px;
-      border:1px solid var(--fab-border);
-      background:#fff;
-      box-shadow:0 12px 30px -18px rgba(0,0,0,.45);
-      font-size:18px;
-      font-weight:800;
-      cursor:pointer;
+      width:40px; height:40px; border-radius:999px;
+      border:1px solid var(--fab-border); background:#fff;
+      box-shadow:0 10px 24px -16px rgba(0,0,0,.45); font-weight:800; cursor:pointer;
     }
-    .pbtn[disabled]{opacity:.45; cursor:not-allowed;}
+    .pbtn[disabled]{ opacity:.45; cursor:not-allowed; }
+    .sr{ position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+
+    /* ======== TOP NAV (tiny) ======== */
+    .topbar{
+      position:fixed; top:8px; left:50%; transform:translateX(-50%); z-index:5;
+      display:flex; gap:8px; padding:6px 8px; border-radius:999px;
+      background:#fff4; backdrop-filter: blur(8px); border:1px solid #ffffff7a;
+      box-shadow:0 10px 24px -18px rgba(0,0,0,.35);
+    }
+    .topbar a{
+      text-decoration:none; padding:6px 10px; border-radius:999px; font-size:13px; font-weight:700;
+      color:#6d535b; background:#ffdfeb; border:1px solid #f2c3d1;
+    }
+    .topbar a.active{ background:#fff; }
+
+    /* ======== FABs ======== */
     .fab-wrap{
-      position:fixed;
-      right:16px; bottom:16px;
-      z-index:3;
-      display:flex; flex-direction:column; gap:10px;
+      position:fixed; right:14px; bottom:14px; z-index:6; display:flex; flex-direction:column; gap:10px;
     }
     .fab{
-      width:46px; height:46px;
-      border-radius:999px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:var(--fab-bg);
-      border:1px solid var(--fab-border);
-      box-shadow:0 10px 28px -16px rgba(0,0,0,.45);
-      font-weight:800;
-      cursor:pointer;
+      width:46px; height:46px; border-radius:999px; display:flex; align-items:center; justify-content:center;
+      background:var(--fab-bg); border:1px solid var(--fab-border); box-shadow:0 10px 28px -16px rgba(0,0,0,.45); font-weight:800; cursor:pointer;
+    }
+
+    /* ======== FLOATING HEARTS (animated layer) ======== */
+    .float-hearts{ position:fixed; inset:0; pointer-events:none; z-index:3; mix-blend-mode:screen }
+    .aheart{
+      position:absolute; width:14px; height:14px; border-radius:3px; transform: rotate(45deg);
+      background: linear-gradient(145deg, hsl(var(--h,330) 92% 68% /.85), hsl(var(--h,330) 92% 58% /.85));
+      filter: drop-shadow(0 0 6px hsl(var(--h,330) 92% 60% /.7)) drop-shadow(0 0 14px hsl(var(--h,330) 92% 55% /.45));
+      animation: rise var(--dur,24s) linear infinite; opacity:.5;
+    }
+    .aheart::before,.aheart::after{ content:""; position:absolute; width:100%; height:100%; border-radius:50%; background:inherit; left:-50%; top:0; filter:inherit }
+    .aheart::after{ left:0; top:-50% }
+    @keyframes rise{
+      0%{ transform:translate(var(--x,0),0) rotate(45deg) scale(.95); opacity:.38 }
+      50%{ transform:translate(calc(var(--x,0)*-1),-60vh) rotate(45deg) scale(1); opacity:.6 }
+      100%{ transform:translate(var(--x,0),-120vh) rotate(45deg) scale(1.05); opacity:0 }
+    }
+
+    @media (max-width:640px){
+      .scene{ width:min(1000px, 98vw); }
+      .grid{ grid-template-columns: repeat( auto-fit, minmax(150px, 1fr) ); }
     }
   </style>
 </head>
 <body>
-<!-- Floating Hearts Layer -->
-<div class="hearts" id="hearts" aria-hidden="true"></div>
 
-<!-- ✅ Top Navigation Bar -->
-<nav class="topbar">
-  <a href="/life.html">Life</a>
-  <a href="/upload.html">Upload</a>
-  <a class="active" href="/gallery.html">Gallery</a>
-  <a href="/auth/logout">Logout</a>
-</nav>
+  <!-- tiny top nav -->
+  <nav class="topbar">
+    <a href="/life.html">Life</a>
+    <a href="/upload.html">Upload</a>
+    <a href="/gallery.html" class="active">Gallery</a>
+    <a href="/auth/logout">Logout</a>
+  </nav>
 
-<!-- ✅ Image Grid Wrapper -->
-<div class="wrap">
-  <section id="grid" class="grid" aria-live="polite">
-    <!-- These are skeleton loaders (visible before photos load) -->
-    <div class="card skel"></div>
-    <div class="card skel"></div>
-    <div class="card skel"></div>
-  </section>
-</div>
+  <!-- animated floating hearts -->
+  <div class="float-hearts" id="floatHearts" aria-hidden="true"></div>
 
-<!-- ✅ Pagination Buttons -->
-<div class="pager">
-  <button id="prevBtn" class="pbtn" title="Previous Page">‹</button>
-  <button id="nextBtn" class="pbtn" title="Next Page">›</button>
-  <span id="pinfo" class="sr"></span> <!-- For screen readers -->
-</div>
+  <!-- SCENE (welcome-style) -->
+  <div class="scene">
+    <!-- Decor: static side hearts + dots -->
+    <div class="sprinkles" aria-hidden="true">
+      <!-- left hearts -->
+      <div class="heart h1"></div>
+      <div class="heart h2" style="width: clamp(34px,6vw,70px)"></div>
+      <div class="heart h3" style="width: clamp(42px,7vw,78px)"></div>
+      <div class="heart h4" style="width: clamp(34px,6vw,70px)"></div>
+      <!-- right hearts -->
+      <div class="heart h5" style="width: clamp(34px,6vw,70px)"></div>
+      <div class="heart h6"></div>
+      <div class="heart h7" style="width: clamp(42px,7vw,78px)"></div>
+      <div class="heart h8"></div>
+      <!-- dots -->
+      <div class="dot d1"></div><div class="dot d2"></div><div class="dot d3"></div>
+      <div class="dot d4"></div><div class="dot d5"></div>
+      <div class="dot d6"></div><div class="dot d7"></div><div class="dot d8"></div>
+      <div class="dot d9"></div><div class="dot d10"></div>
+    </div>
 
-<!-- ✅ Music & Heart Floating Buttons (Bottom Right) -->
-<div class="fab-wrap">
-  <button class="fab" id="musicBtn" title="Play / Pause Music">♪</button>
-  <button class="fab" id="heartsBtn" title="Toggle Floating Hearts">❤</button>
-</div>
+    <!-- Big decorative heart (behind content) -->
+    <div class="heart fg-heart"></div>
 
-<!-- ✅ Background Music (Will Loop) -->
-<audio id="bgMusic" preload="auto" loop>
-  <source src="/music/bg.mp3" type="audio/mpeg">
-</audio>
-<!-- =========================
-     PART 3 — JavaScript
-========================= -->
+    <!-- FRAME (title removed, gallery inside) -->
+    <div class="frame">
+      <!-- inner scrollable area -->
+      <div class="inner">
+        <section id="grid" class="grid" aria-live="polite">
+          <!-- skeletons while loading -->
+          <div class="card" style="height:240px; opacity:.45"></div>
+          <div class="card" style="height:240px; opacity:.45"></div>
+          <div class="card" style="height:240px; opacity:.45"></div>
+        </section>
+      </div>
+
+      <!-- pagination -->
+      <div class="pager">
+        <button id="prevBtn" class="pbtn" title="Previous">‹</button>
+        <button id="nextBtn" class="pbtn" title="Next">›</button>
+        <span id="pinfo" class="sr"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FABs -->
+  <div class="fab-wrap">
+    <button class="fab" id="musicBtn" title="Play/Pause">♪</button>
+    <button class="fab" id="heartsBtn" title="Toggle Hearts">❤</button>
+  </div>
+
+  <!-- music -->
+  <audio id="bgMusic" preload="auto" loop>
+    <source src="/music/bg.mp3" type="audio/mpeg">
+  </audio>
+
 <script>
-/* ---------- 0) Use your floral canvas image as background (auto path) ---------- */
-(function(){
-  const candidates = [
-    '/assets/bj/floral-canvas.jpg',
-    'assets/bj/floral-canvas.jpg',
-    '/backend/private/assets/bj/floral-canvas.jpg',
-    '../assets/bj/floral-canvas.jpg'
-  ];
-  (function tryAt(i=0){
-    if(i>=candidates.length) return; // fallback = parchment tint
-    const src = candidates[i] + (candidates[i].includes('?')?'&':'?') + 'v=' + Date.now();
-    const img = new Image();
-    img.onload = () => document.documentElement.style.setProperty('--bg-url', `url("${src}")`);
-    img.onerror = () => tryAt(i+1);
-    img.src = src;
-  })();
-})();
-
-/* ---------- 1) (Optional) soft auth ---------- */
+/* ---------- soft privacy guard ---------- */
 (async function(){
   try{
-    const r = await fetch('/api/diag', {credentials:'include', cache:'no-store'});
+    const r=await fetch('/api/diag',{credentials:'include',cache:'no-store'});
     if(!r.ok) throw 0;
-  }catch{ /* location.href='/index.html'; */ }
+  }catch{
+    // location.href='/index.html';
+  }
 })();
 
-/* ---------- 2) Floating rainbow hearts (slow & soft) ---------- */
+/* ---------- animated floating hearts ---------- */
 (function(){
-  const root = document.getElementById('hearts');
-  const N = 26;
+  const root=document.getElementById('floatHearts');
+  const N=26;
   for(let i=0;i<N;i++){
-    const h = document.createElement('div');
-    h.className = 'heart';
-    h.style.setProperty('--hue',  Math.floor(Math.random()*360));
-    h.style.setProperty('--dur',  (18+Math.random()*16)+'s');
-    h.style.setProperty('--size', (12+Math.random()*10)+'px');
-    h.style.setProperty('--x',    (Math.random()*40-20)+'px');
-    h.style.left   = (Math.random()*100)+'vw';
-    h.style.bottom = (-20-Math.random()*50)+'vh';
-    h.style.animationDelay = (Math.random()*10)+'s';
+    const h=document.createElement('div'); h.className='aheart';
+    h.style.setProperty('--h', Math.floor(Math.random()*360));
+    h.style.setProperty('--dur', (18+Math.random()*16)+'s');
+    h.style.setProperty('--x', (Math.random()*40-20)+'px');
+    h.style.left=(Math.random()*100)+'vw';
+    h.style.bottom=(-25 - Math.random()*60)+'vh';
+    h.style.animationDelay=(Math.random()*10)+'s';
     root.appendChild(h);
   }
 })();
 
-/* ---------- 3) Lightbox ---------- */
-const lb = (() => {
-  const el = document.createElement('div');
-  el.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;z-index:10;';
+/* ---------- lightbox ---------- */
+const lightbox = (() => {
+  const el=document.createElement('div');
+  el.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);align-items:center;justify-content:center;z-index:9;';
   el.innerHTML = `
     <button id="lbClose" style="position:absolute;top:20px;right:20px;background:#ffffff26;color:#fff;border:1px solid #ffffff33;border-radius:999px;padding:10px 12px;font-weight:700;cursor:pointer;">✕</button>
     <img id="lbImg" alt="" style="max-width:95vw;max-height:88vh;border-radius:12px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 30px 80px -40px rgba(0,0,0,.9);" />
   `;
   document.body.appendChild(el);
-  const img = el.querySelector('#lbImg');
-  el.querySelector('#lbClose').onclick = () => { el.style.display='none'; img.src=''; };
-  el.addEventListener('click', e => { if(e.target===el) el.querySelector('#lbClose').onclick(); });
-  window.addEventListener('keydown', e => { if(e.key==='Escape' && el.style.display==='flex') el.querySelector('#lbClose').onclick(); });
+  const img=el.querySelector('#lbImg'), close=el.querySelector('#lbClose');
+  close.onclick=()=>{ el.style.display='none'; img.src=''; };
+  el.addEventListener('click',e=>{ if(e.target===el) close.onclick(); });
+  window.addEventListener('keydown',e=>{ if(e.key==='Escape' && el.style.display==='flex') close.onclick(); });
   return { open:(src)=>{ img.src=src; el.style.display='flex'; } };
 })();
 
-/* ---------- 4) Gallery: 18/page, recent-first, robust URL handling ---------- */
+/* ---------- gallery logic (18/page, recent-first) ---------- */
 (function(){
-  const PAGE_SIZE = 18;
-  const grid   = document.getElementById('grid');
-  const prev   = document.getElementById('prevBtn');
-  const next   = document.getElementById('nextBtn');
-  const pinfo  = document.getElementById('pinfo');
+  const PAGE=18;
+  const grid=document.getElementById('grid');
+  const prev=document.getElementById('prevBtn');
+  const next=document.getElementById('nextBtn');
+  const pinfo=document.getElementById('pinfo');
 
-  const ts = () => Date.now();
+  const ts=()=>Date.now();
 
-  function imageURL(item){
-    const id = item?.id ?? item?._id;
-    if (id) return `/api/file/${encodeURIComponent(String(id))}?v=${ts()}`;
-    const p = item?.path ?? item?.url ?? item?.src;
-    if (typeof p === 'string'){
+  function imgURL(item){
+    const id=item?.id ?? item?._id;
+    if(id) return `/api/file/${encodeURIComponent(String(id))}?v=${ts()}`;
+    const p=item?.path ?? item?.url ?? item?.src;
+    if(typeof p==='string'){
       if(/^https?:\/\//i.test(p) || p.startsWith('/')) return `${p}${p.includes('?')?'&':'?'}v=${ts()}`;
       return `/${p}${p.includes('?')?'&':'?'}v=${ts()}`;
     }
     return null;
   }
-
-  function timeOf(o){
-    for (const k of ['createdAt','uploadedAt','time','timestamp','ts','date']){
-      if(o && o[k]){ const d=new Date(o[k]); if(!isNaN(d)) return d.getTime(); }
+  function when(o){
+    for(const k of ['createdAt','uploadedAt','time','timestamp','ts','date']){
+      if(o?.[k]){ const d=new Date(o[k]); if(!isNaN(d)) return d.getTime(); }
     }
-    if (o?.id && /^\d{10,}$/.test(String(o.id))) return parseInt(o.id,10);
+    if(o?.id && /^\d{10,}$/.test(String(o.id))) return parseInt(o.id,10);
     return 0;
   }
 
-  function card(item, i){
-    const url = imageURL(item);
-    const fig = document.createElement('figure');
-    fig.className = 'card';
-    const tilts = [-1.6,1.2,-0.8,0.8,-1.2,1.4,-0.6,0.6];
-    fig.style.setProperty('--tilt', (tilts[i%tilts.length])+'deg');
+  function makeCard(item){
+    const url=imgURL(item);
+    const fig=document.createElement('figure'); fig.className='card';
+    const poster=document.createElement('div'); poster.className='poster';
+    const fill=document.createElement('div'); fill.className='fill';
+    const ph=document.createElement('div'); ph.className='photo';
+    const img=document.createElement('img'); img.loading='lazy'; img.alt='';
 
-    const poster = document.createElement('div'); poster.className='poster';
-    const fill   = document.createElement('div'); fill.className='fill';
-    const photo  = document.createElement('div'); photo.className='photo';
-    const img    = document.createElement('img'); img.loading='lazy'; img.alt='';
+    if(url){ img.src=url; fill.style.backgroundImage=`url('${url}')`; }
+    else { fill.style.background='linear-gradient(135deg,#ffe3ea,#fff)'; ph.innerHTML='<span style="color:#c66;font-weight:700">⚠︎</span>'; }
 
-    if(url){ img.src = url; fill.style.backgroundImage = `url('${url}')`; }
-    else { fill.style.background='linear-gradient(135deg,#ffe5ec,#fff)'; photo.innerHTML='<span style="color:#c66;font-weight:700">⚠︎</span>'; }
+    img.onerror=()=>{ ph.style.opacity='.85'; ph.style.background='#fff4f6'; ph.title='Image failed to load'; };
 
-    img.onerror = () => { photo.style.opacity='.85'; photo.style.background='#fff4f6'; photo.title='Image failed to load'; };
-
-    photo.appendChild(img); poster.appendChild(fill); poster.appendChild(photo); fig.appendChild(poster);
-    fig.addEventListener('click', ()=>{ if(img.src) lb.open(img.src); });
+    ph.appendChild(img); poster.appendChild(fill); poster.appendChild(ph); fig.appendChild(poster);
+    fig.addEventListener('click',()=>{ if(img.src) lightbox.open(img.src); });
     return fig;
   }
 
-  function render(all, page){
-    grid.innerHTML = '';
-    const total = all.length;
-    const pages = Math.max(1, Math.ceil(total/PAGE_SIZE));
-    if (page>pages) page = pages;
-    const start = (page-1)*PAGE_SIZE;
-    const end   = Math.min(start+PAGE_SIZE, total);
+  function render(items, page){
+    grid.innerHTML='';
+    const total=items.length, pages=Math.max(1,Math.ceil(total/PAGE));
+    if(page>pages) page=pages;
+    const start=(page-1)*PAGE, end=Math.min(start+PAGE,total);
 
-    const frag  = document.createDocumentFragment();
-    all.slice(start,end).forEach((it,i)=> frag.appendChild(card(it,i)));
+    const frag=document.createDocumentFragment();
+    items.slice(start,end).forEach(it=>frag.appendChild(makeCard(it)));
     grid.appendChild(frag);
 
-    prev.disabled = (page<=1);
-    next.disabled = (page>=pages);
-    pinfo.textContent = `${page}/${pages}`;
+    prev.disabled=(page<=1); next.disabled=(page>=pages);
+    pinfo.textContent=`${page}/${pages}`;
 
-    const u = new URL(location.href);
-    u.searchParams.set('page', page);
-    history.replaceState(null,'',u.toString());
+    const u=new URL(location.href); u.searchParams.set('page',page); history.replaceState(null,'',u.toString());
   }
 
-  let items = [];
-  let page = parseInt(new URL(location.href).searchParams.get('page')||'1',10);
-  if(!(page>0)) page=1;
+  let all=[], page=parseInt(new URL(location.href).searchParams.get('page')||'1',10); if(!(page>0)) page=1;
 
   (async function load(){
     try{
-      const r = await fetch('/api/list', {credentials:'include', cache:'no-store'});
+      const r=await fetch('/api/list',{credentials:'include',cache:'no-store'});
       if(!r.ok) throw new Error('list failed');
-      const data = await r.json();
-      const arr  = Array.isArray(data) ? data : (Array.isArray(data?.items) ? data.items : []);
-      items = arr.filter(Boolean);
-      items.sort((a,b)=> timeOf(b)-timeOf(a));   // recent-first
-      render(items,page);
-    }catch(e){
-      console.error('Gallery load error:', e);
-      grid.innerHTML = '<div style="padding:24px;background:#fff;border:1px solid #f0c8d4;border-radius:14px">Could not load gallery.</div>';
+      const data=await r.json();
+      const arr=Array.isArray(data)?data:(Array.isArray(data?.items)?data.items:[]);
+      all=arr.filter(Boolean);
+      all.sort((a,b)=>when(b)-when(a)); // recent-first
+      render(all,page);
+    }catch(err){
+      console.error(err);
+      grid.innerHTML='<div style="padding:16px;background:#fff;border:1px solid #f3c6d3;border-radius:10px">Could not load gallery.</div>';
     }
   })();
 
-  prev.onclick = ()=>{ page=Math.max(1,page-1); render(items,page); };
-  next.onclick = ()=>{ page=page+1;             render(items,page); };
+  prev.onclick=()=>{ page=Math.max(1,page-1); render(all,page); };
+  next.onclick=()=>{ page=page+1; render(all,page); };
 })();
 
-/* ---------- 5) Music + Hearts (persist state) ---------- */
+/* ---------- music + hearts toggles (persist) ---------- */
 (function(){
-  const audio     = document.getElementById('bgMusic');
-  const musicBtn  = document.getElementById('musicBtn');
-  const heartsBtn = document.getElementById('heartsBtn');
-  const hearts    = document.getElementById('hearts');
+  const audio=document.getElementById('bgMusic');
+  const musicBtn=document.getElementById('musicBtn');
+  const heartsBtn=document.getElementById('heartsBtn');
+  const floatHearts=document.getElementById('floatHearts');
 
+  let musicOn  = localStorage.getItem('musicOn')  === 'true';
   let heartsOn = localStorage.getItem('heartsOn') !== 'false'; // default true
-  let musicOn  = localStorage.getItem('musicOn') === 'true';
 
-  hearts.style.display = heartsOn ? 'block' : 'none';
+  floatHearts.style.display = heartsOn ? 'block' : 'none';
   heartsBtn.addEventListener('click', ()=>{
     heartsOn = !heartsOn;
-    hearts.style.display = heartsOn ? 'block' : 'none';
+    floatHearts.style.display = heartsOn ? 'block' : 'none';
     localStorage.setItem('heartsOn', heartsOn);
   });
 
-  const resume = () => { if(musicOn) audio.play().catch(()=>{}); document.removeEventListener('pointerdown', resume); };
+  const resume=()=>{ if(musicOn) audio.play().catch(()=>{}); document.removeEventListener('pointerdown',resume); };
   document.addEventListener('pointerdown', resume, {once:true});
 
   musicBtn.addEventListener('click', ()=>{
-    if (audio.paused){
+    if(audio.paused){
       audio.play().then(()=>{ musicOn=true; localStorage.setItem('musicOn','true'); }).catch(()=>{});
-    } else {
+    }else{
       audio.pause(); musicOn=false; localStorage.setItem('musicOn','false');
     }
   });
 })();
 </script>
-
 </body>
 </html>
