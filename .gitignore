@@ -38,3 +38,5 @@ Thumbs.db
 
 # Allow our photos DB to be tracked
 !backend/photos.json
+backend/get-refresh-token.js
+backend/test-drive.js
