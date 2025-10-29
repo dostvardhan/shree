@@ -1,69 +1,48 @@
 ﻿<!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Memory — Photo 7</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Photo 7</title>
 <style>
-:root{--bg1:#ffe6ee;--bg2:#ffd1e0;--ink:#5a3446;--accent:#6d2a47;--card:rgba(255,255,255,.62);--shadow:0 20px 50px rgba(90,52,70,.25);--radius:22px}
+:root{--pink1:#ffe6ee;--pink2:#ffd1e0;--ink:#5a3446;--accent:#6d2a47;--card:rgba(255,255,255,.92);--shadow:0 28px 70px rgba(90,52,70,.18);}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;color:var(--ink);background:radial-gradient(1000px 600px at 10% 10%, rgba(255,255,255,.35), transparent 25%),linear-gradient(160deg,var(--bg1),var(--bg2));background-attachment:fixed;min-height:100vh;overflow-x:hidden}
-header{padding:22px 14px 14px;text-align:center}
-h1{font-family:"Playfair Display",serif;font-size:clamp(26px,5vw,40px);margin:0}
-main{max-width:1000px;margin:0 auto;padding:0 18px 60px}
-.frame{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;text-align:center}
-.hero{width:100%;height:auto;max-height:80vh;object-fit:contain;display:block;background:#fff;border-radius:18px;box-shadow:0 12px 30px rgba(0,0,0,0.25);cursor:zoom-in;transition:transform .22s ease}
-.hero:hover{transform:scale(1.01)}
-.cap{display:inline-block;margin-top:14px;padding:8px 16px;border-radius:999px;background:#fff7f8;color:#6b2a47;font-style:italic;box-shadow:0 6px 18px rgba(0,0,0,.1)}
-.actions{margin-top:20px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
-.pill{padding:10px 18px;border-radius:999px;background:#fff;border:1px solid rgba(0,0,0,.08);text-decoration:none;color:var(--ink);font-weight:600;box-shadow:0 8px 18px rgba(0,0,0,.08)}
-.pill.primary{background:var(--accent);color:#fff}
-.nav-heart{position:fixed;top:50%;transform:translateY(-50%);font-size:38px;text-decoration:none;color:var(--accent);z-index:30;opacity:.92;transition:transform .16s}
-.nav-heart:hover{transform:translateY(-50%) scale(1.08)}
-.nav-left{left:16px}.nav-right{right:16px}
-.fab-wrap{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;gap:10px;z-index:40;align-items:center}
-.fab{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#ffffffdd;border:1px solid #f0c4cc;box-shadow:0 10px 28px -16px rgba(0,0,0,0.45);cursor:pointer;font-weight:800}
-.vol-wrap{position:relative;display:flex;align-items:center}
-.vol-slider{width:110px;height:28px;border-radius:999px;background:#ffffffdd;border:1px solid rgba(0,0,0,0.06);display:flex;align-items:center;padding:0 8px;opacity:0;transform:translateY(8px);transition:opacity .18s, transform .18s;box-shadow:0 10px 24px rgba(0,0,0,0.12)}
-.fab-wrap:hover .vol-slider{opacity:1;transform:translateY(0)}
-.vol-slider input[type=range]{-webkit-appearance:none;background:transparent;width:86px;height:6px;border-radius:6px;outline:none}
-.vol-slider input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 2px 6px rgba(0,0,0,0.2);cursor:pointer}
-.lb-close{position:absolute;top:18px;right:18px;padding:10px;border-radius:8px;background:#ffffffdd;border:none;font-size:18px;cursor:pointer;z-index:99999}
+body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(160deg,var(--pink1),var(--pink2));color:var(--ink);min-height:100vh;overflow-x:hidden}
+#heartsCanvas{position:fixed;inset:0;pointer-events:none;z-index:1}
+.nav-heart{position:fixed;top:50%;transform:translateY(-50%);font-size:36px;text-decoration:none;color:var(--accent);z-index:40;opacity:.95}
+.nav-heart:hover{transform:translateY(-50%) scale(1.06)}
+.nav-left{left:14px}.nav-right{right:14px}
+main{max-width:900px;margin:40px auto;padding:0 20px 80px;position:relative;z-index:10}
+.frame{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:18px;text-align:center}
+.hero{width:100%;max-height:82vh;object-fit:contain;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,0.18);cursor:zoom-in}
+.caption{margin-top:14px;display:inline-block;background:#fff7f7;padding:8px 14px;border-radius:999px;font-style:italic;color:#7a3f44}
+.actions{margin-top:18px;display:flex;gap:12px;justify-content:center}
+.btn{padding:10px 16px;border-radius:999px;text-decoration:none;background:#fff;color:var(--ink);border:1px solid rgba(0,0,0,0.06);font-weight:600}
+.btn.life{background:var(--accent);color:#fff}
+.fab-wrap{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:12px;z-index:50;align-items:center}
+.fab{width:48px;height:48px;border-radius:50%;background:#fff;border:1px solid rgba(0,0,0,0.06);box-shadow:0 12px 28px rgba(0,0,0,0.18);display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700}
+.vol-box{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:#ffffffdd;border:1px solid rgba(0,0,0,0.04);transform:translateY(10px);opacity:0;transition:opacity .14s,transform .14s}
+.fab-wrap:hover .vol-box{transform:translateY(0);opacity:1}
+.vol-box input[type=range]{width:110px;-webkit-appearance:none;background:transparent}
+.lb-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;z-index:9999}
+.lb-overlay img{max-width:96vw;max-height:94vh;border-radius:10px}
+.lb-close{position:absolute;top:20px;right:20px;background:#ffffff22;color:#fff;border:none;font-size:20px;padding:8px 12px;border-radius:8px;cursor:pointer}
 </style>
 </head>
 <body>
-<a id="prevHeart" class="nav-heart nav-left" href="photo6.html" aria-label="Previous">❤</a>
-<a id="nextHeart" class="nav-heart nav-right" href="photo8.html" aria-label="Next">❤</a>
-
-<header><h1>Memory</h1></header>
-
-<main>
-  <article class="frame">
-    <img id="heroImg" class="hero" src="/photos/photo7.jpg" alt="Memory 7">
-    <div class="cap">“That one laugh, forever.”</div>
-    <div class="actions">
-      <a class="pill" href="/gallery.html">Back to Gallery</a>
-      <a class="pill primary" href="/life.html">Sweet Memories</a>
-      <a id="logoutBtn" class="pill" href="#">Logout</a>
-    </div>
-  </article>
-</main>
-
-<div class="fab-wrap">
-  <div class="vol-wrap">
-    <div id="musicBtn" class="fab" title="Play / Pause">♪</div>
-    <div class="vol-slider" aria-hidden="true"><input id="volRange" type="range" min="0" max="100" value="80"></div>
-  </div>
-  <button id="heartsBtn" class="fab" title="Next">❤</button>
+<canvas id="heartsCanvas"></canvas>
+<a class="nav-heart nav-left" href="photo6.html">❤</a>
+<a class="nav-heart nav-right" href="photo8.html">❤</a>
+<img id="heroImg" class="hero" src="/photos/photo7.jpg" alt="Memory 7">
+<div class="caption">“That one laugh, forever.”</div>
+<div class="actions">
+<a class="btn" href="/gallery.html">Gallery</a>
+<a class="btn life" href="/life.html">Life</a>
+<a id="logoutBtn" class="btn" href="#">Logout</a>
 </div>
-
+</div></main>
+<div class="fab-wrap"><div class="fab" id="musicBtn">♪</div><div class="vol-box"><input id="volRange" type="range" min="0" max="100" value="80"></div></div>
 <audio id="bgMusic" preload="auto" loop><source src="/music/bg.mp3" type="audio/mpeg"></audio>
-
-<script>
-(async()=>{try{const r=await fetch('/api/diag',{credentials:'include'});if(!r.ok)throw 0}catch{location.href='/index.html'}})();
-document.getElementById('logoutBtn').addEventListener('click',e=>{e.preventDefault();fetch('/auth/logout',{credentials:'include'}).finally(()=>location.href='/index.html')});
-(function(){const audio=document.getElementById('bgMusic'),btn=document.getElementById('musicBtn'),vol=document.getElementById('volRange');const sV=parseFloat(localStorage.getItem('shree_vol'));const sP=localStorage.getItem('shree_play')==='true';audio.volume = !isNaN(sV)?sV:0.8;vol.value=Math.round(audio.volume*100);if(sP)audio.play().catch(()=>{});btn.addEventListener('click',()=>{if(audio.paused){audio.play().catch(()=>{});localStorage.setItem('shree_play','true')}else{audio.pause();localStorage.setItem('shree_play','false')}});vol.addEventListener('input',e=>{audio.volume=Number(e.target.value)/100;localStorage.setItem('shree_vol',String(audio.volume))});audio.addEventListener('play',()=>btn.title='Pause');audio.addEventListener('pause',()=>btn.title='Play')})();
-(function(){document.getElementById('heartsBtn').addEventListener('click',()=>location.href='photo8.html')})();
-(function(){const hero=document.getElementById('heroImg');hero.addEventListener('click',()=>{const src=hero.src;const overlay=document.createElement('div');overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;z-index:99999';const img=document.createElement('img');img.src=src;img.style.cssText='max-width:96vw;max-height:94vh;object-fit:contain;border-radius:12px;box-shadow:0 30px 80px rgba(0,0,0,.6)';const close=document.createElement('button');close.className='lb-close';close.textContent='✕';close.onclick=()=>overlay.remove();overlay.appendChild(img);overlay.appendChild(close);document.body.appendChild(overlay);const onKey=(e)=>{if(e.key==='Escape'){overlay.remove();document.removeEventListener('keydown',onKey)}};document.addEventListener('keydown',onKey)})})();
-</script>
+<script src="/assets/js/common-photo.js"></script>
 </body>
 </html>
