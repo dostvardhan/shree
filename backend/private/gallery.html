@@ -7,316 +7,258 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
-  :root{
-    --bg-accent: #fff5f4;
-    --text: #5a3740;
-    --muted: #7a5a5f;
-    --card-bg: rgba(255,255,255,0.95);
-    --card-edge: rgba(255,248,246,0.9);
-    --glass: rgba(255,255,255,0.6);
-    --shadow-soft: 0 12px 30px rgba(50,30,40,0.12);
-    --shadow-strong: 0 28px 64px rgba(40,18,30,0.18);
-    --radius-lg: 18px;
-  }
+:root {
+  --text:#5a3740;
+  --muted:#7a5a5f;
+  --bg-card:rgba(255,255,255,0.92);
+  --shadow:0 14px 35px rgba(0,0,0,0.18);
+  --radius:18px;
+}
+body {
+  margin:0;
+  font-family:Inter,system-ui,sans-serif;
+  color:var(--text);
+  background:url("assets/img/gallery-bg-hearts.png") center/cover no-repeat fixed;
+  overflow-x:hidden;
+}
 
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial}
-  body{
-    background: url("assets/img/gallery-bg-hearts.png") center/cover no-repeat fixed;
-    color:var(--text);
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-    overflow-y:auto;
-  }
+/* 🔹 Navigation */
+nav.topbar {
+  display:flex;justify-content:center;gap:10px;
+  position:sticky;top:14px;z-index:10;
+}
+nav.topbar a {
+  text-decoration:none;
+  font-weight:600;
+  font-size:13px;
+  color:var(--text);
+  padding:8px 14px;
+  border-radius:999px;
+  background:linear-gradient(180deg,#ffeef2,#ffdee8);
+  border:1px solid #f2c3d1;
+  box-shadow:0 8px 20px -12px rgba(0,0,0,.3);
+}
+nav.topbar a.active { background:#fff; }
 
-  /* Top nav */
-  nav.topbar{
-    position:sticky; top:14px; z-index:20;
-    display:flex; gap:10px; justify-content:center; align-items:center;
-    margin:0 auto; width:100%;
-    padding:6px 12px;
-    pointer-events:auto;
-  }
-  nav.topbar a{
-    display:inline-block;
-    text-decoration:none; color:var(--text);
-    background:linear-gradient(180deg,#ffeff0,#ffdfeb);
-    padding:8px 14px; border-radius:999px;
-    border:1px solid rgba(240,196,205,0.6);
-    box-shadow:0 8px 20px -12px rgba(0,0,0,0.25);
-    font-weight:600; font-size:13px;
-  }
+/* 🔹 Heading */
+h1 {
+  font-family:"Playfair Display",serif;
+  text-align:center;
+  font-size:clamp(22px,3vw,34px);
+  margin:26px 0 12px;
+  text-shadow:0 1px 0 rgba(255,255,255,0.7);
+}
 
-  /* Title */
-  header.page-head{max-width:1200px;margin:22px auto 6px;padding:0 20px;text-align:center}
-  header.page-head h1{
-    margin:6px 0 14px;font-family:"Playfair Display",serif;font-size:clamp(20px,3.6vw,34px);
-    color:var(--text); letter-spacing:.2px;
-    text-shadow:0 1px 0 rgba(255,255,255,0.7)
-  }
+/* 🔹 Gallery Grid */
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:22px;
+  max-width:1150px;
+  margin:0 auto;
+  padding:10px 20px 60px;
+}
 
-  /* Container that keeps grid centered */
-  .container{
-    max-width:1200px;
-    margin:0 auto 60px;
-    padding:0 20px;
-    position:relative;
-  }
+/* 🔹 Photo Card (new floating glass frame) */
+.card {
+  background:var(--bg-card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  border:1px solid rgba(0,0,0,0.05);
+  overflow:hidden;
+  cursor:pointer;
+  position:relative;
+  transition:transform .25s ease, box-shadow .25s ease;
+}
+.card:hover {
+  transform:translateY(-8px);
+  box-shadow:0 22px 45px rgba(0,0,0,0.25);
+}
 
-  /* Grid: larger cards, balanced spacing */
-  .grid{
-    display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap:22px;
-    align-items:start;
-  }
+/* poster region */
+.poster {
+  position:relative;
+  width:100%;
+  aspect-ratio:3/4;
+  overflow:hidden;
+  border-radius:var(--radius);
+}
 
-  /* Card base */
-  .card{
-    background:var(--card-bg);
-    border-radius:var(--radius-lg);
-    border: 1px solid rgba(0,0,0,0.04);
-    box-shadow: var(--shadow-soft);
-    overflow:visible;
-    transition: transform .28s cubic-bezier(.2,.9,.25,1), box-shadow .28s;
-    cursor:pointer;
-    position:relative;
-    display:flex; flex-direction:column;
-  }
-  .card:hover{ transform: translateY(-10px); box-shadow:var(--shadow-strong) }
+/* blurred fill behind transparent or smaller photos */
+.poster .fill {
+  position:absolute;inset:0;
+  background-size:cover;background-position:center;
+  filter:blur(16px) brightness(0.95);
+  transform:scale(1.05);
+  opacity:0.8;
+}
 
-  /* double framed edge */
-  .card::before{
-    content:"";
-    position:absolute; inset:6px;
-    border-radius:calc(var(--radius-lg) - 6px);
-    pointer-events:none;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
-  }
+/* 🔹 Photo area */
+.photo {
+  position:absolute;inset:8px;
+  background:linear-gradient(180deg,#fff,#fafafa);
+  border-radius:calc(var(--radius) - 6px);
+  box-shadow:inset 0 2px 6px rgba(255,255,255,0.8);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.photo img {
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain; /* ✅ no cropping now */
+  transition:transform .35s ease, filter .3s ease;
+  border-radius:10px;
+}
+.card:hover .photo img {
+  transform:scale(1.06);
+  filter:brightness(1.03) contrast(1.05);
+}
 
-  /* image area (keeps consistent aspect) */
-  .poster{ position:relative; width:100%; aspect-ratio:3/4; overflow:hidden; border-radius:calc(var(--radius-lg) - 2px); }
-  .poster .bg{
-    position:absolute; inset:0; background-size:cover; background-position:center; filter: blur(10px) brightness(.95) saturate(.96);
-    transform:scale(1.04); opacity:0.9;
-  }
+/* hover light reflection */
+.card::after {
+  content:"";
+  position:absolute;inset:0;
+  border-radius:var(--radius);
+  background:linear-gradient(145deg,rgba(255,255,255,0.05),rgba(255,255,255,0));
+  opacity:0;
+  transition:opacity .3s;
+}
+.card:hover::after { opacity:1; }
 
-  .photo-wrap{
-    position:absolute; inset:10px; display:flex; align-items:center; justify-content:center;
-    border-radius:12px; overflow:hidden;
-    background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(250,248,247,0.88));
-    box-shadow: inset 0 4px 18px rgba(255,255,255,0.6);
-  }
-  .photo-wrap img{
-    width:100%; height:100%; object-fit:cover; display:block;
-    transition: transform .35s ease, filter .28s ease;
-    border-radius:8px;
-  }
-  .card:hover .photo-wrap img{ transform: scale(1.03); filter: saturate(1.06) contrast(1.04); }
+/* 🔹 Caption overlay */
+.caption {
+  position:absolute;bottom:10px;left:10px;right:10px;
+  background:rgba(0,0,0,0.55);
+  color:#fff;padding:6px 8px;
+  border-radius:8px;
+  font-size:13px;text-align:center;
+  opacity:0;transform:translateY(6px);
+  transition:opacity .25s, transform .25s;
+}
+.card:hover .caption {opacity:1;transform:translateY(0);}
 
-  /* optional caption overlay on hover */
-  .caption{
-    position:absolute; left:12px; right:12px; bottom:12px;
-    background: linear-gradient(180deg, rgba(0,0,0,0.0), rgba(0,0,0,0.45));
-    color:#fff; padding:8px 10px; border-radius:8px;
-    font-size:13px; text-align:center; opacity:0; transform:translateY(6px);
-    transition: opacity .22s, transform .22s;
-    pointer-events:none;
-  }
-  .card:hover .caption{ opacity:1; transform:translateY(0); }
+/* 🔹 Pagination */
+.pager {display:flex;justify-content:center;gap:10px;padding:20px 0 40px;}
+.pbtn {
+  width:42px;height:42px;border-radius:50%;
+  border:none;background:white;cursor:pointer;
+  font-weight:700;
+  box-shadow:0 10px 24px -16px rgba(0,0,0,0.4);
+}
+.pbtn[disabled]{opacity:.5;cursor:not-allowed}
 
-  /* small meta area (optional hidden) */
-  .meta { padding:10px 12px 14px; font-size:13px; color:var(--muted); display:none; } /* filenames hidden */
-
-  /* pagination centered */
-  .pager { display:flex; justify-content:center; gap:12px; margin-top:18px; margin-bottom:40px; }
-  .pager button{
-    width:44px;height:44px;border-radius:999px;border:none;background:#fff;font-weight:700;
-    box-shadow:0 10px 24px -18px rgba(0,0,0,0.35); cursor:pointer;
-  }
-  .pager button:disabled{ opacity:.45; cursor:default }
-
-  /* floating controls */
-  .fab-wrap{ position:fixed; right:18px; bottom:18px; display:flex; flex-direction:column; gap:12px; z-index:30; }
-  .fab{ width:48px;height:48px;border-radius:999px;background: #fff; border:1px solid rgba(0,0,0,0.06); box-shadow:0 10px 28px -18px rgba(0,0,0,0.35); display:grid;place-items:center;cursor:pointer }
-  .fab.heart{ background: linear-gradient(180deg,#fff,#ffeef0) }
-
-  /* responsiveness */
-  @media (max-width:900px){ .grid{ gap:14px } .container{padding:0 14px} }
-  @media (max-width:520px){ .grid{ grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:10px } .poster{ aspect-ratio:4/5 } }
-
+/* 🔹 Floating buttons */
+.fab-wrap{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:10px;}
+.fab{
+  width:48px;height:48px;border-radius:50%;
+  background:#ffffffcc;
+  border:1px solid #f0c4cc;
+  box-shadow:0 10px 28px -16px rgba(0,0,0,0.45);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;cursor:pointer;
+}
 </style>
 </head>
 <body>
 
-<!-- Auth guard: redirect to index if not authorized -->
+<!-- Auth Guard -->
 <script>
-(async function(){
-  try{
-    const r = await fetch('/api/diag',{credentials:'include'});
-    if(!r.ok) throw 0;
-  }catch(e){
-    location.href = '/index.html';
-  }
+(async()=>{
+ try{
+  const r=await fetch('/api/diag',{credentials:'include'});
+  if(!r.ok)throw 0;
+ }catch{location.href='/index.html';}
 })();
 </script>
 
-<!-- Top nav -->
-<nav class="topbar" aria-label="Main navigation">
-  <a href="/life.html">Life</a>
-  <a href="/upload.html">Upload</a>
-  <a href="/auth/logout">Logout</a>
+<nav class="topbar">
+ <a href="/life.html">Life</a>
+ <a href="/upload.html">Upload</a>
+ <a href="/auth/logout">Logout</a>
 </nav>
 
-<header class="page-head">
-  <h1>Sweet Memories of Shreshtha’s Life</h1>
-</header>
+<h1>Sweet Memories of Shreshtha’s Life</h1>
 
-<main class="container" id="main">
-  <section id="galleryGrid" class="grid" aria-live="polite">
-    <!-- placeholder skeletons (will be replaced) -->
-    <div class="card" style="visibility:hidden"></div>
-    <div class="card" style="visibility:hidden"></div>
-  </section>
+<section id="grid" class="grid">
+  <div class="card" style="opacity:0.4;height:200px;"></div>
+</section>
 
-  <div class="pager" role="navigation" aria-label="Gallery pages">
-    <button id="prevBtn" aria-label="Previous page">‹</button>
-    <button id="nextBtn" aria-label="Next page">›</button>
-  </div>
-</main>
-
-<!-- floating -->
-<div class="fab-wrap" aria-hidden="true">
-  <button class="fab" id="musicBtn">♪</button>
-  <button class="fab heart" id="heartBtn">❤</button>
+<div class="pager">
+  <button id="prevBtn" class="pbtn">‹</button>
+  <button id="nextBtn" class="pbtn">›</button>
 </div>
 
-<!-- audio (optional) -->
+<div class="fab-wrap">
+  <button class="fab" id="musicBtn">♪</button>
+  <button class="fab" id="heartBtn">❤</button>
+</div>
+
 <audio id="bgMusic" loop preload="auto"><source src="/music/bg.mp3" type="audio/mpeg"></audio>
 
-<!-- Lightbox (created dynamically) -->
 <script>
-/* LIGHTBOX (keyboard accessible) */
-const Lightbox = (() => {
-  const el = document.createElement('div');
-  el.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.86);align-items:center;justify-content:center;z-index:9999;';
-  el.innerHTML = `<button id="lbClose" aria-label="close" style="position:absolute;top:18px;right:18px;padding:10px 12px;border-radius:8px;background:#fff8;color:#fff;border:none;font-size:20px;cursor:pointer">✕</button>
-                  <img id="lbImg" style="max-width:95vw;max-height:90vh;border-radius:10px;box-shadow:0 18px 48px rgba(0,0,0,0.6)"/>`;
-  document.body.appendChild(el);
-  const img = el.querySelector('#lbImg');
-  const close = el.querySelector('#lbClose');
-  close.addEventListener('click', () => { el.style.display='none'; img.src=''; history.replaceState(null,'',location.pathname); });
-  el.addEventListener('click', (ev) => { if(ev.target===el) { el.style.display='none'; img.src=''; history.replaceState(null,'',location.pathname);} });
-  document.addEventListener('keydown', (e) => { if(e.key==='Escape') el.style.display='none'; });
-  return {
-    open(src){
-      img.src=src; el.style.display='flex'; try{ history.replaceState(null,'', '?lightbox=1'); }catch(e){} 
-    }
-  };
+/* Lightbox */
+const lb=(()=>{const e=document.createElement("div");
+e.style.cssText="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;z-index:99;";
+e.innerHTML=`<button id='x' style='position:absolute;top:20px;right:20px;padding:8px 12px;color:white;background:#ffffff20;border:1px solid #ffffff40;border-radius:50%;font-size:20px;cursor:pointer;'>✕</button>
+<img id='img' style='max-width:90vw;max-height:85vh;border-radius:12px;'>`;
+document.body.appendChild(e);
+const i=e.querySelector("#img"),c=e.querySelector("#x");
+c.onclick=()=>{e.style.display="none";i.src=""};
+e.addEventListener("click",t=>{if(t.target===e)c.onclick()});
+return{open(s){i.src=s;e.style.display="flex"}}})();
+
+/* Gallery */
+(async()=>{
+ const grid=document.getElementById('grid'),
+ prev=document.getElementById('prevBtn'),
+ next=document.getElementById('nextBtn');
+ const PAGE=24;
+ function getTime(i){for(let k of ['createdAt','uploadedAt','time','date','timestamp'])if(i?.[k])return new Date(i[k]).getTime();return 0;}
+ async function createCard(it){
+   const el=document.createElement('div');el.className='card';
+   el.innerHTML=`<div class='poster'><div class='fill'></div><div class='photo'><img/></div><div class='caption'></div></div>`;
+   const id=it.id||it._id;
+   if(id){
+     try{
+       const res=await fetch('/api/file/'+id,{credentials:'include'});
+       if(!res.ok)throw 0;
+       const blob=await res.blob();
+       const url=URL.createObjectURL(blob);
+       const img=el.querySelector('img');
+       img.src=url;
+       el.querySelector('.fill').style.backgroundImage=`url('${url}')`;
+       el.querySelector('.caption').textContent=it.caption||"";
+       el.onclick=()=>lb.open(url);
+     }catch{}
+   }
+   return el;
+ }
+ function render(list,page){
+   grid.innerHTML='';
+   const total=list.length,pages=Math.ceil(total/PAGE)||1;
+   if(page>pages)page=pages;
+   list.slice((page-1)*PAGE,page*PAGE).forEach(async i=>grid.appendChild(await createCard(i)));
+   prev.disabled=page<=1;next.disabled=page>=pages;
+ }
+ try{
+   const res=await fetch('/api/list',{credentials:'include'});
+   const data=await res.json();
+   let items=Array.isArray(data)?data:(data.items||[]);
+   items=items.sort((a,b)=>getTime(b)-getTime(a));
+   let page=1;render(items,page);
+   prev.onclick=()=>{if(page>1){page--;render(items,page)}};
+   next.onclick=()=>{page++;render(items,page)};
+ }catch{grid.innerHTML='<p style="text-align:center;color:#603a3b;">Unable to load photos.</p>';}
 })();
 
-/* GALLERY logic: fetch /api/list and render cards */
-(async function(){
-  const grid = document.getElementById('galleryGrid');
-  const prev = document.getElementById('prevBtn');
-  const next = document.getElementById('nextBtn');
-  const PAGE = 24; // moderate per-page size
-
-  // helper: try multiple date fields
-  function getTime(i){
-    for(const k of ['uploadedAt','createdAt','time','date','timestamp']) if(i?.[k]) return new Date(i[k]).getTime();
-    return 0;
-  }
-
-  async function createCard(item){
-    const outer = document.createElement('article');
-    outer.className = 'card';
-    outer.tabIndex = 0;
-    outer.setAttribute('role','button');
-    outer.setAttribute('aria-label','Open photo');
-
-    const poster = document.createElement('div');
-    poster.className = 'poster';
-    poster.innerHTML = `<div class="bg"></div><div class="photo-wrap"><img loading="lazy" alt="photo"/></div>
-                        <div class="caption" aria-hidden="true"></div>`;
-    outer.appendChild(poster);
-
-    const imgEl = poster.querySelector('img');
-    const bgEl = poster.querySelector('.bg');
-    const captionEl = poster.querySelector('.caption');
-
-    // set caption (but hidden unless hover)
-    captionEl.textContent = item.caption || item.name || '';
-
-    const id = item.id || item._id;
-    if(!id) return outer;
-
-    try{
-      const res = await fetch('/api/file/' + encodeURIComponent(id), { credentials: 'include' });
-      if(!res.ok) throw new Error('file fetch fail');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      imgEl.src = url;
-      bgEl.style.backgroundImage = `url('${url}')`;
-      // revoke when loaded to free memory
-      imgEl.onload = ()=> { try{ URL.revokeObjectURL(url); }catch(e){} };
-      // open lightbox
-      outer.addEventListener('click', ()=> Lightbox.open(url));
-      outer.addEventListener('keydown', (e)=> { if(e.key==='Enter') Lightbox.open(url); });
-    }catch(err){
-      // don't break whole grid — keep placeholder card
-      console.warn('file load failed', err);
-    }
-
-    return outer;
-  }
-
-  function renderPage(items, page){
-    grid.innerHTML = '';
-    const total = items.length;
-    const pages = Math.max(1, Math.ceil(total / PAGE));
-    page = Math.max(1, Math.min(page, pages));
-    const start = (page - 1) * PAGE;
-    const slice = items.slice(start, start + PAGE);
-    // append cards sequentially
-    slice.forEach(async it => {
-      const node = await createCard(it);
-      grid.appendChild(node);
-    });
-    prev.disabled = page <= 1;
-    next.disabled = page >= pages;
-  }
-
-  try{
-    const res = await fetch('/api/list', { credentials: 'include' });
-    if(!res.ok) throw 0;
-    const data = await res.json();
-    let items = Array.isArray(data) ? data : (data.items || []);
-    items.sort((a,b) => getTime(b) - getTime(a));
-
-    let page = parseInt(new URL(location).searchParams.get('page')) || 1;
-    renderPage(items, page);
-
-    prev.addEventListener('click', ()=> { if(page>1){ page--; renderPage(items,page);} });
-    next.addEventListener('click', ()=> { page++; renderPage(items,page);} );
-
-  }catch(e){
-    grid.innerHTML = `<div style="padding:28px;text-align:center;color:var(--muted)">Unable to load images — try again later.</div>`;
-    console.error(e);
-  }
+/* Music */
+(()=>{
+ const a=document.getElementById('bgMusic'),b=document.getElementById('musicBtn');
+ let on=localStorage.getItem('musicOn')==='true';
+ if(on)a.play().catch(()=>{});
+ b.onclick=()=>{if(a.paused){a.play();on=true;}else{a.pause();on=false;}localStorage.setItem('musicOn',on)};
 })();
-
-/* music toggle (light) */
-(function(){
-  const btn = document.getElementById('musicBtn');
-  const audio = document.getElementById('bgMusic');
-  let on = localStorage.getItem('musicOn') === 'true';
-  if(on) audio.play().catch(()=>{});
-  btn.addEventListener('click', ()=> {
-    if(audio.paused){ audio.play().catch(()=>{}); on=true; } else { audio.pause(); on=false; }
-    localStorage.setItem('musicOn', on);
-  });
-})();
-
 </script>
+
 </body>
 </html>
