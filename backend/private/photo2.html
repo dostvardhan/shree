@@ -1,75 +1,121 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Shreshtha • Memory 2</title>
-<script src="/auth0-spa-js.production.js"></script>
-<script src="/auth-init.js?v=6" defer></script>
-<script src="/guard-auth.js?v=6" defer></script>
+<title>Shreshtha — Photo 2</title>
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline';">
 <style>
-  body{font-family:"Inter",sans-serif;background:linear-gradient(160deg,#fff0ef,#ffd9d6,#ffe9e6);
-  overflow-x:hidden;text-align:center;color:#5a0013;}
-  .nav-heart{position:fixed;top:50%;transform:translateY(-50%);font-size:38px;text-decoration:none;z-index:10;opacity:.9;transition:transform .2s ease,opacity .2s ease;}
-  .nav-heart:hover{transform:translateY(-50%) scale(1.08);opacity:1;}
-  .nav-left{left:20px;color:#ffd166;}
-  .nav-right{right:20px;color:#ff6f91;}
-  .photo-wrap{width:100%;display:flex;justify-content:center;align-items:center;margin:40px 0 20px;}
-  .photo-wrap img{width:auto;height:88vh;max-width:96%;border-radius:18px;box-shadow:0 20px 40px rgba(0,0,0,.15);object-fit:contain;}
-  .quote{margin:16px auto 24px;font-style:italic;font-size:18px;color:#6d2a47;}
-  .bottom-links{margin:22px auto 40px;font-size:15px;}
-  .bottom-links a{color:#6d2a47;text-decoration:none;margin:0 10px;font-weight:600;}
-  .bottom-links a:hover{text-decoration:underline;}
+  :root{ --bg1:#ffeef0; --accent:#6d2a47; --muted:#6b3a3c; }
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;color:var(--muted);}
+  body{ background: radial-gradient(900px 400px at 8% 8%, rgba(255,255,255,0.35), transparent 25%), linear-gradient(180deg,#fff0ef 0%, #ffdede 38%, #ffd2d2 100%); background-attachment:fixed;}
+  main{min-height:100vh; display:flex; align-items:flex-start; justify-content:center; padding:28px 20px 120px;}
+  .sheet { width:min(1200px,94%); max-width:1400px; text-align:center; }
+  .photo-wrap{width:100%;display:flex;justify-content:center;margin:0;}
+  .hero { width:100%; max-width:1100px; height:auto; display:block; object-fit:contain; border-radius:12px; box-shadow: 0 28px 60px rgba(0,0,0,0.18); background:#fff; }
+  .caption { margin-top:18px; display:inline-block; background:rgba(255,255,255,0.9); padding:10px 18px; border-radius:999px; font-style:italic; color:var(--muted); box-shadow:0 8px 24px rgba(0,0,0,0.08); font-size:15px; }
+  .bottom-nav { position:fixed; left:0; right:0; bottom:18px; z-index:110; display:flex; justify-content:center; gap:18px; pointer-events:auto; }
+  .nav-pill { background:#fff; color:var(--muted); padding:10px 14px; border-radius:999px; text-decoration:none; font-weight:600; box-shadow:0 12px 28px rgba(0,0,0,0.10); font-size:14px; }
+  .nav-pill.primary { background:var(--accent); color:#fff; }
+  .nav-heart{position:fixed;top:50%;transform:translateY(-50%);font-size:36px;text-decoration:none;z-index:105;opacity:0.95;user-select:none}
+  .nav-left{left:18px} .nav-right{right:18px}
+  .music-btn { position:fixed; right:22px; bottom:22px; z-index:160; width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center; background:linear-gradient(135deg,#fffafc,#ffeef2); box-shadow:0 12px 30px rgba(220,90,120,0.14); cursor:pointer; border:none;}
+  .music-btn svg { width:26px;height:26px; }
+  .vol-pop { position:fixed; right:18px; bottom:86px; width:220px; padding:10px; border-radius:12px; background:linear-gradient(180deg,#fff,#fff7f6); box-shadow:0 12px 36px rgba(0,0,0,0.12); display:none; z-index:170; gap:10px; align-items:center;}
+  .vol-pop.show{display:flex}
+  .vol-range{width:130px;height:8px;border-radius:999px; background:linear-gradient(90deg,#ffc1c1,#ffd88a); -webkit-appearance:none; outline:none}
+  .vol-range::-webkit-slider-thumb{ -webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid #ffb0a0; box-shadow:0 4px 10px rgba(0,0,0,0.12)}
+  .lb { position:fixed; inset:0; display:none; z-index:999; align-items:center; justify-content:center; background:rgba(0,0,0,0.8); }
+  .lb img{ max-width:95vw; max-height:95vh; border-radius:8px; }
+  #fxCanvas { position:fixed; left:0; top:0; width:100vw; height:100vh; pointer-events:none; z-index:90; }
 </style>
 </head>
 <body>
 
-<a id="prevHeart" class="nav-heart nav-left" href="#"><span>&#10084;</span></a>
-<a id="nextHeart" class="nav-heart nav-right" href="#"><span>&#10084;</span></a>
+<a id="prevHeart" class="nav-heart nav-left" href="#"><span aria-hidden="true">❤</span></a>
+<a id="nextHeart" class="nav-heart nav-right" href="#"><span aria-hidden="true">❤</span></a>
 
-<div class="photo-wrap">
-  <img id="photo" src="/photos/photo2.jpg" alt="Memory 2">
+<main>
+  <div class="sheet">
+    <div class="photo-wrap">
+      <img id="heroImg" class="hero" src="/photos/photo2.jpg" alt="Memory photo 2" />
+    </div>
+    <div style="height:8px"></div>
+    <div class="caption" id="caption">“Every memory tells a story.”</div>
+  </div>
+</main>
+
+<div class="bottom-nav" role="navigation" aria-label="Site navigation">
+  <a class="nav-pill" href="/life.html">Life</a>
+  <a class="nav-pill" href="/gallery.html">Gallery</a>
+  <a class="nav-pill" href="/auth/logout">Logout</a>
 </div>
 
-<div class="quote">“You are my today and all of my tomorrows.”</div>
+<button id="musicBtn" class="music-btn" aria-label="Play / Pause music"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.33-4.94-9.33-7.02C.8 11.9 2.1 7.9 5.5 6.3 7.2 5.4 9.1 6 10 7.3c.9-1.3 2.8-1.9 4.5-1 3.4 1.6 4.7 5.6 2.8 7.68C19.33 16.06 12 21 12 21z"/></svg></button>
 
-<div class="bottom-links">
-  <a href="life.html">Life</a> |
-  <a href="gallery.html">Gallery</a> |
-  <a href="/auth/logout">Logout</a>
+<div id="volPop" class="vol-pop" aria-hidden="true">
+  <div style="font-size:13px;color:#6b2b2b">Vol</div>
+  <input id="volRange" class="vol-range" type="range" min="0" max="100" step="1" value="60" aria-label="Volume" />
+  <button id="muteBtn" style="border:none;background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.06);cursor:pointer" aria-label="Mute">🔈</button>
 </div>
 
-<div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
+<audio id="bgMusic" loop preload="auto"><source src="/music/bg.mp3" type="audio/mpeg"></audio>
+<div id="lb" class="lb" role="dialog" aria-hidden="true"><img id="lbImg" alt="Large photo"/></div>
+<canvas id="fxCanvas" aria-hidden="true"></canvas>
+
 <script>
-(() => {
-  const c=document.getElementById('fxCanvas');
-  if(!c)return;
-  const ctx=c.getContext('2d');
-  const DPR=window.devicePixelRatio||1;
-  let W=0,H=0,hearts=[];
-  const COLORS=['#ffe9ec','#ffdce6','#fff0f6','#fff4de','#e9f7e9','#eae8ff','#fff9d6','#dff7ff'];
+/* prev/next */
+(function(){
+  const img = document.getElementById('heroImg');
+  function getIndex(){
+    const m = (img && img.src) ? (img.src.match(/photo(\d+)\.jpg/i)||img.src.match(/photo(\d+)\.jpeg/i)) : null;
+    if(m && m[1]) return parseInt(m[1],10);
+    const p = (location.pathname||'').match(/photo(\d+)\.html/i);
+    return p ? parseInt(p[1],10) : 2;
+  }
+  const total = 9; const cur = getIndex(); const prev = cur>1?cur-1:total, next = cur<total?cur+1:1;
+  const prevLink = document.getElementById('prevHeart'), nextLink = document.getElementById('nextHeart');
+  if(prevLink) prevLink.href = 'photo'+prev+'.html';
+  if(nextLink) nextLink.href = 'photo'+next+'.html';
+  if(nextLink) nextLink.addEventListener('click', e=>{ e.preventDefault(); location.href = nextLink.href; });
+  if(prevLink) prevLink.addEventListener('click', e=>{ e.preventDefault(); location.href = prevLink.href; });
+})();
+
+/* lightbox */
+(function(){
+  const lb = document.getElementById('lb'), lbImg = document.getElementById('lbImg'), hero = document.getElementById('heroImg');
+  hero.addEventListener('click', ()=> { lbImg.src = hero.src; lb.style.display='flex'; lb.setAttribute('aria-hidden','false');});
+  lb.addEventListener('click', e=> { if(e.target===lb || e.target===lbImg) { lb.style.display='none'; lbImg.src=''; lb.setAttribute('aria-hidden','true'); }});
+})();
+
+/* music */
+(function(){
+  const music = document.getElementById('bgMusic'), btn = document.getElementById('musicBtn');
+  const volPop = document.getElementById('volPop'), volRange = document.getElementById('volRange'), muteBtn = document.getElementById('muteBtn');
+  function applyVolume(v){ music.volume = Math.max(0,Math.min(100,parseInt(v||60,10)))/100; try{ localStorage.setItem('shree_music_volume', String(v)); }catch(e){} }
+  try{ const sv = localStorage.getItem('shree_music_volume'); if(sv!==null) volRange.value = sv; }catch(e){}
+  applyVolume(volRange.value);
+  function setPlaying(state){ if(state){ btn.classList.add('playing'); music.play().catch(()=>{}); try{ localStorage.setItem('shree_music_playing','1'); }catch(e){}; } else{ btn.classList.remove('playing'); music.pause(); try{ localStorage.setItem('shree_music_playing','0'); }catch(e){}; } }
+  try{ if(localStorage.getItem('shree_music_playing') === '1'){ music.play().then(()=>setPlaying(true)).catch(()=>setPlaying(false)); } }catch(e){}
+  btn.addEventListener('click', ()=> { if(volPop.classList.contains('show')){ volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true'); return; } setPlaying(!btn.classList.contains('playing')); });
+  btn.addEventListener('dblclick', ()=>{ volPop.classList.toggle('show'); volPop.setAttribute('aria-hidden', volPop.classList.contains('show') ? 'false':'true'); });
+  volRange.addEventListener('input', ()=> applyVolume(volRange.value));
+  muteBtn.addEventListener('click', ()=> { if(music.volume>0){ volRange.dataset.prev = volRange.value; volRange.value = 0; } else { volRange.value = volRange.dataset.prev||60; } applyVolume(volRange.value); });
+  document.addEventListener('click', (e)=> { if(!e.target.closest('.vol-pop') && !e.target.closest('#musicBtn')){ volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true'); }});
+})();
+
+/* canvas hearts (same as photo1) */
+(function(){
+  const c = document.getElementById('fxCanvas'); if(!c) return; const ctx = c.getContext('2d'); const DPR = Math.max(1, window.devicePixelRatio||1);
+  let W=0,H=0,hearts=[]; const COLORS=['#ffd6e0','#ffe8cc','#e9f7ff','#e5d6ff','#ffd1fa','#fff9d6','#ffe9ec'];
   function R(a,b){return Math.random()*(b-a)+a;}
-  function resize(){W=innerWidth*DPR;H=innerHeight*DPR;c.width=W;c.height=H;c.style.width='100vw';c.style.height='100vh';}
-  function spawn(){if(hearts.length>22)return;hearts.push({x:R(0,W),y:H+R(8*DPR,160*DPR),s:R(14,32),vx:R(-6,6),vy:-R(12,30),a:R(.55,.95),r:R(-.5,.5),vr:R(-.012,.012),color:COLORS[Math.floor(Math.random()*COLORS.length)]});}
-  function drawHeart(px,py,scale,rot,alpha,color){ctx.save();ctx.translate(px,py);ctx.rotate(rot);ctx.scale(scale,scale);ctx.globalAlpha=alpha;ctx.shadowColor=color;ctx.shadowBlur=12;const g=ctx.createRadialGradient(0,-0.1,0.1,0,0.2,1);g.addColorStop(0,color);g.addColorStop(0.7,color);g.addColorStop(1,'rgba(255,255,255,0.1)');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(0,-0.5);ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);ctx.fill();ctx.restore();}
-  function tick(){ctx.clearRect(0,0,W,H);if(Math.random()<0.1)spawn();hearts.forEach(h=>{h.x+=h.vx*0.016;h.y+=h.vy*0.016;h.r+=h.vr;h.a-=0.0009;});hearts=hearts.filter(h=>h.y>-120*DPR&&h.a>0.02);hearts.forEach(h=>drawHeart(h.x,h.y,(h.s/50)*DPR,h.r,h.a,h.color));requestAnimationFrame(tick);}
-  addEventListener('resize',resize,{passive:true});resize();tick();
+  function resize(){ W = innerWidth*DPR; H = innerHeight*DPR; c.width=W; c.height=H; c.style.width='100vw'; c.style.height='100vh'; }
+  function spawn(){ if(hearts.length>30) return; hearts.push({ x:R(0,W), y:H+R(10*DPR,120*DPR), s:R(8,22), vx:R(-8,8), vy:-R(14,32), a:R(.6,.98), r:R(-0.6,0.6), vr:R(-.012,.012), color:COLORS[Math.floor(Math.random()*COLORS.length)] }); }
+  function drawHeart(px,py,scale,rot,alpha,color){ ctx.save(); ctx.translate(px,py); ctx.rotate(rot); ctx.scale(scale,scale); ctx.globalAlpha=Math.min(1,alpha*1.05); const g=ctx.createRadialGradient(0,-0.12,0.05,0,0.12,1.0); g.addColorStop(0,color); g.addColorStop(1,'rgba(255,255,255,0.08)'); ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(0,-0.5); ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8); ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5); ctx.fill(); ctx.globalAlpha=0.45*alpha; ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.ellipse(0.18,-0.28,0.12,0.06,-0.4,0,Math.PI*2); ctx.fill(); ctx.restore(); ctx.shadowBlur=0; }
+  function tick(){ ctx.clearRect(0,0,W,H); if(Math.random()<0.12) spawn(); hearts.forEach(h=>{ h.x += h.vx*0.016; h.y += h.vy*0.016; h.r += h.vr; h.a -= 0.0008; }); hearts = hearts.filter(h=>h.y>-120*DPR && h.a>0.02); hearts.forEach(h=>drawHeart(h.x,h.y,(h.s/50)*DPR,h.r,h.a,h.color)); requestAnimationFrame(tick); }
+  addEventListener('resize', resize, {passive:true}); resize(); tick();
 })();
 </script>
-
-<link rel="stylesheet" href="/assets/css/music.css" />
-<script src="/assets/js/music-control.js" defer></script>
-
-<script>
-(() => {
-  const total=9;
-  const cur=2;
-  const prev=cur>1?cur-1:total;
-  const next=cur<total?cur+1:1;
-  document.getElementById('prevHeart').href='photo'+prev+'.html';
-  document.getElementById('nextHeart').href='photo'+next+'.html';
-})();
-</script>
-
 </body>
 </html>
