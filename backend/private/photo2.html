@@ -3,151 +3,142 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Shreshtha • Photo 2</title>
+<title>Photo 2 — Shreshtha</title>
 <style>
   :root{
-    --bg1:#ffe9ef; --bg2:#ffdbe6; --accent:#6d2a47; --muted:#6b3a3c;
-    --pill-bg: rgba(255,255,255,0.95);
-    --card-shadow: 0 30px 80px rgba(90,52,70,0.12);
+    --bg:#ffdfe6;
+    --heart-color:#6d2a47;
+    --pill-bg:rgba(255,255,255,0.95);
+    --pill-text:#6d2a47;
+    --accent:#6d2a47;
   }
-  html,body{height:100%;margin:0;font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;}
   body{
-    background: linear-gradient(180deg,var(--bg1),var(--bg2));
-    min-height:100vh; display:flex; align-items:flex-start; justify-content:center;
+    background:linear-gradient(180deg,#ffe6ec 0%, #ffdfe6 40%, #ffebf1 100%);
+    overflow:auto;
   }
-  .page { width:100%; max-width:1200px; margin:28px auto 80px; padding: 18px; box-sizing:border-box;}
-  header{ text-align:center; margin-bottom:12px }
-  h1{ margin:0; font-family:"Playfair Display", serif; color:var(--muted); font-size:28px }
-  .frame{ background: transparent; border-radius:18px; padding:0; display:flex; flex-direction:column; align-items:center; }
-  .hero-wrap{ width:100%; display:flex; justify-content:center; }
-  .hero {
-    display:block;
-    width:min(920px, 78vw);
-    height:auto;
-    max-height:82vh;
-    object-fit:contain;
-    border-radius:12px;
-    box-shadow:var(--card-shadow);
-    background:var(--pill-bg);
-    border: 8px solid rgba(255,255,255,0.9);
-    transition: transform .22s ease;
-    cursor:zoom-in;
+
+  .stage{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px; position:relative; }
+
+  .photo-wrap{ width:min(900px, 92%); min-width:800px; margin:0 auto; display:block; }
+  .photo-wrap img{ width:100%; height:auto; display:block; object-fit:contain; border-radius:8px; box-shadow: 0 28px 60px rgba(110,40,70,0.18); }
+
+  .caption{ text-align:center; margin-top:18px; }
+  .caption .pill{ display:inline-block; background:var(--pill-bg); color:var(--pill-text); padding:10px 18px; border-radius:999px; font-style:italic; box-shadow:0 16px 36px rgba(0,0,0,0.08); }
+
+  .side-heart{ position:fixed; top:50%; transform:translateY(-50%); width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,#fff,#ffeef3); display:flex; align-items:center; justify-content:center; box-shadow: 0 8px 22px rgba(0,0,0,0.12); z-index:30; text-decoration:none; color:var(--heart-color); font-size:20px; }
+  .side-heart.left{ left:14px }
+  .side-heart.right{ right:14px }
+
+  .music-btn{ position:fixed; right:18px; bottom:18px; width:56px;height:56px;border-radius:50%; background:linear-gradient(135deg,#fff,#ffeef3); box-shadow:0 12px 36px rgba(0,0,0,0.14); display:flex;align-items:center;justify-content:center;z-index:40; cursor:pointer; }
+  .music-btn .icon{ font-size:20px; color:var(--accent) }
+
+  .vol-popup{ position:fixed; right:88px; bottom:28px; background:var(--pill-bg); padding:10px;border-radius:10px; box-shadow:0 12px 30px rgba(0,0,0,0.12); display:none; z-index:41; align-items:center; }
+  .vol-popup input[type="range"]{ width:160px }
+
+  .hearts { pointer-events:none; position:fixed; inset:0; z-index:5; overflow:hidden; }
+  .hearts i{ position:absolute; width:12px; height:12px; transform:translateY(0) rotate(-15deg); opacity:.85; border-radius:3px; background:var(--accent); mix-blend-mode:screen; will-change:transform,opacity; }
+
+  .lb { display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; }
+  .lb img{ max-width:95vw; max-height:95vh; border-radius:6px; }
+
+  @media (max-width:900px){
+    .photo-wrap{ min-width:unset; width:100%; }
+    .side-heart{ width:40px;height:40px;font-size:18px; }
   }
-  .caption { margin-top:14px; background:var(--pill-bg); color:var(--muted); padding:8px 14px; border-radius:999px; font-style:italic; box-shadow:0 12px 30px rgba(0,0,0,0.06); max-width:90%; text-align:center; }
-  .actions { margin-top:18px; display:flex; gap:12px; justify-content:center; }
-  .pill { background:var(--pill-bg); color:var(--muted); padding:9px 14px; border-radius:999px; text-decoration:none; font-weight:600; box-shadow:0 12px 30px rgba(0,0,0,0.06); }
-  .pill.primary{ background:var(--accent); color:#fff; }
-  .nav-heart{ position:fixed; top:50%; transform:translateY(-50%); font-size:28px; text-decoration:none; z-index:30; color:var(--accent); user-select:none; padding:8px; }
-  .nav-left{ left:18px } .nav-right{ right:18px }
-  .music-wrap{ position:fixed; right:18px; bottom:18px; z-index:40; display:flex; flex-direction:column; gap:8px; align-items:center; }
-  .music-btn{ width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:linear-gradient(#fff,#ffeef3); border:1px solid rgba(109,42,71,0.08); box-shadow:0 10px 28px rgba(0,0,0,0.14); cursor:pointer; font-weight:700; color:var(--accent) }
-  .vol{ width:120px; padding:6px; border-radius:999px; background:var(--pill-bg); display:none; box-shadow:0 10px 20px rgba(0,0,0,0.08); }
-  .vol input[type=range]{ width:100%; }
-  #heartsCanvas{ position:fixed; inset:0; pointer-events:none; z-index:1; }
-  @media (max-width:520px){ .hero{ width:min(100%,94vw); max-height:62vh; } }
 </style>
 </head>
 <body>
 
-<canvas id="heartsCanvas" aria-hidden="true"></canvas>
+<div class="hearts" id="hearts"></div>
 
-<!-- photo2: left -> photo1.html, right -> photo3.html -->
-<a id="leftHeart" class="nav-heart nav-left" href="photo1.html" aria-label="Previous">❤</a>
-<a id="rightHeart" class="nav-heart nav-right" href="photo3.html" aria-label="Next">❤</a>
+<!-- photo2: left -> photo1 ; right -> photo3 -->
+<a class="side-heart left" id="leftHeart" href="/photo1.html" aria-label="Previous">❤</a>
+<a class="side-heart right" id="rightHeart" href="/photo3.html" aria-label="Next">❤</a>
 
-<div class="page">
-  <header><h1>Sweet Memories of Shreshtha’s Life</h1></header>
-  <main class="frame" role="main">
-    <!-- PER-PAGE VALUES -->
-    <script>const IMG_SRC = '/photos/photo2.jpg'; const CAPTION = "Every memory tells a story.";</script>
-
-    <div class="hero-wrap">
-      <img id="heroImg" class="hero" src="" alt="Memory image 2">
-    </div>
-
-    <div class="caption" id="captionEl"></div>
-
-    <div class="actions">
-      <a class="pill" id="galleryBtn" href="/gallery.html">Gallery</a>
-      <a class="pill primary" id="lifeBtn" href="/life.html">Life</a>
-      <a class="pill" id="logoutBtn" href="/auth/logout">Logout</a>
-    </div>
-  </main>
-</div>
-
-<div class="music-wrap">
-  <button id="musicBtn" class="music-btn" title="Play / Pause">♪</button>
-  <div class="vol" id="volWrap" aria-hidden="true">
-    <input id="volRange" type="range" min="0" max="100" step="1" value="80">
+<main class="stage">
+  <div class="photo-wrap">
+    <img id="photoImg" src="/photos/photo2.jpg" alt="Memory photo 2" />
+    <div class="caption"><span class="pill">“Every memory tells a story.”</span></div>
   </div>
+</main>
+
+<div class="music-btn" id="musicBtn" title="Play / Pause (click) — hover to volume">
+  <span class="icon" id="musicIcon">♪</span>
+</div>
+<div class="vol-popup" id="volPopup">
+  <label style="font-size:12px;margin-right:8px;color:#6d2a47;font-weight:600">Vol</label>
+  <input id="volRange" type="range" min="0" max="1" step="0.01" value="0.6">
 </div>
 
-<audio id="bgMusic" src="/music/bg.mp3" loop preload="auto"></audio>
+<div class="lb" id="lb"><img id="lbImg" src=""><button id="lbClose" style="position:absolute;top:20px;right:20px;background:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer">✕</button></div>
+
+<audio id="bgAudio" loop preload="auto"><source src="/music/bg.mp3" type="audio/mpeg"></audio>
 
 <script>
-/* init */
-(function(){
-  const hero = document.getElementById('heroImg');
-  const cap = document.getElementById('captionEl');
-  hero.src = (typeof IMG_SRC !== 'undefined') ? IMG_SRC : '/photos/photo2.jpg';
-  cap.textContent = (typeof CAPTION !== 'undefined') ? CAPTION : '';
+(function makeHearts(){
+  const container=document.getElementById('hearts');
+  const colors=['#ffd1e0','#ffb7c8','#ffd7e0','#cfeef0','#e6f7d7','#fbe1c7'];
+  const n=28;
+  for(let i=0;i<n;i++){
+    const el=document.createElement('i');
+    el.style.left = Math.random()*100 + '%';
+    el.style.top  = Math.random()*100 + '%';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.opacity = 0.6 + Math.random()*0.4;
+    el.style.transform = `scale(${0.6 + Math.random()*0.9}) rotate(${(Math.random()*40)-20}deg)`;
+    container.appendChild(el);
+    const dur = 6000 + Math.random()*9000;
+    const dy = 8 + Math.random()*40;
+    el.animate([
+      { transform: el.style.transform + ` translateY(0px)` },
+      { transform: el.style.transform + ` translateY(-${dy}px)` },
+      { transform: el.style.transform + ` translateY(0px)` }
+    ], { duration: dur, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
+  }
+})();
 
-  hero.addEventListener('click', function(){
-    const overlay = document.createElement('div');
-    overlay.style.position='fixed'; overlay.style.inset='0'; overlay.style.background='rgba(0,0,0,0.92)';
-    overlay.style.display='flex'; overlay.style.alignItems='center'; overlay.style.justifyContent='center';
-    overlay.style.zIndex='99999'; overlay.style.padding='24px';
-    const img = document.createElement('img'); img.src = hero.src;
-    img.style.maxWidth='98vw'; img.style.maxHeight='96vh'; img.style.objectFit='contain'; img.style.borderRadius='10px';
-    overlay.appendChild(img);
-    const btn = document.createElement('button'); btn.textContent='✕';
-    btn.style.position='absolute'; btn.style.top='16px'; btn.style.right='18px'; btn.style.background='transparent';
-    btn.style.color='#fff'; btn.style.fontSize='22px'; btn.style.border='none'; btn.style.cursor='pointer';
-    overlay.appendChild(btn); btn.addEventListener('click', ()=> overlay.remove());
-    overlay.addEventListener('click', (e)=> { if(e.target===overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
+(function(){
+  const photo=document.getElementById('photoImg');
+  const lb=document.getElementById('lb');
+  const lbImg=document.getElementById('lbImg');
+  const lbClose=document.getElementById('lbClose');
+  photo.addEventListener('click', ()=>{
+    lbImg.src = photo.src;
+    lb.style.display='flex';
   });
+  lbClose.addEventListener('click', ()=>{ lb.style.display='none'; lbImg.src=''; });
+  lb.addEventListener('click', e=>{ if(e.target===lb) { lb.style.display='none'; lbImg.src=''; }});
 })();
 
-/* logout */
 (function(){
-  const btn = document.getElementById('logoutBtn');
-  if(!btn) return;
-  btn.addEventListener('click', function(ev){
-    ev.preventDefault();
-    fetch('/auth/logout', { method:'GET', credentials:'include' }).catch(()=>{}).finally(()=> location.href = '/index.html' );
-  }, { passive:true });
+  const audio=document.getElementById('bgAudio');
+  const btn=document.getElementById('musicBtn');
+  const icon=document.getElementById('musicIcon');
+  const volPopup=document.getElementById('volPopup');
+  const volRange=document.getElementById('volRange');
+
+  audio.volume = parseFloat(volRange.value);
+  btn.addEventListener('click', async ()=>{
+    if(audio.paused){
+      try { await audio.play(); icon.textContent='▮▮'; }
+      catch(e){}
+    } else { audio.pause(); icon.textContent='♪'; }
+  });
+
+  btn.addEventListener('mouseenter', ()=> volPopup.style.display='flex');
+  btn.addEventListener('mouseleave', ()=> { setTimeout(()=>{ if(!volPopup.matches(':hover')) volPopup.style.display='none'; }, 250); });
+  volPopup.addEventListener('mouseleave', ()=> volPopup.style.display='none');
+
+  volRange.addEventListener('input', ()=> { audio.volume = parseFloat(volRange.value); });
 })();
 
-/* music + volume */
 (function(){
-  const audio = document.getElementById('bgMusic');
-  const btn = document.getElementById('musicBtn');
-  const volWrap = document.getElementById('volWrap');
-  const volRange = document.getElementById('volRange');
-  const vol = Number(localStorage.getItem('shree_vol') || 80);
-  audio.volume = Math.max(0, Math.min(1, vol/100));
-  volRange.value = Math.round(audio.volume * 100);
-  if(localStorage.getItem('shree_play') === 'true') audio.play().catch(()=>{});
-  btn.addEventListener('click', function(){
-    if(audio.paused){ audio.play().catch(()=>{}); localStorage.setItem('shree_play','true'); }
-    else { audio.pause(); localStorage.setItem('shree_play','false'); }
-    volWrap.style.display = volWrap.style.display === 'block' ? 'none' : 'block';
-    if(volWrap.style.display === 'block') setTimeout(()=> volWrap.style.display = 'none', 5000);
-  }, { passive:true });
-  volRange.addEventListener('input', function(){ audio.volume = Number(volRange.value)/100; localStorage.setItem('shree_vol', String(volRange.value)); }, { passive:true });
-})();
-
-/* hearts canvas */
-(function(){
-  const canvas = document.getElementById('heartsCanvas'); if(!canvas) return;
-  const ctx = canvas.getContext('2d'); let W=innerWidth, H=innerHeight;
-  function resize(){ W=innerWidth; H=innerHeight; canvas.width=W; canvas.height=H; } addEventListener('resize', resize); resize();
-  const colors=['#ffd3e3','#ffebc8','#fff1b8','#d4f8d6','#dbeeff','#e9dbff'];
-  const hearts=[];
-  function spawn(){ return { x: Math.random()*W, y: H + 10, s: 6 + Math.random()*8, vy: -0.6 - Math.random()*0.9, a: 0.95 + Math.random()*0.2, col: colors[Math.floor(Math.random()*colors.length)] }; }
-  function draw(h){ ctx.save(); ctx.translate(h.x,h.y); ctx.scale(h.s/22,h.s/22); ctx.globalAlpha=Math.max(0,h.a); ctx.fillStyle=h.col; ctx.beginPath(); ctx.moveTo(0,-8); ctx.bezierCurveTo(8,-20,28,-10,0,22); ctx.bezierCurveTo(-28,-10,-8,-20,0,-8); ctx.fill(); ctx.restore(); }
-  function frame(){ ctx.clearRect(0,0,W,H); if(hearts.length<40 && Math.random()<0.6) hearts.push(spawn()); for(let i=hearts.length-1;i>=0;i--){ const h=hearts[i]; h.y+=h.vy; h.x+=Math.sin((h.y+h.s)*0.02)*0.4; h.a-=0.0025; draw(h); if(h.y<-80||h.a<=0) hearts.splice(i,1); } requestAnimationFrame(frame); } frame();
+  document.addEventListener('keyup', (e)=>{
+    if(e.key==='ArrowLeft') document.getElementById('leftHeart').click();
+    if(e.key==='ArrowRight') document.getElementById('rightHeart').click();
+    if(e.key==='Escape') { const lb=document.getElementById('lb'); if(lb.style.display==='flex') lb.style.display='none'; }
+  });
 })();
 </script>
 </body>
