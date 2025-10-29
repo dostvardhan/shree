@@ -1,145 +1,75 @@
-﻿<!doctype html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Photo 2 — Shreshtha</title>
+<title>Shreshtha • Memory 2</title>
+<script src="/auth0-spa-js.production.js"></script>
+<script src="/auth-init.js?v=6" defer></script>
+<script src="/guard-auth.js?v=6" defer></script>
 <style>
-  :root{
-    --bg:#ffdfe6;
-    --heart-color:#6d2a47;
-    --pill-bg:rgba(255,255,255,0.95);
-    --pill-text:#6d2a47;
-    --accent:#6d2a47;
-  }
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;}
-  body{
-    background:linear-gradient(180deg,#ffe6ec 0%, #ffdfe6 40%, #ffebf1 100%);
-    overflow:auto;
-  }
-
-  .stage{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px; position:relative; }
-
-  .photo-wrap{ width:min(900px, 92%); min-width:800px; margin:0 auto; display:block; }
-  .photo-wrap img{ width:100%; height:auto; display:block; object-fit:contain; border-radius:8px; box-shadow: 0 28px 60px rgba(110,40,70,0.18); }
-
-  .caption{ text-align:center; margin-top:18px; }
-  .caption .pill{ display:inline-block; background:var(--pill-bg); color:var(--pill-text); padding:10px 18px; border-radius:999px; font-style:italic; box-shadow:0 16px 36px rgba(0,0,0,0.08); }
-
-  .side-heart{ position:fixed; top:50%; transform:translateY(-50%); width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,#fff,#ffeef3); display:flex; align-items:center; justify-content:center; box-shadow: 0 8px 22px rgba(0,0,0,0.12); z-index:30; text-decoration:none; color:var(--heart-color); font-size:20px; }
-  .side-heart.left{ left:14px }
-  .side-heart.right{ right:14px }
-
-  .music-btn{ position:fixed; right:18px; bottom:18px; width:56px;height:56px;border-radius:50%; background:linear-gradient(135deg,#fff,#ffeef3); box-shadow:0 12px 36px rgba(0,0,0,0.14); display:flex;align-items:center;justify-content:center;z-index:40; cursor:pointer; }
-  .music-btn .icon{ font-size:20px; color:var(--accent) }
-
-  .vol-popup{ position:fixed; right:88px; bottom:28px; background:var(--pill-bg); padding:10px;border-radius:10px; box-shadow:0 12px 30px rgba(0,0,0,0.12); display:none; z-index:41; align-items:center; }
-  .vol-popup input[type="range"]{ width:160px }
-
-  .hearts { pointer-events:none; position:fixed; inset:0; z-index:5; overflow:hidden; }
-  .hearts i{ position:absolute; width:12px; height:12px; transform:translateY(0) rotate(-15deg); opacity:.85; border-radius:3px; background:var(--accent); mix-blend-mode:screen; will-change:transform,opacity; }
-
-  .lb { display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; }
-  .lb img{ max-width:95vw; max-height:95vh; border-radius:6px; }
-
-  @media (max-width:900px){
-    .photo-wrap{ min-width:unset; width:100%; }
-    .side-heart{ width:40px;height:40px;font-size:18px; }
-  }
+  body{font-family:"Inter",sans-serif;background:linear-gradient(160deg,#fff0ef,#ffd9d6,#ffe9e6);
+  overflow-x:hidden;text-align:center;color:#5a0013;}
+  .nav-heart{position:fixed;top:50%;transform:translateY(-50%);font-size:38px;text-decoration:none;z-index:10;opacity:.9;transition:transform .2s ease,opacity .2s ease;}
+  .nav-heart:hover{transform:translateY(-50%) scale(1.08);opacity:1;}
+  .nav-left{left:20px;color:#ffd166;}
+  .nav-right{right:20px;color:#ff6f91;}
+  .photo-wrap{width:100%;display:flex;justify-content:center;align-items:center;margin:40px 0 20px;}
+  .photo-wrap img{width:auto;height:88vh;max-width:96%;border-radius:18px;box-shadow:0 20px 40px rgba(0,0,0,.15);object-fit:contain;}
+  .quote{margin:16px auto 24px;font-style:italic;font-size:18px;color:#6d2a47;}
+  .bottom-links{margin:22px auto 40px;font-size:15px;}
+  .bottom-links a{color:#6d2a47;text-decoration:none;margin:0 10px;font-weight:600;}
+  .bottom-links a:hover{text-decoration:underline;}
 </style>
 </head>
 <body>
 
-<div class="hearts" id="hearts"></div>
+<a id="prevHeart" class="nav-heart nav-left" href="#"><span>&#10084;</span></a>
+<a id="nextHeart" class="nav-heart nav-right" href="#"><span>&#10084;</span></a>
 
-<!-- photo2: left -> photo1 ; right -> photo3 -->
-<a class="side-heart left" id="leftHeart" href="/photo1.html" aria-label="Previous">❤</a>
-<a class="side-heart right" id="rightHeart" href="/photo3.html" aria-label="Next">❤</a>
-
-<main class="stage">
-  <div class="photo-wrap">
-    <img id="photoImg" src="/photos/photo2.jpg" alt="Memory photo 2" />
-    <div class="caption"><span class="pill">“Every memory tells a story.”</span></div>
-  </div>
-</main>
-
-<div class="music-btn" id="musicBtn" title="Play / Pause (click) — hover to volume">
-  <span class="icon" id="musicIcon">♪</span>
-</div>
-<div class="vol-popup" id="volPopup">
-  <label style="font-size:12px;margin-right:8px;color:#6d2a47;font-weight:600">Vol</label>
-  <input id="volRange" type="range" min="0" max="1" step="0.01" value="0.6">
+<div class="photo-wrap">
+  <img id="photo" src="/photos/photo2.jpg" alt="Memory 2">
 </div>
 
-<div class="lb" id="lb"><img id="lbImg" src=""><button id="lbClose" style="position:absolute;top:20px;right:20px;background:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer">✕</button></div>
+<div class="quote">“You are my today and all of my tomorrows.”</div>
 
-<audio id="bgAudio" loop preload="auto"><source src="/music/bg.mp3" type="audio/mpeg"></audio>
+<div class="bottom-links">
+  <a href="life.html">Life</a> |
+  <a href="gallery.html">Gallery</a> |
+  <a href="/auth/logout">Logout</a>
+</div>
 
+<div id="fxRoot" aria-hidden="true"><canvas id="fxCanvas"></canvas></div>
 <script>
-(function makeHearts(){
-  const container=document.getElementById('hearts');
-  const colors=['#ffd1e0','#ffb7c8','#ffd7e0','#cfeef0','#e6f7d7','#fbe1c7'];
-  const n=28;
-  for(let i=0;i<n;i++){
-    const el=document.createElement('i');
-    el.style.left = Math.random()*100 + '%';
-    el.style.top  = Math.random()*100 + '%';
-    el.style.background = colors[Math.floor(Math.random()*colors.length)];
-    el.style.opacity = 0.6 + Math.random()*0.4;
-    el.style.transform = `scale(${0.6 + Math.random()*0.9}) rotate(${(Math.random()*40)-20}deg)`;
-    container.appendChild(el);
-    const dur = 6000 + Math.random()*9000;
-    const dy = 8 + Math.random()*40;
-    el.animate([
-      { transform: el.style.transform + ` translateY(0px)` },
-      { transform: el.style.transform + ` translateY(-${dy}px)` },
-      { transform: el.style.transform + ` translateY(0px)` }
-    ], { duration: dur, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
-  }
-})();
-
-(function(){
-  const photo=document.getElementById('photoImg');
-  const lb=document.getElementById('lb');
-  const lbImg=document.getElementById('lbImg');
-  const lbClose=document.getElementById('lbClose');
-  photo.addEventListener('click', ()=>{
-    lbImg.src = photo.src;
-    lb.style.display='flex';
-  });
-  lbClose.addEventListener('click', ()=>{ lb.style.display='none'; lbImg.src=''; });
-  lb.addEventListener('click', e=>{ if(e.target===lb) { lb.style.display='none'; lbImg.src=''; }});
-})();
-
-(function(){
-  const audio=document.getElementById('bgAudio');
-  const btn=document.getElementById('musicBtn');
-  const icon=document.getElementById('musicIcon');
-  const volPopup=document.getElementById('volPopup');
-  const volRange=document.getElementById('volRange');
-
-  audio.volume = parseFloat(volRange.value);
-  btn.addEventListener('click', async ()=>{
-    if(audio.paused){
-      try { await audio.play(); icon.textContent='▮▮'; }
-      catch(e){}
-    } else { audio.pause(); icon.textContent='♪'; }
-  });
-
-  btn.addEventListener('mouseenter', ()=> volPopup.style.display='flex');
-  btn.addEventListener('mouseleave', ()=> { setTimeout(()=>{ if(!volPopup.matches(':hover')) volPopup.style.display='none'; }, 250); });
-  volPopup.addEventListener('mouseleave', ()=> volPopup.style.display='none');
-
-  volRange.addEventListener('input', ()=> { audio.volume = parseFloat(volRange.value); });
-})();
-
-(function(){
-  document.addEventListener('keyup', (e)=>{
-    if(e.key==='ArrowLeft') document.getElementById('leftHeart').click();
-    if(e.key==='ArrowRight') document.getElementById('rightHeart').click();
-    if(e.key==='Escape') { const lb=document.getElementById('lb'); if(lb.style.display==='flex') lb.style.display='none'; }
-  });
+(() => {
+  const c=document.getElementById('fxCanvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  const DPR=window.devicePixelRatio||1;
+  let W=0,H=0,hearts=[];
+  const COLORS=['#ffe9ec','#ffdce6','#fff0f6','#fff4de','#e9f7e9','#eae8ff','#fff9d6','#dff7ff'];
+  function R(a,b){return Math.random()*(b-a)+a;}
+  function resize(){W=innerWidth*DPR;H=innerHeight*DPR;c.width=W;c.height=H;c.style.width='100vw';c.style.height='100vh';}
+  function spawn(){if(hearts.length>22)return;hearts.push({x:R(0,W),y:H+R(8*DPR,160*DPR),s:R(14,32),vx:R(-6,6),vy:-R(12,30),a:R(.55,.95),r:R(-.5,.5),vr:R(-.012,.012),color:COLORS[Math.floor(Math.random()*COLORS.length)]});}
+  function drawHeart(px,py,scale,rot,alpha,color){ctx.save();ctx.translate(px,py);ctx.rotate(rot);ctx.scale(scale,scale);ctx.globalAlpha=alpha;ctx.shadowColor=color;ctx.shadowBlur=12;const g=ctx.createRadialGradient(0,-0.1,0.1,0,0.2,1);g.addColorStop(0,color);g.addColorStop(0.7,color);g.addColorStop(1,'rgba(255,255,255,0.1)');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(0,-0.5);ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);ctx.fill();ctx.restore();}
+  function tick(){ctx.clearRect(0,0,W,H);if(Math.random()<0.1)spawn();hearts.forEach(h=>{h.x+=h.vx*0.016;h.y+=h.vy*0.016;h.r+=h.vr;h.a-=0.0009;});hearts=hearts.filter(h=>h.y>-120*DPR&&h.a>0.02);hearts.forEach(h=>drawHeart(h.x,h.y,(h.s/50)*DPR,h.r,h.a,h.color));requestAnimationFrame(tick);}
+  addEventListener('resize',resize,{passive:true});resize();tick();
 })();
 </script>
+
+<link rel="stylesheet" href="/assets/css/music.css" />
+<script src="/assets/js/music-control.js" defer></script>
+
+<script>
+(() => {
+  const total=9;
+  const cur=2;
+  const prev=cur>1?cur-1:total;
+  const next=cur<total?cur+1:1;
+  document.getElementById('prevHeart').href='photo'+prev+'.html';
+  document.getElementById('nextHeart').href='photo'+next+'.html';
+})();
+</script>
+
 </body>
 </html>
