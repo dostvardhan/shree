@@ -1,48 +1,88 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Photo 3</title>
-<style>
-:root{--pink1:#ffe6ee;--pink2:#ffd1e0;--ink:#5a3446;--accent:#6d2a47;--card:rgba(255,255,255,.92);--shadow:0 28px 70px rgba(90,52,70,.18);}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(160deg,var(--pink1),var(--pink2));color:var(--ink);min-height:100vh;overflow-x:hidden}
-#heartsCanvas{position:fixed;inset:0;pointer-events:none;z-index:1}
-.nav-heart{position:fixed;top:50%;transform:translateY(-50%);font-size:36px;text-decoration:none;color:var(--accent);z-index:40;opacity:.95}
-.nav-heart:hover{transform:translateY(-50%) scale(1.06)}
-.nav-left{left:14px}.nav-right{right:14px}
-main{max-width:900px;margin:40px auto;padding:0 20px 80px;position:relative;z-index:10}
-.frame{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:18px;text-align:center}
-.hero{width:100%;max-height:82vh;object-fit:contain;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,0.18);cursor:zoom-in}
-.caption{margin-top:14px;display:inline-block;background:#fff7f7;padding:8px 14px;border-radius:999px;font-style:italic;color:#7a3f44}
-.actions{margin-top:18px;display:flex;gap:12px;justify-content:center}
-.btn{padding:10px 16px;border-radius:999px;text-decoration:none;background:#fff;color:var(--ink);border:1px solid rgba(0,0,0,0.06);font-weight:600}
-.btn.life{background:var(--accent);color:#fff}
-.fab-wrap{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:12px;z-index:50;align-items:center}
-.fab{width:48px;height:48px;border-radius:50%;background:#fff;border:1px solid rgba(0,0,0,0.06);box-shadow:0 12px 28px rgba(0,0,0,0.18);display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700}
-.vol-box{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:#ffffffdd;border:1px solid rgba(0,0,0,0.04);transform:translateY(10px);opacity:0;transition:opacity .14s,transform .14s}
-.fab-wrap:hover .vol-box{transform:translateY(0);opacity:1}
-.vol-box input[type=range]{width:110px;-webkit-appearance:none;background:transparent}
-.lb-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;z-index:9999}
-.lb-overlay img{max-width:96vw;max-height:94vh;border-radius:10px}
-.lb-close{position:absolute;top:20px;right:20px;background:#ffffff22;color:#fff;border:none;font-size:20px;padding:8px 12px;border-radius:8px;cursor:pointer}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shreshtha — Photo 3</title>
+
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' 'unsafe-inline' 'unsafe-eval';
+                 connect-src 'self' https:;
+                 img-src 'self' data:;
+                 style-src 'self' 'unsafe-inline';
+                 media-src 'self';">
+
+  <script src="/auth0-spa-js.production.js" defer></script>
+  <script src="/auth-init.js" defer></script>
+  <script src="/guard-auth.js" defer></script>
+
+  <link rel="stylesheet" href="/assets/css/music-heart.css">
+  <script src="/assets/js/music-heart.js" defer></script>
+
+  <style>
+    :root{ --ink:#f6f6f6; --muted:#d5d5d5; --bg1:#0f2b35; --bg2:#153947; --bg3:#22495a; --accent:#f9cc63; }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:"Playfair Display",serif}
+    body{ background: radial-gradient(1000px 500px at 10% 10%, rgba(255,240,200,0.08), transparent 25%), linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 45%, var(--bg3) 100%); background-attachment: fixed; color:var(--ink); overflow-y:auto; }
+    .wrap{max-width:1600px;margin:18px auto;padding:18px}
+    .photo-card{background:transparent;padding:8px 12px 40px;margin:8px 0}
+    .photo-wrap{width:min(1500px,98vw); margin:0 auto;text-align:center}
+    .photo-wrap img{display:block;width:100%;height:auto;max-height:240vh;object-fit:contain;border-radius:8px;box-shadow:0 30px 70px rgba(0,0,0,0.35)}
+    .caption{text-align:center;margin:20px 0 10px}
+    .pill{display:inline-block;background:linear-gradient(180deg,#1d3a48,#1a313d);padding:14px 24px;border-radius:999px;color:var(--muted);font-style:italic;box-shadow:0 10px 22px rgba(0,0,0,0.4)}
+    .bottom-nav{display:flex;gap:14px;justify-content:center;margin-top:14px}
+    .bottom-nav a{ text-decoration:none;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,0.1);color:var(--ink);box-shadow:0 8px 22px rgba(0,0,0,0.3);font-weight:600}
+    .nav-heart{position:fixed;top:50%;transform:translateY(-50%);width:56px;height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;z-index:150;cursor:pointer;background:linear-gradient(180deg,#1e404c,#102933);box-shadow:0 14px 32px rgba(0,0,0,0.35)}
+    .nav-left{left:14px}.nav-right{right:14px}
+    .nav-inner{width:40px;height:40px;border-radius:999px;background:var(--accent);color:#202020;display:flex;align-items:center;justify-content:center;font-weight:700}
+    #heartsCanvas{position:fixed;inset:0;pointer-events:none;z-index:15}
+    @media (max-width:900px){ .photo-wrap{width:min(760px,94vw)} .nav-heart{width:48px;height:48px} .nav-inner{width:34px;height:34px} }
+  </style>
 </head>
 <body>
-<canvas id="heartsCanvas"></canvas>
-<a class="nav-heart nav-left" href="photo2.html">❤</a>
-<a class="nav-heart nav-right" href="photo4.html">❤</a>
-<img id="heroImg" class="hero" src="/photos/photo3.jpg" alt="Memory 3">
-<div class="caption">“Little moments, big memories.”</div>
-<div class="actions">
-<a class="btn" href="/gallery.html">Gallery</a>
-<a class="btn life" href="/life.html">Life</a>
-<a id="logoutBtn" class="btn" href="#">Logout</a>
-</div>
-</div></main>
-<div class="fab-wrap"><div class="fab" id="musicBtn">♪</div><div class="vol-box"><input id="volRange" type="range" min="0" max="100" value="80"></div></div>
-<audio id="bgMusic" preload="auto" loop><source src="/music/bg.mp3" type="audio/mpeg"></audio>
-<script src="/assets/js/common-photo.js"></script>
+
+  <a id="prevHeart" class="nav-heart nav-left" href="photo2.html"><span class="nav-inner">❤</span></a>
+  <a id="nextHeart" class="nav-heart nav-right" href="photo4.html"><span class="nav-inner">❤</span></a>
+
+  <canvas id="heartsCanvas" aria-hidden="true"></canvas>
+
+  <main class="wrap">
+    <article class="photo-card" aria-label="Photo 3">
+      <div class="photo-wrap">
+        <img id="mainPhoto" src="/photos/photo3.jpg" alt="Memory 3 — Shreshtha">
+      </div>
+
+      <div class="caption"><div class="pill">"Happiness looks good on you."</div></div>
+
+      <nav class="bottom-nav">
+        <a href="life.html">Life</a><a href="gallery.html">Gallery</a><a href="/auth/logout">Logout</a>
+      </nav>
+    </article>
+  </main>
+
+  <script>
+    (function(){
+      const total=9;
+      function getIndex(){const m=(location.pathname||'').match(/photo(\d+)\.html/i);return m?parseInt(m[1],10):3;}
+      const cur=getIndex(), prev=cur>1?cur-1:total, next=cur<total?cur+1:1;
+      const pl=document.getElementById('prevHeart'), nl=document.getElementById('nextHeart');
+      if(pl) pl.href='photo'+prev+'.html'; if(nl) nl.href='photo'+next+'.html';
+    })();
+  </script>
+
+  <script>
+    (function(){
+      const c=document.getElementById('heartsCanvas'); if(!c) return;
+      const ctx=c.getContext('2d'); const DPR=Math.max(1,window.devicePixelRatio||1);
+      let W=0,H=0,hearts=[]; const COLORS=['#f9cc63','#f6e7b5','#e8f4ff','#bcd9d0','#f2f2f2']; const R=(a,b)=>Math.random()*(b-a)+a;
+      function resize(){W=innerWidth*DPR;H=innerHeight*DPR;c.width=W;c.height=H;c.style.width='100vw';c.style.height='100vh'}
+      function spawn(){ if(hearts.length>60) return; hearts.push({x:R(0,W),y:H+R(20*DPR,160*DPR),s:R(10,26)*DPR,vx:R(-0.2,0.2)*DPR,vy:-R(0.4,1.4)*DPR,a:R(0.5,0.9),r:R(-0.6,0.6),vr:R(-0.01,0.01),color:COLORS[(Math.random()*COLORS.length)|0]});}
+      function drawHeart(px,py,scale,rot,alpha,color){ctx.save();ctx.translate(px,py);ctx.rotate(rot);ctx.scale(scale,scale);ctx.globalAlpha=Math.min(1,alpha);ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(0,-0.5);ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);ctx.fill();ctx.restore();}
+      function tick(){ctx.clearRect(0,0,W,H); if(Math.random()<0.2) spawn(); hearts.forEach(h=>{h.x+=h.vx*0.016;h.y+=h.vy*0.016;h.r+=h.vr;h.a-=0.001; drawHeart(h.x,h.y,(h.s/52)*DPR,h.r,h.a,h.color);}); hearts=hearts.filter(h=>h.y>-120*DPR&&h.a>0.02); requestAnimationFrame(tick);}
+      addEventListener('resize',resize,{passive:true}); resize(); tick();
+    })();
+  </script>
+
 </body>
 </html>

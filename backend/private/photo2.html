@@ -1,127 +1,109 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Photo 2 — Sweet Memories</title>
-<meta http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shreshtha — Photo 2</title>
 
-<style>
-  /* same CSS as photo1 for consistent look */
-  :root{ --bg1:#fff0f0; --bg2:#ffdedd; --ink:#6b2a2f; --muted:#97555a; }
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:
-    radial-gradient(900px 400px at 10% 10%, rgba(255,255,255,0.35), transparent 25%),
-    linear-gradient(180deg,var(--bg1),var(--bg2)); color:var(--ink); }
-  .wrap{max-width:1100px;margin:28px auto;padding:12px;}
-  .photo-frame{background:transparent;padding:10px;display:flex;justify-content:center;align-items:center;}
-  .photo-full{width:900px;max-width:94vw;border-radius:12px;box-shadow:0 30px 60px rgba(0,0,0,0.12);background:#fff;overflow:hidden}
-  .photo-full img{display:block;width:100%;height:auto;object-fit:contain}
-  .caption{text-align:center;margin:18px 0 10px}
-  .cap-bubble{display:inline-block;background:rgba(255,255,255,0.95);padding:12px 22px;border-radius:999px;font-style:italic;box-shadow:0 18px 40px rgba(0,0,0,0.07);color:var(--muted);font-size:16px}
-  .bottom-nav{display:flex;gap:14px;justify-content:center;margin-top:18px}
-  .nav-pill{background:#fff;padding:10px 18px;border-radius:999px;text-decoration:none;color:var(--ink);box-shadow:0 12px 26px rgba(0,0,0,0.06);font-weight:600}
-  .nav-heart{position:fixed;top:50%;transform:translateY(-50%);z-index:140;font-size:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;width:60px;height:60px;border-radius:999px}
-  .nav-left{left:12px} .nav-right{right:12px}
-  #fxCanvas{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:80}
-  .music-btn{position:fixed;right:16px;bottom:18px;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fffafc,#ffeff2);box-shadow:0 12px 28px rgba(0,0,0,0.12);z-index:160;cursor:pointer;border:none}
-  .vol-pop{position:fixed; right:16px; bottom:86px; width:220px;padding:10px;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.12); background:linear-gradient(180deg,#fff,#fff7f7); display:none; align-items:center; gap:12px; z-index:170}
-  .vol-pop.show{display:flex}
-  .vol-range{width:130px;height:6px;border-radius:999px;appearance:none;background:linear-gradient(90deg,#ffc1c1,#ffd88a)}
-  .vol-range::-webkit-slider-thumb{appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid #ffb0a0;box-shadow:0 4px 10px rgba(0,0,0,0.12)}
-  @media (max-width:720px){ .nav-heart{width:48px;height:48px;font-size:36px} .music-btn{width:52px;height:52px} .cap-bubble{font-size:15px} }
-</style>
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' 'unsafe-inline' 'unsafe-eval';
+                 connect-src 'self' https:;
+                 img-src 'self' data:;
+                 style-src 'self' 'unsafe-inline';
+                 media-src 'self';">
+
+  <script src="/auth0-spa-js.production.js" defer></script>
+  <script src="/auth-init.js" defer></script>
+  <script src="/guard-auth.js" defer></script>
+
+  <link rel="stylesheet" href="/assets/css/music-heart.css">
+  <script src="/assets/js/music-heart.js" defer></script>
+
+  <style>
+    :root{
+      --ink:#f6f6f6; --muted:#d5d5d5;
+      --bg1:#0f2b35; --bg2:#153947; --bg3:#22495a; --accent:#f9cc63;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:"Playfair Display",serif}
+    body{
+      background:
+        radial-gradient(1000px 500px at 10% 10%, rgba(255,240,200,0.08), transparent 25%),
+        linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 45%, var(--bg3) 100%);
+      background-attachment: fixed;
+      color:var(--ink); overflow-y:auto;
+    }
+    .wrap{max-width:1600px;margin:18px auto;padding:18px;display:block}
+    .photo-card{background:transparent;padding:8px 12px 40px;margin:8px 0;position:relative}
+    .photo-area{display:flex;justify-content:center;align-items:flex-start}
+    .photo-wrap{width:min(1500px,98vw);display:block;background:transparent;margin:0 auto;text-align:center}
+    .photo-wrap img{display:block;width:100%;height:auto;max-height:240vh;object-fit:contain;border-radius:8px;box-shadow:0 30px 70px rgba(0,0,0,0.35)}
+    .caption{text-align:center;margin:20px 0 10px}
+    .pill{display:inline-block;background:linear-gradient(180deg,#1d3a48,#1a313d);padding:14px 24px;border-radius:999px;box-shadow:0 10px 22px rgba(0,0,0,0.4);font-style:italic;color:var(--muted);border:1px solid rgba(255,255,255,0.1)}
+    .bottom-nav{display:flex;gap:14px;justify-content:center;margin-top:14px}
+    .bottom-nav a{ text-decoration:none;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,0.1);color:var(--ink);box-shadow:0 8px 22px rgba(0,0,0,0.3);font-weight:600;backdrop-filter:blur(6px);transition:all .2s;}
+    .bottom-nav a:hover{background:rgba(255,255,255,0.18);color:#fff}
+    .nav-heart{position:fixed;top:50%;transform:translateY(-50%);width:56px;height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;z-index:150;cursor:pointer;box-shadow:0 14px 32px rgba(0,0,0,0.35);background:linear-gradient(180deg,#1e404c,#102933);}
+    .nav-left{left:14px}.nav-right{right:14px}
+    .nav-inner{width:40px;height:40px;border-radius:999px;background:var(--accent);color:#202020;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.4)}
+    #heartsCanvas{position:fixed;inset:0;pointer-events:none;z-index:15}
+    @media (max-width:900px){ .photo-wrap{width:min(760px,94vw)} .nav-heart{width:48px;height:48px} .nav-inner{width:34px;height:34px} }
+    @media (max-width:420px){ .photo-wrap{width:96vw} .photo-wrap img{max-height:140vh} }
+  </style>
 </head>
 <body>
 
-<script>
-(async function(){
-  try{
-    const r = await fetch('/api/diag',{credentials:'include'});
-    if(!r.ok) throw 0;
-  }catch(e){
-    location.href='/index.html';
-  }
-})();
-</script>
+  <a id="prevHeart" class="nav-heart nav-left" href="photo1.html"><span class="nav-inner">❤</span></a>
+  <a id="nextHeart" class="nav-heart nav-right" href="photo3.html"><span class="nav-inner">❤</span></a>
 
-<canvas id="fxCanvas" aria-hidden="true"></canvas>
+  <canvas id="heartsCanvas" aria-hidden="true"></canvas>
 
-<!-- For photo2: prev -> photo1.html, next -> photo3.html -->
-<a id="prevHeart" class="nav-heart nav-left" href="photo1.html" aria-label="Previous"><span>❤</span></a>
-<a id="nextHeart" class="nav-heart nav-right" href="photo3.html" aria-label="Next"><span>❤</span></a>
+  <main class="wrap" role="main">
+    <article class="photo-card" role="article" aria-label="Photo 2">
+      <div class="photo-area">
+        <div class="photo-wrap">
+          <img id="mainPhoto" src="/photos/photo2.jpg" alt="Memory 2 — Shreshtha">
+        </div>
+      </div>
 
-<div class="wrap">
-  <div class="photo-frame">
-    <figure class="photo-full" role="group" aria-label="Memory photo">
-      <img id="mainPhoto" src="/photos/photo2.jpg" alt="Photo 2 — Sweet memory" />
-    </figure>
-  </div>
+      <div class="caption">
+        <div class="pill">"Memories are timeless treasures of the heart."</div>
+      </div>
 
-  <div class="caption" aria-live="polite">
-    <div class="cap-bubble">“Every memory tells a story.”</div>
-  </div>
+      <nav class="bottom-nav">
+        <a href="life.html">Life</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="/auth/logout">Logout</a>
+      </nav>
+    </article>
+  </main>
 
-  <div class="bottom-nav" role="navigation" aria-label="Bottom navigation">
-    <a class="nav-pill" href="/life.html">Life</a>
-    <a class="nav-pill" href="/gallery.html">Gallery</a>
-    <a class="nav-pill" href="/auth/logout">Logout</a>
-  </div>
-</div>
+  <script>
+    (function(){
+      const total=9;
+      function getIndex(){const m=(location.pathname||'').match(/photo(\d+)\.html/i);return m?parseInt(m[1],10):2;}
+      const cur=getIndex(); const prev=cur>1?cur-1:total; const next=cur<total?cur+1:1;
+      const pl=document.getElementById('prevHeart'), nl=document.getElementById('nextHeart');
+      if(pl) pl.href = 'photo'+prev+'.html';
+      if(nl) nl.href = 'photo'+next+'.html';
+    })();
+  </script>
 
-<button id="musicButton" class="music-btn" aria-pressed="false" aria-label="Play background music" title="Play / Pause music">
-  <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" focusable="false">
-    <path class="heart" d="M12 21s-7.33-4.94-9.33-7.02C.8 11.9 2.1 7.9 5.5 6.3 7.2 5.4 9.1 6 10 7.3c.9-1.3 2.8-1.9 4.5-1 3.4 1.6 4.7 5.6 2.8 7.68C19.33 16.06 12 21 12 21z" fill="#ff6b81"/>
-  </svg>
-</button>
-
-<div id="volPop" class="vol-pop" role="dialog" aria-hidden="true">
-  <div style="font-size:13px;color:#6b2b2b">Vol</div>
-  <input id="volRange" class="vol-range" type="range" min="0" max="100" step="1" value="60" aria-label="Volume slider" />
-  <button id="muteBtn" title="Mute/unmute" style="border:none;background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.06);cursor:pointer">🔈</button>
-</div>
-
-<audio id="bgMusic" loop preload="auto"><source src="/music/bg.mp3" type="audio/mpeg"></audio>
-
-<script>
-/* re-use same small canvas hearts + music logic as photo1 */
-(function(){
-  const c = document.getElementById('fxCanvas');
-  if(!c) return;
-  const ctx = c.getContext('2d');
-  const DPR = Math.max(1, window.devicePixelRatio || 1);
-  let W=0,H=0,parts=[];
-  const COLORS = ['#ffd6e0','#ffe8cc','#e6f7ff','#e9f7e9','#eae8ff','#fff0f6','#fff4de'];
-  function resize(){ W = innerWidth*DPR; H = innerHeight*DPR; c.width = W; c.height = H; c.style.width='100vw'; c.style.height='100vh'; }
-  function spawn(){ if(parts.length>90) return; parts.push({ x:Math.random()*W,y:H+Math.random()*200*DPR,r:(3+Math.random()*8)*DPR,vx:(Math.random()*2-1)*0.4*DPR,vy:-(1+Math.random()*3)*DPR,alpha:0.9+Math.random()*0.3,color:COLORS[Math.floor(Math.random()*COLORS.length)],rot:Math.random()*Math.PI }); }
-  function draw(){ ctx.clearRect(0,0,W,H); if(Math.random()<0.12) spawn(); for(let i=parts.length-1;i>=0;i--){ const p=parts[i]; p.x+=p.vx; p.y+=p.vy; p.alpha-=0.0006; if(p.y<-100*DPR||p.alpha<=0.02){parts.splice(i,1);continue;} ctx.save(); ctx.globalAlpha=Math.max(0,p.alpha*0.95); ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill(); ctx.restore(); } requestAnimationFrame(draw); }
-  addEventListener('resize',resize,{passive:true}); resize(); draw();
-})();
-
-(function(){
-  // prev/next ok from hrefs
-})();
-
-/* music control (same as photo1) */
-(function(){
-  const btn = document.getElementById('musicButton');
-  const volPop = document.getElementById('volPop');
-  const volRange = document.getElementById('volRange');
-  const muteBtn = document.getElementById('muteBtn');
-  const music = document.getElementById('bgMusic');
-
-  function applyVolume(v){ music.volume = Math.max(0,Math.min(100,parseInt(v||60,10)))/100; try{ localStorage.setItem('shree_music_volume', String(v)); }catch(e){} }
-  try{ const sv = localStorage.getItem('shree_music_volume'); if(sv!==null) volRange.value = sv; applyVolume(volRange.value); }catch(e){}
-  try{ if(localStorage.getItem('shree_music_playing') === '1'){ music.play().then(()=>btn.classList.add('playing')).catch(()=>{}); } }catch(e){}
-  function setPlaying(p){ if(p){ btn.classList.add('playing'); music.play().catch(()=>{}); localStorage.setItem('shree_music_playing','1'); btn.setAttribute('aria-pressed','true'); } else { btn.classList.remove('playing'); music.pause(); localStorage.setItem('shree_music_playing','0'); btn.setAttribute('aria-pressed','false'); } }
-  btn.addEventListener('click', (e)=>{ setPlaying(!btn.classList.contains('playing')); });
-  volRange.addEventListener('input', ()=> applyVolume(volRange.value));
-  muteBtn.addEventListener('click', ()=>{ if(music.volume>0){ volRange.dataset.prev = volRange.value; volRange.value=0; } else { volRange.value = volRange.dataset.prev || 60; } applyVolume(volRange.value); });
-  document.addEventListener('click', (e)=>{ if(!e.target.closest('.vol-pop') && !e.target.closest('#musicButton')){ volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true'); }});
-  music.addEventListener('play', ()=> btn.classList.add('playing'));
-  music.addEventListener('pause', ()=> btn.classList.remove('playing'));
-})();
-</script>
+  <!-- Floating hearts (same as photo1) -->
+  <script>
+    (function(){
+      const c=document.getElementById('heartsCanvas'); if(!c) return;
+      const ctx=c.getContext('2d'); const DPR=Math.max(1,window.devicePixelRatio||1);
+      let W=0,H=0,hearts=[];
+      const COLORS=['#f9cc63','#f6e7b5','#e8f4ff','#bcd9d0','#f2f2f2']; const R=(a,b)=>Math.random()*(b-a)+a;
+      function resize(){ W=innerWidth*DPR; H=innerHeight*DPR; c.width=W; c.height=H; c.style.width='100vw'; c.style.height='100vh'; }
+      function spawn(){ if(hearts.length>60) return; hearts.push({ x:R(0,W), y:H+R(20*DPR,160*DPR), s:R(10,26)*DPR, vx:R(-0.2,0.2)*DPR, vy:-R(0.4,1.4)*DPR, a:R(0.5,0.9), r:R(-0.6,0.6), vr:R(-0.01,0.01), color:COLORS[(Math.random()*COLORS.length)|0] }); }
+      function drawHeart(px,py,scale,rot,alpha,color){ ctx.save();ctx.translate(px,py);ctx.rotate(rot);ctx.scale(scale,scale);ctx.globalAlpha=Math.min(1,alpha);ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(0,-0.5);ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);ctx.fill();ctx.restore(); }
+      function tick(){ ctx.clearRect(0,0,W,H); if(Math.random()<0.2) spawn(); hearts.forEach(h=>{ h.x+=h.vx*0.016; h.y+=h.vy*0.016; h.r+=h.vr; h.a-=0.001; drawHeart(h.x,h.y,(h.s/52)*DPR,h.r,h.a,h.color); }); hearts=hearts.filter(h=>h.y>-120*DPR&&h.a>0.02); requestAnimationFrame(tick); }
+      addEventListener('resize',resize,{passive:true}); resize(); tick();
+    })();
+  </script>
 
 </body>
 </html>
