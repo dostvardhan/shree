@@ -6,14 +6,19 @@
   <title>Shreshtha — Photo 1</title>
 
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
+        content="default-src 'self';
+                 script-src 'self' 'unsafe-inline' 'unsafe-eval';
+                 connect-src 'self' https:;
+                 img-src 'self' data:;
+                 style-src 'self' 'unsafe-inline';
+                 media-src 'self';">
 
-  <!-- Auth (deferred, kept as you use elsewhere) -->
+  <!-- Auth -->
   <script src="/auth0-spa-js.production.js" defer></script>
   <script src="/auth-init.js" defer></script>
   <script src="/guard-auth.js" defer></script>
 
-  <!-- use same life/upload music styling (you already have these files) -->
+  <!-- Music styling (upload.html style) -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
 
@@ -35,26 +40,11 @@
       overflow-y:auto;
     }
 
-    /* container */
-    .wrap{max-width:1600px;margin:18px auto;padding:18px; display:block}
+    .wrap{max-width:1600px;margin:18px auto;padding:18px;display:block}
+    .photo-card{background:transparent;border-radius:0;padding:8px 12px 40px;margin:8px 0;position:relative}
+    .photo-area{display:flex;justify-content:center;align-items:flex-start}
 
-    /* photo stage: NO white gutters — image fills main column */
-    .photo-card{
-      background:transparent;
-      border-radius:0;
-      padding:8px 12px 40px;
-      margin:8px 0;
-      position:relative;
-    }
-
-    .photo-area{
-      display:flex;
-      justify-content:center;
-      align-items:flex-start;
-    }
-
-    /* large portrait container - no white side panels */
-    /* increased max width for bigger display (max 1500px, falls back to viewport) */
+    /* large full photo */
     .photo-wrap{
       width:min(1500px,98vw);
       display:block;
@@ -62,83 +52,85 @@
       border-radius:0;
       overflow:visible;
       margin:0 auto;
-      padding:0;
       text-align:center;
     }
-
     .photo-wrap img{
       display:block;
       width:100%;
       height:auto;
-      /* allow very tall scrollable image for portrait A4+ feel */
       max-height:240vh;
       object-fit:contain;
       border-radius:6px;
-      box-shadow: 0 24px 56px rgba(0,0,0,0.12);
+      box-shadow:0 24px 56px rgba(0,0,0,0.12);
       background:transparent;
       -webkit-user-drag:none;
     }
 
-    /* caption */
-    .caption{ text-align:center;margin:18px 0 8px; }
+    .caption{text-align:center;margin:18px 0 8px}
     .pill{
       display:inline-block;
       background:linear-gradient(180deg,#fff,#fff0f2);
-      padding:12px 22px;border-radius:999px;
+      padding:12px 22px;
+      border-radius:999px;
       box-shadow:0 12px 30px rgba(0,0,0,0.06);
-      font-style:italic;color:var(--muted);
+      font-style:italic;
+      color:var(--muted);
     }
 
-    /* bottom nav small */
-    .bottom-nav{ display:flex;gap:12px;justify-content:center;margin-top:10px }
-    .bottom-nav a{ text-decoration:none;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,0.9);color:var(--ink);box-shadow:0 8px 20px rgba(0,0,0,0.06);font-weight:700 }
+    .bottom-nav{display:flex;gap:12px;justify-content:center;margin-top:10px}
+    .bottom-nav a{
+      text-decoration:none;
+      padding:8px 14px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.9);
+      color:var(--ink);
+      box-shadow:0 8px 20px rgba(0,0,0,0.06);
+      font-weight:700
+    }
 
-    /* left & right small nav hearts */
+    /* navigation hearts */
     .nav-heart{
-      position:fixed;top:50%;transform:translateY(-50%);width:56px;height:56px;border-radius:999px;
-      display:flex;align-items:center;justify-content:center;z-index:150;cursor:pointer;
-      box-shadow:0 12px 30px rgba(0,0,0,0.10); background:linear-gradient(180deg,#fffafc,#ffeef2);
+      position:fixed;top:50%;transform:translateY(-50%);
+      width:56px;height:56px;border-radius:999px;
+      display:flex;align-items:center;justify-content:center;
+      z-index:150;cursor:pointer;
+      box-shadow:0 12px 30px rgba(0,0,0,0.10);
+      background:linear-gradient(180deg,#fffafc,#ffeef2);
     }
     .nav-left{left:14px}
     .nav-right{right:14px}
-    .nav-inner{width:40px;height:40px;border-radius:999px;background:#6d2a47;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px}
-
-    /* fx canvas (floating hearts/dots like life.html) */
-    #fxCanvas{ position:fixed; left:0; top:0; width:100vw; height:100vh; pointer-events:none; z-index:20; }
-
-    /* small responsive tweaks */
-    @media (max-width:1200px){
-      .photo-wrap{ width:min(1100px,96vw) }
+    .nav-inner{
+      width:40px;height:40px;border-radius:999px;
+      background:#6d2a47;color:#fff;
+      display:flex;align-items:center;justify-content:center;font-size:18px
     }
+
+    #heartsCanvas{position:fixed;inset:0;pointer-events:none;z-index:15}
+
     @media (max-width:900px){
-      .photo-wrap{ width:min(760px,94vw) }
-      .nav-heart{ width:48px;height:48px }
-      .nav-inner{ width:34px;height:34px }
+      .photo-wrap{width:min(760px,94vw)}
+      .nav-heart{width:48px;height:48px}
+      .nav-inner{width:34px;height:34px}
     }
     @media (max-width:420px){
-      .photo-wrap{ width:96vw }
-      .photo-wrap img{ max-height:140vh }
+      .photo-wrap{width:96vw}
+      .photo-wrap img{max-height:140vh}
     }
   </style>
 </head>
 <body>
 
-  <!-- left -> life (back) ; right -> next photo -->
-  <a id="prevHeart" class="nav-heart nav-left" href="life.html" aria-label="Back to Life">
-    <span class="nav-inner">❤</span>
-  </a>
-  <a id="nextHeart" class="nav-heart nav-right" href="photo2.html" aria-label="Next photo">
-    <span class="nav-inner">❤</span>
-  </a>
+  <!-- nav hearts -->
+  <a id="prevHeart" class="nav-heart nav-left" href="life.html"><span class="nav-inner">❤</span></a>
+  <a id="nextHeart" class="nav-heart nav-right" href="photo2.html"><span class="nav-inner">❤</span></a>
 
-  <!-- floating hearts/dots canvas -->
-  <canvas id="fxCanvas" aria-hidden="true"></canvas>
+  <!-- floating hearts canvas -->
+  <canvas id="heartsCanvas" aria-hidden="true"></canvas>
 
   <main class="wrap" role="main">
     <article class="photo-card" role="article" aria-label="Photo 1">
       <div class="photo-area">
         <div class="photo-wrap">
-          <!-- replace with secure streaming path if used: /api/file/<id> -->
           <img id="mainPhoto" src="/photos/photo1.jpg" alt="Memory 1 — Shreshtha">
         </div>
       </div>
@@ -147,7 +139,7 @@
         <div class="pill">“A smile is the beauty of the soul.”</div>
       </div>
 
-      <nav class="bottom-nav" aria-label="page links">
+      <nav class="bottom-nav">
         <a href="life.html">Life</a>
         <a href="gallery.html">Gallery</a>
         <a href="/auth/logout">Logout</a>
@@ -155,103 +147,82 @@
     </article>
   </main>
 
-  <!-- stable prev/next link script -->
+  <!-- prev/next logic -->
   <script>
-    (function(){
-      const total = 9;
-      function getIndex(){ const m = (location.pathname||'').match(/photo(\d+)\.html/i); return m? parseInt(m[1],10) : 1; }
-      const cur = getIndex();
-      const prev = cur>1 ? cur-1 : total;
-      const next = cur<total ? cur+1 : 1;
-      const prevLink = document.getElementById('prevHeart');
-      const nextLink = document.getElementById('nextHeart');
-      if(prevLink) prevLink.href = (cur===1 ? 'life.html' : 'photo'+prev+'.html');
-      if(nextLink) nextLink.href = 'photo'+next+'.html';
-    })();
+  (function(){
+    const total=9;
+    function getIndex(){
+      const m=(location.pathname||'').match(/photo(\d+)\.html/i);
+      return m?parseInt(m[1],10):1;
+    }
+    const cur=getIndex();
+    const prev=cur>1?cur-1:total;
+    const next=cur<total?cur+1:1;
+    const pl=document.getElementById('prevHeart');
+    const nl=document.getElementById('nextHeart');
+    if(pl) pl.href = (cur===1?'life.html':'photo'+prev+'.html');
+    if(nl) nl.href = 'photo'+next+'.html';
+  })();
   </script>
 
-  <!-- Floating hearts & dots (life.html style)
-       - mixed "dot" and "heart" particles
-       - limited count and gentle velocity for performance */
+  <!-- Floating Hearts Animation (from photo5, half density) -->
   <script>
-    (function(){
-      const c = document.getElementById('fxCanvas');
-      if(!c) return;
-      const ctx = c.getContext('2d');
-      const DPR = Math.max(1, window.devicePixelRatio || 1);
-      let W=0, H=0, parts=[];
-      const COLORS = ['#ffd6e0','#fff6a6','#ffd89e','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
-      const R=(a,b)=>Math.random()*(b-a)+a;
+  (function(){
+    const c=document.getElementById('heartsCanvas');
+    if(!c)return;
+    const ctx=c.getContext('2d');
+    const DPR=Math.max(1,window.devicePixelRatio||1);
+    let W=0,H=0,hearts=[];
+    const COLORS=['#ffd6e0','#ffcad6','#ffe0b3','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
+    const R=(a,b)=>Math.random()*(b-a)+a;
 
-      function resize(){ W = Math.floor(window.innerWidth*DPR); H = Math.floor(window.innerHeight*DPR); c.width = W; c.height = H; c.style.width='100vw'; c.style.height='100vh'; }
-      function spawn(){
-        if(parts.length > 140) return;
-        const isHeart = Math.random() < 0.28; // some hearts, mostly dots
-        parts.push({
-          type: isHeart ? 'heart' : 'dot',
-          x: R(0,W),
-          y: H + R(30*DPR,200*DPR),
-          s: isHeart ? R(12,34)*DPR : R(3,10)*DPR,
-          vx: R(-0.6,0.6)*DPR,
-          vy: -R(0.6,2.4)*DPR,
-          a: R(0.55,0.98),
-          r: R(-0.6,0.6),
-          vr: R(-0.01,0.01),
-          color: COLORS[(Math.random()*COLORS.length)|0]
-        });
-      }
-
-      function drawHeart(px,py,scale,rot,alpha,color){
-        ctx.save(); ctx.translate(px,py); ctx.rotate(rot); ctx.scale(scale,scale);
-        ctx.globalAlpha = Math.min(1, alpha * 1.05);
-        ctx.shadowColor = color; ctx.shadowBlur = 12 * scale;
-        const g = ctx.createRadialGradient(0,-0.12,0.05, 0,0.12,1.0);
-        g.addColorStop(0, color); g.addColorStop(0.6, color); g.addColorStop(1, 'rgba(255,255,255,0.08)');
-        ctx.fillStyle = g;
-        ctx.beginPath(); ctx.moveTo(0,-0.5);
-        ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);
-        ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);
-        ctx.fill();
-        ctx.globalAlpha = 0.5 * alpha;
-        ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.beginPath();
-        ctx.ellipse(0.18,-0.28,0.12,0.06,-0.4,0,Math.PI*2); ctx.fill();
-        ctx.restore(); ctx.shadowBlur = 0;
-      }
-
-      function drawDot(p){
-        ctx.save();
-        ctx.globalAlpha = p.a;
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.s, 0, Math.PI*2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      function tick(){
-        ctx.clearRect(0,0,W,H);
-        if(Math.random() < 0.14) spawn();
-        for(let i=parts.length-1;i>=0;i--){
-          const p = parts[i];
-          p.x += p.vx * 0.018;
-          p.y += p.vy * 0.018;
-          if(p.type === 'heart') p.r += p.vr;
-          p.a -= 0.0009;
-          if(p.y < -120*DPR || p.a <= 0.02) parts.splice(i,1);
-          else {
-            if(p.type === 'heart'){
-              drawHeart(p.x, p.y, (p.s/52)*DPR, p.r, p.a, p.color);
-            } else {
-              drawDot(p);
-            }
-          }
-        }
-        requestAnimationFrame(tick);
-      }
-
-      addEventListener('resize', resize, {passive:true});
-      resize(); tick();
-    })();
+    function resize(){
+      W=innerWidth*DPR;H=innerHeight*DPR;
+      c.width=W;c.height=H;
+      c.style.width='100vw';c.style.height='100vh';
+    }
+    function spawn(){
+      if(hearts.length>60)return;
+      hearts.push({
+        x:R(0,W),
+        y:H+R(20*DPR,160*DPR),
+        s:R(12,30)*DPR,
+        vx:R(-0.4,0.4)*DPR,
+        vy:-R(0.6,1.8)*DPR,
+        a:R(0.55,0.95),
+        r:R(-0.6,0.6),
+        vr:R(-0.01,0.01),
+        color:COLORS[(Math.random()*COLORS.length)|0]
+      });
+    }
+    function drawHeart(px,py,scale,rot,alpha,color){
+      ctx.save();ctx.translate(px,py);ctx.rotate(rot);ctx.scale(scale,scale);
+      ctx.globalAlpha=Math.min(1,alpha*1.1);
+      const g=ctx.createRadialGradient(0,-0.12,0.05,0,0.12,1.0);
+      g.addColorStop(0,color);g.addColorStop(0.6,color);g.addColorStop(1,'rgba(255,255,255,0.08)');
+      ctx.fillStyle=g;
+      ctx.beginPath();ctx.moveTo(0,-0.5);
+      ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);
+      ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);
+      ctx.fill();
+      ctx.restore();
+    }
+    function tick(){
+      ctx.clearRect(0,0,W,H);
+      if(Math.random()<0.2)spawn();
+      hearts.forEach(h=>{
+        h.x+=h.vx*0.016;
+        h.y+=h.vy*0.016;
+        h.r+=h.vr;
+        h.a-=0.001;
+        drawHeart(h.x,h.y,(h.s/52)*DPR,h.r,h.a,h.color);
+      });
+      hearts=hearts.filter(h=>h.y>-120*DPR&&h.a>0.02);
+      requestAnimationFrame(tick);
+    }
+    addEventListener('resize',resize,{passive:true});
+    resize();tick();
+  })();
   </script>
 
 </body>
