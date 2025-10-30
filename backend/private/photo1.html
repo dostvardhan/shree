@@ -24,17 +24,20 @@
 
   <style>
     :root{
-      --ink:#6d232b;
-      --muted:#7a4350;
-      --bg1:#fff0ef; --bg2:#ffd6d6;
+      --ink:#4b3a2f;
+      --muted:#6b5a4c;
+      /* new earthy (olive + warm cream) background */
+      --bg-a:#f3efe6;   /* warm cream */
+      --bg-b:#e6eedb;   /* soft olive tint */
+      --accent:#556b3a; /* deep olive for small UI */
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial}
     body{
+      /* new gradient: soft olive / warm cream */
       background:
-        radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
-        radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,0.18), transparent 18%),
-        linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 18%, #ffc0be 38%, #ffb3b3 60%, #ffb0b0 100%);
+        radial-gradient(1000px 520px at 8% 12%, rgba(255,255,250,.45), transparent 28%),
+        linear-gradient(160deg, var(--bg-a) 0%, var(--bg-b) 36%, #dfe8cc 62%, #eaf3df 100%);
       background-attachment: fixed;
       color:var(--ink);
       overflow-y:auto;
@@ -69,7 +72,7 @@
     .caption{text-align:center;margin:18px 0 8px}
     .pill{
       display:inline-block;
-      background:linear-gradient(180deg,#fff,#fff0f2);
+      background:linear-gradient(180deg,#fffef8,#fbf8ef);
       padding:12px 22px;
       border-radius:999px;
       box-shadow:0 12px 30px rgba(0,0,0,0.06);
@@ -82,7 +85,7 @@
       text-decoration:none;
       padding:8px 14px;
       border-radius:999px;
-      background:rgba(255,255,255,0.9);
+      background:rgba(255,255,255,0.92);
       color:var(--ink);
       box-shadow:0 8px 20px rgba(0,0,0,0.06);
       font-weight:700
@@ -95,13 +98,13 @@
       display:flex;align-items:center;justify-content:center;
       z-index:150;cursor:pointer;
       box-shadow:0 12px 30px rgba(0,0,0,0.10);
-      background:linear-gradient(180deg,#fffafc,#ffeef2);
+      background:linear-gradient(180deg,#fffafc,#f7f6ef);
     }
     .nav-left{left:14px}
     .nav-right{right:14px}
     .nav-inner{
       width:40px;height:40px;border-radius:999px;
-      background:#6d2a47;color:#fff;
+      background:var(--accent);color:#fff;
       display:flex;align-items:center;justify-content:center;font-size:18px
     }
 
@@ -173,7 +176,7 @@
     const ctx=c.getContext('2d');
     const DPR=Math.max(1,window.devicePixelRatio||1);
     let W=0,H=0,hearts=[];
-    const COLORS=['#ffd6e0','#ffcad6','#ffe0b3','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
+    const COLORS=['#cfe6c3','#e6f1d8','#ffe7d0','#f0f6e9','#e6f0ff','#f7f1e6'];
     const R=(a,b)=>Math.random()*(b-a)+a;
 
     function resize(){
