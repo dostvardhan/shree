@@ -1,221 +1,310 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shreshtha — Photo 1</title>
-
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self';">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Photo 1 — Shreshtha</title>
 
-  <!-- Auth -->
-  <script src="/auth0-spa-js.production.js" defer></script>
+  <!-- Auth (same includes you use) -->
+  <script src="/auth0-spa-js.production.js"></script>
   <script src="/auth-init.js" defer></script>
   <script src="/guard-auth.js" defer></script>
 
-  <!-- use same life/upload background & music styling -->
-  <link rel="stylesheet" href="/assets/css/music-heart.css">
-  <script src="/assets/js/music-heart.js" defer></script>
-
   <style>
     :root{
-      --ink:#6d232b;
-      --muted:#7a4350;
-      --bg1:#fff0ef; --bg2:#ffd6d6;
+      --text:#6e2430;
+      --bg-start:#fff0ef;
+      --bg-end:#ffb0b0;
+      --panel-shadow: 0 28px 60px rgba(0,0,0,0.16);
+      --accent:#7a2430;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial}
+    html,body{height:100%}
     body{
+      margin:0;
+      font-family:"Playfair Display",serif;
+      color:var(--text);
       background:
         radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
         radial-gradient(900px 500px at 95% 85%, rgba(255,240,230,0.18), transparent 18%),
-        linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 18%, #ffc0be 38%, #ffb3b3 60%, #ffb0b0 100%);
+        linear-gradient(160deg, var(--bg-start) 0%, #ffd6d6 18%, #ffc0be 38%, #ffb3b3 60%, var(--bg-end) 100%);
       background-attachment: fixed;
-      color:var(--ink);
-      overflow-y:auto;
-    }
-
-    /* container */
-    .wrap{max-width:1400px;margin:18px auto;padding:18px; display:block}
-
-    /* photo stage: NO white gutters — image fills main column */
-    .photo-card{
-      background:transparent;
-      border-radius:0;
-      padding:8px 12px 40px;
-      margin:8px 0;
-      position:relative;
-    }
-
-    .photo-area{
-      display:flex;
-      justify-content:center;
-      align-items:flex-start;
-    }
-
-    /* large portrait container - no white side panels */
-    .photo-wrap{
-      width:min(1100px,92vw);
-      display:block;
-      background:transparent;
-      border-radius:12px;
-      overflow:visible;
-      margin:0 auto;
-      padding:0;
+      overflow-x:hidden;
       text-align:center;
     }
 
-    .photo-wrap img{
-      display:block;
+    header{padding:22px 12px 2px; z-index:5; position:relative}
+    .page-links{ font-size:14px; margin-bottom:6px; }
+    .page-links a{
+      display:inline-block; padding:6px 10px; margin:0 6px; border-radius:16px;
+      background:rgba(255,255,255,0.30); color:#5a0013; text-decoration:none;
+      box-shadow:0 6px 12px rgba(0,0,0,0.08);
+    }
+
+    /* FULL-LARGE image container (no white frame) */
+    .photo-hero {
       width:100%;
+      display:flex;
+      justify-content:center;
+      padding:18px 32px 40px;
+      align-items:flex-start;
+      gap:16px;
+      position:relative;
+      z-index:5;
+    }
+
+    /* the image itself - full, scrollable height, max width controlled */
+    .photo-hero img {
+      width:100%;
+      max-width:1600px;            /* recommended maximum width (change if you want larger) */
       height:auto;
-      max-height:180vh;      /* allow very tall scrollable image */
-      object-fit:contain;
-      border-radius:10px;
-      box-shadow: 0 20px 46px rgba(0,0,0,0.10);
-      background:transparent;
+      display:block;
+      object-fit:cover;
+      border-radius:6px;
+      box-shadow: var(--panel-shadow);
+      -webkit-user-drag: none;
     }
 
-    /* caption */
-    .caption{ text-align:center;margin:18px 0 8px; }
-    .pill{
+    /* allow the hero to be taller and allow vertical scroll to view more */
+    .hero-wrap { width:100%; max-width:1700px; margin:0 auto; }
+
+    /* caption centered below photo */
+    .caption {
+      margin:18px auto 26px;
       display:inline-block;
-      background:linear-gradient(180deg,#fff,#fff0f2);
-      padding:12px 22px;border-radius:999px;
-      box-shadow:0 12px 30px rgba(0,0,0,0.06);
-      font-style:italic;color:var(--muted);
+      background: rgba(255,255,255,0.92);
+      padding:12px 26px;
+      border-radius:999px;
+      font-style:italic;
+      color:var(--accent);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.09);
+      max-width:92%;
     }
 
-    /* bottom nav small */
-    .bottom-nav{ display:flex;gap:12px;justify-content:center;margin-top:10px }
-    .bottom-nav a{ text-decoration:none;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,0.9);color:var(--ink);box-shadow:0 8px 20px rgba(0,0,0,0.06);font-weight:700 }
+    /* nav chips (bottom) */
+    .bottom-nav { display:flex; gap:16px; justify-content:center; margin-bottom:36px; }
+    .bottom-nav a{ display:inline-block; padding:10px 16px; border-radius:999px; background:#fff; color:var(--accent); box-shadow:0 8px 18px rgba(0,0,0,0.08); text-decoration:none; font-weight:600; }
 
-    /* left & right small nav hearts */
-    .nav-heart{
-      position:fixed;top:50%;transform:translateY(-50%);width:56px;height:56px;border-radius:999px;
-      display:flex;align-items:center;justify-content:center;z-index:150;cursor:pointer;
-      box-shadow:0 12px 30px rgba(0,0,0,0.10); background:linear-gradient(180deg,#fffafc,#ffeef2);
+    /* side hearts (prev/next) */
+    .nav-heart{ position:fixed; top:50%; transform:translateY(-50%); font-size:28px; z-index:6; width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#fff3f3; box-shadow:0 8px 20px rgba(0,0,0,0.12); cursor:pointer; }
+    .nav-left{ left:18px } .nav-right{ right:18px }
+    .nav-heart span{ color:#7a2430; font-size:20px; }
+
+    /* music button copy from upload.html (tiny heart style) */
+    #musicHeartWrap{ position:fixed; right:18px; bottom:16px; z-index:160; opacity:.98; }
+    #musicHeartBtn{
+      width:46px; height:46px; font-size:18px; border-radius:14px; border:none;
+      background: radial-gradient(circle at 35% 30%, #ffe9f2 0%, #ffc9d6 100%);
+      box-shadow: 0 8px 22px rgba(220,80,110,0.14);
+      display:flex;align-items:center;justify-content:center; cursor:pointer;
     }
-    .nav-left{left:14px}
-    .nav-right{right:14px}
-    .nav-inner{width:40px;height:40px;border-radius:999px;background:#6d2a47;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px}
+    #musicHeartBtn.playing{ transform: scale(1.03); box-shadow:0 12px 26px rgba(220,80,110,0.26); }
+    /* small volume dot */
+    #musicVolDot{ position:absolute; right:-6px; top:-6px; width:14px; height:14px; border-radius:50%; background: radial-gradient(circle at 30% 30%, #fff7d6, #ffd66a); border:2px solid rgba(255,255,255,0.95); box-shadow:0 4px 8px rgba(255,170,100,0.18); }
 
-    /* fx canvas (floating hearts/dots like life.html) */
-    #fxCanvas{ position:fixed; left:0; top:0; width:100vw; height:100vh; pointer-events:none; z-index:20; }
+    /* volume popover */
+    #musicVolPop{ position:fixed; right:18px; bottom:80px; z-index:170; display:none; background:linear-gradient(180deg,#fff,#fff9f7); padding:10px; border-radius:10px; box-shadow:0 12px 30px rgba(0,0,0,0.12); }
+    #musicVolPop.show { display:block; }
+    .vol-range { width:140px; height:6px; -webkit-appearance:none; border-radius:999px; background:linear-gradient(90deg,#ffc1c1,#ffd88a); }
 
-    /* small responsive tweaks */
+    /* canvas hearts (life.html copy) */
+    #fxCanvas{ position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:48; }
+
+    /* responsive tweaks */
     @media (max-width:900px){
-      .photo-wrap{ width:min(760px,94vw) }
-      .nav-heart{ width:48px;height:48px }
-      .nav-inner{ width:34px;height:34px }
-    }
-    @media (max-width:420px){
-      .photo-wrap{ width:96vw }
-      .photo-wrap img{ max-height:140vh }
+      .photo-hero { padding:14px; }
+      .nav-heart{ display:none; } /* hide side hearts on small devices */
+      .photo-hero img { max-width:100%; border-radius:6px; }
     }
   </style>
 </head>
 <body>
-
-  <!-- left -> life (back) ; right -> next photo -->
-  <a id="prevHeart" class="nav-heart nav-left" href="life.html" aria-label="Back to Life">
-    <span class="nav-inner">❤</span>
-  </a>
-  <a id="nextHeart" class="nav-heart nav-right" href="photo2.html" aria-label="Next photo">
-    <span class="nav-inner">❤</span>
-  </a>
-
-  <!-- floating hearts/dots canvas -->
+  <!-- canvas hearts (will be initialized below - copied from life.html) -->
   <canvas id="fxCanvas" aria-hidden="true"></canvas>
 
-  <main class="wrap" role="main">
-    <article class="photo-card" role="article" aria-label="Photo 1">
-      <div class="photo-area">
-        <div class="photo-wrap">
-          <!-- replace with secure streaming path if used: /api/file/<id> -->
-          <img id="mainPhoto" src="/photos/photo1.jpg" alt="Memory 1 — Shreshtha">
+  <header>
+    <div class="page-links">
+      <a href="life.html">Life</a> |
+      <a href="gallery.html">Gallery</a> |
+      <a href="/logout.html">Logout</a>
+    </div>
+  </header>
+
+  <main class="photo-hero">
+    <div class="hero-wrap">
+      <!-- large image (no outer white frame) -->
+      <img id="mainPhoto" src="/photos/photo1.jpg" alt="Photo 1 — Shreshtha" />
+      <div class="caption">"A smile is the beauty of the soul."</div>
+
+      <div style="display:flex;justify-content:center;margin-top:10px;">
+        <div class="bottom-nav">
+          <a href="life.html">Life</a>
+          <a href="gallery.html">Gallery</a>
+          <a href="/logout.html">Logout</a>
         </div>
       </div>
-
-      <div class="caption">
-        <div class="pill">“A smile is the beauty of the soul.”</div>
-      </div>
-
-      <nav class="bottom-nav" aria-label="page links">
-        <a href="life.html">Life</a>
-        <a href="gallery.html">Gallery</a>
-        <a href="/auth/logout">Logout</a>
-      </nav>
-    </article>
+    </div>
   </main>
 
-  <!-- The upload.html music uses these CSS/JS files — we included them in the head.
-       If you prefer the inline implementation instead, I can paste that here too. -->
+  <!-- side hearts prev/next -->
+  <a id="prevHeart" class="nav-heart nav-left" href="photo9.html" aria-label="Previous"><span>&#10084;</span></a>
+  <a id="nextHeart" class="nav-heart nav-right" href="photo2.html" aria-label="Next"><span>&#10084;</span></a>
 
-  <!-- small script: prev/next stable urls -->
+  <!-- music heart (upload.html style) -->
+  <div id="musicHeartWrap" aria-hidden="false">
+    <button id="musicHeartBtn" aria-pressed="false" title="Play / Pause music">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 21s-7.33-4.94-9.33-7.02C.8 11.9 2.1 7.9 5.5 6.3 7.2 5.4 9.1 6 10 7.3c.9-1.3 2.8-1.9 4.5-1 3.4 1.6 4.7 5.6 2.8 7.68C19.33 16.06 12 21 12 21z" fill="#7a2430"/></svg>
+      <span id="musicVolDot" aria-hidden="true"></span>
+    </button>
+    <div id="musicVolPop" role="dialog" aria-hidden="true">
+      <div style="font-size:13px;color:#6b2b2b;margin-right:8px">Vol</div>
+      <input id="volRange" class="vol-range" type="range" min="0" max="100" step="1" value="60" aria-label="Volume" />
+      <button id="muteBtn" style="border:none;background:#fff;padding:6px;border-radius:8px;margin-left:8px" aria-label="Mute">M</button>
+    </div>
+  </div>
+
+  <audio id="bgMusic" loop preload="auto"><source src="/music/bg.mp3" type="audio/mpeg"></audio>
+
+  <!-- copy of the life.html canvas hearts script (keeps behavior & colors like life.html) -->
+  <script>
+  (function(){
+    const c = document.getElementById('fxCanvas'); if (!c) return;
+    const ctx = c.getContext('2d');
+    const DPR = Math.max(1, window.devicePixelRatio || 1);
+    let W=0, H=0, hearts=[];
+    const COLORS = ['#dff7ff','#fff9d6','#ffe9d2','#ffdce6','#e9f7e9','#eae8ff','#fff0f6','#fff4de'];
+    const R=(a,b)=>Math.random()*(b-a)+a;
+
+    function resize(){
+      W = Math.floor(window.innerWidth * DPR);
+      H = Math.floor(window.innerHeight * DPR);
+      c.width = W; c.height = H;
+      c.style.width = '100vw'; c.style.height = '100vh';
+    }
+    function spawn(){
+      if (hearts.length > 28) return;
+      hearts.push({ x:R(0,W), y:H + R(12*DPR,140*DPR), s:R(12,34), vx:R(-6,6), vy:-R(12,36), a:R(.55,.98), r:R(-.5,.5), vr:R(-.012,.012), color:COLORS[(Math.random()*COLORS.length)|0] });
+    }
+    function drawHeart(px,py,scale,rot,alpha,color){
+      ctx.save(); ctx.translate(px,py); ctx.rotate(rot); ctx.scale(scale,scale);
+      ctx.globalAlpha = Math.min(1, alpha*1.05);
+      ctx.shadowColor = color; ctx.shadowBlur = 12 * scale;
+      const g = ctx.createRadialGradient(0, -0.12, 0.05, 0, 0.12, 1.0);
+      g.addColorStop(0, color); g.addColorStop(0.6, color); g.addColorStop(1, 'rgba(255,255,255,0.08)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(0,-0.5);
+      ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);
+      ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);
+      ctx.fill();
+      ctx.globalAlpha = 0.55 * alpha;
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.beginPath();
+      ctx.ellipse(0.18, -0.28, 0.12, 0.06, -0.4, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore(); ctx.shadowBlur = 0;
+    }
+    function tick(){
+      ctx.clearRect(0,0,W,H);
+      if (Math.random() < 0.12) spawn();
+      hearts.forEach(h => { h.x += h.vx * 0.016; h.y += h.vy * 0.016; h.r += h.vr; h.a -= 0.0009; });
+      hearts = hearts.filter(h => h.y > -140*DPR && h.a > 0.02);
+      hearts.forEach(h => drawHeart(h.x, h.y, (h.s/50)*DPR, h.r, h.a, h.color));
+      requestAnimationFrame(tick);
+    }
+    addEventListener('resize', resize, { passive:true });
+    resize(); tick();
+  })();
+  </script>
+
+  <!-- prev/next fix + ensure hrefs are correct -->
   <script>
     (function(){
+      const getIndex = () => {
+        const p = (location.pathname||'').match(/photo(\d+)\.html/i);
+        return p && p[1] ? parseInt(p[1],10) : 1;
+      };
       const total = 9;
-      function getIndex(){ const m = (location.pathname||'').match(/photo(\d+)\.html/i); return m? parseInt(m[1],10) : 1; }
       const cur = getIndex();
-      const prev = cur>1 ? cur-1 : total;
-      const next = cur<total ? cur+1 : 1;
-      const prevLink = document.getElementById('prevHeart');
-      const nextLink = document.getElementById('nextHeart');
-      if(prevLink) prevLink.href = (cur===1 ? 'life.html' : 'photo'+prev+'.html');
-      if(nextLink) nextLink.href = 'photo'+next+'.html';
+      const prev = cur > 1 ? cur - 1 : total;
+      const next = cur < total ? cur + 1 : 1;
+      const pl = document.getElementById('prevHeart'), nl = document.getElementById('nextHeart');
+      if (pl) pl.href = 'photo' + prev + '.html';
+      if (nl) nl.href = 'photo' + next + '.html';
+      if (pl) pl.addEventListener('click', e => { e.preventDefault(); location.href = pl.href;});
+      if (nl) nl.addEventListener('click', e => { e.preventDefault(); location.href = nl.href;});
     })();
   </script>
 
-  <!-- floating hearts/dots canvas script (life-like small colorful dots/hearts) -->
+  <!-- small music UI (upload.html behaviour) -->
   <script>
-    (function(){
-      const c = document.getElementById('fxCanvas');
-      if(!c) return;
-      const ctx = c.getContext('2d');
-      const DPR = Math.max(1, window.devicePixelRatio || 1);
-      let W=0, H=0, parts=[];
-      const COLORS = ['#ffd6e0','#fff6a6','#ffd89e','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
-      const R=(a,b)=>Math.random()*(b-a)+a;
-      function resize(){ W = Math.floor(window.innerWidth*DPR); H = Math.floor(window.innerHeight*DPR); c.width=W; c.height=H; c.style.width='100vw'; c.style.height='100vh'; }
-      function spawn(){
-        if(parts.length > 130) return;
-        parts.push({
-          x: R(0,W),
-          y: H + R(40*DPR,220*DPR),
-          r: R(3,12)*DPR,
-          vx: R(-0.25,0.25)*DPR,
-          vy: -R(0.35,1.0)*DPR,
-          a: R(0.45,0.98),
-          col: COLORS[Math.floor(Math.random()*COLORS.length)]
-        });
-      }
-      function draw(p){
-        ctx.save();
-        ctx.globalAlpha = p.a;
-        ctx.fillStyle = p.col;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-        ctx.fill();
-        ctx.restore();
-      }
-      function tick(){
-        ctx.clearRect(0,0,W,H);
-        if(Math.random() < 0.14) spawn();
-        for(let i=parts.length-1;i>=0;i--){
-          const p = parts[i];
-          p.x += p.vx;
-          p.y += p.vy;
-          p.a -= 0.0009;
-          if(p.y < -60*DPR || p.a <= 0.02) parts.splice(i,1);
-          else draw(p);
-        }
-        requestAnimationFrame(tick);
-      }
-      addEventListener('resize', resize, {passive:true});
-      resize(); tick();
-    })();
-  </script>
+  (function(){
+    const btn = document.getElementById('musicHeartBtn');
+    const volPop = document.getElementById('musicVolPop');
+    const volRange = document.getElementById('volRange');
+    const muteBtn = document.getElementById('muteBtn');
+    const music = document.getElementById('bgMusic');
 
+    function setVolume(v){
+      music.volume = Math.max(0,Math.min(100,parseInt(v,10)))/100;
+      try { localStorage.setItem('shree_music_volume', String(v)); } catch(e){}
+    }
+
+    try {
+      const sv = localStorage.getItem('shree_music_volume');
+      if (sv !== null) volRange.value = sv;
+    } catch(e){}
+
+    setVolume(volRange.value);
+
+    // restore playing state if allowed
+    try {
+      if (localStorage.getItem('shree_music_playing') === '1') {
+        music.play().then(()=> btn.classList.add('playing')).catch(()=>{});
+      }
+    } catch(e){}
+
+    btn.addEventListener('click', (e) => {
+      const isVolDot = e.target && (e.target.id === 'musicVolDot' || e.target.closest && e.target.closest('#musicVolDot'));
+      if (isVolDot) return;
+      if (btn.classList.contains('playing')) {
+        btn.classList.remove('playing');
+        music.pause();
+        try { localStorage.setItem('shree_music_playing','0'); } catch(e){}
+      } else {
+        music.play().catch(()=>{});
+        btn.classList.add('playing');
+        try { localStorage.setItem('shree_music_playing','1'); } catch(e){}
+      }
+    });
+
+    // show/hide vol pop
+    const volDot = document.getElementById('musicVolDot');
+    volDot.addEventListener('click', (e) => {
+      const show = volPop.classList.toggle('show');
+      volPop.setAttribute('aria-hidden', show ? 'false' : 'true');
+      e.stopPropagation();
+      if (show) setTimeout(()=>{ volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true'); }, 6000);
+    });
+
+    volRange.addEventListener('input', ()=> setVolume(volRange.value));
+    muteBtn.addEventListener('click', ()=> {
+      if (music.volume > 0) { volRange.dataset.prev = volRange.value; volRange.value = 0; } 
+      else { volRange.value = volRange.dataset.prev || 60; }
+      setVolume(volRange.value);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#musicVolPop') && !e.target.closest('#musicVolDot')) {
+        volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true');
+      }
+    });
+
+    music.addEventListener('play', ()=> btn.classList.add('playing'));
+    music.addEventListener('pause', ()=> btn.classList.remove('playing'));
+  })();
+  </script>
 </body>
 </html>
