@@ -10,6 +10,10 @@
   <script src="auth-init.js" defer></script>
   <script src="guard-auth.js" defer></script>
 
+  <!-- Music (small heart) -->
+  <link rel="stylesheet" href="/assets/css/music-heart.css">
+  <script src="/assets/js/music-heart.js" defer></script>
+
   <style>
     :root{
       --text:#2b1410;
@@ -19,26 +23,32 @@
     }
 
     html,body{height:100%;margin:0;overflow-x:hidden;}
-    /* ==== Painterly teal–ochre background (CSS only) ==== */
-    body{
+
+    /* =========================================================
+       FORCE painterly teal–ochre background on this page only
+       ========================================================= */
+    body#uploadPage{
       color:var(--text);
+      /* multi-layer painterly base */
       background:
         radial-gradient(1300px 900px at 16% 84%, rgba(203,138,82,0.46), transparent 60%),
         radial-gradient(1100px 820px at 86% 18%, rgba(33,104,106,0.52), transparent 62%),
         radial-gradient(900px 700px at 52% 42%, rgba(255,244,230,0.45), transparent 65%),
-        linear-gradient(180deg, #f7eada 0%, #efd1b4 42%, #e7c3a0 70%, #e3b58d 100%);
-      background-attachment: fixed,fixed,fixed,fixed;
-      background-blend-mode: multiply, normal, screen, normal;
+        linear-gradient(180deg, #f7eada 0%, #efd1b4 42%, #e7c3a0 70%, #e3b58d 100%) !important;
+      background-attachment: fixed,fixed,fixed,fixed !important;
+      background-blend-mode: multiply, normal, screen, normal !important;
+      position: relative;
     }
     /* fine canvas stripes */
-    body::before{
+    body#uploadPage::before{
       content:"";
       position:fixed; inset:0; pointer-events:none;
       background: repeating-linear-gradient(15deg, rgba(0,0,0,0.05) 0 7px, transparent 7px 22px);
       mix-blend-mode:multiply; opacity:.28;
+      z-index:0;
     }
     /* sweeping painterly strokes */
-    body::after{
+    body#uploadPage::after{
       content:"";
       position:fixed; inset:-10vmax; pointer-events:none;
       background:
@@ -48,10 +58,10 @@
         radial-gradient(1000px 700px at 90% 15%, rgba(24,86,91,0.38), transparent 65%),
         radial-gradient(800px 560px at 82% 20%, rgba(24,86,91,0.28), transparent 60%);
       filter: blur(18px) saturate(110%);
-      opacity:.9;
+      opacity:.9; z-index:0;
     }
 
-    header{text-align:center;padding:18px 12px 10px;}
+    header{text-align:center;padding:18px 12px 10px; position:relative; z-index:1;}
     .page-links a{
       display:inline-block;margin:0 6px;padding:6px 12px;border-radius:18px;
       background:rgba(255,255,255,0.35);box-shadow:0 6px 14px rgba(0,0,0,0.12);
@@ -63,7 +73,7 @@
     main{
       max-width:960px;margin:28px auto 90px;padding:0 20px;
       display:grid;grid-template-columns:1fr 420px;gap:26px;
-      visibility:hidden;opacity:0;transition:opacity .25s;
+      visibility:hidden;opacity:0;transition:opacity .25s; position:relative; z-index:1;
     }
     @media (max-width:950px){ main{grid-template-columns:1fr} }
 
@@ -112,12 +122,12 @@
     .bar{height:6px;background:rgba(0,0,0,0.10);border-radius:10px;overflow:hidden;margin-top:10px;}
     .bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#2d7477,#b97c3c);}
 
-    /* Music heart small placement override */
-    #musicHeartWrap{ position:fixed; right:16px; bottom:16px; z-index:999; }
+    /* Music heart placement */
+    #musicHeartWrap{ position:fixed; right:16px; bottom:16px; z-index:9; }
     #musicHeartBtn{ width:44px;height:44px;border-radius:14px; }
   </style>
 </head>
-<body>
+<body id="uploadPage">
   <header>
     <div class="page-links">
       <a href="life.html">Life</a>
@@ -159,10 +169,6 @@
       <div class="pcaption" id="pcaption"></div>
     </aside>
   </main>
-
-  <!-- Music heart (global) -->
-  <link rel="stylesheet" href="/assets/css/music-heart.css">
-  <script src="/assets/js/music-heart.js" defer></script>
 
   <script>
     /* Reveal after auth; 2s fallback so UI never stays hidden */
