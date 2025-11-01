@@ -2,234 +2,288 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Upload — Sweet Memories</title>
-
-  <script src="/auth0-spa-js.production.js"></script>
-  <script src="auth-init.js" defer></script>
-  <script src="guard-auth.js" defer></script>
-
-  <link rel="stylesheet" href="/assets/css/music-heart.css">
-  <script src="/assets/js/music-heart.js" defer></script>
-
+  <link rel="icon" href="/assets/img/favicon.png" />
   <style>
-    :root {
-      --accent: #b97c3c;
-      --text: #2b1410;
-      font-family: "Playfair Display", serif;
-    }
-
-    html, body {
-      height: 100%;
+    body {
       margin: 0;
-      overflow-x: hidden;
-      color: var(--text);
-    }
-
-    /* ==========================================================
-       OPTION B: Softer painterly version with haze overlay
-       ========================================================== */
-    body#uploadPage {
-      background:
-        radial-gradient(900px 700px at 80% 10%, rgba(22,105,108,0.7), transparent 60%),
-        radial-gradient(1200px 900px at 10% 90%, rgba(205,139,77,0.7), transparent 65%),
-        conic-gradient(from 220deg at 25% 80%, rgba(200,120,70,0.6), rgba(245,237,225,0.1) 60%, rgba(15,95,100,0.6) 90%, rgba(240,200,150,0.7)),
-        radial-gradient(600px 480px at 50% 35%, rgba(255,252,245,0.9), rgba(248,238,228,0.8), transparent 75%);
-      background-blend-mode: overlay, multiply, screen, normal;
+      font-family: "Georgia", serif;
+      color: #3a1e1e;
+      background: url("/assets/img/upload-oil-bg-final.jpg") center/cover no-repeat fixed;
       background-attachment: fixed;
-      filter: blur(0.4px) saturate(110%);
+      overflow-x: hidden;
     }
-
-    /* Gentle light mist to soften */
-    body#uploadPage::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background: radial-gradient(circle at 60% 20%, rgba(255,255,255,0.22), rgba(255,255,255,0.12) 60%, rgba(0,0,0,0.1));
-      backdrop-filter: blur(4px);
-      mix-blend-mode: lighten;
-      opacity: 0.45;
-    }
-
-    header {
-      text-align: center;
-      padding: 18px 12px 8px;
-      position: relative;
-      z-index: 2;
-    }
-    .page-links a {
-      display: inline-block;
-      margin: 0 6px;
-      padding: 6px 12px;
-      border-radius: 18px;
-      background: rgba(255,255,255,0.4);
-      color: #3b0d14;
-      text-decoration: none;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.12);
-      font-size: 14px;
-    }
-    .page-links a:hover { background: rgba(255,255,255,0.6); }
 
     h1 {
-      margin: 18px 0 14px;
-      font-size: 46px;
-      color: #3b0d14;
-      text-shadow: 0 4px 8px rgba(0,0,0,0.12);
-    }
-
-    main {
-      max-width: 960px;
-      margin: 30px auto 100px;
-      padding: 0 20px;
-      display: grid;
-      grid-template-columns: 1fr 420px;
-      gap: 26px;
-      visibility: hidden;
-      opacity: 0;
-      transition: opacity .25s;
-      position: relative;
-      z-index: 2;
-    }
-    @media (max-width: 960px) { main { grid-template-columns: 1fr; } }
-
-    .card {
-      background: rgba(255,255,255,0.85);
-      border-radius: 18px;
-      padding: 20px 22px 24px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.25);
-      border: 1px solid rgba(255,255,255,0.5);
-      backdrop-filter: blur(12px);
-    }
-
-    label { display: block; margin: 10px 0 6px; font-weight: 700; }
-    input[type="file"], textarea {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 10px;
-      border: 1px solid rgba(0,0,0,0.1);
-      background: #fff;
-      font-size: 15px;
-      color: #3a2a20;
-    }
-    textarea { min-height: 100px; resize: vertical; }
-
-    .drop {
-      border: 2px dashed rgba(0,0,0,0.15);
-      border-radius: 16px;
-      padding: 28px;
       text-align: center;
-      background: rgba(255,255,255,0.75);
-      margin-bottom: 14px;
-      transition: all .2s ease;
+      margin-top: 60px;
+      font-size: 2.3em;
+      color: #4b1d1d;
+      text-shadow: 1px 1px 2px #d6c3b5;
     }
-    .drop.dragover { background: rgba(228,247,246,0.75); border-color: #2d7477; }
 
-    .btn {
-      background: linear-gradient(90deg,#b97c3c,#d79a5a);
-      color: #fff;
-      font-weight: 800;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 12px;
-      cursor: pointer;
-      box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+    .nav-buttons {
+      text-align: center;
       margin-top: 10px;
     }
-    .btn:hover { filter: brightness(1.08); }
-    .btn.secondary {
-      background: transparent;
-      color: #3a2a20;
-      border: 1px solid rgba(0,0,0,0.12);
+
+    .nav-buttons a {
+      background: #fff3eb;
+      color: #4b1d1d;
+      border-radius: 12px;
+      padding: 6px 16px;
+      margin: 0 8px;
+      text-decoration: none;
+      box-shadow: 1px 2px 4px rgba(0,0,0,0.2);
+      font-weight: bold;
     }
 
-    .preview {
-      border-radius: 14px;
-      overflow: hidden;
-      min-height: 320px;
-      background: rgba(255,255,255,0.6);
+    .nav-buttons a:hover {
+      background: #f8e3d1;
+    }
+
+    .upload-container {
       display: flex;
-      align-items: center;
       justify-content: center;
-      position: relative;
-      padding: 10px;
+      align-items: flex-start;
+      margin: 60px auto;
+      max-width: 900px;
+      gap: 40px;
     }
-    .preview img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      border-radius: 8px;
+
+    .upload-box, .preview-box {
+      background: rgba(255, 255, 255, 0.82);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      flex: 1;
+      min-height: 350px;
     }
-    .pcaption {
-      position: absolute;
-      left: 12px;
-      right: 12px;
-      bottom: 12px;
-      background: rgba(0,0,0,0.3);
-      color: #fff;
-      padding: 8px;
-      border-radius: 8px;
-      font-size: 13px;
-      text-align: center;
-      backdrop-filter: blur(3px);
+
+    .upload-box input[type="file"] {
       display: none;
     }
 
-    #musicHeartWrap { position: fixed; right: 16px; bottom: 16px; z-index: 9; }
-    #musicHeartBtn { width: 44px; height: 44px; border-radius: 14px; }
+    .choose-btn {
+      display: inline-block;
+      background: #b56d3d;
+      color: white;
+      padding: 10px 22px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: all 0.2s ease-in-out;
+    }
+
+    .choose-btn:hover {
+      background: #a25e2e;
+      transform: scale(1.05);
+    }
+
+    textarea {
+      width: 100%;
+      margin-top: 10px;
+      height: 80px;
+      border: 1px solid #c5a68e;
+      border-radius: 8px;
+      padding: 10px;
+      resize: none;
+      font-family: Georgia, serif;
+      background: rgba(255,255,255,0.8);
+    }
+
+    .buttons {
+      text-align: left;
+      margin-top: 15px;
+    }
+
+    button {
+      background: #b56d3d;
+      color: white;
+      padding: 8px 18px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: all 0.2s ease-in-out;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #a25e2e;
+      transform: scale(1.05);
+    }
+
+    #preview {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      height: 100%;
+      color: #4b1d1d;
+      font-style: italic;
+    }
+
+    #preview img {
+      max-width: 100%;
+      border-radius: 12px;
+      margin-top: 10px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+    }
+
+    /* Floating hearts */
+    .heart {
+      position: fixed;
+      bottom: 0;
+      width: 20px;
+      height: 20px;
+      background: rgba(255, 182, 193, 0.8);
+      border-radius: 50%;
+      animation: floatUp 6s linear infinite;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-800px) scale(0.5); opacity: 0; }
+    }
+
+    /* Music icon */
+    #music-toggle {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(255, 182, 193, 0.8);
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    #music-toggle:hover {
+      transform: scale(1.1);
+    }
+
   </style>
 </head>
-<body id="uploadPage">
-  <header>
-    <div class="page-links">
-      <a href="life.html">Life</a>
-      <a href="gallery.html">Gallery</a>
-      <a href="/logout.html">Logout</a>
-    </div>
-    <h1>Upload a Sweet Memory</h1>
-  </header>
+<body>
+  <div class="nav-buttons">
+    <a href="life.html">Life</a>
+    <a href="gallery.html">Gallery</a>
+    <a href="#" onclick="logout()">Logout</a>
+  </div>
 
-  <main id="protectedContent">
-    <section class="card">
-      <form id="uploadForm" autocomplete="off">
-        <div class="drop" id="drop">
-          <div style="font-weight:800">Drag & drop a photo here</div>
-          <div style="margin:6px 0 10px;">or</div>
-          <input id="file" name="photo" type="file" accept="image/*" style="display:none" />
-          <button type="button" class="btn" id="chooseBtn">Choose file</button>
-          <div class="meta">JPG/PNG • Max 8 MB</div>
-        </div>
+  <h1>Upload a Sweet Memory</h1>
 
-        <label for="caption">Caption (short)</label>
-        <textarea id="caption" name="caption" maxlength="150" placeholder="Write a short caption (max 150 chars)"></textarea>
+  <div class="upload-container">
+    <div class="upload-box">
+      <label for="fileInput" class="choose-btn">Choose file</label>
+      <input type="file" id="fileInput" accept="image/*" onchange="previewImage(event)">
+      <p style="margin-top:8px;font-size:14px;color:#6a4a3c;">JPG/PNG • Max 8 MB</p>
 
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-          <button class="btn" type="submit">Upload</button>
-          <button class="btn secondary" type="button" id="clearBtn">Clear</button>
-          <span id="msg" class="meta"></span>
-        </div>
-      </form>
-    </section>
+      <label style="display:block;margin-top:15px;font-weight:bold;">Caption (short)</label>
+      <textarea id="caption" placeholder="Write a short caption (max 150 chars)"></textarea>
 
-    <aside class="card preview" id="previewBox">
-      <div id="previewInner" class="meta" style="text-align:center;">
-        <div style="font-weight:800;color:#1f332f">Preview</div>
-        <div style="margin-top:8px">No photo selected</div>
+      <div class="buttons">
+        <button onclick="uploadPhoto()">Upload</button>
+        <button onclick="clearForm()">Clear</button>
       </div>
-      <div class="pcaption" id="pcaption"></div>
-    </aside>
-  </main>
+    </div>
+
+    <div class="preview-box" id="preview">
+      <p>No photo selected</p>
+    </div>
+  </div>
+
+  <audio id="bgMusic" loop>
+    <source src="/assets/music/bg-melody.mp3" type="audio/mpeg">
+  </audio>
+  <button id="music-toggle" onclick="toggleMusic()">💗</button>
 
   <script>
-    (function(){
-      const el=document.getElementById('protectedContent');
-      const show=()=>{el.style.visibility='visible';el.style.opacity='1'};
-      if(window.__shreeAuthReady) show();
-      else{
-        window.addEventListener('shree:auth-ready', show, {once:true});
-        setTimeout(()=>{if(getComputedStyle(el).visibility==='hidden')show();},1800);
+    // floating hearts
+    setInterval(() => {
+      const heart = document.createElement("div");
+      heart.className = "heart";
+      heart.style.left = Math.random() * window.innerWidth + "px";
+      heart.style.background = Math.random() > 0.5 ? "rgba(255,182,193,0.9)" : "rgba(255,105,180,0.7)";
+      document.body.appendChild(heart);
+      setTimeout(() => heart.remove(), 6000);
+    }, 700);
+
+    // music control
+    const music = document.getElementById("bgMusic");
+    function toggleMusic() {
+      if (music.paused) {
+        music.play();
+        document.getElementById("music-toggle").innerText = "🔊";
+      } else {
+        music.pause();
+        document.getElementById("music-toggle").innerText = "💗";
       }
-    })();
+    }
+
+    // image preview
+    function previewImage(event) {
+      const file = event.target.files[0];
+      const preview = document.getElementById("preview");
+      preview.innerHTML = "";
+      if (file) {
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(file);
+        preview.appendChild(img);
+      } else {
+        preview.innerHTML = "<p>No photo selected</p>";
+      }
+    }
+
+    // form clear
+    function clearForm() {
+      document.getElementById("fileInput").value = "";
+      document.getElementById("caption").value = "";
+      document.getElementById("preview").innerHTML = "<p>No photo selected</p>";
+    }
+
+    // upload logic
+    async function uploadPhoto() {
+      const file = document.getElementById("fileInput").files[0];
+      const caption = document.getElementById("caption").value.trim();
+
+      if (!file) return alert("Please choose a file.");
+      if (caption.length > 150) return alert("Caption too long.");
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("caption", caption);
+
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          headers: {
+            Authorization: localStorage.getItem("auth_token") || ""
+          },
+          body: formData
+        });
+
+        if (!res.ok) throw new Error("Upload failed");
+        alert("Photo uploaded successfully!");
+        clearForm();
+      } catch (err) {
+        alert("Upload failed: " + err.message);
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("auth_token");
+      window.location.href = "index.html";
+    }
   </script>
 </body>
 </html>
