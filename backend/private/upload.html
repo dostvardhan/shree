@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Upload — Sweet Memories</title>
 
-  <!-- Auth (your existing local files) -->
+  <!-- Auth (local files) -->
   <script src="/auth0-spa-js.production.js"></script>
   <script src="auth-init.js" defer></script>
   <script src="guard-auth.js" defer></script>
@@ -19,11 +19,9 @@
     }
 
     html,body{height:100%;margin:0;overflow-x:hidden;}
-
-    /* ==== Painterly CSS background (no image files) ==== */
+    /* ==== Painterly teal–ochre background (CSS only) ==== */
     body{
       color:var(--text);
-      /* base warm wash + teal & ochre clouds */
       background:
         radial-gradient(1300px 900px at 16% 84%, rgba(203,138,82,0.46), transparent 60%),
         radial-gradient(1100px 820px at 86% 18%, rgba(33,104,106,0.52), transparent 62%),
@@ -32,35 +30,21 @@
       background-attachment: fixed,fixed,fixed,fixed;
       background-blend-mode: multiply, normal, screen, normal;
     }
-    /* canvas texture */
+    /* fine canvas stripes */
     body::before{
       content:"";
       position:fixed; inset:0; pointer-events:none;
-      background:
-        repeating-linear-gradient(15deg, rgba(0,0,0,0.05) 0 7px, transparent 7px 22px);
-      mix-blend-mode:multiply;
-      opacity:.35;
+      background: repeating-linear-gradient(15deg, rgba(0,0,0,0.05) 0 7px, transparent 7px 22px);
+      mix-blend-mode:multiply; opacity:.28;
     }
-    /* sweeping strokes (conic + radial with masks) */
+    /* sweeping painterly strokes */
     body::after{
       content:"";
       position:fixed; inset:-10vmax; pointer-events:none;
       background:
-        /* ochre ribbons */
-        conic-gradient(from 200deg at 0% 90%,
-          rgba(199,137,82,0.0) 0 40deg,
-          rgba(199,137,82,0.35) 40deg 55deg,
-          rgba(199,137,82,0.0) 55deg 360deg),
-        conic-gradient(from 210deg at 5% 92%,
-          rgba(199,137,82,0.0) 0 38deg,
-          rgba(199,137,82,0.32) 38deg 52deg,
-          rgba(199,137,82,0.0) 52deg 360deg),
-        /* light cream sweep */
-        conic-gradient(from 350deg at 70% 40%,
-          rgba(255,246,233,0.0) 0 18deg,
-          rgba(255,246,233,0.42) 18deg 34deg,
-          rgba(255,246,233,0.0) 34deg 360deg),
-        /* teal feathers */
+        conic-gradient(from 200deg at 0% 90%, rgba(199,137,82,0.0) 0 40deg, rgba(199,137,82,0.35) 40deg 55deg, rgba(199,137,82,0.0) 55deg 360deg),
+        conic-gradient(from 210deg at 5% 92%, rgba(199,137,82,0.0) 0 38deg, rgba(199,137,82,0.32) 38deg 52deg, rgba(199,137,82,0.0) 52deg 360deg),
+        conic-gradient(from 350deg at 70% 40%, rgba(255,246,233,0.0) 0 18deg, rgba(255,246,233,0.42) 18deg 34deg, rgba(255,246,233,0.0) 34deg 360deg),
         radial-gradient(1000px 700px at 90% 15%, rgba(24,86,91,0.38), transparent 65%),
         radial-gradient(800px 560px at 82% 20%, rgba(24,86,91,0.28), transparent 60%);
       filter: blur(18px) saturate(110%);
@@ -127,6 +111,10 @@
     .meta{font-size:13px;opacity:.85;margin-top:8px;}
     .bar{height:6px;background:rgba(0,0,0,0.10);border-radius:10px;overflow:hidden;margin-top:10px;}
     .bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#2d7477,#b97c3c);}
+
+    /* Music heart small placement override */
+    #musicHeartWrap{ position:fixed; right:16px; bottom:16px; z-index:999; }
+    #musicHeartBtn{ width:44px;height:44px;border-radius:14px; }
   </style>
 </head>
 <body>
@@ -171,6 +159,10 @@
       <div class="pcaption" id="pcaption"></div>
     </aside>
   </main>
+
+  <!-- Music heart (global) -->
+  <link rel="stylesheet" href="/assets/css/music-heart.css">
+  <script src="/assets/js/music-heart.js" defer></script>
 
   <script>
     /* Reveal after auth; 2s fallback so UI never stays hidden */
