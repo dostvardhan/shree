@@ -5,12 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Upload — Sweet Memories</title>
 
-  <!-- Auth -->
   <script src="/auth0-spa-js.production.js"></script>
   <script src="auth-init.js" defer></script>
   <script src="guard-auth.js" defer></script>
 
-  <!-- Music -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
 
@@ -29,32 +27,31 @@
     }
 
     /* ==========================================================
-       OPTION A: Full vivid painterly teal–ochre background
+       OPTION B: Softer painterly version with haze overlay
        ========================================================== */
     body#uploadPage {
       background:
-        radial-gradient(900px 700px at 80% 10%, rgba(15,95,100,0.9), transparent 60%),
-        radial-gradient(1200px 900px at 10% 90%, rgba(203,131,74,0.9), transparent 65%),
-        conic-gradient(from 220deg at 25% 80%, rgba(210,130,70,0.9), rgba(250,240,230,0.1) 60%, rgba(17,105,108,0.9) 90%, rgba(230,180,120,0.8)),
-        radial-gradient(600px 480px at 50% 35%, rgba(255,250,242,0.95), rgba(250,235,220,0.8), transparent 75%);
+        radial-gradient(900px 700px at 80% 10%, rgba(22,105,108,0.7), transparent 60%),
+        radial-gradient(1200px 900px at 10% 90%, rgba(205,139,77,0.7), transparent 65%),
+        conic-gradient(from 220deg at 25% 80%, rgba(200,120,70,0.6), rgba(245,237,225,0.1) 60%, rgba(15,95,100,0.6) 90%, rgba(240,200,150,0.7)),
+        radial-gradient(600px 480px at 50% 35%, rgba(255,252,245,0.9), rgba(248,238,228,0.8), transparent 75%);
       background-blend-mode: overlay, multiply, screen, normal;
       background-attachment: fixed;
+      filter: blur(0.4px) saturate(110%);
     }
 
-    /* add faint painterly texture lines */
+    /* Gentle light mist to soften */
     body#uploadPage::before {
       content: "";
       position: fixed;
       inset: 0;
       pointer-events: none;
-      background: repeating-linear-gradient(15deg, rgba(0,0,0,0.04) 0 10px, transparent 10px 28px);
-      mix-blend-mode: multiply;
-      opacity: 0.25;
+      background: radial-gradient(circle at 60% 20%, rgba(255,255,255,0.22), rgba(255,255,255,0.12) 60%, rgba(0,0,0,0.1));
+      backdrop-filter: blur(4px);
+      mix-blend-mode: lighten;
+      opacity: 0.45;
     }
 
-    /* =============================================
-       HEADER + PAGE LINKS
-       ============================================= */
     header {
       text-align: center;
       padding: 18px 12px 8px;
@@ -66,24 +63,21 @@
       margin: 0 6px;
       padding: 6px 12px;
       border-radius: 18px;
-      background: rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.4);
       color: #3b0d14;
       text-decoration: none;
       box-shadow: 0 8px 16px rgba(0,0,0,0.12);
       font-size: 14px;
     }
-    .page-links a:hover { background: rgba(255,255,255,0.52); }
+    .page-links a:hover { background: rgba(255,255,255,0.6); }
 
     h1 {
       margin: 18px 0 14px;
       font-size: 46px;
       color: #3b0d14;
-      text-shadow: 0 5px 10px rgba(0,0,0,0.18);
+      text-shadow: 0 4px 8px rgba(0,0,0,0.12);
     }
 
-    /* =============================================
-       MAIN UPLOAD AREA
-       ============================================= */
     main {
       max-width: 960px;
       margin: 30px auto 100px;
@@ -100,12 +94,12 @@
     @media (max-width: 960px) { main { grid-template-columns: 1fr; } }
 
     .card {
-      background: rgba(255,255,255,0.82);
+      background: rgba(255,255,255,0.85);
       border-radius: 18px;
       padding: 20px 22px 24px;
-      box-shadow: 0 16px 44px rgba(0,0,0,0.3);
-      border: 1px solid rgba(255,255,255,0.6);
-      backdrop-filter: saturate(130%);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.5);
+      backdrop-filter: blur(12px);
     }
 
     label { display: block; margin: 10px 0 6px; font-weight: 700; }
@@ -139,7 +133,7 @@
       padding: 10px 18px;
       border-radius: 12px;
       cursor: pointer;
-      box-shadow: 0 10px 22px rgba(0,0,0,0.2);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.18);
       margin-top: 10px;
     }
     .btn:hover { filter: brightness(1.08); }
@@ -153,7 +147,7 @@
       border-radius: 14px;
       overflow: hidden;
       min-height: 320px;
-      background: rgba(255,255,255,0.65);
+      background: rgba(255,255,255,0.6);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -171,31 +165,16 @@
       left: 12px;
       right: 12px;
       bottom: 12px;
-      background: rgba(0,0,0,0.36);
+      background: rgba(0,0,0,0.3);
       color: #fff;
       padding: 8px;
       border-radius: 8px;
       font-size: 13px;
       text-align: center;
-      backdrop-filter: blur(2px);
+      backdrop-filter: blur(3px);
       display: none;
     }
-    .meta { font-size: 13px; opacity: .85; margin-top: 8px; }
-    .bar {
-      height: 6px;
-      background: rgba(0,0,0,0.1);
-      border-radius: 10px;
-      overflow: hidden;
-      margin-top: 10px;
-    }
-    .bar span {
-      display: block;
-      height: 100%;
-      width: 0;
-      background: linear-gradient(90deg,#2d7477,#b97c3c);
-    }
 
-    /* Music heart */
     #musicHeartWrap { position: fixed; right: 16px; bottom: 16px; z-index: 9; }
     #musicHeartBtn { width: 44px; height: 44px; border-radius: 14px; }
   </style>
@@ -224,8 +203,6 @@
         <label for="caption">Caption (short)</label>
         <textarea id="caption" name="caption" maxlength="150" placeholder="Write a short caption (max 150 chars)"></textarea>
 
-        <div class="bar"><span id="prog"></span></div>
-
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <button class="btn" type="submit">Upload</button>
           <button class="btn secondary" type="button" id="clearBtn">Clear</button>
@@ -252,69 +229,6 @@
         window.addEventListener('shree:auth-ready', show, {once:true});
         setTimeout(()=>{if(getComputedStyle(el).visibility==='hidden')show();},1800);
       }
-    })();
-
-    (function(){
-      const drop=document.getElementById('drop');
-      const file=document.getElementById('file');
-      const choose=document.getElementById('chooseBtn');
-      const caption=document.getElementById('caption');
-      const pcap=document.getElementById('pcaption');
-      const pinner=document.getElementById('previewInner');
-      const prog=document.getElementById('prog');
-      const msg=document.getElementById('msg');
-      const form=document.getElementById('uploadForm');
-
-      choose.onclick=()=>file.click();
-      file.onchange=()=>setPreview(file.files[0]);
-      caption.oninput=()=>{pcap.textContent=caption.value.trim();pcap.style.display=caption.value.trim()?'block':'none'};
-
-      ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('dragover')}));
-      ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('dragover')}));
-      drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f){file.files=e.dataTransfer.files;setPreview(f)}});
-
-      function setPreview(f){
-        if(!f){pinner.innerHTML='<div class="meta">No photo selected</div>';pcap.style.display='none';return}
-        const url=URL.createObjectURL(f);
-        pinner.innerHTML='<img src="'+url+'" alt="preview"/>';
-        pcap.textContent=caption.value.trim();
-        pcap.style.display=pcap.textContent?'block':'none';
-      }
-
-      form.onsubmit=async e=>{
-        e.preventDefault();
-        const f=file.files[0];
-        if(!f){msg.textContent='Please select a photo first.';return}
-        msg.textContent='Uploading…';
-        prog.style.width='0%';
-        let fake=0; const t=setInterval(()=>{fake=Math.min(fake+3,85);prog.style.width=fake+'%'},80);
-
-        try{
-          let res;
-          if(window.authFetch) res=await window.authFetch('/api/upload',{method:'POST',body:new FormData(form)});
-          else{
-            const fd=new FormData(); fd.append('photo',f);
-            if(caption.value.trim()) fd.append('caption',caption.value.trim());
-            let token=window.getAuthToken?await window.getAuthToken():null;
-            const headers=token?{'Authorization':'Bearer '+token}:{};
-            res=await fetch('/api/upload',{method:'POST',body:fd,headers,credentials:'include'});
-          }
-          clearInterval(t);
-          if(!res.ok) throw new Error('HTTP '+res.status);
-          prog.style.width='100%';
-          msg.textContent='Uploaded ✔';
-          setTimeout(()=>{msg.textContent='';prog.style.width='0%'},900);
-        }catch(err){
-          clearInterval(t); prog.style.width='0%';
-          msg.textContent='Upload failed: '+err.message; console.error(err);
-        }
-      };
-
-      document.getElementById('clearBtn').onclick=()=>{
-        file.value=''; caption.value=''; pcap.style.display='none';
-        pinner.innerHTML='<div class="meta">No photo selected</div>';
-        msg.textContent=''; prog.style.width='0%';
-      };
     })();
   </script>
 </body>
