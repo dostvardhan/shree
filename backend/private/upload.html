@@ -1,180 +1,174 @@
-﻿<!doctype html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Upload — Sweet Memories</title>
-  <link rel="icon" href="/assets/img/favicon.png" />
+  <link rel="icon" type="image/png" href="assets/img/heart-icon.png" />
+
   <style>
     body {
       margin: 0;
       font-family: "Georgia", serif;
-      color: #3a1e1e;
-      background: url("/assets/img/upload-oil-bg-final.jpg") center/cover no-repeat fixed;
-      background-attachment: fixed;
+      background: url("assets/img/upload-oil-bg-final.jpg") center/cover no-repeat fixed;
+      color: #4b2b2b;
       overflow-x: hidden;
+    }
+
+    /* Soft overlay for oil painting warmth */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.3),
+        rgba(255, 245, 230, 0.3)
+      );
+      backdrop-filter: blur(1px);
+      z-index: 0;
+    }
+
+    .top-nav {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      margin-top: 25px;
+    }
+
+    .top-nav a {
+      background: rgba(255, 255, 255, 0.7);
+      padding: 8px 18px;
+      margin: 0 6px;
+      border-radius: 25px;
+      text-decoration: none;
+      color: #4b2b2b;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .top-nav a:hover {
+      background: #e7b487;
+      color: #fff;
     }
 
     h1 {
       text-align: center;
-      margin-top: 60px;
-      font-size: 2.3em;
-      color: #4b1d1d;
-      text-shadow: 1px 1px 2px #d6c3b5;
-    }
-
-    .nav-buttons {
-      text-align: center;
-      margin-top: 10px;
-    }
-
-    .nav-buttons a {
-      background: #fff3eb;
-      color: #4b1d1d;
-      border-radius: 12px;
-      padding: 6px 16px;
-      margin: 0 8px;
-      text-decoration: none;
-      box-shadow: 1px 2px 4px rgba(0,0,0,0.2);
+      font-size: 2rem;
       font-weight: bold;
-    }
-
-    .nav-buttons a:hover {
-      background: #f8e3d1;
+      margin-top: 25px;
+      color: #4b2b2b;
+      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
+      position: relative;
+      z-index: 2;
     }
 
     .upload-container {
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      margin: 60px auto;
-      max-width: 900px;
-      gap: 40px;
+      gap: 25px;
+      margin-top: 40px;
+      z-index: 2;
+      position: relative;
     }
 
     .upload-box, .preview-box {
-      background: rgba(255, 255, 255, 0.82);
-      border-radius: 18px;
-      padding: 24px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      flex: 1;
-      min-height: 350px;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      width: 320px;
+      text-align: center;
+      transition: transform 0.3s ease;
     }
 
-    .upload-box input[type="file"] {
-      display: none;
+    .upload-box:hover, .preview-box:hover {
+      transform: scale(1.02);
     }
 
-    .choose-btn {
-      display: inline-block;
-      background: #b56d3d;
+    input[type="file"] {
+      margin: 15px 0;
+      background: #b87333;
       color: white;
-      padding: 10px 22px;
-      border-radius: 8px;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
       cursor: pointer;
-      font-weight: bold;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      transition: all 0.2s ease-in-out;
-    }
-
-    .choose-btn:hover {
-      background: #a25e2e;
-      transform: scale(1.05);
+      font-weight: 600;
     }
 
     textarea {
       width: 100%;
-      margin-top: 10px;
       height: 80px;
-      border: 1px solid #c5a68e;
+      margin-top: 10px;
       border-radius: 8px;
+      border: 1px solid #d4a373;
       padding: 10px;
       resize: none;
       font-family: Georgia, serif;
-      background: rgba(255,255,255,0.8);
-    }
-
-    .buttons {
-      text-align: left;
-      margin-top: 15px;
     }
 
     button {
-      background: #b56d3d;
+      background: #b87333;
       color: white;
-      padding: 8px 18px;
-      margin-right: 10px;
       border: none;
-      border-radius: 8px;
+      padding: 8px 18px;
+      border-radius: 6px;
+      margin-top: 10px;
       cursor: pointer;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      transition: all 0.2s ease-in-out;
-      font-weight: bold;
+      transition: all 0.3s ease;
+      font-weight: 600;
     }
 
     button:hover {
-      background: #a25e2e;
+      background: #a45a2a;
       transform: scale(1.05);
     }
 
-    #preview {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      height: 100%;
-      color: #4b1d1d;
-      font-style: italic;
-    }
-
-    #preview img {
-      max-width: 100%;
-      border-radius: 12px;
-      margin-top: 10px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-    }
-
-    /* Floating hearts */
     .heart {
       position: fixed;
-      bottom: 0;
-      width: 20px;
-      height: 20px;
-      background: rgba(255, 182, 193, 0.8);
-      border-radius: 50%;
-      animation: floatUp 6s linear infinite;
-      pointer-events: none;
-      z-index: 10;
+      bottom: -10px;
+      font-size: 18px;
+      color: #ffb6c1;
+      animation: floatUp 6s ease-in infinite;
+      opacity: 0.8;
+      z-index: 1;
     }
 
     @keyframes floatUp {
-      0% { transform: translateY(0) scale(1); opacity: 1; }
-      100% { transform: translateY(-800px) scale(0.5); opacity: 0; }
+      from {
+        transform: translateY(0) scale(1);
+        opacity: 0.8;
+      }
+      to {
+        transform: translateY(-800px) scale(0.5);
+        opacity: 0;
+      }
     }
 
-    /* Music icon */
-    #music-toggle {
+    .music-control {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
-      width: 50px;
-      height: 50px;
+      bottom: 20px;
+      right: 25px;
+      z-index: 5;
+      background: rgba(255, 192, 203, 0.8);
+      padding: 10px;
       border-radius: 50%;
-      background: rgba(255, 182, 193, 0.8);
-      border: none;
-      font-size: 22px;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease;
     }
 
-    #music-toggle:hover {
+    .music-control:hover {
       transform: scale(1.1);
     }
 
   </style>
 </head>
 <body>
-  <div class="nav-buttons">
+  <div class="top-nav">
     <a href="life.html">Life</a>
     <a href="gallery.html">Gallery</a>
     <a href="#" onclick="logout()">Logout</a>
@@ -184,104 +178,93 @@
 
   <div class="upload-container">
     <div class="upload-box">
-      <label for="fileInput" class="choose-btn">Choose file</label>
-      <input type="file" id="fileInput" accept="image/*" onchange="previewImage(event)">
-      <p style="margin-top:8px;font-size:14px;color:#6a4a3c;">JPG/PNG • Max 8 MB</p>
-
-      <label style="display:block;margin-top:15px;font-weight:bold;">Caption (short)</label>
-      <textarea id="caption" placeholder="Write a short caption (max 150 chars)"></textarea>
-
-      <div class="buttons">
-        <button onclick="uploadPhoto()">Upload</button>
-        <button onclick="clearForm()">Clear</button>
-      </div>
+      <form id="uploadForm" enctype="multipart/form-data">
+        <label for="fileInput">Drag & drop a photo here<br>or</label><br />
+        <input type="file" id="fileInput" accept="image/*" required /><br />
+        <small>JPG/PNG • Max 8 MB</small>
+        <br /><br />
+        <label for="caption"><b>Caption (short)</b></label><br />
+        <textarea id="caption" placeholder="Write a short caption (max 150 chars)"></textarea>
+        <br />
+        <button type="submit">Upload</button>
+        <button type="button" onclick="clearForm()">Clear</button>
+      </form>
     </div>
 
-    <div class="preview-box" id="preview">
-      <p>No photo selected</p>
+    <div class="preview-box">
+      <p><b>Preview</b></p>
+      <img id="preview" src="" alt="No photo selected" style="max-width: 100%; border-radius: 10px; display: none;" />
+      <p id="statusMsg"></p>
     </div>
   </div>
 
+  <div class="music-control" onclick="toggleMusic()">💗</div>
   <audio id="bgMusic" loop>
-    <source src="/assets/music/bg-melody.mp3" type="audio/mpeg">
+    <source src="assets/music/soft-bg.mp3" type="audio/mpeg">
   </audio>
-  <button id="music-toggle" onclick="toggleMusic()">💗</button>
 
   <script>
     // floating hearts
-    setInterval(() => {
+    function createHeart() {
       const heart = document.createElement("div");
-      heart.className = "heart";
-      heart.style.left = Math.random() * window.innerWidth + "px";
-      heart.style.background = Math.random() > 0.5 ? "rgba(255,182,193,0.9)" : "rgba(255,105,180,0.7)";
+      heart.classList.add("heart");
+      heart.textContent = "❤";
+      heart.style.left = Math.random() * 100 + "vw";
+      heart.style.animationDuration = Math.random() * 2 + 4 + "s";
       document.body.appendChild(heart);
       setTimeout(() => heart.remove(), 6000);
-    }, 700);
+    }
+    setInterval(createHeart, 600);
 
     // music control
     const music = document.getElementById("bgMusic");
+    let isPlaying = false;
     function toggleMusic() {
-      if (music.paused) {
-        music.play();
-        document.getElementById("music-toggle").innerText = "🔊";
-      } else {
+      if (isPlaying) {
         music.pause();
-        document.getElementById("music-toggle").innerText = "💗";
-      }
-    }
-
-    // image preview
-    function previewImage(event) {
-      const file = event.target.files[0];
-      const preview = document.getElementById("preview");
-      preview.innerHTML = "";
-      if (file) {
-        const img = document.createElement("img");
-        img.src = URL.createObjectURL(file);
-        preview.appendChild(img);
       } else {
-        preview.innerHTML = "<p>No photo selected</p>";
+        music.play();
       }
+      isPlaying = !isPlaying;
     }
 
-    // form clear
-    function clearForm() {
-      document.getElementById("fileInput").value = "";
-      document.getElementById("caption").value = "";
-      document.getElementById("preview").innerHTML = "<p>No photo selected</p>";
-    }
+    // preview image
+    document.getElementById("fileInput").addEventListener("change", function (event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const preview = document.getElementById("preview");
+          preview.src = e.target.result;
+          preview.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      }
+    });
 
-    // upload logic
-    async function uploadPhoto() {
+    // form submission
+    document.getElementById("uploadForm").addEventListener("submit", async e => {
+      e.preventDefault();
       const file = document.getElementById("fileInput").files[0];
-      const caption = document.getElementById("caption").value.trim();
-
-      if (!file) return alert("Please choose a file.");
-      if (caption.length > 150) return alert("Caption too long.");
-
+      const caption = document.getElementById("caption").value;
+      if (!file) return alert("Please select a file!");
       const formData = new FormData();
       formData.append("file", file);
       formData.append("caption", caption);
 
-      try {
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          headers: {
-            Authorization: localStorage.getItem("auth_token") || ""
-          },
-          body: formData
-        });
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const msg = document.getElementById("statusMsg");
+      msg.textContent = res.ok ? "✅ Uploaded successfully!" : "❌ Upload failed.";
+    });
 
-        if (!res.ok) throw new Error("Upload failed");
-        alert("Photo uploaded successfully!");
-        clearForm();
-      } catch (err) {
-        alert("Upload failed: " + err.message);
-      }
+    function clearForm() {
+      document.getElementById("fileInput").value = "";
+      document.getElementById("caption").value = "";
+      document.getElementById("preview").style.display = "none";
+      document.getElementById("statusMsg").textContent = "";
     }
 
     function logout() {
-      localStorage.removeItem("auth_token");
       window.location.href = "index.html";
     }
   </script>
