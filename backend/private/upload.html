@@ -5,124 +5,109 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Upload — Sweet Memories</title>
 
-  <!-- Auth Protection -->
+  <!-- Auth -->
   <script src="/auth0-spa-js.production.js" defer></script>
   <script src="/auth-init.js" defer></script>
   <script src="/guard-auth.js" defer></script>
 
-  <!-- Music Button -->
+  <!-- Music -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
 
   <style>
     :root{
       --ink:#4b1e21;
-      --panel:rgba(255,255,255,0.84);
+      --glass:rgba(255,255,255,.84);
       --accent:#b5783b;
+      --bg-img:/assets/img/upload-oil-bg-final.jpg?v=9;
     }
     *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
 
-    /* ✅ Full-page oil-painting background (no borders) */
+    /* ===== Background (two-layer: blur cover + contain) ===== */
+    .bg-layer{
+      position:fixed; inset:0; width:100vw; height:100vh; object-fit:cover;
+      pointer-events:none; z-index:0;
+    }
+    .bg-blur{
+      filter: blur(14px) brightness(1.02) saturate(1.05);
+      transform: scale(1.06);                /* bleed to edges after blur */
+    }
+    .bg-base{
+      object-fit:contain;                     /* show full painting (no crop) */
+      z-index:1;
+    }
+
+    /* Subtle top vignette to keep title readable */
+    .top-fade{
+      position:fixed; inset:0; z-index:2; pointer-events:none;
+      background: linear-gradient(180deg, rgba(255,255,255,.55), transparent 22%);
+    }
+
     body{
-      min-height:100vh;
       font-family: ui-serif,"Playfair Display",Georgia,serif;
       color:var(--ink);
-      background:
-        linear-gradient(rgba(255,240,230,0.18),rgba(240,220,210,0.18)),
-        url("/assets/img/upload-oil-bg-final.jpg?v=7") center center / cover no-repeat fixed;
       overflow-x:hidden;
-      position:relative;
     }
 
-    header{text-align:center;padding-top:20px;position:relative;z-index:5;}
+    header{text-align:center; padding-top:18px; position:relative; z-index:5;}
     h1{
-      font-size:2.6rem;
-      font-weight:700;
-      margin-top:16px;
-      text-shadow:0 5px 10px rgba(0,0,0,0.12);
-    }
-
-    .page-links{
-      margin-top:10px;
+      font-size:2.6rem; font-weight:700; margin-top:14px;
+      text-shadow:0 5px 10px rgba(0,0,0,.12);
     }
     .page-links a{
-      display:inline-block;
-      margin:0 6px;
-      padding:6px 12px;
-      border-radius:16px;
-      background:rgba(255,255,255,0.35);
-      color:var(--ink);
-      text-decoration:none;
-      box-shadow:0 3px 6px rgba(0,0,0,0.1);
+      display:inline-block; margin:0 6px; padding:6px 12px; border-radius:16px;
+      background:rgba(255,255,255,.38); color:var(--ink); text-decoration:none;
+      box-shadow:0 3px 6px rgba(0,0,0,.1);
     }
-    .page-links a:hover{
-      background:rgba(255,255,255,0.5);
-    }
+    .page-links a:hover{ background:rgba(255,255,255,.52); }
 
     main{
-      display:flex;
-      flex-wrap:wrap;
-      justify-content:center;
-      gap:30px;
-      margin:60px auto;
-      max-width:950px;
-      padding:0 18px;
-      position:relative;
-      z-index:3;
-      visibility:hidden;
-      opacity:0;
-      transition:opacity 0.5s ease;
+      display:flex; flex-wrap:wrap; justify-content:center; gap:28px;
+      margin:60px auto; max-width:950px; padding:0 18px;
+      position:relative; z-index:5;
+      visibility:hidden; opacity:0; transition:opacity .45s ease;
     }
-
     .card{
-      background:var(--panel);
-      backdrop-filter:blur(6px);
-      border-radius:18px;
-      box-shadow:0 8px 20px rgba(0,0,0,0.2);
-      padding:22px;
-      flex:1;
-      min-width:300px;
+      background:var(--glass); backdrop-filter: blur(6px);
+      border-radius:18px; box-shadow:0 8px 20px rgba(0,0,0,.2);
+      padding:22px; flex:1; min-width:300px;
     }
-
-    label{font-weight:600;display:block;margin-top:12px;margin-bottom:6px;}
-    input[type=file]{width:100%;}
+    label{font-weight:700; display:block; margin:10px 0 6px;}
+    input[type=file]{width:100%}
     textarea{
-      width:100%;height:100px;
-      border-radius:10px;border:1px solid #ccc;
-      padding:8px;resize:none;font-family:inherit;font-size:15px;
-      background:rgba(255,255,255,0.9);
+      width:100%; height:100px; border-radius:10px; border:1px solid #cfcfcf;
+      padding:10px; resize:none; font:inherit; background:rgba(255,255,255,.92);
     }
-
     button{
-      background:var(--accent);
-      color:white;
-      border:none;
-      padding:8px 16px;
-      border-radius:8px;
-      font-weight:600;
-      cursor:pointer;
-      margin-top:14px;
+      background:var(--accent); color:#fff; border:none; padding:9px 16px;
+      border-radius:10px; font-weight:700; cursor:pointer; margin-top:12px;
+      box-shadow:0 6px 14px rgba(0,0,0,.16);
     }
-    button:hover{transform:scale(1.05);}
+    button:hover{ transform:translateY(-1px); }
+    .btn-ghost{ background:#f6e7da; color:#5a0013; }
 
     .preview{
-      display:flex;align-items:center;justify-content:center;
-      background:rgba(255,255,255,0.75);
-      border-radius:16px;
-      min-height:280px;
-      box-shadow:inset 0 0 8px rgba(0,0,0,0.08);
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(255,255,255,.75); border-radius:16px;
+      min-height:280px; box-shadow: inset 0 0 8px rgba(0,0,0,.08);
     }
-    .preview img{max-width:100%;max-height:70vh;border-radius:10px;}
+    .preview img{ max-width:100%; max-height:70vh; border-radius:10px; }
 
-    /* 💗 Floating Hearts (bottom-up) */
-    #fxCanvas{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:1;}
+    /* 💗 Hearts (bottom-up) */
+    #fxCanvas{ position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:3; }
 
-    /* 🎵 Music Heart Button */
-    #musicHeartWrap{right:14px;bottom:14px;z-index:20;}
+    /* Music heart button */
+    #musicHeartWrap{ right:14px; bottom:14px; z-index:20; }
   </style>
 </head>
 <body>
-  <!-- 💗 Hearts -->
+  <!-- BG: blur cover + contain (no crop, no white sides) -->
+  <img class="bg-layer bg-blur" src="/assets/img/upload-oil-bg-final.jpg?v=9" alt="" aria-hidden="true">
+  <img class="bg-layer bg-base" src="/assets/img/upload-oil-bg-final.jpg?v=9" alt="" aria-hidden="true">
+  <div class="top-fade" aria-hidden="true"></div>
+
+  <!-- Hearts -->
   <canvas id="fxCanvas"></canvas>
 
   <header>
@@ -135,9 +120,9 @@
   </header>
 
   <main id="protected">
-    <div class="card">
+    <section class="card">
       <p><b>Drag & drop a photo here</b> or</p>
-      <input id="fileInput" type="file" accept="image/*"><br>
+      <input id="fileInput" type="file" accept="image/*">
       <small>JPG/PNG • Max 8 MB</small>
 
       <label for="caption">Caption (short)</label>
@@ -145,96 +130,100 @@
 
       <div>
         <button id="uploadBtn">Upload</button>
-        <button id="clearBtn" style="background:#f6e7da;color:#5a0013;">Clear</button>
+        <button id="clearBtn" class="btn-ghost">Clear</button>
       </div>
       <p id="status" style="margin-top:10px;font-size:14px;"></p>
-    </div>
+    </section>
 
-    <div class="card preview" id="previewBox">
+    <aside class="card preview" id="previewBox">
       <p id="previewText">Preview</p>
-    </div>
+    </aside>
   </main>
 
+  <!-- gentle auto music (same site origin) -->
   <audio autoplay loop>
     <source src="/assets/music/soft-love.mp3" type="audio/mpeg">
   </audio>
 
   <script>
-    // Auth Guard - secure page
+    // ===== Secure reveal after auth =====
     (function(){
-      const show = ()=>{const el=document.getElementById('protected');if(el){el.style.visibility='visible';el.style.opacity='1';}};
-      const deny = ()=>{location.href='/index.html';};
+      const show = ()=>{ const el=document.getElementById('protected'); if(el){ el.style.visibility='visible'; el.style.opacity='1'; } };
+      const deny = ()=>{ location.href='/index.html'; };
       if(window.__shreeAuthReady===true) show();
-      else {
-        window.addEventListener('shree:auth-ready',show,{once:true});
-        window.addEventListener('shree:auth-denied',deny,{once:true});
-        setTimeout(()=>{if(window.__shreeAuthReady===true)show();},2000);
+      else{
+        window.addEventListener('shree:auth-ready', show, {once:true});
+        window.addEventListener('shree:auth-denied', deny, {once:true});
+        setTimeout(()=>{ if(window.__shreeAuthReady===true) show(); }, 1800);
       }
     })();
 
-    // Upload logic
-    const file=document.getElementById('fileInput');
-    const cap=document.getElementById('caption');
-    const prev=document.getElementById('previewText');
-    const btnU=document.getElementById('uploadBtn');
-    const btnC=document.getElementById('clearBtn');
-    const status=document.getElementById('status');
+    // ===== Upload logic =====
+    const file = document.getElementById('fileInput');
+    const cap  = document.getElementById('caption');
+    const prev = document.getElementById('previewText');
+    const btnU = document.getElementById('uploadBtn');
+    const btnC = document.getElementById('clearBtn');
+    const status = document.getElementById('status');
 
-    file.addEventListener('change',()=>{
-      const f=file.files[0];
-      if(!f){prev.textContent='Preview';return;}
-      const url=URL.createObjectURL(f);
-      prev.innerHTML='<img src="'+url+'" alt="preview">';
+    file.addEventListener('change', ()=>{
+      const f = file.files[0];
+      if(!f){ prev.textContent='Preview'; return; }
+      const url = URL.createObjectURL(f);
+      prev.innerHTML = '<img src="'+url+'" alt="preview">';
     });
-    btnC.onclick=()=>{file.value='';cap.value='';prev.textContent='Preview';status.textContent='';};
-    btnU.onclick=async()=>{
-      if(!file.files[0]){status.textContent='Please select a file first.';return;}
+
+    btnC.onclick = ()=>{ file.value=''; cap.value=''; prev.textContent='Preview'; status.textContent=''; };
+
+    btnU.onclick = async ()=>{
+      if(!file.files[0]){ status.textContent='Please select a file first.'; return; }
       status.textContent='Uploading...';
-      const fd=new FormData();
-      fd.append('photo',file.files[0]);
-      if(cap.value.trim())fd.append('caption',cap.value.trim());
+      const fd = new FormData();
+      fd.append('photo', file.files[0]);
+      if(cap.value.trim()) fd.append('caption', cap.value.trim());
       try{
         let res;
-        if(window.authFetch)
-          res=await window.authFetch('/api/upload',{method:'POST',body:fd});
-        else
-          res=await fetch('/api/upload',{method:'POST',body:fd,credentials:'include'});
-        if(!res.ok)throw new Error('HTTP '+res.status);
+        if(window.authFetch) res = await window.authFetch('/api/upload', {method:'POST', body:fd});
+        else res = await fetch('/api/upload', {method:'POST', body:fd, credentials:'include'});
+        if(!res.ok) throw new Error('HTTP '+res.status);
         status.textContent='Uploaded ✓';
-        setTimeout(()=>location.href='gallery.html',800);
-      }catch(e){status.textContent='Error: '+e.message;}
+        setTimeout(()=>location.href='gallery.html', 800);
+      }catch(e){
+        status.textContent='Error: '+e.message;
+      }
     };
 
-    // 💗 Hearts animation (bottom-up)
+    // ===== Hearts bottom-up =====
     (function(){
-      const c=document.getElementById('fxCanvas');if(!c)return;
+      const c=document.getElementById('fxCanvas'); if(!c) return;
       const ctx=c.getContext('2d');
       const DPR=Math.max(1,devicePixelRatio||1);
       let W=0,H=0,hearts=[];
       const R=(a,b)=>Math.random()*(b-a)+a;
-      const COLORS=['#ffb3c6','#ffd1ea','#ffe3b8','#ffd89e','#ffd6e0','#f9b0c3','#ffd7b3'];
-      function resize(){W=innerWidth*DPR;H=innerHeight*DPR;c.width=W;c.height=H;}
+      const C=['#ffb3c6','#ffd1ea','#ffe3b8','#ffd89e','#ffd6e0','#f9b0c3','#ffd7b3'];
+
+      function resize(){ W=innerWidth*DPR; H=innerHeight*DPR; c.width=W; c.height=H; }
       function spawn(){
-        if(hearts.length>36)return;
+        if(hearts.length>36) return;
         const s=R(14,26);
-        hearts.push({x:R(0,W),y:H-R(10,40)*DPR,s,vy:-R(18,26),a:R(.6,.95),col:COLORS[(Math.random()*COLORS.length)|0]});
+        hearts.push({x:R(0,W),y:H-R(18,40)*DPR,s,vy:-R(18,26),a:R(.6,.95),col:C[(Math.random()*C.length)|0]});
       }
       function draw(h){
         const {x,y,s,a,col}=h;
-        ctx.save();ctx.translate(x,y);ctx.scale(s/50*DPR,s/50*DPR);ctx.globalAlpha=a;
-        ctx.beginPath();ctx.moveTo(0,-.5);
+        ctx.save(); ctx.translate(x,y); ctx.scale(s/50*DPR,s/50*DPR); ctx.globalAlpha=a;
+        ctx.beginPath(); ctx.moveTo(0,-.5);
         ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8);
         ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5);
-        ctx.fillStyle=col;ctx.fill();ctx.restore();
+        ctx.fillStyle=col; ctx.fill(); ctx.restore();
       }
       function tick(){
         ctx.clearRect(0,0,W,H);
-        if(Math.random()<.18)spawn();
-        hearts.forEach(h=>{h.y+=h.vy;h.a-=.003;draw(h);});
-        hearts=hearts.filter(h=>h.a>.02&&h.y>-140*DPR);
+        if(Math.random()<.18) spawn();
+        hearts.forEach(h=>{ h.y+=h.vy; h.a-=.003; draw(h); });
+        hearts=hearts.filter(h=>h.a>.02 && h.y>-140*DPR);
         requestAnimationFrame(tick);
       }
-      addEventListener('resize',resize,{passive:true});resize();tick();
+      addEventListener('resize',resize,{passive:true}); resize(); tick();
     })();
   </script>
 </body>
