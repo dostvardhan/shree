@@ -1,254 +1,203 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Upload — Sweet Memories</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Upload — Sweet Memories</title>
+<link rel="icon" href="/assets/img/favicon.png" />
+<style>
+:root {
+  --ink: #4b1e1e;
+  --accent: #cfa26d;
+}
 
-  <!-- Auth guard (your existing files) -->
-  <script src="/auth0-spa-js.production.js"></script>
-  <script src="/auth-init.js" defer></script>
-  <script src="/guard-auth.js" defer></script>
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: ui-serif, "Playfair Display", Georgia, serif;
 
-  <style>
-    :root{
-      /* 🔥 POINT TO YOUR FILE IN /backend/private/assets/img */
-      --bg-url: url("/assets/img/upload-oil-bg-final.jpg");
+  /* ✅ Oil-painted background with depth */
+  background-image:
+    linear-gradient(rgba(255, 240, 230, 0.35), rgba(240, 220, 210, 0.45)),
+    url("/assets/img/upload-oil-bg-final.jpg?v=4");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  transition: background 1s ease-in-out;
+}
 
-      --ink:#55222a;
-      --panel:#ffffffee;
-      --panel-soft:#ffffffc8;
-      --accent:#b97a3c;
-    }
+h1 {
+  text-align: center;
+  font-weight: 700;
+  font-size: 2em;
+  margin-top: 90px;
+}
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      color:var(--ink);
-      font-family: ui-serif, "Playfair Display", Georgia, serif;
+nav {
+  text-align: center;
+  margin-top: 15px;
+}
 
-      /* 👇 Oil-painted background */
-      background-image:
-        radial-gradient(1200px 800px at 85% 10%, rgba(255,255,255,0.35), rgba(255,255,255,0.05) 40%, transparent 60%),
-        var(--bg-url);
-      background-size: cover;
-      background-position: center center;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-    }
+nav a {
+  background: #fff6f0cc;
+  color: var(--ink);
+  padding: 4px 14px;
+  border-radius: 16px;
+  font-size: 15px;
+  text-decoration: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  margin: 0 6px;
+}
 
-    /* Very soft canvas grain / vignette */
-    body::before{
-      content:"";
-      position:fixed; inset:0;
-      pointer-events:none;
-      background:
-        radial-gradient(1100px 700px at 20% 85%, rgba(0,0,0,0.06), transparent 60%),
-        radial-gradient(900px 520px at 85% 20%, rgba(0,0,0,0.05), transparent 50%);
-      mix-blend-mode:multiply;
-    }
+nav a:hover {
+  background: #fffaf7;
+}
 
-    header{ text-align:center; padding:24px 12px 6px }
-    .tabs{
-      display:inline-flex; gap:10px; margin-bottom:12px;
-    }
-    .tabs a{
-      text-decoration:none; color:var(--ink);
-      background:#fff7; backdrop-filter: blur(3px);
-      padding:6px 12px; border-radius:16px; border:1px solid #0001;
-    }
-    h1{ margin:6px 0 10px; font-size:40px; text-shadow:0 8px 18px #0002 }
+main {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 30px;
+  margin: 60px auto;
+  max-width: 900px;
+  padding: 0 16px;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
 
-    main{
-      max-width:1100px; margin:10px auto 64px; padding:0 18px;
-      display:grid; grid-template-columns: 1fr 1fr; gap:26px;
-    }
+.card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(6px);
+  border-radius: 18px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  padding: 20px;
+  flex: 1;
+  min-width: 280px;
+}
 
-    .card{
-      backdrop-filter: blur(6px) saturate(110%);
-      background: var(--panel);
-      border:1px solid #00000014;
-      box-shadow: 0 24px 50px #0000002a;
-      border-radius:18px; padding:20px;
-    }
+button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .2s ease;
+}
 
-    /* left form panel */
-    .drop{
-      border:2px dashed #00000022; border-radius:14px; padding:18px;
-      text-align:center; background:var(--panel-soft);
-    }
-    .drop.drag{ border-color:#00000055; background:#ffffffee }
+button:hover {
+  transform: scale(1.05);
+}
 
-    .choose{
-      margin-top:10px;
-      appearance:none; border:0; cursor:pointer; font-weight:700;
-      padding:10px 14px; border-radius:10px; color:white;
-      background:linear-gradient(180deg,#cb8b4d,#b57334);
-      box-shadow:0 8px 18px #0000002a;
-    }
+textarea {
+  width: 100%;
+  height: 90px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  padding: 8px;
+  font-family: inherit;
+  resize: none;
+}
 
-    textarea{
-      width:100%; min-height:120px; padding:12px; border-radius:12px;
-      border:1px solid #00000022; background:#fffffff2; font-family:inherit;
-    }
-    .row{ display:flex; gap:10px; margin-top:12px }
-    .btn{ padding:10px 14px; border-radius:10px; border:0; cursor:pointer; font-weight:700 }
-    .btn.primary{ color:#fff; background:linear-gradient(180deg,#cb8b4d,#b57334) }
-    .btn.ghost{ background:#ffffffcc; border:1px solid #00000015 }
+#hearts {
+  position: fixed;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+}
 
-    /* right preview */
-    .preview{
-      display:flex; align-items:center; justify-content:center; min-height:320px;
-      background: #ffffffd9; border-radius:18px; border:1px solid #00000010;
-      box-shadow: inset 0 1px 0 #ffffffc8;
-    }
-    .preview img{ max-width:100%; max-height:380px; object-fit:contain; border-radius:12px }
+.heart {
+  position: absolute;
+  color: rgba(255,192,203,0.6);
+  animation: float 6s infinite ease-in;
+}
 
-    /* floating hearts (very soft) */
-    #fxHearts{ position:fixed; inset:0; pointer-events:none; z-index:1; }
-    header, main { position:relative; z-index:2; }
-
-    @media (max-width:980px){ main{ grid-template-columns:1fr } }
-  </style>
+@keyframes float {
+  0% { transform: translateY(0) scale(1); opacity: 0.8; }
+  100% { transform: translateY(-100vh) scale(1.3); opacity: 0; }
+}
+</style>
 </head>
 <body>
-  <canvas id="fxHearts" aria-hidden="true"></canvas>
+<nav>
+  <a href="life.html">Life</a>
+  <a href="gallery.html">Gallery</a>
+  <a href="#" onclick="logout()">Logout</a>
+</nav>
 
-  <header>
-    <nav class="tabs">
-      <a href="/life.html">Life</a>
-      <a href="/gallery.html">Gallery</a>
-      <a href="/logout.html">Logout</a>
-    </nav>
-    <h1>Upload a Sweet Memory</h1>
-  </header>
+<h1>Upload a Sweet Memory</h1>
 
-  <main id="protectedContent" style="visibility:hidden;opacity:0;transition:opacity .25s">
-    <!-- LEFT: form -->
-    <section class="card">
-      <div id="drop" class="drop">
-        <div><strong>Drag &amp; drop</strong> a photo here</div>
-        <div style="opacity:.7;margin:6px 0">or</div>
-        <label>
-          <input id="file" type="file" accept="image/*" hidden />
-          <button type="button" class="choose">Choose file</button>
-        </label>
-        <div style="margin-top:8px; font-size:12px; opacity:.75">JPG/PNG • Max 8 MB</div>
-      </div>
+<main id="protectedContent">
+  <div class="card">
+    <p><b>Drag & drop a photo here</b> or</p>
+    <input type="file" id="fileInput" accept="image/*"><br>
+    <small>JPG/PNG • Max 8 MB</small><br><br>
+    <label for="caption"><b>Caption (short)</b></label><br>
+    <textarea id="caption" maxlength="150" placeholder="Write a short caption (max 150 chars)"></textarea><br>
+    <button id="uploadBtn">Upload</button>
+    <button id="clearBtn">Clear</button>
+  </div>
 
-      <div style="margin-top:16px">
-        <div style="font-weight:700;margin:6px 0">Caption (short)</div>
-        <textarea id="caption" placeholder="Write a short caption (max 150 chars)"></textarea>
-      </div>
+  <div class="card" id="previewBox">
+    <p><b>Preview</b></p>
+    <img id="preview" style="max-width:100%; border-radius:10px; display:none;">
+  </div>
+</main>
 
-      <div class="row">
-        <button id="uploadBtn" class="btn primary">Upload</button>
-        <button id="clearBtn" class="btn ghost">Clear</button>
-        <div id="status" style="margin-left:8px;opacity:.8"></div>
-      </div>
-    </section>
+<div id="hearts"></div>
 
-    <!-- RIGHT: preview -->
-    <aside class="card preview">
-      <div id="ph">No photo selected</div>
-      <img id="pv" alt="preview" style="display:none" />
-    </aside>
-  </main>
+<audio autoplay loop>
+  <source src="/assets/music/soft-love.mp3" type="audio/mpeg">
+</audio>
 
-  <script>
-    // Show content after auth guard says ready
-    (function waitForAuth(){
-      const show=()=>{const el=document.getElementById('protectedContent'); if(el){el.style.visibility='visible'; el.style.opacity='1';}};
-      if(window.__shreeAuthReady) show();
-      else window.addEventListener('shree:auth-ready', show, {once:true});
-      // tiny fallback
-      setTimeout(()=>window.__shreeAuthReady && show(), 1200);
-    })();
+<script>
+function logout(){ location.href="/logout"; }
 
-    // Hearts (subtle)
-    (function(){
-      const c=document.getElementById('fxHearts'); if(!c) return;
-      const ctx=c.getContext('2d'); const DPR=Math.max(1,devicePixelRatio||1);
-      let W=0,H=0,hs=[];
-      const C=['#ffb6c1','#ffc9de','#ffd6e7','#ffe3ee'];
-      const R=(a,b)=>Math.random()*(b-a)+a;
-      function resize(){ W=Math.floor(innerWidth*DPR); H=Math.floor(innerHeight*DPR); c.width=W; c.height=H; c.style.width='100%'; c.style.height='100%'; }
-      function spawn(){ if(hs.length>28) return; hs.push({x:R(0,W),y:H+R(20,140),s:R(12,22)*DPR,vx:R(-6,6),vy:-R(16,28),a:R(.15,.35),r:R(-.4,.4),vr:R(-.01,.01),col:C[(Math.random()*C.length)|0]}); }
-      function heart(x,y,s){ ctx.beginPath(); ctx.moveTo(0,-.5); ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8); ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5); }
-      function tick(){
-        ctx.clearRect(0,0,W,H);
-        if(Math.random()<.12) spawn();
-        for(const h of hs){
-          ctx.save(); ctx.translate(h.x,h.y); ctx.rotate(h.r);
-          ctx.scale(h.s, h.s); ctx.globalAlpha=h.a; ctx.fillStyle=h.col;
-          heart(); ctx.fill(); ctx.restore();
-          h.x+=h.vx*.016*DPR; h.y+=h.vy*.016*DPR; h.r+=h.vr; h.a-=.0006;
-        }
-        hs=hs.filter(h=>h.a>0 && h.y>-120*DPR);
-        requestAnimationFrame(tick);
-      }
-      addEventListener('resize', resize, {passive:true}); resize(); tick();
-    })();
+// Fade-in after auth
+(function waitForAuth(){
+  const show = () => {
+    const el = document.getElementById('protectedContent');
+    if(!el) return;
+    el.style.visibility = 'visible';
+    el.style.opacity = '1';
+  };
+  if (window.__shreeAuthReady) { show(); return; }
+  window.addEventListener('shree:auth-ready', show, { once:true });
+  setTimeout(show, 600);
+})();
 
-    // Upload/preview logic
-    (function(){
-      const file = document.getElementById('file');
-      const drop = document.getElementById('drop');
-      const pv   = document.getElementById('pv');
-      const ph   = document.getElementById('ph');
-      const cap  = document.getElementById('caption');
-      const msg  = document.getElementById('status');
+// Hearts animation
+const heartColors = ['#f7c6c7','#f5b6b8','#fcdde1'];
+setInterval(() => {
+  const heart = document.createElement('div');
+  heart.className = 'heart';
+  heart.textContent = '❤';
+  heart.style.left = Math.random()*100+'vw';
+  heart.style.fontSize = (12+Math.random()*16)+'px';
+  heart.style.color = heartColors[Math.floor(Math.random()*heartColors.length)];
+  document.getElementById('hearts').appendChild(heart);
+  setTimeout(()=>heart.remove(),6000);
+},400);
 
-      drop.addEventListener('click',()=>file.click());
-      drop.addEventListener('dragover',e=>{e.preventDefault(); drop.classList.add('drag');});
-      drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));
-      drop.addEventListener('drop',e=>{
-        e.preventDefault(); drop.classList.remove('drag');
-        if(e.dataTransfer.files && e.dataTransfer.files[0]) { file.files = e.dataTransfer.files; preview(); }
-      });
-      file.addEventListener('change', preview);
-
-      function preview(){
-        const f=file.files[0];
-        if(!f){ pv.style.display='none'; ph.style.display='block'; return; }
-        const url=URL.createObjectURL(f);
-        pv.src=url; pv.onload=()=>URL.revokeObjectURL(url);
-        pv.style.display='block'; ph.style.display='none';
-      }
-
-      document.getElementById('clearBtn').addEventListener('click',()=>{
-        file.value=""; cap.value=""; pv.style.display='none'; ph.style.display='block'; msg.textContent="";
-      });
-
-      document.getElementById('uploadBtn').addEventListener('click', async ()=>{
-        if(!file.files[0]){ msg.textContent="Please select a photo."; return; }
-        msg.textContent="Uploading…";
-        try{
-          const fd=new FormData();
-          fd.append('photo', file.files[0]);
-          if(cap.value.trim()) fd.append('caption', cap.value.trim());
-
-          // Use authFetch if available (your guard attaches JWT)
-          let res;
-          if(window.authFetch){
-            res = await window.authFetch('/api/upload', { method:'POST', body:fd });
-          }else{
-            let headers={};
-            if(window.getAuthToken){ const t=await window.getAuthToken(); if(t) headers.Authorization='Bearer '+t; }
-            res = await fetch('/api/upload', { method:'POST', body:fd, headers, credentials:'include' });
-          }
-          if(!res.ok) throw new Error('HTTP '+res.status);
-          msg.textContent="Uploaded ✓"; setTimeout(()=>location.href='/gallery.html', 800);
-        }catch(err){
-          console.error(err); msg.textContent="Upload failed: "+err.message;
-        }
-      });
-    })();
-  </script>
-
-  <!-- Optional: tiny music heart – uses your existing asset files if present -->
-  <link rel="stylesheet" href="/assets/css/music-heart.css">
-  <script src="/assets/js/music-heart.js" defer></script>
+// Image preview
+document.getElementById('fileInput').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    const img=document.getElementById('preview');
+    img.src=ev.target.result;
+    img.style.display='block';
+  };
+  reader.readAsDataURL(file);
+});
+</script>
 </body>
 </html>
