@@ -5,107 +5,127 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Upload — Sweet Memories</title>
 
-  <!-- Auth (page stays hidden until these confirm login) -->
+  <!-- Auth Protection -->
   <script src="/auth0-spa-js.production.js" defer></script>
   <script src="/auth-init.js" defer></script>
   <script src="/guard-auth.js" defer></script>
 
-  <!-- Music heart (same bundle you already use) -->
+  <!-- Music Button -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
 
   <style>
     :root{
       --ink:#4b1e21;
-      --panel:rgba(255,255,255,0.82);
-      --soft:rgba(255,255,255,0.55);
-      --chip:rgba(255,255,255,0.35);
-      --gold:#b5783b;
+      --panel:rgba(255,255,255,0.84);
+      --accent:#b5783b;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0}
+    *{box-sizing:border-box;margin:0;padding:0}
 
-    /* ✅ Oil painting bg, fit without over-zoom */
+    /* ✅ Full-page oil-painting background (no borders) */
     body{
-      color:var(--ink);
+      min-height:100vh;
       font-family: ui-serif,"Playfair Display",Georgia,serif;
-      background-image:
-        linear-gradient(rgba(255,240,230,.30), rgba(240,220,210,.35)),
-        url("/assets/img/upload-oil-bg-final.jpg?v=5");
-      background-size: contain;          /* full painting in view */
-      background-position: center top;   /* keep upper figure visible */
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      background-color:#f9eee4;          /* soft fill around edges */
+      color:var(--ink);
+      background:
+        linear-gradient(rgba(255,240,230,0.18),rgba(240,220,210,0.18)),
+        url("/assets/img/upload-oil-bg-final.jpg?v=7") center center / cover no-repeat fixed;
       overflow-x:hidden;
+      position:relative;
     }
 
-    header{ text-align:center; padding:18px 12px 0; position:relative; z-index:20; }
-    .page-links{ margin:6px 0 10px; font-size:14px; }
+    header{text-align:center;padding-top:20px;position:relative;z-index:5;}
+    h1{
+      font-size:2.6rem;
+      font-weight:700;
+      margin-top:16px;
+      text-shadow:0 5px 10px rgba(0,0,0,0.12);
+    }
+
+    .page-links{
+      margin-top:10px;
+    }
     .page-links a{
-      display:inline-block; padding:6px 10px; margin:0 4px; border-radius:16px;
-      background:var(--chip); color:var(--ink); text-decoration:none;
-      box-shadow:0 4px 8px rgba(0,0,0,0.10);
+      display:inline-block;
+      margin:0 6px;
+      padding:6px 12px;
+      border-radius:16px;
+      background:rgba(255,255,255,0.35);
+      color:var(--ink);
+      text-decoration:none;
+      box-shadow:0 3px 6px rgba(0,0,0,0.1);
     }
-    .page-links a:hover{ background:rgba(255,255,255,0.45); }
-    h1{ margin:18px 0 16px; font-size:46px; color:var(--ink); text-shadow:0 6px 10px rgba(0,0,0,0.08); }
+    .page-links a:hover{
+      background:rgba(255,255,255,0.5);
+    }
 
-    main{ max-width:1100px; margin:12px auto 90px; padding:0 18px; position:relative; z-index:15; }
-    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:26px; align-items:start; }
-    @media (max-width:980px){ .grid{ grid-template-columns:1fr; } }
+    main{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:30px;
+      margin:60px auto;
+      max-width:950px;
+      padding:0 18px;
+      position:relative;
+      z-index:3;
+      visibility:hidden;
+      opacity:0;
+      transition:opacity 0.5s ease;
+    }
 
     .card{
       background:var(--panel);
-      border-radius:16px;
-      box-shadow:0 12px 30px rgba(0,0,0,0.14);
-      padding:22px 20px;
-      backdrop-filter: blur(4px);
-      border:1px solid rgba(255,255,255,0.45);
+      backdrop-filter:blur(6px);
+      border-radius:18px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.2);
+      padding:22px;
+      flex:1;
+      min-width:300px;
     }
 
-    label{ display:block; font-size:17px; margin:8px 0 8px; }
-    input[type="file"]{ font-size:14px; width:100%; }
-
+    label{font-weight:600;display:block;margin-top:12px;margin-bottom:6px;}
+    input[type=file]{width:100%;}
     textarea{
-      width:100%; min-height:100px; padding:12px; border-radius:10px; border:1px solid rgba(0,0,0,0.08);
-      background:#fff; font-family:inherit; font-size:15px; color:#3b2b2b;
-      box-shadow: inset 0 1px 3px rgba(0,0,0,0.04);
+      width:100%;height:100px;
+      border-radius:10px;border:1px solid #ccc;
+      padding:8px;resize:none;font-family:inherit;font-size:15px;
+      background:rgba(255,255,255,0.9);
     }
-    .btn{
-      display:inline-block; margin-top:14px; padding:10px 16px; border:none; border-radius:12px; cursor:pointer;
-      background:#7a2430; color:#fff; font-weight:600; box-shadow:0 8px 18px rgba(0,0,0,0.14);
-    }
-    .btn:hover{ filter:brightness(1.04); transform: translateY(-1px); }
-    .btn.secondary{ background:#f3e3db; color:#5a0013; }
 
-    .drop{
-      border:2px dashed rgba(0,0,0,0.15);
-      border-radius:14px;
-      padding:14px;
-      background:var(--soft);
-      text-align:center;
+    button{
+      background:var(--accent);
+      color:white;
+      border:none;
+      padding:8px 16px;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+      margin-top:14px;
     }
-    .drop.drag{ border-color:#b5783b; background:rgba(255,255,255,0.7); }
+    button:hover{transform:scale(1.05);}
 
     .preview{
-      min-height:280px; display:flex; align-items:center; justify-content:center;
-      background:linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.68));
-      border-radius:16px; box-shadow: inset 0 1px 0 rgba(255,255,255,.24);
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(255,255,255,0.75);
+      border-radius:16px;
+      min-height:280px;
+      box-shadow:inset 0 0 8px rgba(0,0,0,0.08);
     }
-    .preview img{ max-width:100%; max-height:70vh; border-radius:12px; object-fit:contain; }
+    .preview img{max-width:100%;max-height:70vh;border-radius:10px;}
 
-    /* Hearts canvas (💗 now spawn from bottom, float upward) */
-    #fxCanvas{ position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:10; }
+    /* 💗 Floating Hearts (bottom-up) */
+    #fxCanvas{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:1;}
 
-    /* Music button: keep visible above hearts */
-    #musicHeartWrap{ right:14px; bottom:14px; z-index:30; opacity:.98; }
+    /* 🎵 Music Heart Button */
+    #musicHeartWrap{right:14px;bottom:14px;z-index:20;}
   </style>
 </head>
 <body>
-  <!-- 💗 Hearts Layer -->
-  <canvas id="fxCanvas" aria-hidden="true"></canvas>
+  <!-- 💗 Hearts -->
+  <canvas id="fxCanvas"></canvas>
 
-  <header id="top">
+  <header>
     <div class="page-links">
       <a href="life.html">Life</a>
       <a href="gallery.html">Gallery</a>
@@ -114,151 +134,107 @@
     <h1>Upload a Sweet Memory</h1>
   </header>
 
-  <!-- Protected content (hidden until auth OK) -->
-  <main id="protected" style="visibility:hidden;opacity:0;transition:opacity .25s">
-    <div class="grid">
-      <section class="card">
-        <div id="drop" class="drop">
-          <div style="font-weight:700">Drag & drop a photo here</div>
-          <div style="opacity:.7;margin:6px 0">or</div>
-          <input id="file" name="photo" type="file" accept="image/*" />
-          <div style="margin-top:8px;font-size:12px;opacity:.8">JPG/PNG • Max 8 MB</div>
-        </div>
+  <main id="protected">
+    <div class="card">
+      <p><b>Drag & drop a photo here</b> or</p>
+      <input id="fileInput" type="file" accept="image/*"><br>
+      <small>JPG/PNG • Max 8 MB</small>
 
-        <label for="caption" style="margin-top:14px">Caption (short)</label>
-        <textarea id="caption" name="caption" placeholder="Write a short caption (max 150 chars)"></textarea>
+      <label for="caption">Caption (short)</label>
+      <textarea id="caption" maxlength="150" placeholder="Write a short caption (max 150 chars)"></textarea>
 
-        <div style="display:flex;gap:10px;align-items:center">
-          <button id="btnUpload" class="btn" type="button">Upload</button>
-          <button id="btnClear" class="btn secondary" type="button">Clear</button>
-          <div id="status" style="margin-left:10px;font-size:13px;opacity:.9"></div>
-        </div>
-      </section>
+      <div>
+        <button id="uploadBtn">Upload</button>
+        <button id="clearBtn" style="background:#f6e7da;color:#5a0013;">Clear</button>
+      </div>
+      <p id="status" style="margin-top:10px;font-size:14px;"></p>
+    </div>
 
-      <aside class="card preview" id="previewBox">
-        <div id="previewInner" style="text-align:center;opacity:.8">Preview</div>
-      </aside>
+    <div class="card preview" id="previewBox">
+      <p id="previewText">Preview</p>
     </div>
   </main>
 
-  <noscript>
-    <div class="card" style="max-width:760px;margin:24px auto;background:#fff0f2">
-      Please enable JavaScript to use this page.
-    </div>
-  </noscript>
+  <audio autoplay loop>
+    <source src="/assets/music/soft-love.mp3" type="audio/mpeg">
+  </audio>
 
-  <!-- 💗 Hearts (spawn from bottom, float up) -->
   <script>
+    // Auth Guard - secure page
     (function(){
-      const c = document.getElementById('fxCanvas'); if (!c) return;
-      const ctx = c.getContext('2d');
-      const DPR = Math.max(1, window.devicePixelRatio || 1);
-      let W=0,H=0, hearts=[];
-      const COLORS=['#ffb3c6','#ffd1ea','#ffe3b8','#ffd89e','#ffd6e0','#f9b0c3','#ffd7b3'];
-      const R=(a,b)=>Math.random()*(b-a)+a;
-      function resize(){ W=Math.floor(innerWidth*DPR); H=Math.floor(innerHeight*DPR); c.width=W; c.height=H; c.style.width='100vw'; c.style.height='100vh'; }
-      function spawn(){
-        if(hearts.length>36) return;
-        const s=R(14,26);
-        hearts.push({
-          x:R(0,W),                  // anywhere horizontally
-          y:H - R(4,40)*DPR,         // 🔻 start near bottom
-          s, vx:R(-8,8), vy:-R(18,28), // float upward
-          a:R(.6,.95), r:R(-.4,.4), vr:R(-.01,.01),
-          col:COLORS[(Math.random()*COLORS.length)|0]
-        });
-      }
-      function draw(h){
-        const {x,y,s,r,a,col}=h;
-        ctx.save(); ctx.translate(x,y); ctx.rotate(r); ctx.scale(s/50*DPR,s/50*DPR); ctx.globalAlpha=a;
-        ctx.beginPath(); ctx.moveTo(0,-.5);
-        ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8);
-        ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5);
-        ctx.fillStyle=col; ctx.fill(); ctx.restore();
-      }
-      function tick(){
-        ctx.clearRect(0,0,W,H);
-        if(Math.random()<.18) spawn();
-        hearts.forEach(h=>{ h.x+=h.vx*.016*DPR; h.y+=h.vy*.016*DPR; h.r+=h.vr; h.a-=.0009; draw(h); });
-        hearts=hearts.filter(h=> h.a>.02 && h.y>-140*DPR );
-        requestAnimationFrame(tick);
-      }
-      addEventListener('resize',resize,{passive:true}); resize(); tick();
-    })();
-  </script>
-
-  <!-- Upload + Auth show/hide -->
-  <script>
-    // Show protected UI only after guard-auth says OK
-    (function(){
-      const show = ()=>{ const el = document.getElementById('protected'); if(el){ el.style.visibility='visible'; el.style.opacity='1'; } };
-      const deny = ()=>{ location.href = '/index.html'; };
-
-      if (window.__shreeAuthReady === true) show();
+      const show = ()=>{const el=document.getElementById('protected');if(el){el.style.visibility='visible';el.style.opacity='1';}};
+      const deny = ()=>{location.href='/index.html';};
+      if(window.__shreeAuthReady===true) show();
       else {
-        window.addEventListener('shree:auth-ready', show, {once:true});
-        window.addEventListener('shree:auth-denied', deny, {once:true});
-        // failsafe after 2s: if helper present & logged in, show
-        setTimeout(()=>{ if(window.__shreeAuthReady===true) show(); }, 2000);
+        window.addEventListener('shree:auth-ready',show,{once:true});
+        window.addEventListener('shree:auth-denied',deny,{once:true});
+        setTimeout(()=>{if(window.__shreeAuthReady===true)show();},2000);
       }
     })();
 
     // Upload logic
+    const file=document.getElementById('fileInput');
+    const cap=document.getElementById('caption');
+    const prev=document.getElementById('previewText');
+    const btnU=document.getElementById('uploadBtn');
+    const btnC=document.getElementById('clearBtn');
+    const status=document.getElementById('status');
+
+    file.addEventListener('change',()=>{
+      const f=file.files[0];
+      if(!f){prev.textContent='Preview';return;}
+      const url=URL.createObjectURL(f);
+      prev.innerHTML='<img src="'+url+'" alt="preview">';
+    });
+    btnC.onclick=()=>{file.value='';cap.value='';prev.textContent='Preview';status.textContent='';};
+    btnU.onclick=async()=>{
+      if(!file.files[0]){status.textContent='Please select a file first.';return;}
+      status.textContent='Uploading...';
+      const fd=new FormData();
+      fd.append('photo',file.files[0]);
+      if(cap.value.trim())fd.append('caption',cap.value.trim());
+      try{
+        let res;
+        if(window.authFetch)
+          res=await window.authFetch('/api/upload',{method:'POST',body:fd});
+        else
+          res=await fetch('/api/upload',{method:'POST',body:fd,credentials:'include'});
+        if(!res.ok)throw new Error('HTTP '+res.status);
+        status.textContent='Uploaded ✓';
+        setTimeout(()=>location.href='gallery.html',800);
+      }catch(e){status.textContent='Error: '+e.message;}
+    };
+
+    // 💗 Hearts animation (bottom-up)
     (function(){
-      const file = document.getElementById('file');
-      const drop = document.getElementById('drop');
-      const cap  = document.getElementById('caption');
-      const prev = document.getElementById('previewInner');
-      const btnU = document.getElementById('btnUpload');
-      const btnC = document.getElementById('btnClear');
-      const status = document.getElementById('status');
-
-      // Preview
-      file.addEventListener('change', ()=>{
-        const f = file.files[0];
-        if(!f){ prev.textContent='Preview'; return; }
-        const url = URL.createObjectURL(f);
-        prev.innerHTML = '<img alt="preview" src="'+url+'">';
-      });
-
-      // Drag & drop
-      ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{e.preventDefault(); drop.classList.add('drag');}));
-      ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{e.preventDefault(); drop.classList.remove('drag');}));
-      drop.addEventListener('drop', e=>{
-        const f=e.dataTransfer.files&&e.dataTransfer.files[0];
-        if(f){ file.files = e.dataTransfer.files; file.dispatchEvent(new Event('change')); }
-      });
-
-      // Clear
-      btnC.addEventListener('click', ()=>{
-        file.value=''; cap.value=''; prev.textContent='Preview'; status.textContent='';
-      });
-
-      // Upload
-      btnU.addEventListener('click', async ()=>{
-        if(!file.files[0]) { status.textContent='Please choose a photo first.'; return; }
-        status.textContent='Uploading…';
-
-        const fd = new FormData();
-        fd.append('photo', file.files[0]);
-        if (cap.value.trim()) fd.append('caption', cap.value.trim());
-
-        try{
-          let res;
-          if (window.authFetch) {
-            res = await window.authFetch('/api/upload', { method:'POST', body:fd });
-          } else {
-            // fallback: try cookie-based session; guard-auth sets it
-            res = await fetch('/api/upload', { method:'POST', body:fd, credentials:'include' });
-          }
-          if(!res.ok) throw new Error('HTTP '+res.status);
-          status.textContent='Uploaded ✓';
-          setTimeout(()=> location.href='gallery.html', 700);
-        }catch(err){
-          console.error(err);
-          status.textContent='Upload failed: '+ err.message;
-        }
-      });
+      const c=document.getElementById('fxCanvas');if(!c)return;
+      const ctx=c.getContext('2d');
+      const DPR=Math.max(1,devicePixelRatio||1);
+      let W=0,H=0,hearts=[];
+      const R=(a,b)=>Math.random()*(b-a)+a;
+      const COLORS=['#ffb3c6','#ffd1ea','#ffe3b8','#ffd89e','#ffd6e0','#f9b0c3','#ffd7b3'];
+      function resize(){W=innerWidth*DPR;H=innerHeight*DPR;c.width=W;c.height=H;}
+      function spawn(){
+        if(hearts.length>36)return;
+        const s=R(14,26);
+        hearts.push({x:R(0,W),y:H-R(10,40)*DPR,s,vy:-R(18,26),a:R(.6,.95),col:COLORS[(Math.random()*COLORS.length)|0]});
+      }
+      function draw(h){
+        const {x,y,s,a,col}=h;
+        ctx.save();ctx.translate(x,y);ctx.scale(s/50*DPR,s/50*DPR);ctx.globalAlpha=a;
+        ctx.beginPath();ctx.moveTo(0,-.5);
+        ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8);
+        ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5);
+        ctx.fillStyle=col;ctx.fill();ctx.restore();
+      }
+      function tick(){
+        ctx.clearRect(0,0,W,H);
+        if(Math.random()<.18)spawn();
+        hearts.forEach(h=>{h.y+=h.vy;h.a-=.003;draw(h);});
+        hearts=hearts.filter(h=>h.a>.02&&h.y>-140*DPR);
+        requestAnimationFrame(tick);
+      }
+      addEventListener('resize',resize,{passive:true});resize();tick();
     })();
   </script>
 </body>
