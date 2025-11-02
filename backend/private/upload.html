@@ -1,272 +1,254 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Upload — Sweet Memories</title>
-  <link rel="icon" type="image/png" href="assets/img/heart-icon.png" />
+
+  <!-- Auth guard (your existing files) -->
+  <script src="/auth0-spa-js.production.js"></script>
+  <script src="/auth-init.js" defer></script>
+  <script src="/guard-auth.js" defer></script>
 
   <style>
-    body {
-      margin: 0;
-      font-family: "Georgia", serif;
-      background: url("assets/img/upload-oil-bg-final.jpg") center/cover no-repeat fixed;
-      color: #4b2b2b;
-      overflow-x: hidden;
+    :root{
+      /* 🔥 POINT TO YOUR FILE IN /backend/private/assets/img */
+      --bg-url: url("/assets/img/upload-oil-bg-final.jpg");
+
+      --ink:#55222a;
+      --panel:#ffffffee;
+      --panel-soft:#ffffffc8;
+      --accent:#b97a3c;
     }
 
-    /* Soft overlay for oil painting warmth */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(
-        180deg,
-        rgba(255, 255, 255, 0.3),
-        rgba(255, 245, 230, 0.3)
-      );
-      backdrop-filter: blur(1px);
-      z-index: 0;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      color:var(--ink);
+      font-family: ui-serif, "Playfair Display", Georgia, serif;
+
+      /* 👇 Oil-painted background */
+      background-image:
+        radial-gradient(1200px 800px at 85% 10%, rgba(255,255,255,0.35), rgba(255,255,255,0.05) 40%, transparent 60%),
+        var(--bg-url);
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
     }
 
-    .top-nav {
-      position: relative;
-      z-index: 2;
-      text-align: center;
-      margin-top: 25px;
+    /* Very soft canvas grain / vignette */
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(1100px 700px at 20% 85%, rgba(0,0,0,0.06), transparent 60%),
+        radial-gradient(900px 520px at 85% 20%, rgba(0,0,0,0.05), transparent 50%);
+      mix-blend-mode:multiply;
     }
 
-    .top-nav a {
-      background: rgba(255, 255, 255, 0.7);
-      padding: 8px 18px;
-      margin: 0 6px;
-      border-radius: 25px;
-      text-decoration: none;
-      color: #4b2b2b;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      font-weight: 600;
-      transition: all 0.3s ease;
+    header{ text-align:center; padding:24px 12px 6px }
+    .tabs{
+      display:inline-flex; gap:10px; margin-bottom:12px;
+    }
+    .tabs a{
+      text-decoration:none; color:var(--ink);
+      background:#fff7; backdrop-filter: blur(3px);
+      padding:6px 12px; border-radius:16px; border:1px solid #0001;
+    }
+    h1{ margin:6px 0 10px; font-size:40px; text-shadow:0 8px 18px #0002 }
+
+    main{
+      max-width:1100px; margin:10px auto 64px; padding:0 18px;
+      display:grid; grid-template-columns: 1fr 1fr; gap:26px;
     }
 
-    .top-nav a:hover {
-      background: #e7b487;
-      color: #fff;
+    .card{
+      backdrop-filter: blur(6px) saturate(110%);
+      background: var(--panel);
+      border:1px solid #00000014;
+      box-shadow: 0 24px 50px #0000002a;
+      border-radius:18px; padding:20px;
     }
 
-    h1 {
-      text-align: center;
-      font-size: 2rem;
-      font-weight: bold;
-      margin-top: 25px;
-      color: #4b2b2b;
-      text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.7);
-      position: relative;
-      z-index: 2;
+    /* left form panel */
+    .drop{
+      border:2px dashed #00000022; border-radius:14px; padding:18px;
+      text-align:center; background:var(--panel-soft);
+    }
+    .drop.drag{ border-color:#00000055; background:#ffffffee }
+
+    .choose{
+      margin-top:10px;
+      appearance:none; border:0; cursor:pointer; font-weight:700;
+      padding:10px 14px; border-radius:10px; color:white;
+      background:linear-gradient(180deg,#cb8b4d,#b57334);
+      box-shadow:0 8px 18px #0000002a;
     }
 
-    .upload-container {
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      gap: 25px;
-      margin-top: 40px;
-      z-index: 2;
-      position: relative;
+    textarea{
+      width:100%; min-height:120px; padding:12px; border-radius:12px;
+      border:1px solid #00000022; background:#fffffff2; font-family:inherit;
     }
+    .row{ display:flex; gap:10px; margin-top:12px }
+    .btn{ padding:10px 14px; border-radius:10px; border:0; cursor:pointer; font-weight:700 }
+    .btn.primary{ color:#fff; background:linear-gradient(180deg,#cb8b4d,#b57334) }
+    .btn.ghost{ background:#ffffffcc; border:1px solid #00000015 }
 
-    .upload-box, .preview-box {
-      background: rgba(255, 255, 255, 0.85);
-      padding: 25px;
-      border-radius: 15px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      width: 320px;
-      text-align: center;
-      transition: transform 0.3s ease;
+    /* right preview */
+    .preview{
+      display:flex; align-items:center; justify-content:center; min-height:320px;
+      background: #ffffffd9; border-radius:18px; border:1px solid #00000010;
+      box-shadow: inset 0 1px 0 #ffffffc8;
     }
+    .preview img{ max-width:100%; max-height:380px; object-fit:contain; border-radius:12px }
 
-    .upload-box:hover, .preview-box:hover {
-      transform: scale(1.02);
-    }
+    /* floating hearts (very soft) */
+    #fxHearts{ position:fixed; inset:0; pointer-events:none; z-index:1; }
+    header, main { position:relative; z-index:2; }
 
-    input[type="file"] {
-      margin: 15px 0;
-      background: #b87333;
-      color: white;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    textarea {
-      width: 100%;
-      height: 80px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: 1px solid #d4a373;
-      padding: 10px;
-      resize: none;
-      font-family: Georgia, serif;
-    }
-
-    button {
-      background: #b87333;
-      color: white;
-      border: none;
-      padding: 8px 18px;
-      border-radius: 6px;
-      margin-top: 10px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-weight: 600;
-    }
-
-    button:hover {
-      background: #a45a2a;
-      transform: scale(1.05);
-    }
-
-    .heart {
-      position: fixed;
-      bottom: -10px;
-      font-size: 18px;
-      color: #ffb6c1;
-      animation: floatUp 6s ease-in infinite;
-      opacity: 0.8;
-      z-index: 1;
-    }
-
-    @keyframes floatUp {
-      from {
-        transform: translateY(0) scale(1);
-        opacity: 0.8;
-      }
-      to {
-        transform: translateY(-800px) scale(0.5);
-        opacity: 0;
-      }
-    }
-
-    .music-control {
-      position: fixed;
-      bottom: 20px;
-      right: 25px;
-      z-index: 5;
-      background: rgba(255, 192, 203, 0.8);
-      padding: 10px;
-      border-radius: 50%;
-      cursor: pointer;
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-      transition: transform 0.3s ease;
-    }
-
-    .music-control:hover {
-      transform: scale(1.1);
-    }
-
+    @media (max-width:980px){ main{ grid-template-columns:1fr } }
   </style>
 </head>
 <body>
-  <div class="top-nav">
-    <a href="life.html">Life</a>
-    <a href="gallery.html">Gallery</a>
-    <a href="#" onclick="logout()">Logout</a>
-  </div>
+  <canvas id="fxHearts" aria-hidden="true"></canvas>
 
-  <h1>Upload a Sweet Memory</h1>
+  <header>
+    <nav class="tabs">
+      <a href="/life.html">Life</a>
+      <a href="/gallery.html">Gallery</a>
+      <a href="/logout.html">Logout</a>
+    </nav>
+    <h1>Upload a Sweet Memory</h1>
+  </header>
 
-  <div class="upload-container">
-    <div class="upload-box">
-      <form id="uploadForm" enctype="multipart/form-data">
-        <label for="fileInput">Drag & drop a photo here<br>or</label><br />
-        <input type="file" id="fileInput" accept="image/*" required /><br />
-        <small>JPG/PNG • Max 8 MB</small>
-        <br /><br />
-        <label for="caption"><b>Caption (short)</b></label><br />
+  <main id="protectedContent" style="visibility:hidden;opacity:0;transition:opacity .25s">
+    <!-- LEFT: form -->
+    <section class="card">
+      <div id="drop" class="drop">
+        <div><strong>Drag &amp; drop</strong> a photo here</div>
+        <div style="opacity:.7;margin:6px 0">or</div>
+        <label>
+          <input id="file" type="file" accept="image/*" hidden />
+          <button type="button" class="choose">Choose file</button>
+        </label>
+        <div style="margin-top:8px; font-size:12px; opacity:.75">JPG/PNG • Max 8 MB</div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div style="font-weight:700;margin:6px 0">Caption (short)</div>
         <textarea id="caption" placeholder="Write a short caption (max 150 chars)"></textarea>
-        <br />
-        <button type="submit">Upload</button>
-        <button type="button" onclick="clearForm()">Clear</button>
-      </form>
-    </div>
+      </div>
 
-    <div class="preview-box">
-      <p><b>Preview</b></p>
-      <img id="preview" src="" alt="No photo selected" style="max-width: 100%; border-radius: 10px; display: none;" />
-      <p id="statusMsg"></p>
-    </div>
-  </div>
+      <div class="row">
+        <button id="uploadBtn" class="btn primary">Upload</button>
+        <button id="clearBtn" class="btn ghost">Clear</button>
+        <div id="status" style="margin-left:8px;opacity:.8"></div>
+      </div>
+    </section>
 
-  <div class="music-control" onclick="toggleMusic()">💗</div>
-  <audio id="bgMusic" loop>
-    <source src="assets/music/soft-bg.mp3" type="audio/mpeg">
-  </audio>
+    <!-- RIGHT: preview -->
+    <aside class="card preview">
+      <div id="ph">No photo selected</div>
+      <img id="pv" alt="preview" style="display:none" />
+    </aside>
+  </main>
 
   <script>
-    // floating hearts
-    function createHeart() {
-      const heart = document.createElement("div");
-      heart.classList.add("heart");
-      heart.textContent = "❤";
-      heart.style.left = Math.random() * 100 + "vw";
-      heart.style.animationDuration = Math.random() * 2 + 4 + "s";
-      document.body.appendChild(heart);
-      setTimeout(() => heart.remove(), 6000);
-    }
-    setInterval(createHeart, 600);
+    // Show content after auth guard says ready
+    (function waitForAuth(){
+      const show=()=>{const el=document.getElementById('protectedContent'); if(el){el.style.visibility='visible'; el.style.opacity='1';}};
+      if(window.__shreeAuthReady) show();
+      else window.addEventListener('shree:auth-ready', show, {once:true});
+      // tiny fallback
+      setTimeout(()=>window.__shreeAuthReady && show(), 1200);
+    })();
 
-    // music control
-    const music = document.getElementById("bgMusic");
-    let isPlaying = false;
-    function toggleMusic() {
-      if (isPlaying) {
-        music.pause();
-      } else {
-        music.play();
+    // Hearts (subtle)
+    (function(){
+      const c=document.getElementById('fxHearts'); if(!c) return;
+      const ctx=c.getContext('2d'); const DPR=Math.max(1,devicePixelRatio||1);
+      let W=0,H=0,hs=[];
+      const C=['#ffb6c1','#ffc9de','#ffd6e7','#ffe3ee'];
+      const R=(a,b)=>Math.random()*(b-a)+a;
+      function resize(){ W=Math.floor(innerWidth*DPR); H=Math.floor(innerHeight*DPR); c.width=W; c.height=H; c.style.width='100%'; c.style.height='100%'; }
+      function spawn(){ if(hs.length>28) return; hs.push({x:R(0,W),y:H+R(20,140),s:R(12,22)*DPR,vx:R(-6,6),vy:-R(16,28),a:R(.15,.35),r:R(-.4,.4),vr:R(-.01,.01),col:C[(Math.random()*C.length)|0]}); }
+      function heart(x,y,s){ ctx.beginPath(); ctx.moveTo(0,-.5); ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8); ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5); }
+      function tick(){
+        ctx.clearRect(0,0,W,H);
+        if(Math.random()<.12) spawn();
+        for(const h of hs){
+          ctx.save(); ctx.translate(h.x,h.y); ctx.rotate(h.r);
+          ctx.scale(h.s, h.s); ctx.globalAlpha=h.a; ctx.fillStyle=h.col;
+          heart(); ctx.fill(); ctx.restore();
+          h.x+=h.vx*.016*DPR; h.y+=h.vy*.016*DPR; h.r+=h.vr; h.a-=.0006;
+        }
+        hs=hs.filter(h=>h.a>0 && h.y>-120*DPR);
+        requestAnimationFrame(tick);
       }
-      isPlaying = !isPlaying;
-    }
+      addEventListener('resize', resize, {passive:true}); resize(); tick();
+    })();
 
-    // preview image
-    document.getElementById("fileInput").addEventListener("change", function (event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = e => {
-          const preview = document.getElementById("preview");
-          preview.src = e.target.result;
-          preview.style.display = "block";
-        };
-        reader.readAsDataURL(file);
+    // Upload/preview logic
+    (function(){
+      const file = document.getElementById('file');
+      const drop = document.getElementById('drop');
+      const pv   = document.getElementById('pv');
+      const ph   = document.getElementById('ph');
+      const cap  = document.getElementById('caption');
+      const msg  = document.getElementById('status');
+
+      drop.addEventListener('click',()=>file.click());
+      drop.addEventListener('dragover',e=>{e.preventDefault(); drop.classList.add('drag');});
+      drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));
+      drop.addEventListener('drop',e=>{
+        e.preventDefault(); drop.classList.remove('drag');
+        if(e.dataTransfer.files && e.dataTransfer.files[0]) { file.files = e.dataTransfer.files; preview(); }
+      });
+      file.addEventListener('change', preview);
+
+      function preview(){
+        const f=file.files[0];
+        if(!f){ pv.style.display='none'; ph.style.display='block'; return; }
+        const url=URL.createObjectURL(f);
+        pv.src=url; pv.onload=()=>URL.revokeObjectURL(url);
+        pv.style.display='block'; ph.style.display='none';
       }
-    });
 
-    // form submission
-    document.getElementById("uploadForm").addEventListener("submit", async e => {
-      e.preventDefault();
-      const file = document.getElementById("fileInput").files[0];
-      const caption = document.getElementById("caption").value;
-      if (!file) return alert("Please select a file!");
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("caption", caption);
+      document.getElementById('clearBtn').addEventListener('click',()=>{
+        file.value=""; cap.value=""; pv.style.display='none'; ph.style.display='block'; msg.textContent="";
+      });
 
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const msg = document.getElementById("statusMsg");
-      msg.textContent = res.ok ? "✅ Uploaded successfully!" : "❌ Upload failed.";
-    });
+      document.getElementById('uploadBtn').addEventListener('click', async ()=>{
+        if(!file.files[0]){ msg.textContent="Please select a photo."; return; }
+        msg.textContent="Uploading…";
+        try{
+          const fd=new FormData();
+          fd.append('photo', file.files[0]);
+          if(cap.value.trim()) fd.append('caption', cap.value.trim());
 
-    function clearForm() {
-      document.getElementById("fileInput").value = "";
-      document.getElementById("caption").value = "";
-      document.getElementById("preview").style.display = "none";
-      document.getElementById("statusMsg").textContent = "";
-    }
-
-    function logout() {
-      window.location.href = "index.html";
-    }
+          // Use authFetch if available (your guard attaches JWT)
+          let res;
+          if(window.authFetch){
+            res = await window.authFetch('/api/upload', { method:'POST', body:fd });
+          }else{
+            let headers={};
+            if(window.getAuthToken){ const t=await window.getAuthToken(); if(t) headers.Authorization='Bearer '+t; }
+            res = await fetch('/api/upload', { method:'POST', body:fd, headers, credentials:'include' });
+          }
+          if(!res.ok) throw new Error('HTTP '+res.status);
+          msg.textContent="Uploaded ✓"; setTimeout(()=>location.href='/gallery.html', 800);
+        }catch(err){
+          console.error(err); msg.textContent="Upload failed: "+err.message;
+        }
+      });
+    })();
   </script>
+
+  <!-- Optional: tiny music heart – uses your existing asset files if present -->
+  <link rel="stylesheet" href="/assets/css/music-heart.css">
+  <script src="/assets/js/music-heart.js" defer></script>
 </body>
 </html>
