@@ -12,77 +12,38 @@
 
   <style>
     :root{
-      /* 🔄 new painting file */
       --bg-art: url("/assets/img/upload-bg-final-new.jpg");
-
-      /* center artwork sizing/placement */
-      --art-size: min(1020px, 82vmin);
-      --art-top: 112px;
-      --art-opacity: 0.95;
-
-      /* blurred page backdrop */
-      --blur-opacity: 0.88;
-      --blur-strength: 22px;
-
-      /* UI look */
-      --ink:#461a1f;
+      --ink:#3a181c;
       --btn:#bb7a39;
-      --glass: rgba(255,255,255,.84);
-    }
-
-    @media (max-width: 880px){
-      :root{
-        --art-size: 92vmin;
-        --art-top: 92px;
-        --art-opacity: 0.98;
-        --blur-strength: 16px;
-      }
+      --glass: rgba(255,255,255,.83);
     }
 
     *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      color:var(--ink);
-      font-family: ui-serif, "Playfair Display", Georgia, serif;
-      overflow-x:hidden;
-      background:#f6eee7;
-    }
+    html,body{height:100%;margin:0;padding:0;overflow-x:hidden;font-family: ui-serif,"Playfair Display",Georgia,serif;color:var(--ink);}
 
-    /* ===== Painterly background: blur layer + crisp center art ===== */
-    .bg, .bg::before, .bg::after{
-      position:fixed; inset:0; pointer-events:none;
-    }
-    .bg::before{
+    /* full painting background */
+    body::before{
       content:"";
+      position:fixed; inset:0;
       background-image: var(--bg-art);
-      background-repeat:no-repeat;
+      background-size: cover;
       background-position:center center;
-      background-size: cover;              /* fills whole page */
-      filter: blur(var(--blur-strength)) saturate(106%);
-      opacity: var(--blur-opacity);
-      transform: scale(1.03);              /* avoids blur edge gaps */
+      background-attachment:fixed;
+      filter: blur(12px) saturate(108%) brightness(1.02);
+      transform:scale(1.02);
+      z-index:-2;
     }
-    .bg::after{
+    body::after{
       content:"";
-      width: var(--art-size);
-      height: var(--art-size);
-      margin: 0 auto;
-      left:0; right:0;
-      top: var(--art-top);
-      background-image: var(--bg-art);
-      background-repeat:no-repeat;
-      background-position:center 42%;      /* pushes the lady slightly upward */
-      background-size: contain;            /* show entire painting */
-      box-shadow: 0 22px 60px rgba(0,0,0,.28);
-      border-radius: 10px;
-      opacity: var(--art-opacity);
+      position:fixed; inset:0;
+      background:rgba(255,255,255,0.2);
+      z-index:-1;
     }
 
-    header{ text-align:center; padding:18px 10px 0; position:relative; z-index:3; }
+    header{ text-align:center; padding:22px 10px 0; position:relative; z-index:3; }
     .nav a{
       display:inline-block; margin:0 6px; padding:6px 12px; border-radius:18px;
-      background:rgba(255,255,255,.88); color:var(--ink); text-decoration:none;
+      background:rgba(255,255,255,.86); color:var(--ink); text-decoration:none;
       box-shadow:0 6px 16px rgba(0,0,0,.12);
       font-size:14px;
     }
@@ -103,9 +64,9 @@
     .card{
       background:var(--glass);
       border-radius:14px;
-      box-shadow:0 18px 40px rgba(0,0,0,.18);
+      box-shadow:0 18px 40px rgba(0,0,0,.25);
       border: 1px solid rgba(255,255,255,.55);
-      backdrop-filter: blur(6px) saturate(120%);
+      backdrop-filter: blur(8px) saturate(120%);
     }
     .pane{ padding:18px 18px 16px; }
 
@@ -129,18 +90,16 @@
     .btn.secondary{ background:rgba(0,0,0,.06); color:var(--ink); }
     .muted{ font-size:12px; opacity:.8 }
 
-    /* Hearts canvas (spawn from bottom area) */
+    /* hearts canvas */
     #fxCanvas{
       position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:2;
     }
 
-    /* music heart (same component) */
+    /* music heart */
     #musicHeartWrap{ right:14px; bottom:14px; z-index:6; }
   </style>
 </head>
 <body>
-  <!-- Background painterly layers -->
-  <div class="bg" aria-hidden="true"></div>
   <canvas id="fxCanvas" aria-hidden="true"></canvas>
 
   <header>
@@ -154,10 +113,10 @@
 
   <main id="protectedContent" style="visibility:hidden;opacity:0;transition:opacity .25s">
     <!-- Left: form -->
-    <section class="card" aria-labelledby="formTitle">
+    <section class="card">
       <div class="pane">
         <div class="drop">
-          <div id="formTitle" style="font-weight:700">Drag & drop a photo here or</div>
+          <div style="font-weight:700">Drag & drop a photo here or</div>
           <input id="photo" name="photo" type="file" accept="image/*" required>
           <div class="muted">JPG/PNG • Max 8 MB</div>
         </div>
@@ -176,7 +135,7 @@
     </section>
 
     <!-- Right: preview -->
-    <aside class="card" aria-label="Preview">
+    <aside class="card">
       <div class="pane" style="min-height:220px; display:flex; align-items:center; justify-content:center;">
         <div id="previewBox" style="text-align:center; width:100%">
           <div class="muted">Preview</div>
@@ -187,7 +146,7 @@
     </aside>
   </main>
 
-  <!-- Hearts animation -->
+  <!-- Floating hearts -->
   <script>
     (function(){
       const c = document.getElementById('fxCanvas'); if (!c) return;
@@ -200,7 +159,7 @@
       function size(){ W=Math.floor(innerWidth*DPR); H=Math.floor(innerHeight*DPR); c.width=W; c.height=H; c.style.width='100vw'; c.style.height='100vh'; }
       function spawn(){
         if(hearts.length>36) return;
-        const startY = H - R(40*DPR, 140*DPR);          // start near bottom
+        const startY = H - R(40*DPR, 140*DPR);
         hearts.push({x:R(0,W),y:startY,s:R(14,28),vx:R(-8,8),vy:-R(10,22),a:R(.55,.9),r:R(-.5,.5),vr:R(-.01,.01),col:C[(Math.random()*C.length)|0]});
       }
       function draw(h){
@@ -222,7 +181,7 @@
     })();
   </script>
 
-  <!-- Upload logic (JWT via authFetch if available) -->
+  <!-- Upload logic -->
   <script>
     (function(){
       const root = document.getElementById('protectedContent');
@@ -275,7 +234,7 @@
     })();
   </script>
 
-  <!-- Music heart (global) -->
+  <!-- Music Heart -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
 </body>
