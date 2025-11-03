@@ -12,30 +12,29 @@
 
   <style>
     :root{
-      /* your painting file (already pushed) */
-      --bg-art: url("/assets/img/upload-oil-bg-final.jpg");
+      /* 🔄 new painting file */
+      --bg-art: url("/assets/img/upload-bg-final-new.jpg");
 
-      /* how big the center painting appears */
-      --art-size: min(1050px, 82vmin);     /* desktop default */
-      --art-top: 118px;                    /* moves center art down a bit */
-      --art-opacity: 0.92;                 /* visibility of the center art */
+      /* center artwork sizing/placement */
+      --art-size: min(1020px, 82vmin);
+      --art-top: 112px;
+      --art-opacity: 0.95;
 
-      /* blurred backdrop */
-      --blur-opacity: 0.85;
+      /* blurred page backdrop */
+      --blur-opacity: 0.88;
       --blur-strength: 22px;
 
-      /* UI accents */
+      /* UI look */
       --ink:#461a1f;
       --btn:#bb7a39;
-      --card: rgba(255,255,255,.82);
-      --glass: rgba(255,255,255,.82);
+      --glass: rgba(255,255,255,.84);
     }
 
     @media (max-width: 880px){
       :root{
-        --art-size: 92vmin;       /* slightly smaller on phones so more fits */
-        --art-top: 96px;
-        --art-opacity: 0.96;
+        --art-size: 92vmin;
+        --art-top: 92px;
+        --art-opacity: 0.98;
         --blur-strength: 16px;
       }
     }
@@ -47,10 +46,10 @@
       color:var(--ink);
       font-family: ui-serif, "Playfair Display", Georgia, serif;
       overflow-x:hidden;
-      background:#f7efe9;
+      background:#f6eee7;
     }
 
-    /* ===== Full-page background: 2 layers ===== */
+    /* ===== Painterly background: blur layer + crisp center art ===== */
     .bg, .bg::before, .bg::after{
       position:fixed; inset:0; pointer-events:none;
     }
@@ -59,13 +58,12 @@
       background-image: var(--bg-art);
       background-repeat:no-repeat;
       background-position:center center;
-      background-size: cover;             /* fills page */
-      filter: blur(var(--blur-strength)) saturate(105%);
+      background-size: cover;              /* fills whole page */
+      filter: blur(var(--blur-strength)) saturate(106%);
       opacity: var(--blur-opacity);
-      transform: scale(1.03);             /* avoid blur gaps at edges */
+      transform: scale(1.03);              /* avoids blur edge gaps */
     }
     .bg::after{
-      /* crisp center painting scaled DOWN so you see more of it */
       content:"";
       width: var(--art-size);
       height: var(--art-size);
@@ -74,17 +72,17 @@
       top: var(--art-top);
       background-image: var(--bg-art);
       background-repeat:no-repeat;
-      background-position:center center;
-      background-size: contain;           /* shows entire painting */
-      box-shadow: 0 20px 60px rgba(0,0,0,.28);
-      border-radius: 8px;
+      background-position:center 42%;      /* pushes the lady slightly upward */
+      background-size: contain;            /* show entire painting */
+      box-shadow: 0 22px 60px rgba(0,0,0,.28);
+      border-radius: 10px;
       opacity: var(--art-opacity);
     }
 
     header{ text-align:center; padding:18px 10px 0; position:relative; z-index:3; }
     .nav a{
       display:inline-block; margin:0 6px; padding:6px 12px; border-radius:18px;
-      background:rgba(255,255,255,.86); color:var(--ink); text-decoration:none;
+      background:rgba(255,255,255,.88); color:var(--ink); text-decoration:none;
       box-shadow:0 6px 16px rgba(0,0,0,.12);
       font-size:14px;
     }
@@ -122,7 +120,7 @@
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
       box-shadow: inset 0 1px 2px rgba(0,0,0,.05);
     }
-    .actions{ display:flex; gap:10px; align-items:center; margin-top:12px; }
+    .actions{ display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap; }
     .btn{
       background:var(--btn); color:#fff; border:none; border-radius:10px;
       padding:9px 14px; font-weight:700; cursor:pointer;
@@ -131,12 +129,12 @@
     .btn.secondary{ background:rgba(0,0,0,.06); color:var(--ink); }
     .muted{ font-size:12px; opacity:.8 }
 
-    /* hearts canvas now floats mainly from bottom */
+    /* Hearts canvas (spawn from bottom area) */
     #fxCanvas{
       position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:2;
     }
 
-    /* music heart (same component as other pages) */
+    /* music heart (same component) */
     #musicHeartWrap{ right:14px; bottom:14px; z-index:6; }
   </style>
 </head>
@@ -156,10 +154,10 @@
 
   <main id="protectedContent" style="visibility:hidden;opacity:0;transition:opacity .25s">
     <!-- Left: form -->
-    <section class="card">
+    <section class="card" aria-labelledby="formTitle">
       <div class="pane">
         <div class="drop">
-          <div style="font-weight:700">Drag & drop a photo here or</div>
+          <div id="formTitle" style="font-weight:700">Drag & drop a photo here or</div>
           <input id="photo" name="photo" type="file" accept="image/*" required>
           <div class="muted">JPG/PNG • Max 8 MB</div>
         </div>
@@ -178,7 +176,7 @@
     </section>
 
     <!-- Right: preview -->
-    <aside class="card">
+    <aside class="card" aria-label="Preview">
       <div class="pane" style="min-height:220px; display:flex; align-items:center; justify-content:center;">
         <div id="previewBox" style="text-align:center; width:100%">
           <div class="muted">Preview</div>
@@ -189,7 +187,7 @@
     </aside>
   </main>
 
-  <!-- Hearts (spawn mostly from bottom) -->
+  <!-- Hearts animation -->
   <script>
     (function(){
       const c = document.getElementById('fxCanvas'); if (!c) return;
@@ -198,15 +196,29 @@
       let W=0,H=0, hearts=[];
       const C=['#ffb3c6','#fff6a6','#ffd89e','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
       const R=(a,b)=>Math.random()*(b-a)+a;
-      function resize(){ W=Math.floor(innerWidth*DPR); H=Math.floor(innerHeight*DPR); c.width=W; c.height=H; c.style.width='100vw'; c.style.height='100vh'; }
+
+      function size(){ W=Math.floor(innerWidth*DPR); H=Math.floor(innerHeight*DPR); c.width=W; c.height=H; c.style.width='100vw'; c.style.height='100vh'; }
       function spawn(){
         if(hearts.length>36) return;
-        const startY = H - R(40*DPR, 140*DPR);      // start from lower area
+        const startY = H - R(40*DPR, 140*DPR);          // start near bottom
         hearts.push({x:R(0,W),y:startY,s:R(14,28),vx:R(-8,8),vy:-R(10,22),a:R(.55,.9),r:R(-.5,.5),vr:R(-.01,.01),col:C[(Math.random()*C.length)|0]});
       }
-      function draw(h){ const {x,y,s,r,a,col}=h; ctx.save(); ctx.translate(x,y); ctx.rotate(r); ctx.scale(s/50*DPR,s/50*DPR); ctx.globalAlpha=a; ctx.beginPath(); ctx.moveTo(0,-.5); ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8); ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5); ctx.fillStyle=col; ctx.fill(); ctx.restore(); }
-      function tick(){ ctx.clearRect(0,0,W,H); if(Math.random()<.18) spawn(); hearts.forEach(h=>{ h.x+=h.vx*.016*DPR; h.y+=h.vy*.016*DPR; h.r+=h.vr; h.a-=.0009; draw(h)}); hearts=hearts.filter(h=>h.a>.02&&h.y>-140*DPR); requestAnimationFrame(tick); }
-      addEventListener('resize',resize,{passive:true}); resize(); tick();
+      function draw(h){
+        const {x,y,s,r,a,col}=h;
+        ctx.save(); ctx.translate(x,y); ctx.rotate(r); ctx.scale(s/50*DPR,s/50*DPR); ctx.globalAlpha=a;
+        ctx.beginPath(); ctx.moveTo(0,-.5);
+        ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8);
+        ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5);
+        ctx.fillStyle=col; ctx.fill(); ctx.restore();
+      }
+      function tick(){
+        ctx.clearRect(0,0,W,H);
+        if(Math.random()<.18) spawn();
+        hearts.forEach(h=>{ h.x+=h.vx*.016*DPR; h.y+=h.vy*.016*DPR; h.r+=h.vr; h.a-=.0009; draw(h); });
+        hearts=hearts.filter(h=>h.a>.02&&h.y>-140*DPR);
+        requestAnimationFrame(tick);
+      }
+      addEventListener('resize',size,{passive:true}); size(); tick();
     })();
   </script>
 
@@ -234,7 +246,8 @@
       });
 
       clr.addEventListener('click', ()=>{
-        file.value = ''; cap.value=''; prev.style.display='none'; prev.removeAttribute('src'); prevSub.textContent='No photo selected'; msg.textContent='';
+        file.value = ''; cap.value=''; prev.style.display='none'; prev.removeAttribute('src');
+        prevSub.textContent='No photo selected'; msg.textContent='';
       });
 
       btn.addEventListener('click', async ()=>{
@@ -262,7 +275,7 @@
     })();
   </script>
 
-  <!-- Global music heart (same files you already have) -->
+  <!-- Music heart (global) -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
 </body>
