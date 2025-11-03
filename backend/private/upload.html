@@ -12,40 +12,71 @@
 
   <style>
     :root{
+      /* ✅ your new background image */
       --bg-art: url("/assets/img/upload-bg-final-new.jpg");
-      --ink:#3a181c;
-      --btn:#bb7a39;
-      --glass: rgba(255,255,255,.83);
+
+      /* crisp center painting */
+      --art-width: clamp(280px, 76vmin, 1080px); /* responsive */
+      --art-top: 120px;                          /* push down a little */
+      --art-opacity: .98;
+
+      /* blurred backdrop */
+      --blur-strength: 20px;
+      --blur-opacity: .85;
+
+      /* UI tokens */
+      --ink:#3e171b;
+      --card: rgba(255,255,255,.86);
+      --glass: rgba(255,255,255,.86);
+      --btn:#b37232;
+    }
+    @media (max-width: 880px){
+      :root{ --art-top: 96px; --blur-strength: 16px; }
     }
 
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;padding:0;overflow-x:hidden;font-family: ui-serif,"Playfair Display",Georgia,serif;color:var(--ink);}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--ink);
+      font-family: ui-serif, "Playfair Display", Georgia, serif;
+      overflow-x:hidden; background:#f6eee8;
+    }
 
-    /* full painting background */
-    body::before{
+    /* ===== Painterly background: 2 layers ===== */
+    .bg,.bg::before,.bg::after{ position:fixed; inset:0; pointer-events:none; }
+    /* 1) blurred full bleed */
+    .bg::before{
       content:"";
-      position:fixed; inset:0;
       background-image: var(--bg-art);
-      background-size: cover;
+      background-repeat:no-repeat;
       background-position:center center;
-      background-attachment:fixed;
-      filter: blur(12px) saturate(108%) brightness(1.02);
-      transform:scale(1.02);
-      z-index:-2;
+      background-size: cover;
+      filter: blur(var(--blur-strength)) saturate(108%);
+      opacity: var(--blur-opacity);
+      transform: scale(1.03); /* avoid blur edges */
     }
-    body::after{
+    /* 2) crisp center painting panel */
+    .bg::after{
       content:"";
-      position:fixed; inset:0;
-      background:rgba(255,255,255,0.2);
-      z-index:-1;
+      position:fixed;
+      left:50%; transform:translateX(-50%);
+      top: var(--art-top);
+      width: var(--art-width);
+      height: var(--art-width);         /* square panel that fits both desktop/mobile */
+      background-image: var(--bg-art);
+      background-repeat:no-repeat;
+      background-position:center center;
+      background-size: contain;         /* 👈 shows more of the lady properly */
+      border-radius: 10px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.28);
+      opacity: var(--art-opacity);
     }
 
-    header{ text-align:center; padding:22px 10px 0; position:relative; z-index:3; }
+    header{ text-align:center; padding:18px 10px 0; position:relative; z-index:3; }
     .nav a{
       display:inline-block; margin:0 6px; padding:6px 12px; border-radius:18px;
-      background:rgba(255,255,255,.86); color:var(--ink); text-decoration:none;
-      box-shadow:0 6px 16px rgba(0,0,0,.12);
-      font-size:14px;
+      background:rgba(255,255,255,.9); color:var(--ink); text-decoration:none;
+      box-shadow:0 6px 16px rgba(0,0,0,.12); font-size:14px;
     }
     h1{
       margin:16px 0 10px; font-size:44px; line-height:1.1; color:var(--ink);
@@ -54,19 +85,16 @@
 
     main{
       position:relative; z-index:4;
-      max-width: 1100px;
-      margin: 24px auto 120px;
-      padding: 0 16px;
+      max-width: 1100px; margin: 24px auto 120px; padding: 0 16px;
       display:grid; grid-template-columns: 1fr 1fr; gap:24px;
     }
     @media (max-width: 960px){ main{ grid-template-columns: 1fr; gap:16px; } }
 
     .card{
-      background:var(--glass);
-      border-radius:14px;
-      box-shadow:0 18px 40px rgba(0,0,0,.25);
+      background:var(--glass); border-radius:14px;
+      box-shadow:0 18px 40px rgba(0,0,0,.18);
       border: 1px solid rgba(255,255,255,.55);
-      backdrop-filter: blur(8px) saturate(120%);
+      backdrop-filter: blur(6px) saturate(120%);
     }
     .pane{ padding:18px 18px 16px; }
 
@@ -81,7 +109,7 @@
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
       box-shadow: inset 0 1px 2px rgba(0,0,0,.05);
     }
-    .actions{ display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap; }
+    .actions{ display:flex; gap:10px; align-items:center; margin-top:12px; }
     .btn{
       background:var(--btn); color:#fff; border:none; border-radius:10px;
       padding:9px 14px; font-weight:700; cursor:pointer;
@@ -90,16 +118,18 @@
     .btn.secondary{ background:rgba(0,0,0,.06); color:var(--ink); }
     .muted{ font-size:12px; opacity:.8 }
 
-    /* hearts canvas */
-    #fxCanvas{
-      position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:2;
-    }
+    /* hearts canvas (mostly bottom float) */
+    #fxCanvas{ position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:2; }
 
-    /* music heart */
-    #musicHeartWrap{ right:14px; bottom:14px; z-index:6; }
+    /* keep crisp panel clear on very small screens */
+    @media (max-height: 660px){
+      :root{ --art-top: 80px; }
+    }
   </style>
 </head>
 <body>
+  <!-- Background painterly layers -->
+  <div class="bg" aria-hidden="true"></div>
   <canvas id="fxCanvas" aria-hidden="true"></canvas>
 
   <header>
@@ -146,7 +176,7 @@
     </aside>
   </main>
 
-  <!-- Floating hearts -->
+  <!-- Hearts (spawn mostly from bottom) -->
   <script>
     (function(){
       const c = document.getElementById('fxCanvas'); if (!c) return;
@@ -155,33 +185,19 @@
       let W=0,H=0, hearts=[];
       const C=['#ffb3c6','#fff6a6','#ffd89e','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
       const R=(a,b)=>Math.random()*(b-a)+a;
-
-      function size(){ W=Math.floor(innerWidth*DPR); H=Math.floor(innerHeight*DPR); c.width=W; c.height=H; c.style.width='100vw'; c.style.height='100vh'; }
+      function resize(){ W=Math.floor(innerWidth*DPR); H=Math.floor(innerHeight*DPR); c.width=W; c.height=H; c.style.width='100vw'; c.style.height='100vh'; }
       function spawn(){
         if(hearts.length>36) return;
-        const startY = H - R(40*DPR, 140*DPR);
+        const startY = H - R(40*DPR, 140*DPR);      // start near bottom
         hearts.push({x:R(0,W),y:startY,s:R(14,28),vx:R(-8,8),vy:-R(10,22),a:R(.55,.9),r:R(-.5,.5),vr:R(-.01,.01),col:C[(Math.random()*C.length)|0]});
       }
-      function draw(h){
-        const {x,y,s,r,a,col}=h;
-        ctx.save(); ctx.translate(x,y); ctx.rotate(r); ctx.scale(s/50*DPR,s/50*DPR); ctx.globalAlpha=a;
-        ctx.beginPath(); ctx.moveTo(0,-.5);
-        ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8);
-        ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5);
-        ctx.fillStyle=col; ctx.fill(); ctx.restore();
-      }
-      function tick(){
-        ctx.clearRect(0,0,W,H);
-        if(Math.random()<.18) spawn();
-        hearts.forEach(h=>{ h.x+=h.vx*.016*DPR; h.y+=h.vy*.016*DPR; h.r+=h.vr; h.a-=.0009; draw(h); });
-        hearts=hearts.filter(h=>h.a>.02&&h.y>-140*DPR);
-        requestAnimationFrame(tick);
-      }
-      addEventListener('resize',size,{passive:true}); size(); tick();
+      function draw(h){ const {x,y,s,r,a,col}=h; ctx.save(); ctx.translate(x,y); ctx.rotate(r); ctx.scale(s/50*DPR,s/50*DPR); ctx.globalAlpha=a; ctx.beginPath(); ctx.moveTo(0,-.5); ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8); ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5); ctx.fillStyle=col; ctx.fill(); ctx.restore(); }
+      function tick(){ ctx.clearRect(0,0,W,H); if(Math.random()<.18) spawn(); hearts.forEach(h=>{ h.x+=h.vx*.016*DPR; h.y+=h.vy*.016*DPR; h.r+=h.vr; h.a-=.0009; draw(h)}); hearts=hearts.filter(h=>h.a>.02&&h.y>-140*DPR); requestAnimationFrame(tick); }
+      addEventListener('resize',resize,{passive:true}); resize(); tick();
     })();
   </script>
 
-  <!-- Upload logic -->
+  <!-- Upload logic (JWT via authFetch if available) -->
   <script>
     (function(){
       const root = document.getElementById('protectedContent');
@@ -205,8 +221,7 @@
       });
 
       clr.addEventListener('click', ()=>{
-        file.value = ''; cap.value=''; prev.style.display='none'; prev.removeAttribute('src');
-        prevSub.textContent='No photo selected'; msg.textContent='';
+        file.value = ''; cap.value=''; prev.style.display='none'; prev.removeAttribute('src'); prevSub.textContent='No photo selected'; msg.textContent='';
       });
 
       btn.addEventListener('click', async ()=>{
@@ -234,7 +249,7 @@
     })();
   </script>
 
-  <!-- Music Heart -->
+  <!-- Global music heart (same files you already have) -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
 </body>
