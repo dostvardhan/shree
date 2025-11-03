@@ -5,74 +5,80 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Upload — Sweet Memories</title>
 
-  <!-- Keep page private (Auth0) -->
+  <!-- Private page (Auth0) -->
   <script src="/auth0-spa-js.production.js" defer></script>
   <script src="/auth-init.js" defer></script>
   <script src="/guard-auth.js" defer></script>
 
   <style>
     :root{
-      --bg-art: url("/assets/img/upload-bg-final-new.jpg?v=3");
-      --ink: #3b1f20;
-      --card: rgba(255,255,255,.86);
-      --glass: rgba(255,255,255,.86);
-      --btn: #bb7a39;
+      --bg-art: url("/assets/img/upload-bg-final-new.jpg?v=4");
+      --ink:#3b1f20;
+      --btn:#bb7a39;
+      --glass: rgba(255,255,255,.88);
     }
-
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0;
-      color:var(--ink);
+      margin:0; color:var(--ink);
       font-family: ui-serif,"Playfair Display",Georgia,serif;
+      overflow-x:hidden;
+      background:#f8efe8;
+    }
 
-      /* ✅ single full-page background (no center overlay) */
+    /* ===== Full page background: same image 2 ways =====
+       - blur layer (COVER) fills the screen softly (no white bars)
+       - fit layer (CONTAIN) shows full painting without crop         */
+    .bg, .bg::before, .bg::after{ position:fixed; inset:0; pointer-events:none }
+    .bg::before{
+      content:"";
       background-image: var(--bg-art);
-      background-repeat: no-repeat;
-      background-position: center center;
-      background-size: cover;
-      background-attachment: fixed;
+      background-repeat:no-repeat;
+      background-position:center 20%;
+      background-size: cover;                 /* fills screen */
+      filter: blur(18px) saturate(108%);
+      opacity:.28;                            /* very soft fill */
+      transform: scale(1.03);
+    }
+    .bg::after{
+      content:"";
+      background-image: var(--bg-art);
+      background-repeat:no-repeat;
+      background-position:center 12%;         /* thoda upar focus so head visible */
+      background-size: contain;               /* ✅ no crop */
     }
 
-    /* subtle vignette for legibility */
-    .vignette{
-      position: fixed; inset: 0; pointer-events:none;
-      background: radial-gradient(ellipse at center,
-                  rgba(0,0,0,0) 55%, rgba(0,0,0,.18) 100%);
-    }
-
-    header{ text-align:center; padding:20px 12px 6px }
+    header{ text-align:center; padding:18px 12px 4px }
     .nav a{
       display:inline-block; margin:0 6px; padding:6px 12px; border-radius:18px;
-      background:var(--card); color:var(--ink); text-decoration:none;
+      background:rgba(255,255,255,.9); color:var(--ink); text-decoration:none;
       box-shadow:0 8px 18px rgba(0,0,0,.14); font-size:14px;
     }
     h1{
-      margin:12px 0 8px; font-size:44px; line-height:1.1;
+      margin:10px 0 6px; font-size:44px; line-height:1.08;
       text-shadow:0 10px 24px rgba(0,0,0,.18);
     }
 
     main{
       max-width: 1100px;
-      margin: 18px auto 140px;
+      margin: 18px auto 120px;
       padding: 0 16px;
       display:grid; grid-template-columns: 1fr 1fr; gap:22px;
+      position:relative; z-index:2;           /* above bg */
     }
-    @media (max-width: 980px){
-      main{ grid-template-columns: 1fr; gap:16px; }
-    }
+    @media (max-width:980px){ main{ grid-template-columns:1fr; gap:16px } }
 
     .card{
-      background: var(--glass);
+      background:var(--glass);
       border-radius:14px;
       box-shadow:0 18px 40px rgba(0,0,0,.22);
-      border: 1px solid rgba(255,255,255,.55);
+      border:1px solid rgba(255,255,255,.55);
       backdrop-filter: blur(6px) saturate(120%);
     }
-    .pane{ padding:18px 18px 16px; }
+    .pane{ padding:18px 18px 16px }
 
     .drop{
-      border:2px dashed rgba(0,0,0,.15); border-radius:12px;
+      border:2px dashed rgba(0,0,0,.14); border-radius:12px;
       padding:16px; text-align:center; background:rgba(255,255,255,.55);
     }
     .drop input[type="file"]{ display:block; margin:10px auto }
@@ -84,21 +90,21 @@
       box-shadow: inset 0 1px 2px rgba(0,0,0,.05);
     }
 
-    .actions{ display:flex; gap:10px; align-items:center; margin-top:12px; }
+    .actions{ display:flex; gap:10px; align-items:center; margin-top:12px }
     .btn{
       background:var(--btn); color:#fff; border:none; border-radius:10px;
       padding:9px 14px; font-weight:700; cursor:pointer;
       box-shadow:0 10px 20px rgba(0,0,0,.2);
     }
-    .btn.secondary{ background:rgba(0,0,0,.06); color:var(--ink); }
+    .btn.secondary{ background:rgba(0,0,0,.06); color:var(--ink) }
     .muted{ font-size:12px; opacity:.85 }
 
-    /* hearts floating from bottom (optional, lightweight) */
-    #fxCanvas{ position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:-1; }
+    /* hearts (lightweight) */
+    #fxCanvas{ position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:1 }
   </style>
 </head>
 <body>
-  <div class="vignette" aria-hidden="true"></div>
+  <div class="bg" aria-hidden="true"></div>
   <canvas id="fxCanvas" aria-hidden="true"></canvas>
 
   <header>
@@ -110,9 +116,8 @@
     <h1>Upload a Sweet Memory</h1>
   </header>
 
-  <!-- Protected content (shown when auth is ready) -->
-  <main id="protectedContent" style="visibility:hidden;opacity:0;transition:opacity .25s">
-    <!-- Left: form -->
+  <!-- ✅ Form is visible by default; guard-auth will redirect if not logged in -->
+  <main id="protectedContent">
     <section class="card">
       <div class="pane">
         <div class="drop">
@@ -134,7 +139,6 @@
       </div>
     </section>
 
-    <!-- Right: preview -->
     <aside class="card">
       <div class="pane" style="min-height:220px; display:flex; align-items:center; justify-content:center;">
         <div id="previewBox" style="text-align:center; width:100%">
@@ -146,8 +150,8 @@
     </aside>
   </main>
 
-  <!-- Hearts (spawn mostly from bottom) -->
   <script>
+    // Hearts
     (function(){
       const c = document.getElementById('fxCanvas'); if (!c) return;
       const ctx = c.getContext('2d');
@@ -156,25 +160,14 @@
       const C=['#ffb3c6','#fff6a6','#ffd89e','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
       const R=(a,b)=>Math.random()*(b-a)+a;
       function resize(){ W=Math.floor(innerWidth*DPR); H=Math.floor(innerHeight*DPR); c.width=W; c.height=H; c.style.width='100vw'; c.style.height='100vh'; }
-      function spawn(){
-        if(hearts.length>36) return;
-        const startY = H - R(40*DPR, 140*DPR);
-        hearts.push({x:R(0,W),y:startY,s:R(14,28),vx:R(-8,8),vy:-R(10,22),a:R(.55,.9),r:R(-.5,.5),vr:R(-.01,.01),col:C[(Math.random()*C.length)|0]});
-      }
+      function spawn(){ if(hearts.length>36) return; const y=H-R(40*DPR,140*DPR); hearts.push({x:R(0,W),y,s:R(14,28),vx:R(-8,8),vy:-R(10,22),a:R(.55,.9),r:R(-.5,.5),vr:R(-.01,.01),col:C[(Math.random()*C.length)|0]}); }
       function draw(h){ const {x,y,s,r,a,col}=h; ctx.save(); ctx.translate(x,y); ctx.rotate(r); ctx.scale(s/50*DPR,s/50*DPR); ctx.globalAlpha=a; ctx.beginPath(); ctx.moveTo(0,-.5); ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8); ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5); ctx.fillStyle=col; ctx.fill(); ctx.restore(); }
       function tick(){ ctx.clearRect(0,0,W,H); if(Math.random()<.18) spawn(); hearts.forEach(h=>{ h.x+=h.vx*.016*DPR; h.y+=h.vy*.016*DPR; h.r+=h.vr; h.a-=.0009; draw(h)}); hearts=hearts.filter(h=>h.a>.02&&h.y>-140*DPR); requestAnimationFrame(tick); }
       addEventListener('resize',resize,{passive:true}); resize(); tick();
     })();
-  </script>
 
-  <!-- Show content after auth, handle preview + upload -->
-  <script>
+    // Preview + upload
     (function(){
-      const root = document.getElementById('protectedContent');
-      const show = ()=>{ root.style.visibility='visible'; root.style.opacity='1'; };
-      if (window.__shreeAuthReady) show();
-      else { window.addEventListener('shree:auth-ready', show, {once:true}); setTimeout(()=>{ if(window.__shreeAuthReady) show(); }, 1500); }
-
       const file = document.getElementById('photo');
       const cap  = document.getElementById('caption');
       const btn  = document.getElementById('uploadBtn');
@@ -191,7 +184,8 @@
       });
 
       clr.addEventListener('click', ()=>{
-        file.value = ''; cap.value=''; prev.style.display='none'; prev.removeAttribute('src'); prevSub.textContent='No photo selected'; msg.textContent='';
+        file.value=''; cap.value=''; prev.style.display='none'; prev.removeAttribute('src');
+        prevSub.textContent='No photo selected'; msg.textContent='';
       });
 
       btn.addEventListener('click', async ()=>{
@@ -211,7 +205,7 @@
           }
           if(!res.ok) throw new Error('HTTP '+res.status);
           msg.textContent='Uploaded ✓';
-          setTimeout(()=>location.href='/gallery.html', 750);
+          setTimeout(()=>location.href='/gallery.html', 700);
         }catch(e){
           console.error(e); msg.textContent='Upload failed: '+e.message;
         }
@@ -219,7 +213,7 @@
     })();
   </script>
 
-  <!-- Optional: global music heart (uses your existing files) -->
+  <!-- Music heart (optional) -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
 </body>
