@@ -12,70 +12,44 @@
 
   <style>
     :root{
-      /* ✅ your new background image */
+      /* ✅ single background image (your latest) */
       --bg-art: url("/assets/img/upload-bg-final-new.jpg");
 
-      /* crisp center painting */
-      --art-width: clamp(280px, 76vmin, 1080px); /* responsive */
-      --art-top: 120px;                          /* push down a little */
-      --art-opacity: .98;
-
-      /* blurred backdrop */
-      --blur-strength: 20px;
+      /* blurred backdrop amount (set to 0px if you want no blur) */
+      --blur-strength: 16px;
       --blur-opacity: .85;
 
-      /* UI tokens */
+      /* UI */
       --ink:#3e171b;
-      --card: rgba(255,255,255,.86);
-      --glass: rgba(255,255,255,.86);
+      --glass: rgba(255,255,255,.9);
       --btn:#b37232;
-    }
-    @media (max-width: 880px){
-      :root{ --art-top: 96px; --blur-strength: 16px; }
     }
 
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0; color:var(--ink);
-      font-family: ui-serif, "Playfair Display", Georgia, serif;
+      font-family: ui-serif,"Playfair Display",Georgia,serif;
       overflow-x:hidden; background:#f6eee8;
     }
 
-    /* ===== Painterly background: 2 layers ===== */
-    .bg,.bg::before,.bg::after{ position:fixed; inset:0; pointer-events:none; }
-    /* 1) blurred full bleed */
+    /* ==== Single full-page background (NO center panel) ==== */
+    .bg,.bg::before{ position:fixed; inset:0; pointer-events:none; }
     .bg::before{
       content:"";
       background-image: var(--bg-art);
       background-repeat:no-repeat;
       background-position:center center;
-      background-size: cover;
+      background-size: cover;             /* fill viewport */
       filter: blur(var(--blur-strength)) saturate(108%);
       opacity: var(--blur-opacity);
-      transform: scale(1.03); /* avoid blur edges */
-    }
-    /* 2) crisp center painting panel */
-    .bg::after{
-      content:"";
-      position:fixed;
-      left:50%; transform:translateX(-50%);
-      top: var(--art-top);
-      width: var(--art-width);
-      height: var(--art-width);         /* square panel that fits both desktop/mobile */
-      background-image: var(--bg-art);
-      background-repeat:no-repeat;
-      background-position:center center;
-      background-size: contain;         /* 👈 shows more of the lady properly */
-      border-radius: 10px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.28);
-      opacity: var(--art-opacity);
+      transform: scale(1.02);             /* avoid blur-edge gaps */
     }
 
     header{ text-align:center; padding:18px 10px 0; position:relative; z-index:3; }
     .nav a{
       display:inline-block; margin:0 6px; padding:6px 12px; border-radius:18px;
-      background:rgba(255,255,255,.9); color:var(--ink); text-decoration:none;
+      background:rgba(255,255,255,.95); color:var(--ink); text-decoration:none;
       box-shadow:0 6px 16px rgba(0,0,0,.12); font-size:14px;
     }
     h1{
@@ -100,9 +74,10 @@
 
     .drop{
       border:2px dashed rgba(0,0,0,.15); border-radius:12px;
-      padding:16px; text-align:center; background:rgba(255,255,255,.55);
+      padding:16px; text-align:center; background:rgba(255,255,255,.6);
     }
     .drop input[type="file"]{ display:block; margin:10px auto }
+
     textarea{
       width:100%; min-height:98px; resize:vertical; padding:10px 12px;
       border-radius:10px; border:1px solid rgba(0,0,0,.12); background:#fff;
@@ -118,17 +93,12 @@
     .btn.secondary{ background:rgba(0,0,0,.06); color:var(--ink); }
     .muted{ font-size:12px; opacity:.8 }
 
-    /* hearts canvas (mostly bottom float) */
+    /* hearts */
     #fxCanvas{ position:fixed; inset:0; width:100vw; height:100vh; pointer-events:none; z-index:2; }
-
-    /* keep crisp panel clear on very small screens */
-    @media (max-height: 660px){
-      :root{ --art-top: 80px; }
-    }
   </style>
 </head>
 <body>
-  <!-- Background painterly layers -->
+  <!-- Background -->
   <div class="bg" aria-hidden="true"></div>
   <canvas id="fxCanvas" aria-hidden="true"></canvas>
 
@@ -176,7 +146,7 @@
     </aside>
   </main>
 
-  <!-- Hearts (spawn mostly from bottom) -->
+  <!-- Hearts (bottom float) -->
   <script>
     (function(){
       const c = document.getElementById('fxCanvas'); if (!c) return;
@@ -188,7 +158,7 @@
       function resize(){ W=Math.floor(innerWidth*DPR); H=Math.floor(innerHeight*DPR); c.width=W; c.height=H; c.style.width='100vw'; c.style.height='100vh'; }
       function spawn(){
         if(hearts.length>36) return;
-        const startY = H - R(40*DPR, 140*DPR);      // start near bottom
+        const startY = H - R(40*DPR, 140*DPR);
         hearts.push({x:R(0,W),y:startY,s:R(14,28),vx:R(-8,8),vy:-R(10,22),a:R(.55,.9),r:R(-.5,.5),vr:R(-.01,.01),col:C[(Math.random()*C.length)|0]});
       }
       function draw(h){ const {x,y,s,r,a,col}=h; ctx.save(); ctx.translate(x,y); ctx.rotate(r); ctx.scale(s/50*DPR,s/50*DPR); ctx.globalAlpha=a; ctx.beginPath(); ctx.moveTo(0,-.5); ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8); ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5); ctx.fillStyle=col; ctx.fill(); ctx.restore(); }
@@ -197,13 +167,13 @@
     })();
   </script>
 
-  <!-- Upload logic (JWT via authFetch if available) -->
+  <!-- Upload logic -->
   <script>
     (function(){
       const root = document.getElementById('protectedContent');
       const show = ()=>{ root.style.visibility='visible'; root.style.opacity='1'; };
       if (window.__shreeAuthReady) show();
-      else { window.addEventListener('shree:auth-ready', show, {once:true}); setTimeout(()=>{ if(window.__shreeAuthReady) show(); }, 1500); }
+      else { window.addEventListener('shree:auth-ready', show, {once:true}); setTimeout(show, 1200); } // hard fallback
 
       const file = document.getElementById('photo');
       const cap  = document.getElementById('caption');
@@ -249,7 +219,7 @@
     })();
   </script>
 
-  <!-- Global music heart (same files you already have) -->
+  <!-- Music heart -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
 </body>
