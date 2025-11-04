@@ -13,33 +13,34 @@
 
   <style>
     :root{
-      /* Background art — same as upload page */
       --bg-art: url("/assets/img/upload-bg-final-new.jpg");
 
-      /* Option 3 — Golden Chestnut (premium cinematic) */
-      --ink: #4d2a18;
-      --ink-soft: #6a3a22;
+      /* Warm, high-contrast inks */
+      --ink: #3b1f16;        /* title */
+      --ink-soft:#5a3426;    /* body */
+      --muted:#6d4a3a;       /* subtitle */
 
-      /* Glass + layout tokens */
-      --glass: rgba(255,255,255,.22);
-      --card: rgba(255,255,255,.30);
+      /* Glass */
+      --card: rgba(255,255,255,.22);
+      --border: rgba(255,255,255,.55);
       --radius: 22px;
       --shadow: 0 22px 60px rgba(0,0,0,.28);
-      --btn:#6d2a47;         /* deep rose plum */
+
+      /* CTA */
+      --btn:#6d2a47;
       --btnHover:#7b3051;
-      --muted:#5f3a2c;       /* subtitle harmony */
     }
 
     *{box-sizing:border-box}
     html,body{height:100%;margin:0}
     body{
-      font-family: ui-serif, "Georgia", "Times New Roman", serif;
+      font-family: ui-serif, Georgia, "Times New Roman", serif;
       color:var(--ink);
-      overflow:hidden; /* no scroll on the hero */
-      background:#000; /* under-blur safety */
+      overflow:hidden;
+      background:#000;
     }
 
-    /* Painterly background */
+    /* Background: lighter blur, center aligned (no top-crop) */
     .bg, .bg::before, .bg::after{
       position:fixed; inset:0; pointer-events:none;
     }
@@ -47,96 +48,85 @@
       content:"";
       background-image: var(--bg-art);
       background-size: cover;
-      background-position: center center; /* no top-crop */
-      filter: blur(16px) saturate(112%);
+      background-position: center center;
+      filter: blur(10px) saturate(112%);  /* lighter blur */
       opacity:.92;
-      transform: scale(1.035);
+      transform: scale(1.01);             /* edge safety without crop feel */
     }
-    /* Subtle vignette to pull focus to center */
+    /* very soft vignette for focus */
     .bg::after{
       content:"";
       background:
-        radial-gradient(65% 55% at 50% 45%, rgba(255,255,255,.08), transparent 55%),
-        radial-gradient(120% 100% at 50% 60%, rgba(0,0,0,.25), transparent 60%);
+        radial-gradient(70% 58% at 50% 46%, rgba(255,255,255,.10), transparent 55%),
+        radial-gradient(120% 110% at 50% 60%, rgba(0,0,0,.20), transparent 62%);
       mix-blend-mode: multiply;
     }
 
     .wrap{
       min-height:100%;
-      display:grid;
-      place-items:center;
+      display:grid; place-items:center;
       padding:24px;
-      position:relative;
-      z-index:2;
+      position:relative; z-index:2;
     }
 
     .card{
-      width:min(980px,92vw);
+      width:min(960px,92vw);
       background:var(--card);
-      backdrop-filter: blur(10px) saturate(120%);
-      -webkit-backdrop-filter: blur(10px) saturate(120%);
+      backdrop-filter: blur(8px) saturate(120%);
+      -webkit-backdrop-filter: blur(8px) saturate(120%);
+      border:1px solid var(--border);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
       text-align:center;
       padding: clamp(28px, 6vw, 56px);
-      border: 1px solid rgba(255,255,255,.45);
     }
 
     .logo{
-      margin:0 0 10px;
+      margin:0 0 12px;
       font-size: clamp(58px, 9.5vw, 98px);
       line-height:1.02;
-      letter-spacing:.4px;
+      letter-spacing:.3px;
       color: var(--ink);
-      /* Option 3 glow */
       text-shadow:
-        0 2px 12px rgba(255, 233, 200, 0.35),
-        0 1px 0 rgba(255,255,255,.45);
+        0 1px 0 rgba(255,255,255,.6),
+        0 8px 22px rgba(0,0,0,.18);
     }
 
     .tag{
       margin:0 auto 28px;
-      max-width: 60ch;
+      max-width:62ch;
       font-size: clamp(16px, 2.2vw, 20px);
       color: var(--muted);
-      text-shadow: 0 1px 10px rgba(255, 233, 200, .25);
+      text-shadow: 0 1px 8px rgba(0,0,0,.15);
     }
 
     .cta-row{display:flex;justify-content:center}
     .btn{
-      -webkit-appearance:none; appearance:none;
-      border:none; cursor:pointer;
-      padding:14px 26px;
-      border-radius:999px;
-      background:var(--btn);
-      color:#fff; font-weight:700; letter-spacing:.2px;
-      box-shadow: 0 14px 30px rgba(109,42,71,.35);
+      appearance:none; border:none; cursor:pointer;
+      padding:14px 26px; border-radius:999px;
+      background:var(--btn); color:#fff; font-weight:700;
+      letter-spacing:.2px; text-decoration:none; display:inline-block;
+      box-shadow:0 14px 30px rgba(109,42,71,.35);
       transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
-      text-decoration:none; display:inline-block;
     }
     .btn:hover{ transform: translateY(-2px); background:var(--btnHover); }
     .btn:focus{ outline:3px solid rgba(109,42,71,.35); outline-offset:3px; }
 
     footer{
-      text-align:center;
-      font-size:12px;
-      color: var(--ink-soft);
-      opacity:.9;
-      margin-top:24px;
-      text-shadow: 0 1px 6px rgba(255, 233, 200, .25);
+      text-align:center; font-size:12px; color: var(--ink-soft);
+      opacity:.95; margin-top:24px;
+      text-shadow: 0 1px 6px rgba(0,0,0,.15);
     }
   </style>
 </head>
 <body>
-  <!-- Painterly background -->
   <div class="bg" aria-hidden="true"></div>
 
   <main class="wrap">
     <section class="card" aria-labelledby="brand">
       <h1 id="brand" class="logo">Shreshtha</h1>
       <p class="tag">
-        A little home of smiles, tiny adventures, and the sweetest memories —
-        curated with love.
+        A little home of smiles, tiny adventures, and the sweetest memories — curated with love.
       </p>
 
       <div class="cta-row">
