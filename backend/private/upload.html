@@ -30,7 +30,7 @@ html,body{
 .bg img{
   width:100vw;height:100vh;
   object-fit:cover;
-  object-position:center 0%;
+  object-position:center top;
   filter:saturate(110%) contrast(105%);
 }
 
@@ -42,8 +42,10 @@ header{text-align:center;padding:18px 10px 0;position:relative;z-index:3;}
   text-decoration:none;box-shadow:0 6px 16px rgba(0,0,0,.15);font-size:14px;
 }
 h1{
-  margin:16px 0 10px;font-size:44px;line-height:1.1;color:var(--ink);
-  text-shadow:0 10px 20px rgba(0,0,0,.25);
+  margin:16px 0 10px;
+  font-size:44px;line-height:1.1;
+  color:#5c2e10; /* Softer, warm brown tone matching painting */
+  text-shadow:0 10px 24px rgba(0,0,0,.25);
 }
 
 /* ====== Upload & Preview Cards ====== */
@@ -60,10 +62,10 @@ h1{
 }
 .drop input[type=file]{display:block;margin:10px auto;}
 textarea{
-  width:100%;min-height:92px;resize:vertical;padding:10px 12px;
+  width:100%;min-height:86px;resize:vertical;padding:10px 12px;
   border-radius:10px;border:1px solid rgba(0,0,0,.12);
   background:rgba(255,255,255,.85);
-  font-family:system-ui;
+  font-family:system-ui;box-sizing:border-box;
 }
 .actions{display:flex;gap:10px;align-items:center;margin-top:12px;}
 .btn{
@@ -78,8 +80,8 @@ textarea{
 #protectedContent.show{visibility:visible;opacity:1;}
 
 /* ====== Layout ====== */
-.upload-card{top:90px;right:8%;width:420px;}
-.preview-card{bottom:60px;left:8%;width:360px;background:rgba(255,255,255,.25);}
+.upload-card{top:90px;right:8%;width:400px;}
+.preview-card{bottom:60px;left:8%;width:340px;background:rgba(255,255,255,.25);}
 
 /* Hearts Canvas */
 #fxCanvas{position:fixed;inset:0;pointer-events:none;z-index:2;}
@@ -107,7 +109,7 @@ textarea{
         <input id="photo" name="photo" type="file" accept="image/*" required>
         <div class="muted">JPG/PNG • Max 8 MB</div>
       </div>
-      <div style="margin-top:12px">
+      <div style="margin-top:10px">
         <label for="caption" style="font-weight:700">Caption (short)</label>
         <textarea id="caption" name="caption" placeholder="Write a short caption (max 150 chars)"></textarea>
       </div>
@@ -160,7 +162,6 @@ textarea{
     fd.append('photo',file.files[0]);
     if(cap.value.trim())fd.append('caption',cap.value.trim());
     try{
-      // ⬇️ Local relative path again — hits your backend properly
       const res=await fetch('/api/upload',{method:'POST',body:fd,credentials:'include'});
       if(!res.ok)throw new Error('HTTP '+res.status);
       msg.textContent='Uploaded ✓';
