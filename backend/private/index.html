@@ -13,102 +13,136 @@
 
   <style>
     :root{
+      /* Background art — same as upload page */
       --bg-art: url("/assets/img/upload-bg-final-new.jpg");
-      --ink:#3b1e1b;
-      --btn:#6d2a47;
+
+      /* Option 3 — Golden Chestnut (premium cinematic) */
+      --ink: #4d2a18;
+      --ink-soft: #6a3a22;
+
+      /* Glass + layout tokens */
+      --glass: rgba(255,255,255,.22);
+      --card: rgba(255,255,255,.30);
+      --radius: 22px;
+      --shadow: 0 22px 60px rgba(0,0,0,.28);
+      --btn:#6d2a47;         /* deep rose plum */
       --btnHover:#7b3051;
-      --muted:#6b4c5a;
+      --muted:#5f3a2c;       /* subtitle harmony */
     }
 
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;overflow:hidden;font-family:ui-serif,"Playfair Display",Georgia,serif;color:var(--ink);}
-
-    /* Background — full cover, no crop, vibrant */
-    body::before{
-      content:"";
-      position:fixed;inset:0;z-index:-1;
-      background-image:var(--bg-art);
-      background-size:cover;
-      background-position:center top;
-      background-repeat:no-repeat;
-      filter:saturate(110%) contrast(106%);
+    html,body{height:100%;margin:0}
+    body{
+      font-family: ui-serif, "Georgia", "Times New Roman", serif;
+      color:var(--ink);
+      overflow:hidden; /* no scroll on the hero */
+      background:#000; /* under-blur safety */
     }
 
-    /* Light overlay for readability */
-    body::after{
+    /* Painterly background */
+    .bg, .bg::before, .bg::after{
+      position:fixed; inset:0; pointer-events:none;
+    }
+    .bg::before{
       content:"";
-      position:fixed;inset:0;z-index:-1;
-      background:rgba(255,255,255,.18);
-      backdrop-filter:blur(10px);
+      background-image: var(--bg-art);
+      background-size: cover;
+      background-position: center center; /* no top-crop */
+      filter: blur(16px) saturate(112%);
+      opacity:.92;
+      transform: scale(1.035);
+    }
+    /* Subtle vignette to pull focus to center */
+    .bg::after{
+      content:"";
+      background:
+        radial-gradient(65% 55% at 50% 45%, rgba(255,255,255,.08), transparent 55%),
+        radial-gradient(120% 100% at 50% 60%, rgba(0,0,0,.25), transparent 60%);
+      mix-blend-mode: multiply;
     }
 
-    /* Center Card */
     .wrap{
-      height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      padding:20px;
+      min-height:100%;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      position:relative;
+      z-index:2;
     }
+
     .card{
-      background:rgba(255,255,255,.25);
-      backdrop-filter:blur(10px) saturate(130%);
-      -webkit-backdrop-filter:blur(10px) saturate(130%);
-      border-radius:24px;
-      box-shadow:0 20px 60px rgba(0,0,0,.25);
-      padding:clamp(30px,6vw,60px);
-      width:min(800px,90%);
-      border:1px solid rgba(255,255,255,.5);
-      transition:transform .3s ease;
+      width:min(980px,92vw);
+      background:var(--card);
+      backdrop-filter: blur(10px) saturate(120%);
+      -webkit-backdrop-filter: blur(10px) saturate(120%);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      text-align:center;
+      padding: clamp(28px, 6vw, 56px);
+      border: 1px solid rgba(255,255,255,.45);
     }
-    .card:hover{transform:translateY(-4px);}
 
     .logo{
-      font-size:clamp(58px,8vw,96px);
-      margin:0 0 12px;
-      line-height:1.05;
-      text-shadow:0 8px 18px rgba(0,0,0,.2);
+      margin:0 0 10px;
+      font-size: clamp(58px, 9.5vw, 98px);
+      line-height:1.02;
+      letter-spacing:.4px;
+      color: var(--ink);
+      /* Option 3 glow */
+      text-shadow:
+        0 2px 12px rgba(255, 233, 200, 0.35),
+        0 1px 0 rgba(255,255,255,.45);
     }
+
     .tag{
       margin:0 auto 28px;
-      font-size:clamp(17px,2.3vw,21px);
-      color:var(--muted);
-      max-width:55ch;
+      max-width: 60ch;
+      font-size: clamp(16px, 2.2vw, 20px);
+      color: var(--muted);
+      text-shadow: 0 1px 10px rgba(255, 233, 200, .25);
     }
 
+    .cta-row{display:flex;justify-content:center}
     .btn{
-      display:inline-block;
-      background:var(--btn);
-      color:#fff;
-      border:none;
-      padding:14px 28px;
-      font-weight:700;
+      -webkit-appearance:none; appearance:none;
+      border:none; cursor:pointer;
+      padding:14px 26px;
       border-radius:999px;
-      box-shadow:0 10px 24px rgba(109,42,71,.3);
-      text-decoration:none;
-      letter-spacing:.3px;
-      transition:all .2s ease;
+      background:var(--btn);
+      color:#fff; font-weight:700; letter-spacing:.2px;
+      box-shadow: 0 14px 30px rgba(109,42,71,.35);
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+      text-decoration:none; display:inline-block;
     }
-    .btn:hover{background:var(--btnHover);transform:translateY(-2px);}
-    .btn:focus{outline:3px solid rgba(109,42,71,.4);outline-offset:3px;}
+    .btn:hover{ transform: translateY(-2px); background:var(--btnHover); }
+    .btn:focus{ outline:3px solid rgba(109,42,71,.35); outline-offset:3px; }
 
     footer{
-      font-size:13px;
-      color:var(--muted);
-      margin-top:26px;
+      text-align:center;
+      font-size:12px;
+      color: var(--ink-soft);
       opacity:.9;
+      margin-top:24px;
+      text-shadow: 0 1px 6px rgba(255, 233, 200, .25);
     }
   </style>
 </head>
 <body>
+  <!-- Painterly background -->
+  <div class="bg" aria-hidden="true"></div>
+
   <main class="wrap">
-    <section class="card">
-      <h1 class="logo">Shreshtha</h1>
+    <section class="card" aria-labelledby="brand">
+      <h1 id="brand" class="logo">Shreshtha</h1>
       <p class="tag">
-        A little home of smiles, tiny adventures, and the sweetest memories — curated with love.
+        A little home of smiles, tiny adventures, and the sweetest memories —
+        curated with love.
       </p>
-      <a class="btn" href="/auth/login" id="btn-login">Step inside</a>
+
+      <div class="cta-row">
+        <a class="btn" href="/auth/login" id="btn-login">Step inside</a>
+      </div>
+
       <footer>© Shreshtha’s Life • crafted with love</footer>
     </section>
   </main>
