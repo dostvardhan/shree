@@ -5,18 +5,17 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Upload — Sweet Memories</title>
 
-  <!-- Private page auth -->
   <script src="/auth0-spa-js.production.js" defer></script>
   <script src="/auth-init.js" defer></script>
   <script src="/guard-auth.js" defer></script>
 
   <style>
-    :root{
+    :root {
       --bg-url: "/assets/img/upload-bg-final-new.jpg";
       --ink:#3b1e1b;
       --btn:#bb7a39;
-      --glass: rgba(255,255,255,.38);        /* more transparent */
-      --glass-lite: rgba(255,255,255,.28);   /* inner boxes even lighter */
+      --glass: rgba(255,255,255,.28);
+      --glass-lite: rgba(255,255,255,.22);
     }
 
     html,body{height:100%}
@@ -27,30 +26,27 @@
       overflow-x:hidden; background:#000;
     }
 
-    /* Background image (no crop feel, keeps face visible) */
     .bg-wrap{position:fixed; inset:0; z-index:0; pointer-events:none; display:grid; place-items:center;}
     .bg-wrap img{width:100vw; height:100vh; object-fit:cover; object-position:center 15%;}
 
-    header{ text-align:center; padding:18px 10px 0; position:relative; z-index:3; }
-    .nav a{
-      display:inline-block; margin:0 6px; padding:6px 12px; border-radius:18px;
-      background:rgba(255,255,255,.86); color:var(--ink); text-decoration:none;
-      box-shadow:0 6px 16px rgba(0,0,0,.12); font-size:14px;
-    }
-    h1{ margin:16px 0 10px; font-size:44px; line-height:1.1; color:var(--ink);
-        text-shadow:0 8px 18px rgba(0,0,0,.30); }
+    header{text-align:center; padding:18px 10px 0; position:relative; z-index:3;}
+    .nav a{display:inline-block;margin:0 6px;padding:6px 12px;border-radius:18px;
+      background:rgba(255,255,255,.86);color:var(--ink);text-decoration:none;
+      box-shadow:0 6px 16px rgba(0,0,0,.12);font-size:14px;}
+    h1{margin:16px 0 10px;font-size:44px;line-height:1.1;color:var(--ink);
+      text-shadow:0 8px 18px rgba(0,0,0,.30);}
 
-    /* ===== Layout: upload = top-right (smaller), preview = bottom-left (smaller) ===== */
+    /* Swapped layout */
     main{
       position:relative; z-index:4;
       max-width:1400px; margin:22px auto 120px; padding:0 18px;
-      height: calc(100vh - 170px);
+      height:calc(100vh - 170px);
       display:grid; gap:24px;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
+      grid-template-columns:1fr 1fr;
+      grid-template-rows:1fr 1fr;
       grid-template-areas:
-        "empty upload"
-        "preview empty2";
+        "upload empty"
+        "empty2 preview";
       align-items:start;
     }
 
@@ -58,66 +54,53 @@
       background:var(--glass);
       border-radius:14px;
       box-shadow:0 14px 34px rgba(0,0,0,.22);
-      border:1px solid rgba(255,255,255,.55);
+      border:1px solid rgba(255,255,255,.45);
       backdrop-filter: blur(10px);
     }
-    .pane{ padding:16px 16px 14px; }
+    .pane{padding:16px;}
 
-    /* Upload box — top right, a bit smaller */
-    .upload-card{ grid-area: upload; justify-self:end; width: 420px; }
+    /* Upload bottom-left */
+    .upload-card{grid-area:upload;justify-self:start;width:380px;background:var(--glass-lite);}
     .drop{
-      border:2px dashed rgba(0,0,0,.22); border-radius:12px;
-      padding:14px; text-align:center; background:var(--glass-lite);
+      border:2px dashed rgba(0,0,0,.22);border-radius:12px;
+      padding:14px;text-align:center;background:rgba(255,255,255,.18);
     }
-    .drop input[type=file]{ display:block; margin:10px auto; }
+    .drop input[type=file]{display:block;margin:10px auto;}
 
     textarea{
-      width:100%; min-height:92px; resize:vertical; padding:10px 12px;
-      border-radius:10px; border:1px solid rgba(0,0,0,.12); background:rgba(255,255,255,.85);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      width:100%;min-height:92px;resize:vertical;padding:10px 12px;
+      border-radius:10px;border:1px solid rgba(0,0,0,.12);background:rgba(255,255,255,.8);
+      font-family:system-ui;
     }
-    .actions{ display:flex; gap:10px; align-items:center; margin-top:12px; }
-    .btn{ background:var(--btn); color:#fff; border:none; border-radius:10px; padding:9px 14px; font-weight:700; cursor:pointer; box-shadow:0 10px 22px rgba(0,0,0,.25); }
-    .btn.secondary{ background:rgba(0,0,0,.06); color:var(--ink); }
-    .muted{ font-size:12px; opacity:.82 }
 
-    /* Preview — bottom left, smaller + more transparent */
-    .preview-card{ grid-area: preview; justify-self:start; width: 360px; background: rgba(255,255,255,.32); }
-    #previewImg{ max-width:100%; border-radius:10px; display:none; box-shadow:0 8px 20px rgba(0,0,0,.22); }
+    .actions{display:flex;gap:10px;align-items:center;margin-top:12px;}
+    .btn{background:var(--btn);color:#fff;border:none;border-radius:10px;padding:9px 14px;
+      font-weight:700;cursor:pointer;box-shadow:0 10px 22px rgba(0,0,0,.25);}
+    .btn.secondary{background:rgba(0,0,0,.06);color:var(--ink);}
+    .muted{font-size:12px;opacity:.82}
 
-    /* Hearts canvas */
-    #fxCanvas{ position:fixed; inset:0; pointer-events:none; z-index:2; }
+    /* Preview top-right */
+    .preview-card{grid-area:preview;justify-self:end;width:420px;background:rgba(255,255,255,.25);}
+    #previewImg{max-width:100%;border-radius:10px;display:none;box-shadow:0 8px 20px rgba(0,0,0,.22);}
 
-    /* Reveal content safely */
-    #protectedContent{ visibility:hidden; opacity:0; transition:opacity .25s }
-    #protectedContent.show{ visibility:visible; opacity:1 }
+    #fxCanvas{position:fixed;inset:0;pointer-events:none;z-index:2;}
+    #protectedContent{visibility:hidden;opacity:0;transition:opacity .25s;}
+    #protectedContent.show{visibility:visible;opacity:1;}
 
-    /* Mobile: stack upload then preview, centered */
-    @media (max-width: 900px){
-      main{
-        height:auto;
-        grid-template-columns: 1fr;
-        grid-template-rows:auto auto;
-        grid-template-areas:
-          "upload"
-          "preview";
-        justify-items:center;
-        gap:16px;
-      }
-      .upload-card{ width:min(92vw, 420px); justify-self:center; }
-      .preview-card{ width:min(92vw, 380px); justify-self:center; }
+    @media (max-width:900px){
+      main{grid-template-columns:1fr;grid-template-rows:auto auto;grid-template-areas:"upload""preview";
+      justify-items:center;gap:16px;height:auto;}
+      .upload-card{width:min(92vw,420px);}
+      .preview-card{width:min(92vw,380px);}
     }
   </style>
 </head>
 <body>
-  <div class="bg-wrap" aria-hidden="true">
-    <img src="/assets/img/upload-bg-final-new.jpg" alt="">
-  </div>
-
-  <canvas id="fxCanvas" aria-hidden="true"></canvas>
+  <div class="bg-wrap"><img src="/assets/img/upload-bg-final-new.jpg" alt=""></div>
+  <canvas id="fxCanvas"></canvas>
 
   <header>
-    <nav class="nav" aria-label="Pages">
+    <nav class="nav">
       <a href="/life.html">Life</a>
       <a href="/gallery.html">Gallery</a>
       <a href="/logout.html">Logout</a>
@@ -126,7 +109,18 @@
   </header>
 
   <main id="protectedContent">
-    <!-- Upload (top-right) -->
+    <!-- Preview now top-right -->
+    <aside class="card preview-card">
+      <div class="pane" style="min-height:200px;display:flex;align-items:center;justify-content:center;">
+        <div id="previewBox" style="text-align:center;width:100%">
+          <div class="muted">Preview</div>
+          <div class="muted" id="previewSub">No photo selected</div>
+          <img id="previewImg" alt=""/>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Upload now bottom-left -->
     <section class="card upload-card">
       <div class="pane">
         <div class="drop">
@@ -137,7 +131,7 @@
 
         <div style="margin-top:12px">
           <label for="caption" style="font-weight:700">Caption (short)</label>
-          <textarea id="caption" name="caption" placeholder="Write a short caption (max 150 chars)"></textarea>
+          <textarea id="caption" name="caption" placeholder="Write a short caption..."></textarea>
         </div>
 
         <div class="actions">
@@ -147,90 +141,35 @@
         </div>
       </div>
     </section>
-
-    <!-- Preview (bottom-left) -->
-    <aside class="card preview-card">
-      <div class="pane" style="min-height:180px; display:flex; align-items:center; justify-content:center;">
-        <div id="previewBox" style="text-align:center; width:100%">
-          <div class="muted">Preview</div>
-          <div class="muted" id="previewSub">No photo selected</div>
-          <img id="previewImg" alt=""/>
-        </div>
-      </div>
-    </aside>
   </main>
 
-  <!-- Hearts -->
   <script>
     (function(){
-      const c=document.getElementById('fxCanvas'); if(!c) return;
-      const ctx=c.getContext('2d'); const DPR=Math.max(1,devicePixelRatio||1);
-      let W=0,H=0, hearts=[]; const C=['#ffb3c6','#fff6a6','#ffd89e','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
+      const c=document.getElementById('fxCanvas');if(!c)return;
+      const ctx=c.getContext('2d');const DPR=Math.max(1,devicePixelRatio||1);
+      let W=0,H=0,hearts=[];const C=['#ffb3c6','#fff6a6','#ffd89e','#d6f5c6','#d6e0ff','#ffd1ea','#ffe3b8'];
       const R=(a,b)=>Math.random()*(b-a)+a;
-      function resize(){ W=innerWidth*DPR; H=innerHeight*DPR; c.width=W; c.height=H; }
-      function spawn(){ if(hearts.length>36) return; hearts.push({x:R(0,W),y:H-R(60,180),s:R(14,28),vx:R(-8,8),vy:-R(10,22),a:R(.55,.9),r:R(-.5,.5),vr:R(-.01,.01),col:C[(Math.random()*C.length)|0]}); }
-      function draw(h){ const {x,y,s,r,a,col}=h; ctx.save(); ctx.translate(x,y); ctx.rotate(r); ctx.scale(s/50*DPR,s/50*DPR); ctx.globalAlpha=a; ctx.beginPath(); ctx.moveTo(0,-.5); ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8); ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5); ctx.fillStyle=col; ctx.fill(); ctx.restore(); }
-      function tick(){ ctx.clearRect(0,0,W,H); if(Math.random()<.18) spawn(); hearts.forEach(h=>{ h.x+=h.vx*.016*DPR; h.y+=h.vy*.016*DPR; h.r+=h.vr; h.a-=.0009; draw(h)}); hearts=hearts.filter(h=>h.a>.02&&h.y>-140*DPR); requestAnimationFrame(tick); }
-      addEventListener('resize',resize,{passive:true}); resize(); tick();
+      function resize(){W=innerWidth*DPR;H=innerHeight*DPR;c.width=W;c.height=H;}
+      function spawn(){if(hearts.length>36)return;hearts.push({x:R(0,W),y:H-R(60,180),s:R(14,28),vx:R(-8,8),vy:-R(10,22),a:R(.55,.9),r:R(-.5,.5),vr:R(-.01,.01),col:C[(Math.random()*C.length)|0]});}
+      function draw(h){const{x,y,s,r,a,col}=h;ctx.save();ctx.translate(x,y);ctx.rotate(r);ctx.scale(s/50*DPR,s/50*DPR);ctx.globalAlpha=a;ctx.beginPath();ctx.moveTo(0,-.5);ctx.bezierCurveTo(.45,-1.05,1.15,-.05,0,.8);ctx.bezierCurveTo(-1.15,-.05,-.45,-1.05,0,-.5);ctx.fillStyle=col;ctx.fill();ctx.restore();}
+      function tick(){ctx.clearRect(0,0,W,H);if(Math.random()<.18)spawn();hearts.forEach(h=>{h.x+=h.vx*.016*DPR;h.y+=h.vy*.016*DPR;h.r+=h.vr;h.a-=.0009;draw(h)});hearts=hearts.filter(h=>h.a>.02&&h.y>-140*DPR);requestAnimationFrame(tick);}
+      addEventListener('resize',resize,{passive:true});resize();tick();
     })();
   </script>
 
-  <!-- Upload + robust auth reveal -->
   <script>
     (function(){
-      const root = document.getElementById('protectedContent');
-      const reveal = ()=> root.classList.add('show');
-      if (window.__shreeAuthReady) reveal();
-      else {
-        window.addEventListener('shree:auth-ready', reveal, { once:true });
-        setTimeout(reveal, 1500);
-      }
-
-      const file = document.getElementById('photo');
-      const cap  = document.getElementById('caption');
-      const btn  = document.getElementById('uploadBtn');
-      const clr  = document.getElementById('clearBtn');
-      const msg  = document.getElementById('msg');
-      const prev = document.getElementById('previewImg');
-      const prevSub = document.getElementById('previewSub');
-
-      file.addEventListener('change', ()=>{
-        const f = file.files[0];
-        if(!f){ prev.style.display='none'; prev.removeAttribute('src'); prevSub.textContent='No photo selected'; return; }
-        const url = URL.createObjectURL(f);
-        prev.src = url; prev.style.display='inline-block'; prevSub.textContent='';
-      });
-
-      clr.addEventListener('click', ()=>{
-        file.value = ''; cap.value=''; prev.style.display='none'; prev.removeAttribute('src'); prevSub.textContent='No photo selected'; msg.textContent='';
-      });
-
-      btn.addEventListener('click', async ()=>{
-        if(!file.files[0]){ msg.textContent='Please choose a photo'; return; }
-        msg.textContent='Uploading…';
-        const fd = new FormData();
-        fd.append('photo', file.files[0]);
-        if (cap.value.trim()) fd.append('caption', cap.value.trim());
-        try{
-          let res;
-          if(window.authFetch){
-            res = await window.authFetch('/api/upload', { method:'POST', body: fd });
-          }else{
-            let token=null; if(window.getAuthToken) token = await window.getAuthToken();
-            const headers = token ? { 'Authorization':'Bearer '+token } : {};
-            res = await fetch('/api/upload', { method:'POST', body: fd, headers, credentials:'include' });
-          }
-          if(!res.ok) throw new Error('HTTP '+res.status);
-          msg.textContent='Uploaded ✓';
-          setTimeout(()=>location.href='/gallery.html', 750);
-        }catch(e){
-          console.error(e); msg.textContent='Upload failed: '+e.message;
-        }
-      });
+      const root=document.getElementById('protectedContent');
+      const reveal=()=>root.classList.add('show');
+      if(window.__shreeAuthReady)reveal();else{window.addEventListener('shree:auth-ready',reveal,{once:true});setTimeout(reveal,1500);}
+      const file=document.getElementById('photo'),cap=document.getElementById('caption'),btn=document.getElementById('uploadBtn'),clr=document.getElementById('clearBtn'),msg=document.getElementById('msg'),prev=document.getElementById('previewImg'),prevSub=document.getElementById('previewSub');
+      file.addEventListener('change',()=>{const f=file.files[0];if(!f){prev.style.display='none';prev.src='';prevSub.textContent='No photo selected';return;}const url=URL.createObjectURL(f);prev.src=url;prev.style.display='inline-block';prevSub.textContent='';});
+      clr.addEventListener('click',()=>{file.value='';cap.value='';prev.style.display='none';prev.src='';prevSub.textContent='No photo selected';msg.textContent='';});
+      btn.addEventListener('click',async()=>{if(!file.files[0]){msg.textContent='Please choose a photo';return;}msg.textContent='Uploading…';const fd=new FormData();fd.append('photo',file.files[0]);if(cap.value.trim())fd.append('caption',cap.value.trim());try{let res;if(window.authFetch)res=await window.authFetch('/api/upload',{method:'POST',body:fd});else{let token=null;if(window.getAuthToken)token=await window.getAuthToken();const headers=token?{'Authorization':'Bearer '+token}:{};
+      res=await fetch('/api/upload',{method:'POST',body:fd,headers,credentials:'include'});}if(!res.ok)throw new Error('HTTP '+res.status);msg.textContent='Uploaded ✓';setTimeout(()=>location.href='/gallery.html',750);}catch(e){msg.textContent='Upload failed: '+e.message;console.error(e);}});
     })();
   </script>
 
-  <!-- Music heart -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
 </body>
