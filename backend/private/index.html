@@ -5,147 +5,104 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Shreshtha • Home</title>
 
-  <!-- (Public landing; no auth guard needed here) -->
+  <!-- Auth -->
+  <script src="/auth0-spa-js.production.js"></script>
+  <script src="auth-init.js" defer></script>
+  <script src="guard-auth.js" defer></script>
 
   <style>
-    :root{
-      /* SAME painting as upload page */
+    :root {
       --bg-art: url("/assets/img/upload-bg-final-new.jpg");
-
-      /* contained crisp art block (no crop) */
-      --art-size: min(1080px, 82vmin);
-      --art-top: 118px;        /* move down so head never crops */
-      --art-opacity: .95;
-
-      /* blurred backdrop */
-      --blur-opacity: .86;
-      --blur-strength: 22px;
-
-      /* theme */
-      --teal:#47B8B0;           /* requested text colour */
-      --ink:#1b2b2a;            /* subtle dark for shadows */
-      --glass: rgba(255,255,255,.14);
-      --glass-stroke: rgba(255,255,255,.35);
-      --btn-bg:#5e2441;         /* keeps brand feel */
-      --btn-bg-hover:#6d2a4b;
+      --text1: #7F255B;  /* deep rose */
+      --text2: #C894B8;  /* soft blush highlight */
+      --glass: rgba(255, 255, 255, 0.12);
+      --border: rgba(255, 255, 255, 0.25);
+      --btn-bg: #6d2a47;
+      --btn-hover: #812f56;
     }
 
-    @media (max-width: 880px){
-      :root{
-        --art-size: 92vmin;
-        --art-top: 96px;
-        --blur-strength: 16px;
-      }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      font-family: ui-serif, "Georgia", "Times New Roman", serif;
+      background: var(--bg-art) no-repeat center center fixed;
+      background-size: cover;
+      overflow: hidden;
     }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family: ui-serif, "Playfair Display", Georgia, serif;
-      color:var(--teal);
-      background:#0f1514;
-      overflow-x:hidden;
+    .wrap {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
     }
 
-    /* ===== Full-page background: blurred fill + crisp contained art (no crop) ===== */
-    .bg, .bg::before, .bg::after{position:fixed; inset:0; pointer-events:none}
-    .bg::before{
-      content:"";
-      background-image: var(--bg-art);
-      background-repeat:no-repeat;
-      background-position:center center;
-      background-size: cover;               /* fills edges */
-      filter: blur(var(--blur-strength)) saturate(106%);
-      opacity: var(--blur-opacity);
-      transform: scale(1.03);
-    }
-    .bg::after{
-      content:"";
-      width: var(--art-size);
-      height: var(--art-size);
-      margin: 0 auto;
-      left:0; right:0; top: var(--art-top);
-      background-image: var(--bg-art);
-      background-repeat:no-repeat;
-      background-position:center center;
-      background-size: contain;             /* shows the whole painting */
-      box-shadow: 0 22px 60px rgba(0,0,0,.30);
-      border-radius: 10px;
-      opacity: var(--art-opacity);
-    }
-
-    /* ===== Card ===== */
-    .wrap{
-      position:relative; z-index:4;
-      min-height:100%;
-      display:grid; place-items:center;
-      padding:20px;
-    }
-    .card{
-      width:min(980px, 92vw);
-      margin-top: clamp(140px, 18vh, 220px);
+    .card {
       background: var(--glass);
-      -webkit-backdrop-filter: blur(10px);
-      backdrop-filter: blur(10px);
-      border-radius: 18px;
-      border:1px solid var(--glass-stroke);
-      box-shadow: 0 18px 40px rgba(0,0,0,.25);
-      text-align:center;
-      padding: clamp(22px, 6vw, 48px);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+      padding: clamp(28px, 6vw, 56px);
+      width: min(900px, 90vw);
     }
 
-    h1{
-      margin:0 0 10px;
-      font-size: clamp(46px, 9.5vw, 96px);
-      line-height:1.04;
-      color: var(--teal);
-      /* gentle glow for contrast on mixed background */
+    h1 {
+      font-size: clamp(56px, 9vw, 96px);
+      line-height: 1.05;
+      background: linear-gradient(180deg, var(--text1), var(--text2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
       text-shadow:
-        0 0 30px rgba(71,184,176,.30),
-        0 2px 0 rgba(0,0,0,.25);
+        0 0 18px rgba(127, 37, 91, 0.45),
+        0 2px 0 rgba(0, 0, 0, 0.3);
+      margin-bottom: 14px;
     }
 
-    .tag{
-      margin: 6px auto 22px;
-      max-width: 58ch;
-      font-size: clamp(16px, 2.6vw, 22px);
-      color: var(--teal);
-      opacity:.95;
-      text-shadow: 0 1px 0 rgba(0,0,0,.25);
+    .tag {
+      font-size: clamp(16px, 2.4vw, 20px);
+      color: var(--text1);
+      opacity: 0.9;
+      text-shadow: 0 0 14px rgba(200, 148, 184, 0.45);
+      margin-bottom: 26px;
     }
 
-    .btn{
-      -webkit-appearance:none; appearance:none;
-      display:inline-block;
-      border:none; cursor:pointer;
-      padding:14px 28px;
+    .btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      padding: 14px 26px;
       border-radius: 999px;
-      font-weight:800;
-      letter-spacing:.2px;
-      color:#fff;
       background: var(--btn-bg);
-      box-shadow:
-        0 14px 28px rgba(94,36,65,.35),
-        inset 0 0 0 1px rgba(255,255,255,.18);
-      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      text-decoration: none;
+      box-shadow: 0 12px 28px rgba(109, 42, 71, 0.35);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
     }
-    .btn:hover{ transform: translateY(-2px); background: var(--btn-bg-hover); }
-    .btn:focus{ outline:3px solid rgba(71,184,176,.45); outline-offset:3px; }
 
-    footer{
-      margin-top:18px;
-      font-size:12px;
-      color: var(--teal);
-      opacity:.9;
-      text-shadow: 0 1px 0 rgba(0,0,0,.25);
+    .btn:hover {
+      transform: translateY(-2px);
+      background: var(--btn-hover);
+      box-shadow: 0 0 38px rgba(200, 148, 184, 0.65);
+    }
+
+    footer {
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--text1);
+      opacity: 0.9;
+      text-shadow: 0 0 10px rgba(200, 148, 184, 0.4);
     }
   </style>
 </head>
-<body>
-  <!-- Background layers -->
-  <div class="bg" aria-hidden="true"></div>
 
+<body>
   <main class="wrap">
     <section class="card" aria-labelledby="brand">
       <h1 id="brand">Shreshtha</h1>
