@@ -2,147 +2,262 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Shreshtha • Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Upload — Sweet Memories</title>
 
-  <!-- Security (simple, since this page is static) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline';">
+  <!-- Auth -->
+  <script src="/auth0-spa-js.production.js"></script>
+  <script src="auth-init.js" defer></script>
+  <script src="guard-auth.js" defer></script>
 
   <style>
-    :root{
-      /* same painting as upload.html */
+    :root {
       --bg-art: url("/assets/img/upload-bg-final-new.jpg");
-
-      /* center artwork box */
-      --art-size: min(1180px, 86vmin);
-      --art-top: 92px;          /* move center image down a bit */
-      --art-opacity: 0.92;
-
-      /* blur backdrop */
-      --blur-strength: 22px;
-      --blur-opacity: 0.86;
-
-      /* glass card + type */
-      --ink: #4a2128;           /* deep maroon */
-      --sub: #6e4b56;           /* subtitle */
-      --glass: rgba(255,255,255,.18);
-      --glass-border: rgba(255,255,255,.55);
-      --shadow: 0 28px 70px rgba(0,0,0,.28);
-
-      /* CTA */
+      --ink: #3a1f1f;
+      --sub: #5b3a3a;
       --btn: #6d2a47;
       --btnHover: #7b3051;
+      --card-bg: rgba(255,255,255,0.18);
+      --preview-bg: rgba(255,255,255,0.12);
+      --radius: 18px;
+      --shadow: 0 14px 38px rgba(0,0,0,0.22);
     }
 
-    @media (max-width: 900px){
-      :root{
-        --art-size: 92vmin;
-        --art-top: 76px;
-        --blur-strength: 16px;
-      }
-    }
-
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      color:var(--ink);
-      font-family: ui-serif, Georgia, "Times New Roman", serif;
-      overflow-x:hidden;
-      background:#f6efe8;
-    }
-
-    /* ===== Painterly background (2 layers) ===== */
-    .bg, .bg::before, .bg::after{
-      position:fixed; inset:0; pointer-events:none;
-    }
-    .bg::before{
-      content:"";
-      background-image: var(--bg-art);
-      background-repeat:no-repeat;
-      background-position:center center;
-      background-size: cover; /* full bleed blur */
-      filter: blur(var(--blur-strength)) saturate(108%);
-      opacity: var(--blur-opacity);
-      transform: scale(1.02); /* avoid blur gaps */
-    }
-    .bg::after{
-      content:"";
-      width: var(--art-size);
-      height: var(--art-size);
-      margin: 0 auto;
-      left:0; right:0;
-      top: var(--art-top);
-      background-image: var(--bg-art);
-      background-repeat:no-repeat;
-      background-position:center center;
-      background-size: contain;   /* ⭐ no crop */
-      box-shadow: 0 24px 68px rgba(0,0,0,.26);
-      border-radius: 12px;
-      opacity: var(--art-opacity);
-    }
-
-    /* ===== Center card ===== */
-    .wrap{ position:relative; z-index:3; min-height:100%; display:grid; place-items:center; padding:24px 16px 40px; }
-    .card{
-      width:min(980px, 92vw);
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: 24px;
-      -webkit-backdrop-filter: blur(10px) saturate(120%);
-      backdrop-filter: blur(10px) saturate(120%);
-      box-shadow: var(--shadow);
-      text-align:center;
-      padding: clamp(28px, 6vw, 56px);
-    }
-    .logo{
-      margin:0 0 8px;
-      font-size: clamp(48px, 8.6vw, 96px);
-      line-height:1.06;
-      letter-spacing:.3px;
-      text-shadow: 0 8px 26px rgba(0,0,0,.18);
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      height: 100%; overflow: hidden;
+      font-family: ui-serif, "Georgia", "Times New Roman", serif;
       color: var(--ink);
+      background: var(--bg-art) no-repeat center center fixed;
+      background-size: cover;
     }
-    .tag{
-      margin:0 auto 26px;
-      max-width: 56ch;
-      font-size: clamp(16px, 2.2vw, 22px);
+
+    header {
+      text-align: center;
+      padding: 16px 0 0;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: var(--ink);
+      background: rgba(255,255,255,0.8);
+      padding: 6px 14px;
+      margin: 0 6px;
+      border-radius: 20px;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: all 0.2s ease;
+    }
+    nav a:hover { background: rgba(255,255,255,1); }
+
+    h1 {
+      text-align: center;
+      font-size: 38px;
+      font-weight: 700;
+      color: var(--ink);
+      text-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      margin-top: 12px;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      align-items: start;
+      justify-content: center;
+      padding: 20px 40px;
+      height: calc(100% - 140px);
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; height: auto; overflow-y: auto; }
+    }
+
+    .upload-box, .preview-box {
+      backdrop-filter: blur(10px) saturate(110%);
+      -webkit-backdrop-filter: blur(10px) saturate(110%);
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      transition: transform 0.2s ease;
+    }
+    .upload-box:hover, .preview-box:hover { transform: translateY(-2px); }
+
+    .upload-box {
+      max-width: 400px;
+      justify-self: end;
+      opacity: 0.95;
+    }
+
+    .preview-box {
+      justify-self: start;
+      max-width: 380px;
+      opacity: 0.85;
+      background: var(--preview-bg);
+    }
+
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      margin: 8px 0 12px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 80px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(0,0,0,0.2);
+      padding: 10px;
+      resize: none;
+      font-family: inherit;
+      font-size: 14px;
+      background: rgba(255,255,255,0.6);
+    }
+
+    button {
+      background: var(--btn);
+      color: #fff;
+      border: none;
+      border-radius: 16px;
+      padding: 8px 20px;
+      margin-top: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(109,42,71,0.3);
+      transition: background 0.2s, transform 0.2s;
+    }
+    button:hover { background: var(--btnHover); transform: translateY(-1px); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #preview img {
+      width: 100%;
+      border-radius: var(--radius);
+      display: block;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 13px;
       color: var(--sub);
+      position: absolute;
+      bottom: 16px;
+      width: 100%;
     }
 
-    .cta-row{display:flex; justify-content:center}
-    .btn{
-      appearance:none; border:none; cursor:pointer;
-      padding:14px 26px; border-radius:999px;
-      background:var(--btn); color:#fff; font-weight:700;
-      box-shadow: 0 14px 30px rgba(109,42,71,.35);
-      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
-      text-decoration:none; display:inline-block;
+    /* Floating heart icon */
+    .heart-btn {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      background: radial-gradient(circle at top left, #ffcad4, #ff9eb5);
+      border-radius: 50%;
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: transform 0.2s;
     }
-    .btn:hover{ transform: translateY(-2px); background:var(--btnHover); }
-
-    footer{
-      text-align:center; font-size:12px; color: var(--sub); opacity:.9; margin-top:24px;
-    }
+    .heart-btn:hover { transform: scale(1.08); }
   </style>
 </head>
+
 <body>
-  <!-- Background painterly layers -->
-  <div class="bg" aria-hidden="true"></div>
+  <header>
+    <nav>
+      <a href="life.html">Life</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="#" id="logout">Logout</a>
+    </nav>
+    <h1>Upload a Sweet Memory</h1>
+  </header>
 
-  <main class="wrap">
-    <section class="card" aria-labelledby="brand">
-      <h1 id="brand" class="logo">Shreshtha</h1>
-      <p class="tag">
-        A little home of smiles, tiny adventures, and the sweetest memories — curated with love.
-      </p>
+  <main>
+    <!-- Upload Form -->
+    <div class="upload-box">
+      <form id="uploadForm" enctype="multipart/form-data">
+        <label><b>Drag & drop a photo here or</b></label><br/>
+        <input type="file" id="photo" name="photo" accept="image/*" required/>
+        <small>JPG/PNG • Max 8 MB</small>
 
-      <div class="cta-row">
-        <a class="btn" href="/auth/login" id="btn-login">Step inside</a>
-      </div>
+        <label for="caption"><b>Caption (short)</b></label>
+        <textarea id="caption" name="caption" maxlength="150" placeholder="Write a short caption..."></textarea>
 
-      <footer>© Shreshtha’s Life • crafted with love</footer>
-    </section>
+        <button type="submit">Upload</button>
+        <button type="button" id="clearBtn">Clear</button>
+      </form>
+    </div>
+
+    <!-- Preview -->
+    <div class="preview-box" id="preview">
+      <p style="text-align:center;">Preview<br/><small>No photo selected</small></p>
+    </div>
   </main>
+
+  <div class="heart-btn">❤️</div>
+  <footer>© Shreshtha’s Life • crafted with love</footer>
+
+  <script>
+    // --- Upload + Preview + Clear ---
+    const form = document.getElementById('uploadForm');
+    const photoInput = document.getElementById('photo');
+    const captionInput = document.getElementById('caption');
+    const previewDiv = document.getElementById('preview');
+    const clearBtn = document.getElementById('clearBtn');
+
+    // Preview selected photo
+    photoInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        previewDiv.innerHTML = `<img src="${ev.target.result}" alt="preview"/>`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Clear fields
+    clearBtn.addEventListener('click', e => {
+      e.preventDefault();
+      form.reset();
+      previewDiv.innerHTML = `<p style="text-align:center;">Preview<br/><small>No photo selected</small></p>`;
+    });
+
+    // Upload via backend
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const file = photoInput.files[0];
+      const caption = captionInput.value.trim();
+      if (!file) return alert("Please choose a photo first.");
+
+      const token = localStorage.getItem('auth_token'); // from Auth0 guard
+      const formData = new FormData();
+      formData.append('photo', file);
+      formData.append('caption', caption);
+
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData
+        });
+        if (!res.ok) throw new Error(await res.text());
+        alert("Uploaded successfully!");
+        form.reset();
+        previewDiv.innerHTML = `<p style='text-align:center;'>Preview<br/><small>No photo selected</small></p>`;
+      } catch (err) {
+        console.error(err);
+        alert("Upload failed: " + err.message);
+      }
+    });
+
+    // Logout
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('auth_token');
+      window.location.href = '/';
+    });
+  </script>
 </body>
 </html>
