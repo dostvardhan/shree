@@ -8,7 +8,7 @@
   <style>
     :root {
       --bg-art: url("/assets/img/upload-bg-final-new.jpg");
-      --text: #113538; /* new deep emerald-teal tone */
+      --text: #113538;
       --glass: rgba(255, 255, 255, 0.14);
       --border: rgba(255, 255, 255, 0.25);
       --btn-bg: #113538;
@@ -22,9 +22,31 @@
       width: 100%;
       font-family: ui-serif, "Georgia", "Times New Roman", serif;
       color: var(--text);
-      background: var(--bg-art) no-repeat center center fixed;
-      background-size: cover; /* ensures full vivid background */
+      background-color: #000; /* soft backdrop */
       overflow: hidden;
+    }
+
+    /* Keep image fully visible and centered at all times */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: var(--bg-art) no-repeat center center;
+      background-size: contain; /* ensures no cropping */
+      z-index: -2;
+    }
+
+    /* Subtle vignette for blending if black edges appear */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(
+        circle at center,
+        rgba(0, 0, 0, 0) 70%,
+        rgba(0, 0, 0, 0.4) 100%
+      );
+      z-index: -1;
     }
 
     .wrap {
