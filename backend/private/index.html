@@ -13,13 +13,11 @@
   <style>
     :root {
       --bg-art: url("/assets/img/upload-bg-final-new.jpg");
-      --ink: #4a2424;
-      --sub: #5c3b3b;
-      --btn: #6d2a47;
-      --btnHover: #7b3051;
-      --glass: rgba(255, 255, 255, 0.18);
-      --radius: 22px;
-      --shadow: 0 18px 40px rgba(105, 50, 75, 0.28);
+      --glow: rgba(255, 255, 255, 0.9);
+      --btn: #ffffffcc;
+      --btnText: #642b2b;
+      --btnHover: #fff;
+      --shadow: 0 0 24px rgba(255, 255, 255, 0.6);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -29,46 +27,48 @@
       width: 100%;
       overflow: hidden;
       font-family: ui-serif, "Georgia", "Times New Roman", serif;
-      color: var(--ink);
+      color: var(--glow);
       background: var(--bg-art) no-repeat center center fixed;
-      background-size: cover;
+      background-size: contain; /* ensures full image visible */
+      background-color: #000;
     }
 
     .wrap {
-      min-height: 100%;
+      height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
-      backdrop-filter: blur(4px) brightness(1);
+      text-align: center;
+      backdrop-filter: blur(3px) brightness(1.1);
     }
 
     .card {
-      background: var(--glass);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      text-align: center;
+      background: rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 22px;
       padding: clamp(28px, 6vw, 56px);
-      width: min(800px, 90vw);
+      box-shadow: 0 0 60px rgba(255,255,255,0.08);
+      max-width: 800px;
+      width: 90%;
+      border: 1px solid rgba(255,255,255,0.25);
     }
 
     h1 {
       font-size: clamp(52px, 9vw, 92px);
       line-height: 1.1;
       letter-spacing: 0.5px;
-      color: #4a2424;
-      text-shadow: 0 6px 22px rgba(0,0,0,.15);
+      color: var(--glow);
+      text-shadow: 0 0 22px rgba(255,255,255,0.8);
       margin-bottom: 10px;
     }
 
     .tag {
-      margin: 0 auto 26px;
-      max-width: 52ch;
       font-size: clamp(16px, 2.4vw, 20px);
-      color: var(--sub);
-      text-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      color: var(--glow);
+      opacity: 0.95;
+      text-shadow: 0 0 15px rgba(255,255,255,0.6);
+      margin-bottom: 26px;
     }
 
     .cta-row { display: flex; justify-content: center; margin-top: 10px; }
@@ -80,23 +80,29 @@
       padding: 14px 26px;
       border-radius: 999px;
       background: var(--btn);
-      color: #fff;
+      color: var(--btnText);
       font-weight: 700;
       letter-spacing: 0.3px;
-      box-shadow: 0 12px 28px rgba(109, 42, 71, 0.35);
+      box-shadow: var(--shadow);
       transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
       text-decoration: none;
       font-size: 16px;
     }
 
-    .btn:hover { transform: translateY(-2px); background: var(--btnHover); }
+    .btn:hover {
+      transform: translateY(-2px);
+      background: var(--btnHover);
+      color: #542626;
+      box-shadow: 0 0 40px rgba(255,255,255,0.85);
+    }
 
     footer {
       text-align: center;
       font-size: 13px;
-      color: var(--sub);
+      color: var(--glow);
       opacity: 0.9;
       margin-top: 20px;
+      text-shadow: 0 0 14px rgba(255,255,255,0.6);
     }
   </style>
 </head>
