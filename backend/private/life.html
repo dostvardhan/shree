@@ -1,12 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Do NOT cache protected pages -->
-  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-
-  <!-- CSP (same as before) -->
+  <!-- CSP -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self';
                  script-src 'self' 'unsafe-inline' 'unsafe-eval';
@@ -14,20 +9,16 @@
                  img-src 'self' data:;
                  style-src 'self' 'unsafe-inline';
                  media-src 'self';">
-
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Sweet Memories — Shreshtha</title>
 
-  <!-- Auth (must be on every protected page, same order) -->
+  <!-- Auth (same as photo pages) -->
   <script src="/auth0-spa-js.production.js" defer></script>
   <script src="/auth-init.js" defer></script>
   <script src="/guard-auth.js" defer></script>
 
   <style>
-    /* Hide until guard-auth confirms session */
-    html { visibility: hidden; }
-
     :root{
       --cream:#FFE7DA; --peach:#FFB59E; --red:#FF6B6B;
       --text:#6e2430; --panel:rgba(255,255,255,.05);
@@ -37,9 +28,7 @@
     a{text-decoration:none;color:inherit}
     html,body{height:100%}
     body{
-      margin:0;
-      font-family:"Playfair Display",serif;
-      color:var(--text);
+      margin:0; font-family:"Playfair Display",serif; color:var(--text);
       overflow-y:auto;
       background:
         radial-gradient(1200px 600px at 10% 10%, rgba(255,236,240,0.25), transparent 20%),
@@ -48,7 +37,16 @@
       background-attachment: fixed;
     }
 
-    /* background layers */
+    /* guard: hide content until auth ready */
+    html.guard-hide body{ visibility:hidden }
+    /* lightweight loader so page isn’t “black” */
+    #guardLoader{
+      position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+      font-family:system-ui, sans-serif; color:#7a2a39; background:transparent; z-index:9999;
+    }
+    html:not(.guard-hide) #guardLoader{ display:none }
+
+    /* bg layers */
     .bg-grad{position:fixed;inset:0;z-index:0}
     .bg-dither{position:fixed;inset:0;z-index:1;opacity:.12;mix-blend-mode:overlay;
       background:repeating-linear-gradient(0deg,rgba(255,255,255,.03)0px,rgba(255,255,255,.03)2px,rgba(0,0,0,.02)2px,rgba(0,0,0,.02)4px)}
@@ -60,22 +58,19 @@
     header{padding:28px 18px 6px;text-align:center;position:relative;z-index:6}
     .logo{font-size:46px;color:var(--text);text-shadow:0 2px 10px rgba(0,0,0,.22)}
 
-    /* small chips nav */
     .page-links{ margin-top:8px; text-align:center; font-size:14px; }
     .page-links a{
       display:inline-block; padding:6px 10px; margin:0 4px; border-radius:16px;
       background:rgba(255,255,255,0.30); color:#5a0013;
-      box-shadow:0 4px 8px rgba(0,0,0,0.10); text-decoration:none;
+      box-shadow:0 4px 8px rgba(0,0,0,0.10);
     }
     .page-links a:hover{ background:rgba(255,255,255,0.40); }
 
     .wrap{max-width:1120px;margin:14px auto 110px;padding:0 18px;position:relative;z-index:5}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px}
 
-    .card{
-      position:relative;background:var(--panel);border-radius:var(--radius);
-      box-shadow:var(--shadow);overflow:hidden;transition:transform .28s cubic-bezier(.2,.9,.3,1);
-    }
+    .card{ position:relative;background:var(--panel);border-radius:var(--radius);
+           box-shadow:var(--shadow);overflow:hidden;transition:transform .28s cubic-bezier(.2,.9,.3,1) }
     .card:hover{transform:translateY(-6px)}
     .photo{display:block;width:100%;height:auto;object-fit:cover;background:#fff9f7;max-height:460px}
     .meta{padding:12px 14px 16px;text-align:center;font-style:italic;font-size:15px;color:var(--text)}
@@ -88,10 +83,32 @@
     @keyframes burstMove{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.6);opacity:0}}
 
     #fxCanvas{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:50;}
+    /* music ui (kept same) */
     #musicHeartWrap{ right:14px; bottom:14px; z-index:160; opacity:.97; }
   </style>
+
+  <script>
+    // Hide until guard says OK
+    document.documentElement.classList.add('guard-hide');
+    // Listen for the standard event from guard-auth.js
+    window.addEventListener('shree:auth-ready', (e) => {
+      const ok = !!(e && e.detail && e.detail.authenticated);
+      if (!ok) { location.href = '/index.html'; return; }
+      document.documentElement.classList.remove('guard-hide');
+    }, { once:true });
+    // Failsafe (if event is missed but cookie is already valid, auth-init should sync quickly)
+    setTimeout(() => {
+      if (document.documentElement.classList.contains('guard-hide')) {
+        // last chance – let guard-auth redirect if unauthenticated
+        document.documentElement.classList.remove('guard-hide');
+      }
+    }, 2000);
+  </script>
 </head>
 <body>
+
+  <div id="guardLoader">Loading…</div>
+
   <div class="bg-grad"></div>
   <div class="bg-dither"></div>
   <div class="bg-layer" id="bgLayer"></div>
@@ -101,7 +118,7 @@
     <div class="page-links">
       <a href="gallery.html">Gallery</a> |
       <a href="upload.html">Upload</a> |
-      <a href="/auth/logout?next=/index.html">Logout</a>
+      <a href="/logout.html">Logout</a>
     </div>
   </header>
 
@@ -183,7 +200,7 @@
   });
   </script>
 
-  <!-- Canvas Hearts (fixed innerWidth/innerHeight) -->
+  <!-- Canvas Hearts -->
   <canvas id="fxCanvas"></canvas>
   <script>
   (function(){
@@ -191,33 +208,23 @@
     const ctx = c.getContext('2d');
     const DPR = Math.max(1, window.devicePixelRatio || 1);
     let W=0,H=0, hearts=[];
-
     const COLORS = ['#dff7ff','#fff9d6','#ffe9d2','#ffdce6','#e9f7e9','#eae8ff','#fff0f6','#fff4de'];
     const R=(a,b)=>Math.random()*(b-a)+a;
 
-    function resize(){
-      W = Math.floor(innerWidth * DPR);
-      H = Math.floor(innerHeight * DPR);
-      c.width = W; c.height = H;
-      c.style.width='100vw'; c.style.height='100vh';
-    }
-    function spawn(){
-      if (hearts.length > 26) return;
-      hearts.push({ x:R(0,W), y:H + R(10*DPR,160*DPR), s:R(14,36), vx:R(-6,6), vy:-R(14,36), a:R(.55,.98), r:R(-.5,.5), vr:R(-.012,.012), color:COLORS[(Math.random()*COLORS.length)|0] });
-    }
+    function resize(){ W = Math.floor(innerWidth*DPR); H = Math.floor(innerHeight*DPR);
+      c.width = W; c.height = H; c.style.width='100vw'; c.style.height='100vh'; }
+    function spawn(){ if (hearts.length > 26) return;
+      hearts.push({ x:R(0,W), y:H + R(10*DPR,160*DPR), s:R(14,36),
+        vx:R(-6,6), vy:-R(14,36), a:R(.55,.98), r:R(-.5,.5), vr:R(-.012,.012),
+        color:COLORS[(Math.random()*COLORS.length)|0] });}
     function draw(px,py,scale,rot,alpha,color){
       ctx.save(); ctx.translate(px,py); ctx.rotate(rot); ctx.scale(scale,scale);
       ctx.globalAlpha = Math.min(1, alpha*1.05);
-      ctx.shadowColor=color; ctx.shadowBlur=12*scale;
       const g=ctx.createRadialGradient(0,-0.12,0.05, 0,0.12,1.0);
       g.addColorStop(0,color); g.addColorStop(0.6,color); g.addColorStop(1,'rgba(255,255,255,0.08)');
-      ctx.fillStyle=g;
-      ctx.beginPath(); ctx.moveTo(0,-0.5);
+      ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(0,-0.5);
       ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);
-      ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);
-      ctx.fill();
-      ctx.globalAlpha=0.55*alpha; ctx.fillStyle='rgba(255,255,255,0.95)';
-      ctx.beginPath(); ctx.ellipse(0.18,-0.28,0.12,0.06,-0.4,0,Math.PI*2); ctx.fill();
+      ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5); ctx.fill();
       ctx.restore();
     }
     function tick(){
@@ -233,11 +240,8 @@
   })();
   </script>
 
-  <!-- music -->
+  <!-- Music -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
-
-  <!-- On BFCache restore (mobile back), force reload -->
-  <script>addEventListener('pageshow',e=>{if(e.persisted)location.reload();});</script>
 </body>
 </html>

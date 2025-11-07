@@ -5,95 +5,71 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Upload — Sweet Memories</title>
 
-<!-- Do NOT cache protected pages -->
-<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
-
-<!-- Auth Protection -->
+<!-- Auth (same as photo pages) -->
 <script src="/auth0-spa-js.production.js" defer></script>
 <script src="/auth-init.js" defer></script>
 <script src="/guard-auth.js" defer></script>
 
 <style>
-/* Hide until verified */
-html { visibility: hidden; }
+:root{ --ink:#3b1e1b; --btn:#bb7a39; --glass:rgba(255,255,255,.35); --glass-lite:rgba(255,255,255,.28); }
+html,body{ height:100%; margin:0; overflow:hidden; font-family:ui-serif,"Playfair Display",Georgia,serif; color:var(--ink); background:#000; }
 
-:root{
-  --ink:#3b1e1b;
-  --btn:#bb7a39;
-  --glass:rgba(255,255,255,.35);
-  --glass-lite:rgba(255,255,255,.28);
-}
-html,body{
-  height:100%;margin:0;overflow:hidden;
-  font-family:ui-serif,"Playfair Display",Georgia,serif;
-  color:var(--ink);background:#000;
-}
+/* guard */
+html.guard-hide body{ visibility:hidden }
+#guardLoader{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; color:#caa07b; z-index:9999 }
+html:not(.guard-hide) #guardLoader{ display:none }
 
-/* ====== Background Image ====== */
+/* bg */
 .bg{ position:fixed; inset:0; z-index:0; pointer-events:none; }
-.bg img{
-  width:100vw;height:100vh;
-  object-fit:cover;
-  object-position:center top;
-  filter:saturate(110%) contrast(105%);
-}
+.bg img{ width:100vw; height:100vh; object-fit:cover; object-position:center top; filter:saturate(110%) contrast(105%); }
 
-/* ====== Header ====== */
+/* header */
 header{text-align:center;padding:18px 10px 0;position:relative;z-index:3;}
-.nav a{
-  display:inline-block;margin:0 6px;padding:6px 12px;border-radius:18px;
-  background:rgba(255,255,255,.85);color:var(--ink);
-  text-decoration:none;box-shadow:0 6px 16px rgba(0,0,0,.15);font-size:14px;
-}
-h1{
-  margin:16px 0 10px;
-  font-size:44px;line-height:1.1;
-  color:#5c2e10;
-  text-shadow:0 10px 24px rgba(0,0,0,.25);
-}
+.nav a{ display:inline-block;margin:0 6px;padding:6px 12px;border-radius:18px;
+        background:rgba(255,255,255,.85);color:var(--ink); text-decoration:none;
+        box-shadow:0 6px 16px rgba(0,0,0,.15);font-size:14px; }
+h1{ margin:16px 0 10px; font-size:44px; line-height:1.1; color:#5c2e10; text-shadow:0 10px 24px rgba(0,0,0,.25); }
 
-/* ====== Upload & Preview Cards ====== */
-.card{
-  position:absolute;background:var(--glass);
-  border-radius:14px;box-shadow:0 14px 34px rgba(0,0,0,.22);
-  border:1px solid rgba(255,255,255,.55);
-  backdrop-filter:blur(10px);
-}
+/* cards */
+.card{ position:absolute;background:var(--glass); border-radius:14px; box-shadow:0 14px 34px rgba(0,0,0,.22);
+       border:1px solid rgba(255,255,255,.55); backdrop-filter:blur(10px); }
 .pane{padding:16px 16px 14px;}
-.drop{
-  border:2px dashed rgba(0,0,0,.22);border-radius:12px;
-  padding:14px;text-align:center;background:var(--glass-lite);
-}
+.drop{ border:2px dashed rgba(0,0,0,.22); border-radius:12px; padding:14px; text-align:center; background:var(--glass-lite); }
 .drop input[type=file]{display:block;margin:10px auto;}
-textarea{
-  width:100%;min-height:86px;resize:vertical;padding:10px 12px;
-  border-radius:10px;border:1px solid rgba(0,0,0,.12);
-  background:rgba(255,255,255,.85);
-  font-family:system-ui;box-sizing:border-box;
-}
+textarea{ width:100%; min-height:86px; resize:vertical; padding:10px 12px; border-radius:10px; border:1px solid rgba(0,0,0,.12);
+          background:rgba(255,255,255,.85); font-family:system-ui; box-sizing:border-box; }
 .actions{display:flex;gap:10px;align-items:center;margin-top:12px;}
-.btn{
-  background:var(--btn);color:#fff;border:none;border-radius:10px;
-  padding:9px 14px;font-weight:700;cursor:pointer;
-  box-shadow:0 10px 22px rgba(0,0,0,.25);
-}
+.btn{ background:var(--btn);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-weight:700;cursor:pointer;box-shadow:0 10px 22px rgba(0,0,0,.25); }
 .btn.secondary{background:rgba(0,0,0,.06);color:var(--ink);}
 .muted{font-size:12px;opacity:.82;}
 #previewImg{max-width:100%;border-radius:10px;display:none;box-shadow:0 8px 20px rgba(0,0,0,.22);}
-#protectedContent{visibility:hidden;opacity:0;transition:opacity .25s;}
-#protectedContent.show{visibility:visible;opacity:1;}
 
-/* ====== Layout ====== */
+/* layout */
 .upload-card{top:90px;right:8%;width:400px;}
 .preview-card{bottom:60px;left:8%;width:340px;background:rgba(255,255,255,.25);}
 
-/* Hearts Canvas */
+/* hearts canvas */
 #fxCanvas{position:fixed;inset:0;pointer-events:none;z-index:2;}
 </style>
+
+<script>
+  // Guard: hide until auth ready & redirect if not authenticated
+  document.documentElement.classList.add('guard-hide');
+  window.addEventListener('shree:auth-ready', (e)=>{
+    const ok = !!(e && e.detail && e.detail.authenticated);
+    if(!ok){ location.href = '/index.html'; return; }
+    document.documentElement.classList.remove('guard-hide');
+  }, { once:true });
+  setTimeout(()=>{
+    if(document.documentElement.classList.contains('guard-hide')){
+      document.documentElement.classList.remove('guard-hide'); // let guard-auth do the redirect if needed
+    }
+  }, 2000);
+</script>
 </head>
 <body>
+<div id="guardLoader">Checking access…</div>
+
 <div class="bg"><img src="/assets/img/upload-bg-final-new.jpg" alt="background art"></div>
 <canvas id="fxCanvas"></canvas>
 
@@ -101,13 +77,12 @@ textarea{
   <nav class="nav">
     <a href="/life.html">Life</a>
     <a href="/gallery.html">Gallery</a>
-    <a href="/auth/logout?next=/index.html">Logout</a>
+    <a href="/logout.html">Logout</a>
   </nav>
   <h1>Upload a Sweet Memory</h1>
 </header>
 
 <main id="protectedContent">
-  <!-- Upload Form -->
   <section class="card upload-card">
     <div class="pane">
       <div class="drop">
@@ -127,7 +102,6 @@ textarea{
     </div>
   </section>
 
-  <!-- Preview -->
   <aside class="card preview-card">
     <div class="pane" style="min-height:160px;display:flex;align-items:center;justify-content:center;">
       <div id="previewBox" style="text-align:center;width:100%">
@@ -141,15 +115,6 @@ textarea{
 
 <script>
 (function(){
-  // reveal only after guard-auth signals session OK
-  const root=document.getElementById('protectedContent');
-  const reveal=()=>root.classList.add('show');
-  if(window.__shreeAuthReady)reveal();
-  else{
-    window.addEventListener('shree:auth-ready',reveal,{once:true});
-  }
-
-  // Upload logic
   const file=document.getElementById('photo');
   const cap=document.getElementById('caption');
   const btn=document.getElementById('uploadBtn');
@@ -161,8 +126,7 @@ textarea{
   file.addEventListener('change',()=>{
     const f=file.files[0];
     if(!f){prev.style.display='none';prev.removeAttribute('src');prevSub.textContent='No photo selected';return;}
-    const url=URL.createObjectURL(f);
-    prev.src=url;prev.style.display='inline-block';prevSub.textContent='';
+    prev.src=URL.createObjectURL(f); prev.style.display='inline-block'; prevSub.textContent='';
   });
   clr.addEventListener('click',()=>{file.value='';cap.value='';prev.style.display='none';prev.removeAttribute('src');prevSub.textContent='No photo selected';msg.textContent='';});
   btn.addEventListener('click',async()=>{
@@ -170,22 +134,18 @@ textarea{
     msg.textContent='Uploading…';
     const fd=new FormData();
     fd.append('photo',file.files[0]);
-    if(cap.value.trim())fd.append('caption',cap.value.trim());
+    if(cap.value.trim()) fd.append('caption',cap.value.trim());
     try{
-      const res=await fetch('/api/upload',{method:'POST',body:fd,credentials:'include',cache:'no-store'});
-      if(!res.ok)throw new Error('HTTP '+res.status);
+      const res=await fetch('/api/upload',{method:'POST',body:fd,credentials:'include'});
+      if(!res.ok) throw new Error('HTTP '+res.status);
       msg.textContent='Uploaded ✓';
       setTimeout(()=>location.href='/gallery.html',700);
-    }catch(e){msg.textContent='Upload failed: '+e.message;console.error(e);}
+    }catch(e){ msg.textContent='Upload failed: '+e.message; console.error(e); }
   });
 })();
 </script>
 
-<!-- Hearts -->
 <link rel="stylesheet" href="/assets/css/music-heart.css">
 <script src="/assets/js/music-heart.js" defer></script>
-
-<!-- Prevent BFCache stale view after logout -->
-<script>addEventListener('pageshow',e=>{if(e.persisted)location.reload();});</script>
 </body>
 </html>
