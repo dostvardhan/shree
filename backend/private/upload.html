@@ -5,12 +5,20 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Upload — Sweet Memories</title>
 
+<!-- Do NOT cache protected pages -->
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+
 <!-- Auth Protection -->
 <script src="/auth0-spa-js.production.js" defer></script>
 <script src="/auth-init.js" defer></script>
 <script src="/guard-auth.js" defer></script>
 
 <style>
+/* Hide until verified */
+html { visibility: hidden; }
+
 :root{
   --ink:#3b1e1b;
   --btn:#bb7a39;
@@ -24,9 +32,7 @@ html,body{
 }
 
 /* ====== Background Image ====== */
-.bg{
-  position:fixed;inset:0;z-index:0;pointer-events:none;
-}
+.bg{ position:fixed; inset:0; z-index:0; pointer-events:none; }
 .bg img{
   width:100vw;height:100vh;
   object-fit:cover;
@@ -44,7 +50,7 @@ header{text-align:center;padding:18px 10px 0;position:relative;z-index:3;}
 h1{
   margin:16px 0 10px;
   font-size:44px;line-height:1.1;
-  color:#5c2e10; /* Softer, warm brown tone matching painting */
+  color:#5c2e10;
   text-shadow:0 10px 24px rgba(0,0,0,.25);
 }
 
@@ -95,7 +101,7 @@ textarea{
   <nav class="nav">
     <a href="/life.html">Life</a>
     <a href="/gallery.html">Gallery</a>
-    <a href="/logout.html">Logout</a>
+    <a href="/auth/logout?next=/index.html">Logout</a>
   </nav>
   <h1>Upload a Sweet Memory</h1>
 </header>
@@ -135,11 +141,15 @@ textarea{
 
 <script>
 (function(){
+  // reveal only after guard-auth signals session OK
   const root=document.getElementById('protectedContent');
   const reveal=()=>root.classList.add('show');
   if(window.__shreeAuthReady)reveal();
-  else{window.addEventListener('shree:auth-ready',reveal,{once:true});setTimeout(reveal,1500);}
+  else{
+    window.addEventListener('shree:auth-ready',reveal,{once:true});
+  }
 
+  // Upload logic
   const file=document.getElementById('photo');
   const cap=document.getElementById('caption');
   const btn=document.getElementById('uploadBtn');
@@ -162,7 +172,7 @@ textarea{
     fd.append('photo',file.files[0]);
     if(cap.value.trim())fd.append('caption',cap.value.trim());
     try{
-      const res=await fetch('/api/upload',{method:'POST',body:fd,credentials:'include'});
+      const res=await fetch('/api/upload',{method:'POST',body:fd,credentials:'include',cache:'no-store'});
       if(!res.ok)throw new Error('HTTP '+res.status);
       msg.textContent='Uploaded ✓';
       setTimeout(()=>location.href='/gallery.html',700);
@@ -174,5 +184,8 @@ textarea{
 <!-- Hearts -->
 <link rel="stylesheet" href="/assets/css/music-heart.css">
 <script src="/assets/js/music-heart.js" defer></script>
+
+<!-- Prevent BFCache stale view after logout -->
+<script>addEventListener('pageshow',e=>{if(e.persisted)location.reload();});</script>
 </body>
 </html>

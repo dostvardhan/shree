@@ -1,7 +1,12 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- CSP (correct) -->
+  <!-- Do NOT cache protected pages -->
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <!-- CSP (same as before) -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self';
                  script-src 'self' 'unsafe-inline' 'unsafe-eval';
@@ -9,11 +14,20 @@
                  img-src 'self' data:;
                  style-src 'self' 'unsafe-inline';
                  media-src 'self';">
+
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Sweet Memories — Shreshtha</title>
 
+  <!-- Auth (must be on every protected page, same order) -->
+  <script src="/auth0-spa-js.production.js" defer></script>
+  <script src="/auth-init.js" defer></script>
+  <script src="/guard-auth.js" defer></script>
+
   <style>
+    /* Hide until guard-auth confirms session */
+    html { visibility: hidden; }
+
     :root{
       --cream:#FFE7DA; --peach:#FFB59E; --red:#FF6B6B;
       --text:#6e2430; --panel:rgba(255,255,255,.05);
@@ -66,41 +80,18 @@
     .photo{display:block;width:100%;height:auto;object-fit:cover;background:#fff9f7;max-height:460px}
     .meta{padding:12px 14px 16px;text-align:center;font-style:italic;font-size:15px;color:var(--text)}
 
-    /* subtle per-card hearts */
     .card .soft-heart{position:absolute;pointer-events:none;opacity:.36;animation:softRise 5s ease-in-out infinite;will-change:transform,opacity}
     @keyframes softRise{0%{transform:translateY(6px);opacity:.18}50%{transform:translateY(-6px);opacity:.35}100%{transform:translateY(6px);opacity:.18}}
 
-    /* hover burst */
     .burst{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
     .spark{position:absolute;font-size:12px;text-shadow:0 2px 6px rgba(0,0,0,.35);animation:burstMove 1.6s ease-out forwards;opacity:.95}
     @keyframes burstMove{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.6);opacity:0}}
 
-    /* canvas hearts */
     #fxCanvas{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:50;}
-
-    /* life page – tiny cute music icon overrides */
     #musicHeartWrap{ right:14px; bottom:14px; z-index:160; opacity:.97; }
-    #musicHeartBtn{
-      width:40px; height:40px; font-size:18px; border:none; border-radius:14px;
-      background: radial-gradient(circle at 35% 30%, #ffe9f2 0%, #ffc9d6 100%);
-      box-shadow: 0 6px 16px rgba(220,80,110,0.14);
-      transition: transform .16s ease, box-shadow .16s ease;
-    }
-    #musicHeartBtn:hover{ transform: translateY(-2px); box-shadow: 0 10px 22px rgba(220,80,110,0.22); }
-    #musicHeartBtn.playing{ transform: scale(1.03); box-shadow:0 12px 26px rgba(220,80,110,0.26); }
-    #musicVolDot{
-      position:absolute; right:-5px; top:-5px;
-      width:14px; height:14px; border-radius:50%;
-      background: radial-gradient(circle at 30% 30%, #fff7d6, #ffd66a);
-      border:2px solid rgba(255,255,255,0.95); box-shadow:0 4px 8px rgba(255,170,100,0.22);
-    }
-    #musicVolPop{ right:8px; bottom:60px; width:190px; padding:8px 10px; border-radius:10px; }
-    #musicVolRange{ height:5px; }
-    #musicMuteBtn{ padding:4px 6px; border-radius:6px; }
   </style>
 </head>
 <body>
-
   <div class="bg-grad"></div>
   <div class="bg-dither"></div>
   <div class="bg-layer" id="bgLayer"></div>
@@ -110,7 +101,7 @@
     <div class="page-links">
       <a href="gallery.html">Gallery</a> |
       <a href="upload.html">Upload</a> |
-      <a href="/logout.html">Logout</a>
+      <a href="/auth/logout?next=/index.html">Logout</a>
     </div>
   </header>
 
@@ -242,9 +233,11 @@
   })();
   </script>
 
-  <!-- Global music (one include only) -->
+  <!-- music -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
+
+  <!-- On BFCache restore (mobile back), force reload -->
+  <script>addEventListener('pageshow',e=>{if(e.persisted)location.reload();});</script>
 </body>
 </html>
-
