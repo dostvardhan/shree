@@ -1,281 +1,322 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Gallery — Sweet Memories</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <!-- CSP -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;
+                 connect-src 'self' https:;
+                 img-src 'self' data:;
+                 style-src 'self' 'unsafe-inline' https:;
+                 media-src 'self';">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gallery — Sweet Memories</title>
 
-<style>
-:root {
-  --text:#5a3740;
-  --muted:#7a5a5f;
-  --bg-card:rgba(255,255,255,0.92);
-  --shadow:0 14px 35px rgba(0,0,0,0.18);
-  --radius:18px;
-}
-body {
-  margin:0;
-  font-family:Inter,system-ui,sans-serif;
-  color:var(--text);
-  background:url("assets/img/gallery-bg-hearts.png") center/cover no-repeat fixed;
-  overflow-x:hidden;
-}
+  <!-- Auth (same as photo pages) -->
+  <script src="/auth0-spa-js.production.js" defer></script>
+  <script src="/auth-init.js" defer></script>
+  <script src="/guard-auth.js" defer></script>
 
-/* 🔹 Navigation */
-nav.topbar {
-  display:flex;justify-content:center;gap:10px;
-  position:sticky;top:14px;z-index:10;
-}
-nav.topbar a {
-  text-decoration:none;
-  font-weight:600;
-  font-size:13px;
-  color:var(--text);
-  padding:8px 14px;
-  border-radius:999px;
-  background:linear-gradient(180deg,#ffeef2,#ffdee8);
-  border:1px solid #f2c3d1;
-  box-shadow:0 8px 20px -12px rgba(0,0,0,.3);
-}
-nav.topbar a.active { background:#fff; }
+  <!-- fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-/* 🔹 Heading */
-h1 {
-  font-family:"Playfair Display",serif;
-  text-align:center;
-  font-size:clamp(22px,3vw,34px);
-  margin:26px 0 12px;
-  text-shadow:0 1px 0 rgba(255,255,255,0.7);
-}
+  <style>
+  :root {
+    --text:#5a3740;
+    --muted:#7a5a5f;
+    --bg-card:rgba(255,255,255,0.92);
+    --shadow:0 14px 35px rgba(0,0,0,0.18);
+    --radius:18px;
+  }
+  html.guard-hide body{ visibility:hidden }
 
-/* 🔹 Gallery Grid */
-.grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:22px;
-  max-width:1150px;
-  margin:0 auto;
-  padding:10px 20px 60px;
-}
+  body {
+    margin:0;
+    font-family:Inter,system-ui,sans-serif;
+    color:var(--text);
+    background:url("assets/img/gallery-bg-hearts.png") center/cover no-repeat fixed;
+    overflow-x:hidden;
+  }
 
-/* ===== New polished double-frame ===== */
-.card{
-  background: transparent;
-  border-radius: 22px;
-  padding: 10px;
-  transition: transform .28s cubic-bezier(.2,.9,.25,1), box-shadow .28s;
-  cursor:pointer;
-  position:relative;
-  box-shadow:
-    0 20px 50px rgba(20,10,20,0.14),
-    inset 0 1px 0 rgba(255,255,255,0.35);
-}
-.card::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  border-radius:20px;
-  pointer-events:none;
-  background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(250,246,245,0.55));
-  box-shadow: 0 8px 18px rgba(0,0,0,0.06);
-  transform: translateY(2px);
-  z-index:0;
-}
-.card .frame-inner{
-  position:absolute;
-  inset:8px;
-  border-radius:14px;
-  background: rgba(255,255,255,0.98);
-  box-shadow: inset 0 1px 0 rgba(0,0,0,0.03);
-  z-index:1;
-  pointer-events:none;
-}
-.poster{
-  position:relative;
-  width:100%;
-  aspect-ratio:3/4;
-  border-radius:12px;
-  overflow:hidden;
-  z-index:2;
-}
-.poster .fill{
-  position:absolute; inset:0;
-  background-size:cover; background-position:center;
-  filter: blur(12px) brightness(.92) saturate(.96);
-  transform:scale(1.06);
-  opacity:0.86;
-}
-.photo{
-  position:absolute; inset:12px;
-  z-index:3;
-  display:flex; align-items:center; justify-content:center;
-  background: transparent;
-  border-radius:10px;
-  overflow:hidden;
-}
-.photo img{
-  width:auto; max-width:100%;
-  height:auto; max-height:100%;
-  object-fit:contain;
-  transition: transform .36s ease, filter .28s ease;
-  display:block;
-  filter: saturate(1.03) contrast(1.02);
-  box-shadow: 0 8px 30px rgba(60,30,40,0.06);
-}
-.card:hover .photo img{
-  transform: scale(1.06);
-  filter: saturate(1.06) contrast(1.04) brightness(1.01);
-}
-.card:hover::before{
-  transform:translateY(0);
-  box-shadow: 0 28px 64px rgba(20,10,20,0.18);
-}
+  /* top nav */
+  nav.topbar {
+    display:flex;justify-content:center;gap:10px;
+    position:sticky;top:14px;z-index:10;
+  }
+  nav.topbar a {
+    text-decoration:none;
+    font-weight:600;
+    font-size:13px;
+    color:var(--text);
+    padding:8px 14px;
+    border-radius:999px;
+    background:linear-gradient(180deg,#ffeef2,#ffdee8);
+    border:1px solid #f2c3d1;
+    box-shadow:0 8px 20px -12px rgba(0,0,0,.3);
+  }
 
-/* 🔹 Pagination */
-.pager {display:flex;justify-content:center;gap:10px;padding:20px 0 40px;}
-.pbtn {
-  width:42px;height:42px;border-radius:50%;
-  border:none;background:white;cursor:pointer;
-  font-weight:700;
-  box-shadow:0 10px 24px -16px rgba(0,0,0,0.4);
-}
-.pbtn[disabled]{opacity:.5;cursor:not-allowed}
+  h1 {
+    font-family:"Playfair Display",serif;
+    text-align:center;
+    font-size:clamp(22px,3vw,34px);
+    margin:26px 0 12px;
+    text-shadow:0 1px 0 rgba(255,255,255,0.7);
+  }
 
-/* 🔹 Floating buttons */
-.fab-wrap{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:10px;}
-.fab{
-  width:48px;height:48px;border-radius:50%;
-  background:#ffffffcc;
-  border:1px solid #f0c4cc;
-  box-shadow:0 10px 28px -16px rgba(0,0,0,0.45);
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;cursor:pointer;
-}
-</style>
+  .grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:22px;
+    max-width:1150px;
+    margin:0 auto;
+    padding:10px 20px 60px;
+  }
+
+  .card{
+    background: transparent;
+    border-radius: 22px;
+    padding: 10px;
+    transition: transform .28s cubic-bezier(.2,.9,.25,1), box-shadow .28s;
+    cursor:pointer;
+    position:relative;
+    box-shadow:
+      0 20px 50px rgba(20,10,20,0.14),
+      inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+  .card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:20px;
+    pointer-events:none;
+    background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(250,246,245,0.55));
+    box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+    transform: translateY(2px);
+    z-index:0;
+  }
+  .card .frame-inner{
+    position:absolute;
+    inset:8px;
+    border-radius:14px;
+    background: rgba(255,255,255,0.98);
+    box-shadow: inset 0 1px 0 rgba(0,0,0,0.03);
+    z-index:1;
+    pointer-events:none;
+  }
+  .poster{
+    position:relative;
+    width:100%;
+    aspect-ratio:3/4;
+    border-radius:12px;
+    overflow:hidden;
+    z-index:2;
+  }
+  .poster .fill{
+    position:absolute; inset:0;
+    background-size:cover; background-position:center;
+    filter: blur(12px) brightness(.92) saturate(.96);
+    transform:scale(1.06);
+    opacity:0.86;
+  }
+  .photo{
+    position:absolute; inset:12px;
+    z-index:3;
+    display:flex; align-items:center; justify-content:center;
+    background: transparent;
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .photo img{
+    width:auto; max-width:100%;
+    height:auto; max-height:100%;
+    object-fit:contain;
+    transition: transform .36s ease, filter .28s ease;
+    display:block;
+    filter: saturate(1.03) contrast(1.02);
+    box-shadow: 0 8px 30px rgba(60,30,40,0.06);
+  }
+  .card:hover .photo img{
+    transform: scale(1.06);
+    filter: saturate(1.06) contrast(1.04) brightness(1.01);
+  }
+  .card:hover::before{
+    transform:translateY(0);
+    box-shadow: 0 28px 64px rgba(20,10,20,0.18);
+  }
+
+  .pager {display:flex;justify-content:center;gap:10px;padding:20px 0 40px;}
+  .pbtn {
+    width:42px;height:42px;border-radius:50%;
+    border:none;background:white;cursor:pointer;
+    font-weight:700;
+    box-shadow:0 10px 24px -16px rgba(0,0,0,0.4);
+  }
+
+  .fab-wrap{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:10px;}
+  .fab{
+    width:48px;height:48px;border-radius:50%;
+    background:#ffffffcc;
+    border:1px solid #f0c4cc;
+    box-shadow:0 10px 28px -16px rgba(0,0,0,0.45);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;cursor:pointer;
+  }
+
+  /* tiny guard loader visible until guard-auth signals ready */
+  #guardLoader{
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:system-ui, sans-serif; color:#7a2a39; background:transparent; z-index:9999;
+  }
+  html:not(.guard-hide) #guardLoader{ display:none }
+  </style>
+
+  <!-- music-heart assets (same as life.html) -->
+  <link rel="stylesheet" href="/assets/css/music-heart.css">
+  <script src="/assets/js/music-heart.js" defer></script>
 </head>
 <body>
+  <div id="guardLoader">Loading…</div>
 
-<!-- Auth Guard -->
-<script>
-(async()=>{
- try{
-  const r=await fetch('/api/diag',{credentials:'include'});
-  if(!r.ok)throw 0;
- }catch{location.href='/index.html';}
-})();
-</script>
+  <!-- Auth guard: actual guard script (guard-auth.js) will emit shree:auth-ready event -->
+  <script>
+    // Hide until guard-auth indicates OK (guard-auth.js is loaded with defer)
+    document.documentElement.classList.add('guard-hide');
+    window.addEventListener('shree:auth-ready', (e) => {
+      const ok = !!(e && e.detail && e.detail.authenticated);
+      if (!ok) { location.href = '/index.html'; return; }
+      document.documentElement.classList.remove('guard-hide');
+    }, { once:true });
 
-<nav class="topbar">
- <a href="/life.html">Life</a>
- <a href="/upload.html">Upload</a>
- <a href="/auth/logout">Logout</a>
-</nav>
+    // small failsafe after 2s (prevents permanent blank if event missed)
+    setTimeout(() => {
+      if (document.documentElement.classList.contains('guard-hide')) {
+        document.documentElement.classList.remove('guard-hide');
+      }
+    }, 2000);
+  </script>
 
-<h1>Sweet Memories of Shreshtha’s Life</h1>
+  <nav class="topbar" aria-label="Primary">
+    <a href="/life.html">Life</a>
+    <a href="/upload.html">Upload</a>
+    <a href="/auth/logout">Logout</a>
+  </nav>
 
-<section id="grid" class="grid">
-  <div class="card" style="opacity:0.4;height:200px;"></div>
-</section>
+  <h1>Sweet Memories of Shreshtha’s Life</h1>
 
-<div class="pager">
-  <button id="prevBtn" class="pbtn">‹</button>
-  <button id="nextBtn" class="pbtn">›</button>
-</div>
+  <section id="grid" class="grid">
+    <!-- placeholder while items load -->
+    <div class="card" style="opacity:0.4;height:200px;"></div>
+  </section>
 
-<div class="fab-wrap">
-  <button class="fab" id="musicBtn">♪</button>
-  <button class="fab" id="heartBtn">❤</button>
-</div>
+  <div class="pager">
+    <button id="prevBtn" class="pbtn">‹</button>
+    <button id="nextBtn" class="pbtn">›</button>
+  </div>
 
-<audio id="bgMusic" loop preload="auto"><source src="/music/bg.mp3" type="audio/mpeg"></audio>
+  <!-- Preserve a small heart/fab (positioned above music UI) -->
+  <div style="position:fixed; right:16px; bottom:96px; z-index:9998;">
+    <button class="fab" id="heartBtn" title="Love">❤</button>
+  </div>
 
-<script>
-/* Lightbox (fullscreen + download) */
-const Lightbox = (() => {
-  const container = document.createElement('div');
-  container.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;z-index:9999;padding:18px;';
-  container.innerHTML = `
-    <div style="position:relative;max-width:98vw;max-height:96vh;display:flex;align-items:center;justify-content:center;">
-      <button id="lbClose" aria-label="Close" style="position:absolute;top:8px;right:8px;z-index:3;padding:8px 10px;border-radius:8px;background:#ffffffdd;border:none;font-size:18px;cursor:pointer">✕</button>
-      <a id="lbDownload" download style="position:absolute;top:8px;left:8px;z-index:3;padding:8px 10px;border-radius:8px;background:#ffffffdd;border:none;text-decoration:none;color:#222;font-size:14px;">Download</a>
-      <img id="lbImg" style="max-width:98vw;max-height:96vh;object-fit:contain;border-radius:8px;box-shadow:0 30px 80px rgba(0,0,0,0.6);" alt="full photo"/>
-    </div>
-  `;
-  document.body.appendChild(container);
-  const img = container.querySelector('#lbImg');
-  const closeBtn = container.querySelector('#lbClose');
-  const downloadLink = container.querySelector('#lbDownload');
+  <!-- music-heart implements its own UI and audio; life.html used these assets -->
+  <!-- music-heart.css / music-heart.js will create the UI & attach audio control -->
+  <!-- (No inline audio element needed here — the external script will handle it) -->
 
-  closeBtn.addEventListener('click', ()=>{ container.style.display='none'; img.src=''; downloadLink.href=''; });
-  container.addEventListener('click', ev=>{ if(ev.target===container) closeBtn.click(); });
-  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && container.style.display==='flex') closeBtn.click(); });
+  <!-- Lightbox (fullscreen + download) -->
+  <script>
+  const Lightbox = (() => {
+    const container = document.createElement('div');
+    container.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;z-index:9999;padding:18px;';
+    container.innerHTML = `
+      <div style="position:relative;max-width:98vw;max-height:96vh;display:flex;align-items:center;justify-content:center;">
+        <button id="lbClose" aria-label="Close" style="position:absolute;top:8px;right:8px;z-index:3;padding:8px 10px;border-radius:8px;background:#ffffffdd;border:none;font-size:18px;cursor:pointer">✕</button>
+        <a id="lbDownload" download style="position:absolute;top:8px;left:8px;z-index:3;padding:8px 10px;border-radius:8px;background:#ffffffdd;border:none;text-decoration:none;color:#222;font-size:14px;">Download</a>
+        <img id="lbImg" style="max-width:98vw;max-height:96vh;object-fit:contain;border-radius:8px;box-shadow:0 30px 80px rgba(0,0,0,0.6);" alt="full photo"/>
+      </div>
+    `;
+    document.body.appendChild(container);
+    const img = container.querySelector('#lbImg');
+    const closeBtn = container.querySelector('#lbClose');
+    const downloadLink = container.querySelector('#lbDownload');
 
-  return {
-    open(src, name){
-      img.src = src;
-      downloadLink.href = src;
-      downloadLink.download = name || 'photo.jpg';
-      container.style.display = 'flex';
-    }
-  };
-})();
+    closeBtn.addEventListener('click', ()=>{ container.style.display='none'; img.src=''; downloadLink.href=''; });
+    container.addEventListener('click', ev=>{ if(ev.target===container) closeBtn.click(); });
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape' && container.style.display==='flex') closeBtn.click(); });
 
-/* Gallery Loader */
-(async()=>{
- const grid=document.getElementById('grid'),
- prev=document.getElementById('prevBtn'),
- next=document.getElementById('nextBtn');
- const PAGE=24;
- function getTime(i){for(let k of ['createdAt','uploadedAt','time','date','timestamp'])if(i?.[k])return new Date(i[k]).getTime();return 0;}
- async function createCard(it){
-   const el=document.createElement('div');el.className='card';
-   el.innerHTML=`<div class="frame-inner"></div>
-     <div class="poster">
-       <div class="fill"></div>
-       <div class="photo"><img loading="lazy" alt="photo"/></div>
-     </div>`;
-   const id=it.id||it._id;
-   if(id){
-     try{
-       const res=await fetch('/api/file/'+id,{credentials:'include'});
-       if(!res.ok)throw 0;
-       const blob=await res.blob();
-       const url=URL.createObjectURL(blob);
-       const img=el.querySelector('img');
-       img.src=url;
-       el.querySelector('.fill').style.backgroundImage=`url('${url}')`;
-       el.onclick=()=>Lightbox.open(url, it.name||'photo.jpg');
-     }catch{}
+    return {
+      open(src, name){
+        img.src = src;
+        downloadLink.href = src;
+        downloadLink.download = name || 'photo.jpg';
+        container.style.display = 'flex';
+      }
+    };
+  })();
+  </script>
+
+  <!-- Gallery Loader -->
+  <script>
+  (async()=>{
+   const grid=document.getElementById('grid'),
+         prev=document.getElementById('prevBtn'),
+         next=document.getElementById('nextBtn');
+   const PAGE=24;
+   function getTime(i){for(let k of ['createdAt','uploadedAt','time','date','timestamp'])if(i?.[k])return new Date(i[k]).getTime();return 0;}
+   async function createCard(it){
+     const el=document.createElement('div');el.className='card';
+     el.innerHTML=`<div class="frame-inner"></div>
+       <div class="poster">
+         <div class="fill"></div>
+         <div class="photo"><img loading="lazy" alt="photo"/></div>
+       </div>`;
+     const id=it.id||it._id;
+     if(id){
+       try{
+         const res=await fetch('/api/file/'+id,{credentials:'include'});
+         if(!res.ok)throw 0;
+         const blob=await res.blob();
+         const url=URL.createObjectURL(blob);
+         const img=el.querySelector('img');
+         img.src=url;
+         el.querySelector('.fill').style.backgroundImage=`url('${url}')`;
+         el.onclick=()=>Lightbox.open(url, it.name||'photo.jpg');
+       }catch{}
+     }
+     return el;
    }
-   return el;
- }
- function render(list,page){
-   grid.innerHTML='';
-   const total=list.length,pages=Math.ceil(total/PAGE)||1;
-   if(page>pages)page=pages;
-   list.slice((page-1)*PAGE,page*PAGE).forEach(async i=>grid.appendChild(await createCard(i)));
-   prev.disabled=page<=1;next.disabled=page>=pages;
- }
- try{
-   const res=await fetch('/api/list',{credentials:'include'});
-   const data=await res.json();
-   let items=Array.isArray(data)?data:(data.items||[]);
-   items=items.sort((a,b)=>getTime(b)-getTime(a));
-   let page=1;render(items,page);
-   prev.onclick=()=>{if(page>1){page--;render(items,page)}};
-   next.onclick=()=>{page++;render(items,page)};
- }catch{grid.innerHTML='<p style="text-align:center;color:#603a3b;">Unable to load photos.</p>';}
-})();
+   function render(list,page){
+     grid.innerHTML='';
+     const total=list.length,pages=Math.ceil(total/PAGE)||1;
+     if(page>pages)page=pages;
+     list.slice((page-1)*PAGE,page*PAGE).forEach(async i=>grid.appendChild(await createCard(i)));
+     prev.disabled=page<=1;next.disabled=page>=pages;
+   }
+   try{
+     const res=await fetch('/api/list',{credentials:'include'});
+     const data=await res.json();
+     let items=Array.isArray(data)?data:(data.items||[]);
+     items=items.sort((a,b)=>getTime(b)-getTime(a));
+     let page=1;render(items,page);
+     prev.onclick=()=>{if(page>1){page--;render(items,page)}};
+     next.onclick=()=>{page++;render(items,page)};
+   }catch{grid.innerHTML='<p style="text-align:center;color:#603a3b;">Unable to load photos.</p>';}
+  })();
+  </script>
 
-/* Music toggle */
-(()=>{
- const a=document.getElementById('bgMusic'),b=document.getElementById('musicBtn');
- let on=localStorage.getItem('musicOn')==='true';
- if(on)a.play().catch(()=>{});
- b.onclick=()=>{if(a.paused){a.play();on=true;}else{a.pause();on=false;}localStorage.setItem('musicOn',on)};
-})();
-</script>
+  <!-- small heart FAB behaviour (preserve) -->
+  <script>
+  document.getElementById('heartBtn')?.addEventListener('click', () => {
+    // temporary simple feedback — you can extend for likes backend later
+    const el = document.createElement('div');
+    el.textContent='❤';
+    el.style.position='fixed'; el.style.right='22px'; el.style.bottom='110px';
+    el.style.fontSize='22px'; el.style.opacity='0.95'; el.style.zIndex=9999;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),900);
+  });
+  </script>
 
+  <!-- music-heart script and styles are loaded in <head> — they will instantiate UI -->
 </body>
 </html>
