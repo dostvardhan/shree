@@ -19,9 +19,10 @@
   <script src="/auth-init.js" defer></script>
   <script src="/guard-auth.js" defer></script>
 
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-  <!-- MUSIC (same as life.html) -->
+  <!-- Music UI (same as life.html) -->
   <link rel="stylesheet" href="/assets/css/music-heart.css">
   <script src="/assets/js/music-heart.js" defer></script>
 
@@ -44,7 +45,7 @@
     overflow-x:hidden;
   }
 
-  nav.topbar {
+  nav.topbar{
     display:flex;
     justify-content:center;
     gap:10px;
@@ -89,9 +90,7 @@
     transition: transform .28s cubic-bezier(.2,.9,.25,1), box-shadow .28s;
     cursor:pointer;
     position:relative;
-    box-shadow:
-      0 20px 50px rgba(20,10,20,0.14),
-      inset 0 1px 0 rgba(255,255,255,0.35);
+    box-shadow:0 20px 50px rgba(20,10,20,0.14), inset 0 1px 0 rgba(255,255,255,0.35);
   }
 
   .card::before{
@@ -99,11 +98,9 @@
     position:absolute;
     inset:0;
     border-radius:20px;
-    pointer-events:none;
     background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(250,246,245,0.55));
     box-shadow: 0 8px 18px rgba(0,0,0,0.06);
     transform: translateY(2px);
-    z-index:0;
   }
 
   .poster{
@@ -112,7 +109,6 @@
     aspect-ratio:3/4;
     border-radius:12px;
     overflow:hidden;
-    z-index:2;
   }
 
   .poster .fill{
@@ -128,7 +124,6 @@
   .photo{
     position:absolute;
     inset:12px;
-    z-index:3;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -137,15 +132,11 @@
   }
 
   .photo img{
-    width:auto;
     max-width:100%;
-    height:auto;
     max-height:100%;
+    transition:.3s;
     object-fit:contain;
-    transition: transform .36s ease, filter .28s ease;
-    display:block;
-    filter: saturate(1.03) contrast(1.02);
-    box-shadow: 0 8px 30px rgba(60,30,40,0.06);
+    box-shadow:0 8px 30px rgba(60,30,40,0.06);
   }
 
   .pager{
@@ -156,8 +147,7 @@
   }
 
   .pbtn{
-    width:42px;
-    height:42px;
+    width:42px;height:42px;
     border-radius:50%;
     border:none;
     background:white;
@@ -166,41 +156,31 @@
     box-shadow:0 10px 24px -16px rgba(0,0,0,0.4);
   }
 
-  /* small heart button */
+  /* small heart */
   .fab{
-    width:48px;
-    height:48px;
+    width:48px;height:48px;
     border-radius:50%;
     position:fixed;
     right:16px;
     bottom:96px;
     background:#ffffffcc;
     border:1px solid #f0c4cc;
-    box-shadow:0 10px 28px -16px rgba(0,0,0,0.45);
     display:flex;
     align-items:center;
     justify-content:center;
-    font-weight:800;
     cursor:pointer;
     z-index:9998;
   }
 
   #guardLoader{
-    position:fixed;
-    inset:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-family:system-ui;
-    color:#7a2a39;
-    z-index:9999;
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:system-ui; color:#7a2a39; z-index:9999;
   }
-
   html:not(.guard-hide) #guardLoader{display:none}
-
   </style>
-</head>
 
+</head>
 <body>
 
 <div id="guardLoader">Loading…</div>
@@ -211,7 +191,7 @@ window.addEventListener('shree:auth-ready',(e)=>{
   if(!e.detail.authenticated){location.href="/index.html";return;}
   document.documentElement.classList.remove('guard-hide');
 });
-setTimeout(()=>{document.documentElement.classList.remove('guard-hide')},2000);
+setTimeout(()=>document.documentElement.classList.remove('guard-hide'),2000);
 </script>
 
 <nav class="topbar">
@@ -234,7 +214,7 @@ setTimeout(()=>{document.documentElement.classList.remove('guard-hide')},2000);
 <button class="fab" id="heartBtn">❤</button>
 
 <script>
-document.getElementById("heartBtn").onclick = ()=>{
+document.getElementById("heartBtn").onclick=()=>{
   const h=document.createElement("div");
   h.textContent="❤";
   h.style.position="fixed";
@@ -250,20 +230,19 @@ document.getElementById("heartBtn").onclick = ()=>{
 
 <!-- Lightbox -->
 <script>
-const Lightbox = (() => {
+const Lightbox=(()=>{
   const c=document.createElement("div");
-  c.style.cssText="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;align-items:center;justify-content:center;";
-  c.innerHTML=`<div style="position:relative;max-width:98vw;max-height:96vh;display:flex;align-items:center;justify-content:center;">
-      <button id="lbClose" style="position:absolute;top:8px;right:8px;padding:8px 10px;border-radius:8px;background:#fff;border:none;cursor:pointer">✕</button>
-      <a id="lbDownload" download style="position:absolute;top:8px;left:8px;padding:8px 10px;border-radius:8px;background:#fff;text-decoration:none;color:#222;">Download</a>
-      <img id="lbImg" style="max-width:98vw;max-height:96vh;object-fit:contain;border-radius:8px;">
-    </div>`;
+  c.style.cssText="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;align-items:center;justify-content:center;";
+  c.innerHTML=`<div style="position:relative;max-width:98vw;max-height:96vh;">
+    <button id="lbClose" style="position:absolute;top:8px;right:8px;background:#fff;padding:8px;border:none;border-radius:8px;">✕</button>
+    <a id="lbDownload" download style="position:absolute;top:8px;left:8px;background:#fff;padding:8px;border-radius:8px;text-decoration:none;color:#222;">Download</a>
+    <img id="lbImg" style="max-width:98vw;max-height:96vh;object-fit:contain;border-radius:8px;">
+  </div>`;
   document.body.appendChild(c);
-  const img=c.querySelector("#lbImg");
-  c.querySelector("#lbClose").onclick=()=>{c.style.display="none";};
+  c.querySelector("#lbClose").onclick=()=>c.style.display="none";
   return{
     open:(src,n)=>{
-      img.src=src;
+      c.querySelector("#lbImg").src=src;
       c.querySelector("#lbDownload").href=src;
       c.style.display="flex";
     }
@@ -302,7 +281,7 @@ const Lightbox = (() => {
        el.querySelector("img").src=url;
        el.querySelector(".fill").style.backgroundImage=`url('${url}')`;
        el.onclick=()=>Lightbox.open(url,it.name||"photo.jpg");
-     }catch(e){}
+     }catch{}
    }
    return el;
  }
@@ -320,7 +299,7 @@ const Lightbox = (() => {
  try{
    const res=await fetch("/api/list",{credentials:"include"});
    const data=await res.json();
-   let items=Array.isArray(data)?data:data.items||[];
+   let items=Array.isArray(data)?data:(data.items||[]);
    items=items.sort((a,b)=>getTime(b)-getTime(a));
    let page=1;
    render(items,page);
