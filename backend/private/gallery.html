@@ -219,10 +219,6 @@
     <button class="fab" id="heartBtn" title="Love">❤</button>
   </div>
 
-  <!-- music-heart implements its own UI and audio; life.html used these assets -->
-  <!-- music-heart.css / music-heart.js will create the UI & attach audio control -->
-  <!-- (No inline audio element needed here — the external script will handle it) -->
-
   <!-- Lightbox (fullscreen + download) -->
   <script>
   const Lightbox = (() => {
@@ -255,7 +251,7 @@
   })();
   </script>
 
-  <!-- Gallery Loader -->
+  <!-- Gallery Loader (original behavior preserved) -->
   <script>
   (async()=>{
    const grid=document.getElementById('grid'),
@@ -307,7 +303,6 @@
   <!-- small heart FAB behaviour (preserve) -->
   <script>
   document.getElementById('heartBtn')?.addEventListener('click', () => {
-    // temporary simple feedback — you can extend for likes backend later
     const el = document.createElement('div');
     el.textContent='❤';
     el.style.position='fixed'; el.style.right='22px'; el.style.bottom='110px';
@@ -317,6 +312,8 @@
   });
   </script>
 
-  <!-- music-heart script and styles are loaded in <head> — they will instantiate UI -->
+  <!-- music-heart script and styles (only these, no duplicates) -->
+  <!-- life.html uses these same assets; keep paths identical -->
+  <!-- /assets/js/music-heart.js will create the floating music UI and audio control -->
 </body>
 </html>
