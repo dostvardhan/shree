@@ -182,12 +182,44 @@ textarea{
   body{ overflow:auto; }
 }
 
-/* MUSIC — same as welcome */
-#musicHeartWrap{
-  position:fixed;
-  right:18px;
-  bottom:18px;
-  z-index:160;
+/* MUSIC HEART (same as life / welcome) */
+#musicHeartWrap {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 9999;
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+#musicHeartBtn{
+  width:56px;height:56px;border:none;border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:22px; line-height:1;
+  background: radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0);
+  box-shadow: 0 8px 28px rgba(220,80,110,0.18);
+  transition: transform .16s ease, box-shadow .16s ease, opacity .18s ease;
+}
+#musicHeartBtn:active{ transform:scale(.96); }
+#musicHeartBtn.playing{ box-shadow:0 14px 42px rgba(220,80,110,0.28); transform:scale(1.04); }
+#musicHeartBtn .heart{ pointer-events:none; user-select:none; }
+.vol-dot{
+  width:18px;height:18px;border-radius:50%;
+  background: linear-gradient(150deg,#ffd76d,#ffc96a);
+  box-shadow:0 6px 10px rgba(255,170,100,0.22);
+  border:2px solid rgba(255,255,255,0.95);
+  cursor:pointer; margin-left:-8px;
+}
+.vol-pop{
+  position:absolute; right:72px; bottom:10px; width:220px; padding:10px 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
+  border-radius:12px; box-shadow:0 12px 30px rgba(0,0,0,0.12);
+  display:none; gap:10px; align-items:center;
+}
+.vol-pop.show{ display:flex; }
+.vol-range{ -webkit-appearance:none; width:130px;height:7px;border-radius:999px;background:linear-gradient(90deg,#ffc1c1,#ffd88a); outline:none;}
+.vol-range::-webkit-slider-thumb{
+  -webkit-appearance:none; width:14px;height:14px;border-radius:50%;
+  background:#fff; box-shadow:0 4px 10px rgba(0,0,0,.12); border:3px solid #ffb0a0;
 }
 </style>
 
@@ -207,7 +239,7 @@ setTimeout(()=>document.documentElement.classList.remove('guard-hide'),2000);
 <div id="guardLoader">Checking access…</div>
 
 <div class="bg">
-  <img src="/assets/img/upload-bg-final-new.jpg">
+  <img src="/assets/img/upload-bg-final-new.jpg" alt="">
 </div>
 
 <header>
@@ -221,7 +253,7 @@ setTimeout(()=>document.documentElement.classList.remove('guard-hide'),2000);
 </header>
 
 <main>
-  <!-- RIGHT -->
+  <!-- RIGHT CARD -->
   <section class="card upload-card">
     <div class="pane">
       <div class="drop">
@@ -233,7 +265,7 @@ setTimeout(()=>document.documentElement.classList.remove('guard-hide'),2000);
       <div style="margin-top:12px">
         <label for="caption">Caption (optional)</label>
         <textarea id="caption" name="caption"
-        placeholder="Write something sweet…"></textarea>
+          placeholder="Write something sweet…"></textarea>
       </div>
 
       <div class="actions">
@@ -244,7 +276,7 @@ setTimeout(()=>document.documentElement.classList.remove('guard-hide'),2000);
     </div>
   </section>
 
-  <!-- LEFT -->
+  <!-- LEFT PREVIEW CARD -->
   <aside class="card preview-card">
     <div class="pane" style="min-height:170px;display:flex;align-items:center;justify-content:center;">
       <div style="text-align:center;width:100%">
@@ -306,9 +338,138 @@ btn.addEventListener('click',async()=>{
 });
 </script>
 
-<!-- MUSIC SAME AS WELCOME -->
-<link rel="stylesheet" href="/assets/css/music-heart.css">
-<script src="/assets/js/music-heart.js" defer></script>
+<!-- MUSIC HEART (same behaviour as life.html) -->
+<audio id="bgMusicFinal" loop preload="auto" style="display:none">
+  <source src="/music/bg.mp3" type="audio/mpeg" />
+</audio>
+
+<div id="musicHeartWrap" aria-hidden="false">
+  <button id="musicHeartBtn" aria-label="Toggle background music" title="Play / Pause background music" type="button">
+    <span class="heart" aria-hidden="true">♡</span>
+  </button>
+  <div class="vol-dot" id="musicVolDot" role="button" tabindex="0" aria-label="Volume control" title="Volume"></div>
+
+  <div class="vol-pop" id="musicVolPop" role="dialog" aria-hidden="true">
+    <div style="font-size:13px;color:#6b2b2b;">Vol</div>
+    <input id="musicVolRange" class="vol-range" type="range" min="0" max="100" step="1" value="60" aria-label="Volume slider" />
+    <button id="musicMuteBtn" style="border:none;background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.06);cursor:pointer" aria-pressed="false" title="Mute/unmute">M</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  try {
+    const audio = document.getElementById('bgMusicFinal');
+    const btn = document.getElementById('musicHeartBtn');
+    const volDot = document.getElementById('musicVolDot');
+    const volPop = document.getElementById('musicVolPop');
+    const volRange = document.getElementById('musicVolRange');
+    const muteBtn = document.getElementById('musicMuteBtn');
+
+    if (!audio || !btn || !volDot || !volPop || !volRange || !muteBtn) return;
+
+    try {
+      const savedVol = localStorage.getItem('shree_music_volume');
+      if (savedVol !== null) volRange.value = savedVol;
+      audio.volume = (savedVol !== null)
+        ? (Math.max(0, Math.min(100, parseInt(savedVol,10))) / 100)
+        : 0.6;
+    } catch(e){}
+
+    function updateBtn() {
+      const heart = btn.querySelector('.heart');
+      if (!heart) return;
+      if (!audio.paused) {
+        btn.classList.add('playing');
+        heart.textContent = '❤';
+        btn.setAttribute('aria-pressed','true');
+      } else {
+        btn.classList.remove('playing');
+        heart.textContent = '♡';
+        btn.setAttribute('aria-pressed','false');
+      }
+    }
+
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      if (audio.paused) {
+        audio.play().then(()=> {
+          localStorage.setItem('shree_music_playing','1');
+          updateBtn();
+        }).catch(()=>{});
+      } else {
+        audio.pause();
+        localStorage.setItem('shree_music_playing','0');
+        updateBtn();
+      }
+    });
+
+    volDot.addEventListener('click', function(e){
+      e.stopPropagation();
+      const show = volPop.classList.toggle('show');
+      volPop.setAttribute('aria-hidden', show ? 'false' : 'true');
+      if (show) setTimeout(()=> volRange.focus(), 40);
+    });
+
+    volDot.addEventListener('keydown', function(e){
+      if (e.key==='Enter' || e.key===' ') {
+        e.preventDefault();
+        volDot.click();
+      }
+    });
+
+    volRange.addEventListener('input', function(){
+      const v = Math.max(0, Math.min(100, parseInt(volRange.value,10)));
+      audio.volume = v/100;
+      try { localStorage.setItem('shree_music_volume', String(v)); } catch(e){}
+      muteBtn.setAttribute('aria-pressed', v === 0 ? 'true':'false');
+    });
+
+    muteBtn.addEventListener('click', function(){
+      if (audio.volume > 0) {
+        volRange.dataset.prev = volRange.value;
+        volRange.value = 0;
+      } else {
+        volRange.value = volRange.dataset.prev || 60;
+      }
+      volRange.dispatchEvent(new Event('input'));
+    });
+
+    document.addEventListener('click', function(e){
+      if (!e.target.closest('.vol-pop') && !e.target.closest('#musicVolDot')) {
+        volPop.classList.remove('show');
+        volPop.setAttribute('aria-hidden','true');
+      }
+    });
+
+    audio.play().then(()=>{ updateBtn(); }).catch(()=>{
+      function userStart() {
+        audio.play().then(()=> {
+          localStorage.setItem('shree_music_playing','1');
+          updateBtn();
+        }).catch(()=>{});
+        window.removeEventListener('click', userStart, {capture:true});
+        window.removeEventListener('touchstart', userStart, {passive:true});
+        window.removeEventListener('keydown', userStart, {capture:true});
+      }
+      window.addEventListener('click', userStart, {capture:true});
+      window.addEventListener('touchstart', userStart, {passive:true});
+      window.addEventListener('keydown', userStart, {capture:true});
+    });
+
+    audio.addEventListener('play', updateBtn);
+    audio.addEventListener('pause', updateBtn);
+    audio.addEventListener('volumechange', function(){
+      try{ localStorage.setItem('shree_music_volume',
+        String(Math.round(audio.volume*100))); }catch(e){}
+    });
+
+    updateBtn();
+  } catch(err) {
+    console.warn('music heart snippet error', err);
+  }
+})();
+</script>
 
 </body>
 </html>
