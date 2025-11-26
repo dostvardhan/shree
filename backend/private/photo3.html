@@ -13,31 +13,105 @@
                  style-src 'self' 'unsafe-inline';
                  media-src 'self';">
 
+  <!-- Auth -->
   <script src="/auth0-spa-js.production.js" defer></script>
   <script src="/auth-init.js" defer></script>
   <script src="/guard-auth.js" defer></script>
 
-  <link rel="stylesheet" href="/assets/css/music-heart.css">
-  <script src="/assets/js/music-heart.js" defer></script>
-
   <style>
-    :root{ --ink:#f6f6f6; --muted:#d5d5d5; --bg1:#0f2b35; --bg2:#153947; --bg3:#22495a; --accent:#f9cc63; }
+    :root{
+      --ink:#542c3b;
+      --muted:#7a4b59;
+      --bg1:#ffe6ef;
+      --bg2:#ffcadc;
+      --bg3:#ffb3c9;
+      --accent:#ff88a6;
+    }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:"Playfair Display",serif}
-    body{ background: radial-gradient(1000px 500px at 10% 10%, rgba(255,240,200,0.08), transparent 25%), linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 45%, var(--bg3) 100%); background-attachment: fixed; color:var(--ink); overflow-y:auto; }
-    .wrap{max-width:1600px;margin:18px auto;padding:18px}
-    .photo-card{background:transparent;padding:8px 12px 40px;margin:8px 0}
-    .photo-wrap{width:min(1500px,98vw); margin:0 auto;text-align:center}
-    .photo-wrap img{display:block;width:100%;height:auto;max-height:240vh;object-fit:contain;border-radius:8px;box-shadow:0 30px 70px rgba(0,0,0,0.35)}
+    body{
+      background:
+        radial-gradient(900px 500px at 14% 18%, rgba(255,255,255,0.9), transparent 40%),
+        linear-gradient(155deg, var(--bg1) 0%, var(--bg2) 45%, var(--bg3) 100%);
+      background-attachment: fixed;
+      color:var(--ink);
+      overflow-y:auto;
+    }
+    .wrap{max-width:1600px;margin:18px auto;padding:18px;display:block}
+    .photo-card{background:transparent;border-radius:0;padding:8px 12px 40px;margin:8px 0;position:relative}
+    .photo-area{display:flex;justify-content:center;align-items:flex-start}
+    .photo-wrap{
+      width:min(1500px,98vw);
+      display:block;
+      background:rgba(255,245,250,0.85);
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 26px 70px rgba(255,120,150,0.28);
+      margin:0 auto;
+      text-align:center;
+    }
+    .photo-wrap img{
+      display:block;
+      width:100%;
+      height:auto;
+      max-height:220vh;
+      object-fit:contain;
+      border-radius:14px;
+      box-shadow:0 18px 50px rgba(120,60,80,0.35);
+      -webkit-user-drag:none;
+    }
     .caption{text-align:center;margin:20px 0 10px}
-    .pill{display:inline-block;background:linear-gradient(180deg,#1d3a48,#1a313d);padding:14px 24px;border-radius:999px;color:var(--muted);font-style:italic;box-shadow:0 10px 22px rgba(0,0,0,0.4)}
+    .pill{
+      display:inline-block;
+      background:linear-gradient(180deg,#ffe9f3,#ffd0e2);
+      padding:12px 22px;
+      border-radius:999px;
+      box-shadow:0 10px 26px rgba(150,70,100,0.35);
+      font-style:italic;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,0.9);
+    }
     .bottom-nav{display:flex;gap:14px;justify-content:center;margin-top:14px}
-    .bottom-nav a{ text-decoration:none;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,0.1);color:var(--ink);box-shadow:0 8px 22px rgba(0,0,0,0.3);font-weight:600}
-    .nav-heart{position:fixed;top:50%;transform:translateY(-50%);width:56px;height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;z-index:150;cursor:pointer;background:linear-gradient(180deg,#1e404c,#102933);box-shadow:0 14px 32px rgba(0,0,0,0.35)}
-    .nav-left{left:14px}.nav-right{right:14px}
-    .nav-inner{width:40px;height:40px;border-radius:999px;background:var(--accent);color:#202020;display:flex;align-items:center;justify-content:center;font-weight:700}
+    .bottom-nav a{
+      text-decoration:none;
+      padding:8px 16px;
+      border-radius:999px;
+      background:rgba(255,247,249,0.9);
+      color:var(--ink);
+      box-shadow:0 8px 22px rgba(140,80,100,0.3);
+      font-weight:600;
+      backdrop-filter:blur(6px);
+      transition:all .2s;
+    }
+    .bottom-nav a:hover{background:#fff;color:#552a38}
+    .nav-heart{
+      position:fixed;top:50%;transform:translateY(-50%);
+      width:56px;height:56px;border-radius:999px;
+      display:flex;align-items:center;justify-content:center;
+      z-index:150;cursor:pointer;
+      box-shadow:0 14px 32px rgba(160,90,120,0.4);
+      background:linear-gradient(180deg,#ffccdb,#f9a4bc);
+    }
+    .nav-left{left:14px}
+    .nav-right{right:14px}
+    .nav-inner{
+      width:40px;height:40px;border-radius:999px;
+      background:#fff8fb;
+      color:#8a425c;
+      display:flex;align-items:center;justify-content:center;font-size:18px;
+      font-weight:700;
+      box-shadow:0 2px 6px rgba(0,0,0,0.25);
+    }
     #heartsCanvas{position:fixed;inset:0;pointer-events:none;z-index:15}
-    @media (max-width:900px){ .photo-wrap{width:min(760px,94vw)} .nav-heart{width:48px;height:48px} .nav-inner{width:34px;height:34px} }
+    @media (max-width:900px){
+      .photo-wrap{width:min(760px,94vw)}
+      .nav-heart{width:48px;height:48px}
+      .nav-inner{width:34px;height:34px}
+    }
+    @media (max-width:420px){
+      .photo-wrap{width:96vw}
+      .photo-wrap img{max-height:140vh}
+    }
   </style>
 </head>
 <body>
@@ -47,41 +121,187 @@
 
   <canvas id="heartsCanvas" aria-hidden="true"></canvas>
 
-  <main class="wrap">
-    <article class="photo-card" aria-label="Photo 3">
-      <div class="photo-wrap">
-        <img id="mainPhoto" src="/photos/photo3.jpg" alt="Memory 3 — Shreshtha">
+  <main class="wrap" role="main">
+    <article class="photo-card" role="article" aria-label="Photo 3">
+      <div class="photo-area">
+        <div class="photo-wrap">
+          <img id="mainPhoto" src="/photos/photo3.jpg" alt="Memory 3 — Shreshtha">
+        </div>
       </div>
 
-      <div class="caption"><div class="pill">"Happiness looks good on you."</div></div>
+      <div class="caption">
+        <div class="pill">“The kind of smile that stays with you, even after she leaves.”</div>
+      </div>
 
       <nav class="bottom-nav">
-        <a href="life.html">Life</a><a href="gallery.html">Gallery</a><a href="/auth/logout">Logout</a>
+        <a href="life.html">Life</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="/auth/logout">Logout</a>
       </nav>
     </article>
   </main>
 
+  <!-- navigation logic -->
   <script>
-    (function(){
-      const total=9;
-      function getIndex(){const m=(location.pathname||'').match(/photo(\d+)\.html/i);return m?parseInt(m[1],10):3;}
-      const cur=getIndex(), prev=cur>1?cur-1:total, next=cur<total?cur+1:1;
-      const pl=document.getElementById('prevHeart'), nl=document.getElementById('nextHeart');
-      if(pl) pl.href='photo'+prev+'.html'; if(nl) nl.href='photo'+next+'.html';
-    })();
+  (function(){
+    const total=9;
+    function getIndex(){
+      const m=(location.pathname||'').match(/photo(\d+)\.html/i);
+      return m?parseInt(m[1],10):3;
+    }
+    const cur=getIndex();
+    const prev=cur>1?cur-1:total;
+    const next=cur<total?cur+1:1;
+    const pl=document.getElementById('prevHeart');
+    const nl=document.getElementById('nextHeart');
+    if(pl) pl.href = (cur===1?'life.html':'photo'+prev+'.html');
+    if(nl) nl.href = 'photo'+next+'.html';
+  })();
   </script>
 
+  <!-- floating hearts -->
   <script>
-    (function(){
-      const c=document.getElementById('heartsCanvas'); if(!c) return;
-      const ctx=c.getContext('2d'); const DPR=Math.max(1,window.devicePixelRatio||1);
-      let W=0,H=0,hearts=[]; const COLORS=['#f9cc63','#f6e7b5','#e8f4ff','#bcd9d0','#f2f2f2']; const R=(a,b)=>Math.random()*(b-a)+a;
-      function resize(){W=innerWidth*DPR;H=innerHeight*DPR;c.width=W;c.height=H;c.style.width='100vw';c.style.height='100vh'}
-      function spawn(){ if(hearts.length>60) return; hearts.push({x:R(0,W),y:H+R(20*DPR,160*DPR),s:R(10,26)*DPR,vx:R(-0.2,0.2)*DPR,vy:-R(0.4,1.4)*DPR,a:R(0.5,0.9),r:R(-0.6,0.6),vr:R(-0.01,0.01),color:COLORS[(Math.random()*COLORS.length)|0]});}
-      function drawHeart(px,py,scale,rot,alpha,color){ctx.save();ctx.translate(px,py);ctx.rotate(rot);ctx.scale(scale,scale);ctx.globalAlpha=Math.min(1,alpha);ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(0,-0.5);ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);ctx.fill();ctx.restore();}
-      function tick(){ctx.clearRect(0,0,W,H); if(Math.random()<0.2) spawn(); hearts.forEach(h=>{h.x+=h.vx*0.016;h.y+=h.vy*0.016;h.r+=h.vr;h.a-=0.001; drawHeart(h.x,h.y,(h.s/52)*DPR,h.r,h.a,h.color);}); hearts=hearts.filter(h=>h.y>-120*DPR&&h.a>0.02); requestAnimationFrame(tick);}
-      addEventListener('resize',resize,{passive:true}); resize(); tick();
+  (function(){
+    const c=document.getElementById('heartsCanvas');
+    if(!c)return;
+    const ctx=c.getContext('2d');
+    const DPR=Math.max(1,window.devicePixelRatio||1);
+    let W=0,H=0,hearts=[];
+    const COLORS=['#ff88a6','#ffb6c9','#ffe4ee','#ffd0e0','#ffffff'];
+    const R=(a,b)=>Math.random()*(b-a)+a;
+    function resize(){
+      W=innerWidth*DPR;H=innerHeight*DPR;
+      c.width=W;c.height=H;
+      c.style.width='100vw';c.style.height='100vh';
+    }
+    function spawn(){
+      if(hearts.length>60)return;
+      hearts.push({
+        x:R(0,W),
+        y:H+R(20*DPR,160*DPR),
+        s:R(10,26)*DPR,
+        vx:R(-0.2,0.2)*DPR,
+        vy:-R(0.4,1.4)*DPR,
+        a:R(0.5,0.9),
+        r:R(-0.6,0.6),
+        vr:R(-0.01,0.01),
+        color:COLORS[(Math.random()*COLORS.length)|0]
+      });
+    }
+    function drawHeart(px,py,scale,rot,alpha,color){
+      ctx.save();ctx.translate(px,py);ctx.rotate(rot);ctx.scale(scale,scale);
+      ctx.globalAlpha=Math.min(1,alpha);
+      ctx.fillStyle=color;
+      ctx.beginPath();ctx.moveTo(0,-0.5);
+      ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);
+      ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);
+      ctx.fill();ctx.restore();
+    }
+    function tick(){
+      ctx.clearRect(0,0,W,H);
+      if(Math.random()<0.2)spawn();
+      hearts.forEach(h=>{
+        h.x+=h.vx*0.016;
+        h.y+=h.vy*0.016;
+        h.r+=h.vr;
+        h.a-=0.001;
+        drawHeart(h.x,h.y,(h.s/52)*DPR,h.r,h.a,h.color);
+      });
+      hearts=hearts.filter(h=>h.y>-120*DPR&&h.a>0.02);
+      requestAnimationFrame(tick);
+    }
+    addEventListener('resize',resize,{passive:true});
+    resize();tick();
+  })();
+  </script>
+
+  <!-- MUSIC (continuous across site) -->
+  <audio id="bgMusic" loop preload="auto" style="display:none">
+    <source src="/music/bg.mp3" type="audio/mpeg" />
+  </audio>
+
+  <div id="musicHeartWrap" aria-hidden="false" style="position:fixed;right:18px;bottom:18px;z-index:10;display:flex;gap:8px;align-items:center;">
+    <button id="musicHeartBtn" aria-label="Toggle background music" title="Play / Pause background music" type="button"
+            style="width:56px;height:56px;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1;background:radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0);box-shadow:0 8px 28px rgba(220,80,110,0.18);transition:transform .16s ease, box-shadow .16s ease, opacity .18s ease;">
+      <span class="heart" aria-hidden="true">♡</span>
+    </button>
+    <div class="vol-dot" id="musicVolDot"
+         style="width:18px;height:18px;border-radius:50%;background:linear-gradient(150deg,#ffd76d,#ffc96a);box-shadow:0 6px 10px rgba(255,170,100,0.22);border:2px solid rgba(255,255,255,0.95);cursor:pointer;margin-left:-8px;"></div>
+    <div class="vol-pop" id="musicVolPop"
+         style="position:absolute;right:72px;bottom:10px;width:220px;padding:10px 12px;background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.12);display:none;gap:10px;align-items:center;">
+      <div style="font-size:13px;color:#6b2b2b;">Vol</div>
+      <input id="musicVolRange" class="vol-range" type="range" min="0" max="100" step="1" value="60"
+             style="-webkit-appearance:none;width:130px;height:7px;border-radius:999px;background:linear-gradient(90deg,#ffc1c1,#ffd88a);outline:none;">
+      <button id="musicMuteBtn"
+              style="border:none;background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.06);cursor:pointer"
+              aria-pressed="false">M</button>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const audio=document.getElementById('bgMusic');
+    const btn=document.getElementById('musicHeartBtn');
+    const volDot=document.getElementById('musicVolDot');
+    const volPop=document.getElementById('musicVolPop');
+    const volRange=document.getElementById('musicVolRange');
+    const muteBtn=document.getElementById('musicMuteBtn');
+    if(!audio) return;
+
+    function updateBtn(){
+      const heart=btn.querySelector('.heart');
+      if(!audio.paused){
+        heart.textContent='❤';
+      }else{
+        heart.textContent='♡';
+      }
+    }
+
+    try{
+      const sv=localStorage.getItem('shree_music_volume');
+      if(sv!==null){
+        const v=Math.max(0,Math.min(100,parseInt(sv,10)));
+        audio.volume=v/100;
+        volRange.value=v;
+      }else{
+        audio.volume=0.6;
+      }
+    }catch(e){audio.volume=0.6;}
+
+    const savedPlaying=(()=>{
+      try{return localStorage.getItem('shree_music_playing')==='1';}
+      catch(e){return false;}
     })();
+
+    btn.addEventListener('click',()=>{
+      if(audio.paused){
+        audio.play().then(()=>{
+          try{localStorage.setItem('shree_music_playing','1');}catch(e){}
+          updateBtn();
+        });
+      }else{
+        audio.pause();
+        try{localStorage.setItem('shree_music_playing','0');}catch(e){}
+        updateBtn();
+      }
+    });
+
+    volDot.addEventListener('click',()=>{
+      const show=volPop.style.display!=='flex';
+      volPop.style.display=show?'flex':'none';
+    });
+
+    volRange.addEventListener('input',()=>{
+      const v=Math.max(0,Math.min(100,parseInt(volRange.value||60,10)));
+      audio.volume=v/100;
+      try{localStorage.setItem('shree_music_volume',String(v));}catch(e){}
+    });
+
+    if(savedPlaying){
+      audio.play().then(updateBtn);
+    }
+    updateBtn();
+  })();
   </script>
 
 </body>
