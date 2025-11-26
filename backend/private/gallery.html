@@ -12,7 +12,7 @@
 
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gallery — Sweet Memories</title>
+  <title>Gallery — Jhilmil Siyaadein</title>
 
   <!-- Auth -->
   <script src="/auth0-spa-js.production.js" defer></script>
@@ -55,13 +55,22 @@
     padding:18px 14px 70px;
   }
 
-  nav.topbar{
+  /* prettier top nav */
+  .nav-shell{
     display:flex;
     justify-content:center;
-    gap:10px;
-    position:sticky;
-    top:10px;
-    z-index:10;
+    margin-bottom:6px;
+  }
+  nav.topbar{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:4px;
+    border-radius:999px;
+    background:rgba(255,245,248,0.96);
+    box-shadow:0 10px 28px rgba(40,8,16,0.25);
+    border:1px solid rgba(255,218,232,0.95);
+    backdrop-filter:blur(10px);
   }
 
   nav.topbar a{
@@ -69,46 +78,54 @@
     font-weight:600;
     font-size:13px;
     color:var(--text);
-    padding:8px 14px;
+    padding:7px 16px;
     border-radius:999px;
+    background:transparent;
+    border:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    opacity:.8;
+    transition:background .18s ease, opacity .18s ease, transform .18s ease;
+  }
+
+  nav.topbar a span.icon{font-size:14px;}
+
+  nav.topbar a:hover{
     background:linear-gradient(180deg,#ffeef2,#ffdee8);
-    border:1px solid #f2c3d1;
-    box-shadow:0 8px 20px -12px rgba(0,0,0,.3);
-    backdrop-filter:blur(10px);
+    opacity:1;
+    transform:translateY(-1px);
+  }
+
+  nav.topbar a.primary{
+    background:linear-gradient(180deg,#ffeef2,#ffdee8);
+    opacity:1;
   }
 
   .hero-card{
     max-width:1150px;
-    margin:16px auto 8px;
-    padding:18px 18px 14px;
+    margin:18px auto 10px;
+    padding:20px 18px 18px;
     border-radius:var(--radius-big);
-    background:linear-gradient(135deg, rgba(255,255,255,0.96), rgba(255,244,246,0.96));
+    background:linear-gradient(135deg, rgba(255,255,255,0.97), rgba(255,244,246,0.96));
     box-shadow:var(--shadow-soft);
     border:1px solid rgba(255,255,255,0.9);
-    display:flex;
-    flex-wrap:wrap;
-    align-items:center;
-    justify-content:space-between;
-    gap:16px;
-  }
-
-  .hero-main{
-    min-width:260px;
   }
 
   h1{
     font-weight:700;
     font-size:clamp(22px,3vw,30px);
-    margin:0 0 6px;
+    margin:0 0 4px;
   }
 
   .hero-sub{
     font-size:13px;
     color:var(--muted);
+    margin-bottom:10px;
   }
 
   .hero-note{
-    margin-top:10px;
+    margin-top:6px;
     font-size:12px;
     padding:8px 10px;
     border-radius:14px;
@@ -117,6 +134,7 @@
     display:flex;
     gap:8px;
     align-items:flex-start;
+    max-width:520px;
   }
 
   .hero-note-dot{
@@ -124,38 +142,12 @@
     margin-top:4px;
   }
 
+  .hero-note-text{
+    transition:opacity .18s ease;
+  }
+
   .hero-pill{
-    font-size:11px;
-    padding:6px 10px;
-    border-radius:999px;
-    background:rgba(255,255,255,0.9);
-    border:1px solid rgba(255,220,230,0.9);
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    margin-top:6px;
-    color:var(--muted);
-  }
-
-  .hero-right{
-    min-width:200px;
-    display:flex;
-    flex-direction:column;
-    align-items:flex-end;
-    gap:8px;
-    text-align:right;
-    font-size:11px;
-    color:var(--muted);
-  }
-
-  .hero-right span.dot{
-    width:7px;height:7px;border-radius:999px;background:var(--accent);
-    display:inline-block;margin-right:6px;
-  }
-
-  @media(max-width:720px){
-    .hero-card{align-items:flex-start;}
-    .hero-right{align-items:flex-start;text-align:left;}
+    display:none; /* removed as per request */
   }
 
   .grid{
@@ -235,19 +227,18 @@
   }
 
   .meta{
-    margin-top:8px;
-    font-size:11px;
+    margin-top:6px;
+    font-size:10.5px;
     color:var(--muted);
     display:flex;
-    justify-content:space-between;
+    justify-content:flex-end;
     gap:10px;
     align-items:center;
+    min-height:14px;
   }
 
   .meta .caption{
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+    display:none; /* filename/caption hidden as you asked */
   }
 
   .meta .timestamp{
@@ -278,23 +269,6 @@
     box-shadow:none;
   }
 
-  /* heart tap (small) */
-  .fab{
-    width:48px;height:48px;
-    border-radius:50%;
-    position:fixed;
-    right:16px;
-    bottom:96px;
-    background:#ffffffcc;
-    border:1px solid #f0c4cc;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    z-index:9998;
-    backdrop-filter:blur(10px);
-  }
-
   footer{
     text-align:center;
     font-size:11px;
@@ -317,32 +291,25 @@ setTimeout(()=>document.documentElement.classList.remove('guard-hide'),2000);
 </script>
 
 <div class="page-wrap">
-  <nav class="topbar">
-    <a href="/life.html">Life</a>
-    <a href="/upload.html">Upload</a>
-    <a href="/auth/logout">Logout</a>
-  </nav>
+  <div class="nav-shell">
+    <nav class="topbar">
+      <a href="/life.html" class="primary"><span class="icon">♡</span><span>Life</span></a>
+      <a href="/upload.html"><span class="icon">⬆</span><span>Upload</span></a>
+      <a href="/auth/logout"><span class="icon">↩</span><span>Logout</span></a>
+    </nav>
+  </div>
 
   <section class="hero-card">
-    <div class="hero-main">
-      <h1>Sweet Memories of Shreshtha’s Life</h1>
-      <div class="hero-sub">
-        Yahan sab ki sab casual selfies, cute moments aur chhoti chhoti baatein safe hain —
-        sirf tum dono ke liye. 💫
-      </div>
-      <div class="hero-note">
-        <div class="hero-note-dot"></div>
-        <div id="hero-note-text">
-          Thoda sa music, thodi si photos, aur bohot saara pyaar. 🎧📸
-        </div>
-      </div>
-      <div class="hero-pill">
-        <span>📸</span> Latest uploads sabse pehle upar dikhte hain.
-      </div>
+    <h1>Jhilmil Siyaadein of Shreshtha’s Life</h1>
+    <div class="hero-sub">
+      Yahan sab ki sab casual selfies, cute moments aur chhoti chhoti baatein safe hain —
+      sirf tum dono ke liye. 💫
     </div>
-    <div class="hero-right">
-      <div><span class="dot"></span>Private space, invite-only — no public links.</div>
-      <div><span class="dot"></span>Photos Drive pe locked hain, yahan sirf safe view.</div>
+    <div class="hero-note">
+      <div class="hero-note-dot"></div>
+      <div id="hero-note-text" class="hero-note-text">
+        Kabhi mood off ho to bas yahan aa kar 2–3 photos dekh lena. 🙂
+      </div>
     </div>
   </section>
 
@@ -357,29 +324,6 @@ setTimeout(()=>document.documentElement.classList.remove('guard-hide'),2000);
 
   <footer>Made with a lot of love ♥ and a little bit of code.</footer>
 </div>
-
-<button class="fab" id="heartBtn">❤</button>
-
-<!-- small heart tap animation -->
-<script>
-document.getElementById("heartBtn").onclick=()=>{
-  const h=document.createElement("div");
-  h.textContent="❤";
-  h.style.position="fixed";
-  h.style.right="22px";
-  h.style.bottom="110px";
-  h.style.fontSize="22px";
-  h.style.opacity="0.95";
-  h.style.zIndex=9999;
-  h.style.transition="transform .6s ease, opacity .6s ease";
-  document.body.appendChild(h);
-  requestAnimationFrame(()=>{
-    h.style.transform="translateY(-32px)";
-    h.style.opacity="0";
-  });
-  setTimeout(()=>h.remove(),650);
-};
-</script>
 
 <!-- Lightbox -->
 <script>
@@ -430,7 +374,7 @@ const Lightbox=(()=>{
           <div class="photo"><img loading="lazy" alt="memory photo"></div>
         </div>
         <div class="meta">
-          <div class="caption">${(it.caption || it.name || "Sweet memory").replace(/</g,"&lt;")}</div>
+          <div class="caption"></div>
           <div class="timestamp">${formatShort(getTime(it))}</div>
         </div>
       </div>`;
@@ -489,11 +433,11 @@ const Lightbox=(()=>{
 <script>
 (function(){
   const notes=[
-    "Thoda sa music, thodi si photos, aur bohot saara pyaar. 🎧📸",
-    "Latest photos hamesha sabse pehle yahan upar aate hain. ✨",
-    "Koi bhi photo delete nahi hoti, sirf safe memories ban jaati hain. 💕",
     "Kabhi mood off ho to bas yahan aa kar 2–3 photos dekh lena. 🙂",
-    "Yeh pura gallery sirf tum dono ke liye private hai. 🔐"
+    "Har ek snapshot ek chhoti si love story ka frame hai. 💕",
+    "Koi filter nahi, sirf asli hassi aur cute moments. ✨",
+    "Din chahe kaisa bhi ho, gallery me ek favourite photo zaroor milega. 📸",
+    "Yeh sab yaadein sirf tum dono ke liye safe rakhi hain. 🔐"
   ];
   let i=0;
   const el=document.getElementById("hero-note-text");
