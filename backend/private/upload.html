@@ -1,336 +1,214 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Upload — Sweet Memories</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Upload — Sweet Memories</title>
 
-  <!-- CSP -->
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self';
-                 script-src 'self' 'unsafe-inline' 'unsafe-eval';
-                 connect-src 'self' https:;
-                 img-src 'self' data:;
-                 style-src 'self' 'unsafe-inline';
-                 media-src 'self';">
+<!-- Auth -->
+<script src="/auth0-spa-js.production.js" defer></script>
+<script src="/auth-init.js" defer></script>
+<script src="/guard-auth.js" defer></script>
 
-  <!-- Auth -->
-  <script src="/auth0-spa-js.production.js" defer></script>
-  <script src="/auth-init.js" defer></script>
-  <script src="/guard-auth.js" defer></script>
+<style>
+:root{
+  --ink:#fdf8f2;
+  --ink-soft:#ffe9d3;
+  --btn:#cf8a46;
+  --glass:rgba(255,255,255,.38);
+  --glass-lite:rgba(255,255,255,.22);
+}
 
-  <style>
-    :root{
-      --ink:#3a2118;
-      --btn:#c47b35;
-      --btn-soft:#f6ede1;
-      --glass:rgba(255,255,255,.42);
-      --glass-lite:rgba(255,255,255,.25);
-    }
+*,*::before,*::after{box-sizing:border-box;}
+html,body{
+  height:100%; margin:0; overflow:hidden;
+  font-family:ui-serif,"Playfair Display",Georgia,serif;
+  color:var(--ink);
+  background:#000;
+}
 
-    *,*::before,*::after{box-sizing:border-box;}
-    html,body{
-      height:100%;
-      margin:0;
-      overflow:hidden;
-      font-family:ui-serif,"Playfair Display",Georgia,serif;
-      color:var(--ink);
-      background:#000;
-    }
+/* guard */
+html.guard-hide body{ visibility:hidden }
+#guardLoader{
+  position:fixed; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  color:#f6d5b0;
+  z-index:9999;
+}
+html:not(.guard-hide) #guardLoader{ display:none }
 
-    /* guard */
-    html.guard-hide body{ visibility:hidden; }
-    #guardLoader{
-      position:fixed; inset:0;
-      display:flex; align-items:center; justify-content:center;
-      color:#f6d5b0;
-      font-family:system-ui, -apple-system, "Segoe UI", sans-serif;
-      z-index:9999;
-    }
-    html:not(.guard-hide) #guardLoader{ display:none; }
+/* BG IMAGE */
+.bg{
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+}
+.bg img{
+  width:100vw; height:100vh;
+  object-fit:cover;
+  object-position:center top;
+  filter:saturate(112%) contrast(106%);
+}
 
-    /* background art */
-    .bg{
-      position:fixed; inset:0; z-index:0; pointer-events:none;
-    }
-    .bg img{
-      width:100vw; height:100vh;
-      object-fit:cover;
-      object-position:center top;
-      filter:saturate(112%) contrast(106%);
-    }
-    .bg::after{
-      content:"";
-      position:absolute; inset:0;
-      background:
-        radial-gradient(1100px 620px at 50% 70%, rgba(0,0,0,0.55), transparent 60%),
-        radial-gradient(900px 480px at 10% 10%, rgba(255,255,255,0.20), transparent 55%);
-      mix-blend-mode:soft-light;
-    }
+/* HEADER */
+header{
+  text-align:center;
+  padding:18px 10px 0;
+  position:relative;
+  z-index:3;
+}
 
-    /* header */
-    header{
-      text-align:center;
-      padding:18px 10px 4px;
-      position:relative;
-      z-index:3;
-      color:#fef4ea;
-      text-shadow:0 12px 26px rgba(0,0,0,.55);
-    }
+.nav a{
+  display:inline-block;
+  margin:0 6px;
+  padding:6px 14px;
+  border-radius:999px;
+  background:rgba(7,26,35,0.78);
+  color:#ffe8d0;
+  text-decoration:none;
+  box-shadow:0 10px 24px rgba(0,0,0,.45);
+  font-size:13px;
+  border:1px solid rgba(255,255,255,0.25);
+}
+.nav a:hover{
+  background:rgba(255,255,255,0.14);
+}
 
-    .nav a{
-      display:inline-block;
-      margin:0 6px;
-      padding:6px 14px;
-      border-radius:999px;
-      background:rgba(7,26,35,0.76);
-      color:#ffe8d0;
-      text-decoration:none;
-      box-shadow:0 10px 24px rgba(0,0,0,.45);
-      font-size:13px;
-      border:1px solid rgba(255,255,255,0.25);
-    }
-    .nav a:hover{
-      background:rgba(255,255,255,0.12);
-    }
+h1{
+  margin:14px 0 0;
+  font-size:clamp(44px, 6vw, 66px);
+  line-height:1.05;
+  font-weight:600;
+  color:#fff7ef;
+  text-shadow:
+    0 0 38px rgba(255,255,255,.35),
+    0 2px 0 rgba(255,255,255,.22),
+    0 22px 42px rgba(0,0,0,.8);
+}
 
-    .eyebrow{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:6px;
-      padding:4px 12px;
-      margin-top:10px;
-      border-radius:999px;
-      background:rgba(7,26,35,0.78);
-      font-family:system-ui, -apple-system, "Segoe UI", sans-serif;
-      font-size:11px;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      color:#ffe6c9;
-      box-shadow:0 12px 30px rgba(0,0,0,0.6);
-    }
+/* CARD PANELS */
+.card{
+  position:absolute;
+  background:var(--glass);
+  border-radius:16px;
+  box-shadow:0 22px 52px rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.55);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+}
+.pane{padding:16px 16px 14px;}
 
-    h1{
-      margin:10px 0 4px;
-      font-size:clamp(40px, 5vw, 56px);
-      line-height:1.08;
-      color:#fef7ef;
-      text-shadow:
-        0 0 32px rgba(255,255,255,.35),
-        0 2px 0 rgba(255,255,255,.18),
-        0 18px 42px rgba(0,0,0,.8);
-    }
-    .subtitle{
-      margin-top:4px;
-      font-size:14px;
-      max-width:520px;
-      margin-inline:auto;
-      font-family:system-ui, -apple-system, "Segoe UI", sans-serif;
-      color:#ffe9d5;
-      text-shadow:0 10px 26px rgba(0,0,0,.7);
-    }
+/* DROP ZONE */
+.drop{
+  border:2px dashed rgba(255,255,255,.55);
+  border-radius:12px;
+  padding:14px;
+  text-align:center;
+  background:var(--glass-lite);
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:14px;
+  color:var(--ink-soft);
+}
+.drop input[type=file]{
+  display:block;
+  margin:10px auto 4px;
+  cursor:pointer;
+  position:relative;
+  z-index:20;
+}
 
-    /* cards */
-    .card{
-      position:absolute;
-      background:var(--glass);
-      border-radius:16px;
-      box-shadow:0 22px 52px rgba(0,0,0,.55);
-      border:1px solid rgba(255,255,255,.60);
-      backdrop-filter:blur(12px);
-      -webkit-backdrop-filter:blur(12px);
-    }
-    .pane{padding:16px 16px 14px;}
+/* CAPTION */
+label{
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:14px;
+  font-weight:600;
+  color:#ffeeda;
+}
+textarea{
+  width:100%;
+  min-height:86px;
+  resize:vertical;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.22);
+  background:rgba(255,255,255,.85);
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  box-sizing:border-box;
+  font-size:14px;
+  color:#3a231a;
+  margin-top:6px;
+}
 
-    .drop{
-      border:2px dashed rgba(63,38,24,.45);
-      border-radius:12px;
-      padding:14px;
-      text-align:center;
-      background:var(--glass-lite);
-      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-      font-size:14px;
-      color:#5a311e;
-    }
-    .drop input[type=file]{
-      display:block;
-      margin:10px auto 4px;
-    }
-    .muted{
-      font-size:12px;
-      opacity:.84;
-      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-      color:#5e3724;
-    }
+/* BUTTONS */
+.actions{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-top:12px;
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+.btn{
+  background:var(--btn);
+  color:#fff;
+  border:none;
+  border-radius:999px;
+  padding:9px 18px;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 14px 30px rgba(0,0,0,.55);
+  font-size:13px;
+}
+.btn.secondary{
+  background:rgba(255,255,255,.65);
+  color:#4c2b19;
+  border:1px solid rgba(135,88,55,.35);
+}
 
-    label{
-      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-      font-size:14px;
-      font-weight:600;
-      color:#4c281b;
-    }
+/* PREVIEW BOX */
+#previewImg{
+  max-width:100%;
+  border-radius:10px;
+  display:none;
+  box-shadow:0 12px 28px rgba(0,0,0,.45);
+}
 
-    textarea{
-      width:100%;
-      min-height:86px;
-      resize:vertical;
-      padding:10px 12px;
-      border-radius:10px;
-      border:1px solid rgba(0,0,0,.16);
-      background:rgba(255,255,255,.9);
-      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-      box-sizing:border-box;
-      font-size:14px;
-      color:#3a231a;
-      margin-top:6px;
-    }
+.upload-card{ top:108px; right:8%; width:400px; }
+.preview-card{ bottom:60px; left:8%; width:340px; background:rgba(255,255,255,.14); }
 
-    .actions{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      margin-top:12px;
-      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-    }
-    .btn{
-      background:var(--btn);
-      color:#fff;
-      border:none;
-      border-radius:999px;
-      padding:9px 18px;
-      font-weight:700;
-      cursor:pointer;
-      box-shadow:0 14px 30px rgba(0,0,0,.55);
-      font-size:13px;
-      letter-spacing:.3px;
-    }
-    .btn:hover{
-      filter:brightness(1.04);
-      transform:translateY(-1px);
-    }
-    .btn:active{
-      transform:translateY(1px) scale(.98);
-      box-shadow:0 8px 18px rgba(0,0,0,.5);
-    }
-    .btn.secondary{
-      background:var(--btn-soft);
-      color:#5a301f;
-      border:1px solid rgba(135,88,55,.35);
-      box-shadow:0 10px 20px rgba(0,0,0,.35);
-    }
+@media (max-width:900px){
+  .upload-card,.preview-card{
+    position:relative;
+    width:min(420px,92vw);
+    margin:26px auto;
+  }
+  body{ overflow:auto; }
+}
 
-    #previewImg{
-      max-width:100%;
-      border-radius:10px;
-      display:none;
-      box-shadow:0 12px 28px rgba(0,0,0,.45);
-    }
+/* MUSIC — same as welcome */
+#musicHeartWrap{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:160;
+}
+</style>
 
-    .upload-card{ top:108px; right:8%; width:400px; }
-    .preview-card{ bottom:60px; left:8%; width:340px; background:rgba(255,255,255,.20); }
-
-    .preview-title{
-      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-      font-size:13px;
-      margin-bottom:4px;
-      color:#fbeadd;
-    }
-
-    /* floating hearts canvas */
-    #fxCanvas{
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      z-index:2;
-    }
-
-    @media (max-width:900px){
-      .upload-card{
-        position:relative;
-        top:auto; right:auto;
-        width:min(420px,92vw);
-        margin:30px auto 0;
-      }
-      .preview-card{
-        position:relative;
-        bottom:auto; left:auto;
-        width:min(420px,86vw);
-        margin:18px auto 40px;
-      }
-      body{ overflow:auto; }
-    }
-
-    /* MUSIC HEART – same layout as welcome page */
-    #musicHeartWrap {
-      position: fixed;
-      right: 18px;
-      bottom: 18px;
-      z-index: 160;
-      display:flex;
-      gap:8px;
-      align-items:center;
-      opacity:.97;
-    }
-    #musicHeartBtn{
-      width:56px;height:56px;border:none;border-radius:50%;cursor:pointer;
-      display:flex;align-items:center;justify-content:center;font-size:22px; line-height:1;
-      background: radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0);
-      box-shadow: 0 8px 28px rgba(220,80,110,0.18);
-      transition: transform .16s ease, box-shadow .16s ease, opacity .18s ease;
-    }
-    #musicHeartBtn:active{ transform:scale(.96); }
-    #musicHeartBtn.playing{
-      box-shadow:0 14px 42px rgba(220,80,110,0.28);
-      transform:scale(1.04);
-    }
-    #musicHeartBtn .heart{ pointer-events:none; user-select:none; }
-    .vol-dot{
-      width:18px;height:18px;border-radius:50%;
-      background: linear-gradient(150deg,#ffd76d,#ffc96a);
-      box-shadow:0 6px 10px rgba(255,170,100,0.22);
-      border:2px solid rgba(255,255,255,0.95);
-      cursor:pointer; margin-left:-8px;
-    }
-    .vol-pop{
-      position:absolute; right:72px; bottom:10px; width:220px; padding:10px 12px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
-      border-radius:12px; box-shadow:0 12px 30px rgba(0,0,0,0.12);
-      display:none; gap:10px; align-items:center;
-    }
-    .vol-pop.show{ display:flex; }
-    .vol-range{
-      -webkit-appearance:none; width:130px;height:7px;border-radius:999px;
-      background:linear-gradient(90deg,#ffc1c1,#ffd88a); outline:none;
-    }
-    .vol-range::-webkit-slider-thumb{
-      -webkit-appearance:none; width:14px;height:14px;border-radius:50%;
-      background:#fff; box-shadow:0 4px 10px rgba(0,0,0,.12); border:3px solid #ffb0a0;
-    }
-  </style>
-
-  <script>
-    // Auth guard: hide until auth ready; redirect if not authenticated
-    document.documentElement.classList.add('guard-hide');
-    window.addEventListener('shree:auth-ready', (e)=>{
-      const ok = !!(e && e.detail && e.detail.authenticated);
-      if(!ok){ location.href = '/index.html'; return; }
-      document.documentElement.classList.remove('guard-hide');
-    }, { once:true });
-    setTimeout(()=>{
-      if(document.documentElement.classList.contains('guard-hide')){
-        document.documentElement.classList.remove('guard-hide');
-      }
-    },2000);
-  </script>
+<script>
+document.documentElement.classList.add('guard-hide');
+window.addEventListener('shree:auth-ready',(e)=>{
+  if(!(e && e.detail && e.detail.authenticated)){
+    location.href='/index.html'; return;
+  }
+  document.documentElement.classList.remove('guard-hide');
+},{once:true});
+setTimeout(()=>document.documentElement.classList.remove('guard-hide'),2000);
+</script>
 </head>
+
 <body>
 <div id="guardLoader">Checking access…</div>
 
 <div class="bg">
-  <img src="/assets/img/upload-bg-final-new.jpg" alt="background art">
+  <img src="/assets/img/upload-bg-final-new.jpg">
 </div>
-<canvas id="fxCanvas"></canvas>
 
 <header>
   <nav class="nav">
@@ -339,291 +217,98 @@
     <a href="/logout.html">Logout</a>
   </nav>
 
-  <div class="eyebrow">✨ Add a tiny memory</div>
   <h1>Upload a Sweet Memory</h1>
-  <div class="subtitle">
-    Bas ek photo aur chhota sa caption — baaki sab yahaan, tum dono ke liye quietly safe rahega.
-  </div>
 </header>
 
-<main id="protectedContent">
-  <!-- RIGHT card -->
+<main>
+  <!-- RIGHT -->
   <section class="card upload-card">
     <div class="pane">
       <div class="drop">
-        <div style="font-weight:700">Drag & drop a photo here or</div>
+        <div style="font-weight:700">Choose a photo</div>
         <input id="photo" name="photo" type="file" accept="image/*" required>
-        <div class="muted">JPG/PNG • Max 8 MB</div>
+        <div class="muted" style="font-size:12px;color:#ffe8d9;">JPG/PNG • Max 8 MB</div>
       </div>
 
       <div style="margin-top:12px">
-        <label for="caption">Caption (short)</label>
+        <label for="caption">Caption (optional)</label>
         <textarea id="caption" name="caption"
-                  placeholder="Write a short caption (max 150 characters)"></textarea>
+        placeholder="Write something sweet…"></textarea>
       </div>
 
       <div class="actions">
         <button id="uploadBtn" class="btn" type="button">Upload</button>
         <button id="clearBtn" class="btn secondary" type="button">Clear</button>
-        <span id="msg" class="muted"></span>
+        <span id="msg" style="font-size:12px;color:#ffe8d0;"></span>
       </div>
     </div>
   </section>
 
-  <!-- LEFT card: preview -->
+  <!-- LEFT -->
   <aside class="card preview-card">
     <div class="pane" style="min-height:170px;display:flex;align-items:center;justify-content:center;">
-      <div id="previewBox" style="text-align:center;width:100%">
-        <div class="preview-title">Preview</div>
-        <div class="muted" id="previewSub">No photo selected yet.</div>
-        <img id="previewImg" alt="Selected memory preview">
+      <div style="text-align:center;width:100%">
+        <div style="font-size:13px;color:#ffe8d0;margin-bottom:6px;">Preview</div>
+        <div id="previewSub" style="font-size:12px;color:#ffe8d0;">No photo selected yet.</div>
+        <img id="previewImg" alt="">
       </div>
     </div>
   </aside>
 </main>
 
-<!-- soft hearts background -->
 <script>
-(function(){
-  const c=document.getElementById('fxCanvas'); if(!c) return;
-  const ctx=c.getContext('2d');
-  const DPR=Math.max(1, window.devicePixelRatio||1);
-  let W=0,H=0, hearts=[];
-  const COLORS=['#ffe2d6','#ffe9ba','#ffd6e5','#e4f3ff','#fef3dd'];
-  const R=(a,b)=>Math.random()*(b-a)+a;
+const file=document.getElementById('photo');
+const cap=document.getElementById('caption');
+const btn=document.getElementById('uploadBtn');
+const clr=document.getElementById('clearBtn');
+const msg=document.getElementById('msg');
+const prev=document.getElementById('previewImg');
+const prevSub=document.getElementById('previewSub');
 
-  function resize(){
-    W=innerWidth*DPR; H=innerHeight*DPR;
-    c.width=W; c.height=H;
-    c.style.width='100vw'; c.style.height='100vh';
-  }
-  function spawn(){
-    if(hearts.length>26) return;
-    hearts.push({
-      x:R(0,W), y:H+R(10*DPR,160*DPR),
-      s:R(14,38),
-      vx:R(-5,5), vy:-R(16,32),
-      a:R(.5,.95),
-      r:R(-0.5,0.5),
-      vr:R(-0.012,0.012),
-      color:COLORS[(Math.random()*COLORS.length)|0]
-    });
-  }
-  function draw(px,py,scale,rot,alpha,color){
-    ctx.save(); ctx.translate(px,py); ctx.rotate(rot); ctx.scale(scale,scale);
-    ctx.globalAlpha=Math.min(1,alpha);
-    ctx.beginPath(); ctx.moveTo(0,-0.5);
-    ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);
-    ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);
-    ctx.fillStyle=color; ctx.fill();
-    ctx.restore();
-  }
-  function tick(){
-    ctx.clearRect(0,0,W,H);
-    if(Math.random()<0.14) spawn();
-    hearts.forEach(h=>{
-      h.x+=h.vx*0.018;
-      h.y+=h.vy*0.018;
-      h.r+=h.vr;
-      h.a-=0.0009;
-    });
-    hearts=hearts.filter(h=>h.y>-160*DPR && h.a>0.02);
-    hearts.forEach(h=>draw(h.x,h.y,(h.s/52)*DPR,h.r,h.a,h.color));
-    requestAnimationFrame(tick);
-  }
-  addEventListener('resize',resize,{passive:true});
-  resize(); tick();
-})();
-</script>
-
-<!-- upload + preview logic -->
-<script>
-(function(){
-  const file=document.getElementById('photo');
-  const cap=document.getElementById('caption');
-  const btn=document.getElementById('uploadBtn');
-  const clr=document.getElementById('clearBtn');
-  const msg=document.getElementById('msg');
-  const prev=document.getElementById('previewImg');
-  const prevSub=document.getElementById('previewSub');
-
-  function setMessage(text, isError){
-    msg.textContent=text||"";
-    msg.style.color = isError ? "#8b2525" : "#264a24";
-  }
-
-  file.addEventListener('change',()=>{
-    const f=file.files[0];
-    if(!f){
-      prev.style.display='none';
-      prev.removeAttribute('src');
-      prevSub.textContent='No photo selected yet.';
-      return;
-    }
-    prev.src=URL.createObjectURL(f);
-    prev.style.display='inline-block';
-    prevSub.textContent='';
-    setMessage("", false);
-  });
-
-  clr.addEventListener('click',()=>{
-    file.value='';
-    cap.value='';
+file.addEventListener('change',()=>{
+  const f=file.files[0];
+  if(!f){
     prev.style.display='none';
-    prev.removeAttribute('src');
     prevSub.textContent='No photo selected yet.';
-    setMessage("", false);
-  });
-
-  btn.addEventListener('click',async()=>{
-    if(!file.files[0]){
-      setMessage('Please choose a photo first.', true);
-      return;
-    }
-    setMessage('Uploading…', false);
-    btn.disabled=true;
-
-    const fd=new FormData();
-    fd.append('photo',file.files[0]);
-    if(cap.value.trim()) fd.append('caption',cap.value.trim());
-
-    try{
-      const res=await fetch('/api/upload',{method:'POST',body:fd,credentials:'include'});
-      if(!res.ok) throw new Error('Upload failed');
-      setMessage('Uploaded ✨ Your memory is safe now.', false);
-      cap.value='';
-      file.value='';
-      prev.style.display='none';
-      prev.removeAttribute('src');
-      prevSub.textContent='No photo selected yet.';
-      setTimeout(()=>location.href='/gallery.html', 900);
-    }catch(e){
-      console.error(e);
-      setMessage('Upload failed, please try once more.', true);
-    }finally{
-      btn.disabled=false;
-    }
-  });
-})();
-</script>
-
-<!-- MUSIC — exact behaviour/layout as welcome page -->
-<audio id="bgMusic" loop preload="auto" style="display:none">
-  <source src="/music/bg.mp3" type="audio/mpeg" />
-</audio>
-
-<div id="musicHeartWrap" aria-hidden="false">
-  <button id="musicHeartBtn" aria-label="Toggle background music"
-          title="Play / Pause background music" type="button">
-    <span class="heart" aria-hidden="true">♡</span>
-  </button>
-  <div class="vol-dot" id="musicVolDot" role="button" tabindex="0"
-       aria-label="Volume control" title="Volume"></div>
-
-  <div class="vol-pop" id="musicVolPop" role="dialog" aria-hidden="true">
-    <div style="font-size:13px;color:#6b2b2b;">Vol</div>
-    <input id="musicVolRange" class="vol-range" type="range"
-           min="0" max="100" step="1" value="60" aria-label="Volume slider" />
-    <button id="musicMuteBtn"
-            style="border:none;background:#fff;padding:6px;border-radius:8px;
-                   box-shadow:0 4px 8px rgba(0,0,0,0.06);cursor:pointer"
-            aria-pressed="false" title="Mute/unmute">M</button>
-  </div>
-</div>
-
-<script>
-(function(){
-  const audio = document.getElementById('bgMusic');
-  const btn   = document.getElementById('musicHeartBtn');
-  const volDot= document.getElementById('musicVolDot');
-  const volPop= document.getElementById('musicVolPop');
-  const volRange=document.getElementById('musicVolRange');
-  const muteBtn=document.getElementById('musicMuteBtn');
-  if(!audio||!btn||!volDot||!volPop||!volRange||!muteBtn) return;
-
-  function updateBtn(){
-    const heart = btn.querySelector('.heart');
-    if(!heart) return;
-    if(!audio.paused){
-      btn.classList.add('playing');
-      heart.textContent='❤';
-      btn.setAttribute('aria-pressed','true');
-    }else{
-      btn.classList.remove('playing');
-      heart.textContent='♡';
-      btn.setAttribute('aria-pressed','false');
-    }
+    return;
   }
+  prev.src=URL.createObjectURL(f);
+  prev.style.display='inline-block';
+  prevSub.textContent='';
+  msg.textContent='';
+});
+
+clr.addEventListener('click',()=>{
+  file.value=''; cap.value='';
+  prev.style.display='none';
+  prevSub.textContent='No photo selected yet.';
+  msg.textContent='';
+});
+
+btn.addEventListener('click',async()=>{
+  if(!file.files[0]){
+    msg.textContent='Please choose a photo first.';
+    return;
+  }
+  msg.textContent='Uploading…';
+  const fd=new FormData();
+  fd.append('photo',file.files[0]);
+  if(cap.value.trim()) fd.append('caption',cap.value.trim());
 
   try{
-    const sv = localStorage.getItem('shree_music_volume');
-    if(sv!==null){
-      const v=Math.max(0,Math.min(100,parseInt(sv,10)));
-      audio.volume=v/100;
-      volRange.value=v;
-    }else{
-      audio.volume=0.6;
-    }
-  }catch(e){ audio.volume=0.6; }
-
-  const savedPlaying = (()=>{ try{return localStorage.getItem('shree_music_playing')==='1';}catch(e){return false;} })();
-
-  btn.addEventListener('click', e=>{
-    e.preventDefault();
-    if(audio.paused){
-      audio.play().then(()=>{
-        try{localStorage.setItem('shree_music_playing','1');}catch(e){}
-        updateBtn();
-      }).catch(()=>{});
-    }else{
-      audio.pause();
-      try{localStorage.setItem('shree_music_playing','0');}catch(e){}
-      updateBtn();
-    }
-  });
-
-  volDot.addEventListener('click', e=>{
-    e.stopPropagation();
-    const show = volPop.classList.toggle('show');
-    volPop.setAttribute('aria-hidden', show ? 'false' : 'true');
-    if(show) setTimeout(()=>volRange.focus(),40);
-  });
-  volDot.addEventListener('keydown', e=>{
-    if(e.key==='Enter'||e.key===' '){ e.preventDefault(); volDot.click(); }
-  });
-
-  volRange.addEventListener('input', ()=>{
-    const v=Math.max(0,Math.min(100,parseInt(volRange.value||60,10)));
-    audio.volume=v/100;
-    try{ localStorage.setItem('shree_music_volume', String(v)); }catch(e){}
-    muteBtn.setAttribute('aria-pressed', v===0 ? 'true':'false');
-  });
-
-  muteBtn.addEventListener('click', ()=>{
-    if(audio.volume>0){
-      volRange.dataset.prev=volRange.value;
-      volRange.value=0;
-    }else{
-      volRange.value=volRange.dataset.prev||60;
-    }
-    volRange.dispatchEvent(new Event('input'));
-  });
-
-  document.addEventListener('click', e=>{
-    if(!e.target.closest('.vol-pop') && !e.target.closest('#musicVolDot')){
-      volPop.classList.remove('show');
-      volPop.setAttribute('aria-hidden','true');
-    }
-  });
-
-  if(savedPlaying){
-    audio.play().then(updateBtn).catch(()=>{});
+    const res=await fetch('/api/upload',{method:'POST',body:fd,credentials:'include'});
+    if(!res.ok) throw 0;
+    msg.textContent='Uploaded ✓';
+    setTimeout(()=>location.href='/gallery.html',800);
+  }catch(e){
+    msg.textContent='Upload failed, try again.';
   }
-  audio.addEventListener('play', updateBtn);
-  audio.addEventListener('pause', updateBtn);
-  updateBtn();
-})();
+});
 </script>
+
+<!-- MUSIC SAME AS WELCOME -->
+<link rel="stylesheet" href="/assets/css/music-heart.css">
+<script src="/assets/js/music-heart.js" defer></script>
 
 </body>
 </html>
