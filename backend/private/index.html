@@ -8,15 +8,20 @@
     :root{
       --bg-art: url("/assets/img/upload-bg-final-new.jpg");
       --ink:#0f2f34;
-      --glass: rgba(255,255,255,.14);
-      --glass-border: rgba(255,255,255,.22);
+      --glass: rgba(255,255,255,.20);      /* more solid for readability */
+      --glass-border: rgba(255,255,255,.30);
       --btn:#113538;
       --btnHover:#174449;
       --gold:#e9d6a3;
     }
 
     *{margin:0;padding:0;box-sizing:border-box}
-    html,body{height:100%;width:100%;overflow:hidden;font-family:ui-serif,Georgia,serif}
+    html,body{
+      height:100%;width:100%;
+      overflow:hidden;
+      font-family:ui-serif,Georgia,serif;
+      -webkit-font-smoothing:antialiased;
+    }
 
     body::before{
       content:"";
@@ -30,7 +35,10 @@
     body::after{
       content:"";
       position:fixed; inset:0;
-      background: radial-gradient(1200px 700px at 50% 58%, rgba(0,0,0,.0), rgba(0,0,0,.40));
+      /* slightly softer vignette for better mid brightness */
+      background:
+        radial-gradient(1200px 700px at 50% 58%, rgba(0,0,0,.0), rgba(0,0,0,.32)),
+        radial-gradient(900px 520px at 10% 5%, rgba(255,255,255,.20), transparent 55%);
       z-index:-1;
     }
 
@@ -47,13 +55,31 @@
     .card{
       width:min(880px,90vw);
       background:var(--glass);
+      border-radius:28px;
       border:1px solid var(--glass-border);
-      border-radius:26px;
-      backdrop-filter:blur(9px);
-      -webkit-backdrop-filter:blur(9px);
+      backdrop-filter:blur(7px);
+      -webkit-backdrop-filter:blur(7px);
       padding:clamp(32px,6vw,58px);
-      box-shadow:0 22px 60px rgba(0,0,0,.38);
+      /* extra soft inner glow */
+      box-shadow:
+        0 20px 60px rgba(0,0,0,.40),
+        0 0 0 1px rgba(255,255,255,.08);
+      position:relative;
+      overflow:hidden;
       animation:fadeIn .9s ease-out;
+    }
+
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      border-radius:inherit;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(255,255,255,.35), transparent 55%),
+        radial-gradient(circle at 100% 100%, rgba(255,218,193,.30), transparent 55%);
+      mix-blend-mode:screen;
+      opacity:.85;
+      pointer-events:none;
     }
 
     @keyframes fadeIn{
@@ -61,83 +87,115 @@
       to{opacity:1; transform:translateY(0);}
     }
 
+    .inner{
+      position:relative;
+      z-index:1;
+    }
+
     .tag-top{
       display:inline-block;
-      padding:6px 18px;
+      padding:7px 18px;
       border-radius:999px;
       font-size:13px;
-      letter-spacing:.3px;
-      background:rgba(255,255,255,.22);
-      border:1px solid rgba(255,255,255,.35);
-      color:var(--ink);
+      letter-spacing:.35px;
+      text-transform:uppercase;
+      background:rgba(255,255,255,.75);
+      border:1px solid rgba(255,255,255,.9);
+      color:#7a5b3a;
       margin-bottom:18px;
-      text-shadow:0 1px 1px rgba(255,255,255,.3);
+      box-shadow:0 10px 26px rgba(0,0,0,.25);
     }
 
     h1{
       font-size:clamp(58px,9vw,100px);
       line-height:1.03;
-      margin-bottom:16px;
+      margin-bottom:18px;
       color:var(--ink);
       text-shadow:
-        0 0 28px rgba(255,255,255,.35),
-        0 2px 0 rgba(255,255,255,.18),
-        0 14px 34px rgba(0,0,0,.45);
+        0 0 20px rgba(255,255,255,.45),
+        0 2px 0 rgba(255,255,255,.22),
+        0 14px 34px rgba(0,0,0,.48);
     }
 
     .tag{
       font-size:clamp(17px,2.3vw,22px);
       max-width:700px;
-      margin:0 auto 26px;
-      color:var(--ink);
-      opacity:.96;
+      margin:0 auto 28px;
+      color:#17393d;
+      opacity:.98;
       text-shadow:
-        0 0 16px rgba(255,255,255,.25),
-        0 10px 30px rgba(0,0,0,.35);
+        0 0 14px rgba(255,255,255,.26),
+        0 8px 26px rgba(0,0,0,.32);
     }
 
     .btn{
+      display:inline-block;
       padding:15px 30px;
       border-radius:999px;
-      background:var(--btn);
-      color:#fff;
+      background:linear-gradient(135deg,#113538,#1a4a50);
+      color:#ffffff;
       text-decoration:none;
       font-weight:700;
-      letter-spacing:.3px;
+      letter-spacing:.35px;
       cursor:pointer;
-      box-shadow:0 14px 32px rgba(0,0,0,.38);
-      transition:.18s;
+      border:1px solid rgba(233,214,163,.9);
+      box-shadow:
+        0 14px 32px rgba(0,0,0,.46),
+        0 0 0 1px rgba(0,0,0,.15);
+      transition:
+        transform .18s,
+        box-shadow .18s,
+        background .18s,
+        filter .18s;
     }
     .btn:hover{
       transform:translateY(-2px);
-      background:var(--btnHover);
-      box-shadow:0 0 40px rgba(17,53,56,.55);
+      background:linear-gradient(135deg,#174449,#21595f);
+      box-shadow:
+        0 0 40px rgba(17,53,56,.65),
+        0 18px 38px rgba(0,0,0,.52);
+      filter:brightness(1.03);
+    }
+    .btn:active{
+      transform:translateY(0);
+      box-shadow:
+        0 10px 26px rgba(0,0,0,.55),
+        0 0 0 1px rgba(0,0,0,.3);
     }
 
     footer{
       margin-top:26px;
       font-size:13px;
-      color:var(--ink);
-      opacity:.88;
-      text-shadow:0 0 14px rgba(255,255,255,.22);
+      color:#194046;
+      opacity:.92;
+      text-shadow:0 0 14px rgba(255,255,255,.24);
+    }
+
+    @media (max-aspect-ratio:16/10){
+      body::before{background-position:center 15%;}
+    }
+    @media (min-aspect-ratio:21/9){
+      body::before{background-position:center 22%;}
     }
   </style>
 </head>
 <body>
   <main class="wrap">
-    <section class="card">
-      <div class="tag-top">✨ A quiet little world made just for her</div>
+    <section class="card" aria-labelledby="brand">
+      <div class="inner">
+        <div class="tag-top">✨ A quiet little world made just for her</div>
 
-      <h1>Shreshtha</h1>
+        <h1 id="brand">Shreshtha</h1>
 
-      <p class="tag">
-        A place where her smile feels bigger, her moments feel softer, and the world slows down long
-        enough to remember what love looks like.
-      </p>
+        <p class="tag">
+          A place where her smile feels bigger, her moments feel softer, and the world slows down
+          long enough to remember what love looks like.
+        </p>
 
-      <a class="btn" href="/auth/login">Step inside</a>
+        <a class="btn" href="/auth/login">Step inside</a>
 
-      <footer>© Shreshtha’s Life • held gently, privately, lovingly</footer>
+        <footer>© Shreshtha’s Life • held gently, privately, lovingly</footer>
+      </div>
     </section>
   </main>
 </body>
