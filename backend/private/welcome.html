@@ -13,101 +13,480 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Welcome • Shreshtha</title>
 
+  <!-- Auth0 & guards (same as before) -->
   <script src="/auth0-spa-js.production.js"></script>
   <script src="/auth-init.js?v=7" defer></script>
   <script src="/guard-auth.js?v=7" defer></script>
 
   <style>
     :root{
-      --bg-1:#fff0ef;
-      --bg-2:#ffd6d6;
-      --bg-3:#ffc0be;
-      --text:#6e2430;
-      --btn:#6e2430;
-      --btn-shadow:rgba(0,0,0,.22);
-      --heart-1:#ffd6e0; --heart-2:#ffe8cc; --heart-3:#ffe9ec;
-      --heart-4:#ffd1fa; --heart-5:#fbd1d1; --heart-6:#ffe0e0;
-    }
-    html,body{height:100%}
-    body{
-      margin:0; display:flex; align-items:center; justify-content:center; flex-direction:column;
-      color:var(--text); text-align:center;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Comic Sans MS", cursive;
-      background:
-        radial-gradient(1200px 600px at 12% 10%, rgba(255,236,240,0.25), transparent 20%),
-        radial-gradient(900px 500px at 92% 88%, rgba(255,240,230,0.18), transparent 18%),
-        linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 18%, var(--bg-3) 60%, #ffb0b0 100%);
-      background-attachment: fixed; overflow:hidden;
-    }
-    body::after{
-      content:""; position:fixed; inset:0; pointer-events:none;
-      background:
-        radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,.25), transparent 60%),
-        radial-gradient(120% 120% at 50% 110%, rgba(0,0,0,.08), transparent 50%);
-      z-index:0;
-    }
-    .wrap{ position:relative; z-index:2; transform: translateY(-2vh); padding: 0 18px; }
-    h1{ margin:0 0 28px; font-weight:700; font-size: clamp(28px, 5vw, 56px); letter-spacing:.5px;
-        text-shadow: 0 2px 12px rgba(0,0,0,.18); }
-    .tag{ display:inline-block; margin-bottom:34px; font-size: clamp(13px, 2.6vw, 16px); opacity:.85; }
-    a.enter-btn{
-      display:inline-block; font-size:18px; background:var(--btn); color:#fff;
-      padding:14px 28px; border-radius:42px; text-decoration:none;
-      box-shadow: 0 10px 26px var(--btn-shadow);
-      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
-    }
-    a.enter-btn:hover{ transform:translateY(-2px); box-shadow:0 16px 36px rgba(0,0,0,.24);}
-    a.enter-btn:active{ transform:scale(.98); }
-    @keyframes floatUp { 0%{transform:translateY(0) scale(1);opacity:.95;} 100%{transform:translateY(-110vh) scale(1.45);opacity:0;} }
-    .floating-heart{
-      position:fixed; bottom:-10px; left:0; font-size:18px; opacity:.9; pointer-events:none;
-      animation: floatUp linear forwards; filter: drop-shadow(0 4px 10px rgba(255,120,140,.18));
-      z-index:1; user-select:none;
+      --bg1:#ffd1dc;
+      --bg2:#ffe4e1;
+      --bg3:#fff0f5;
+      --text-main:#5a0f1d;
+      --text-soft:#7a3040;
+      --accent:#8b2234;
+      --accent-soft:rgba(139,34,52,0.12);
+      --glass-bg:rgba(255,255,255,0.22);
+      --glass-border:rgba(255,255,255,0.7);
+      --chip-bg:rgba(255,255,255,0.32);
+
+      --heart-1:#ffd6e0;
+      --heart-2:#ffe8cc;
+      --heart-3:#ffe9ec;
+      --heart-4:#ffd1fa;
+      --heart-5:#fbd1d1;
+      --heart-6:#ffe0e0;
     }
 
-    #musicHeartWrap { position: fixed; right: 18px; bottom: 18px; z-index: 10; display:flex; gap:8px; align-items:center; }
-    #musicHeartBtn{
-      width:56px;height:56px;border:none;border-radius:50%;cursor:pointer;
-      display:flex;align-items:center;justify-content:center;font-size:22px; line-height:1;
-      background: radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0);
-      box-shadow: 0 8px 28px rgba(220,80,110,0.18);
-      transition: transform .16s ease, box-shadow .16s ease, opacity .18s ease;
+    *{box-sizing:border-box;margin:0;padding:0;}
+
+    html,body{height:100%;}
+
+    body{
+      margin:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Comic Sans MS", cursive;
+      color:var(--text-main);
+      text-align:left;
+      overflow:hidden;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+      background-size:240% 240%;
+      animation:bgMove 18s ease-in-out infinite;
+      position:relative;
     }
-    #musicHeartBtn:active{ transform:scale(.96); }
-    #musicHeartBtn.playing{ box-shadow:0 14px 42px rgba(220,80,110,0.28); transform:scale(1.04); }
-    #musicHeartBtn .heart{ pointer-events:none; user-select:none; }
+
+    @keyframes bgMove{
+      0%{background-position:0% 0%;}
+      50%{background-position:100% 100%;}
+      100%{background-position:0% 0%;}
+    }
+
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,.22), transparent 60%),
+        radial-gradient(120% 120% at 50% 110%, rgba(0,0,0,.09), transparent 55%);
+      z-index:0;
+    }
+
+    .wrap{
+      position:relative;
+      z-index:2;
+      width:100%;
+      max-width:1100px;
+      padding:24px;
+      transform:translateY(-2vh);
+    }
+
+    .card{
+      backdrop-filter:blur(22px);
+      -webkit-backdrop-filter:blur(22px);
+      background:var(--glass-bg);
+      border-radius:32px;
+      border:1px solid var(--glass-border);
+      box-shadow:0 24px 60px rgba(137,26,47,0.25);
+      padding:28px 26px 26px;
+      display:grid;
+      grid-template-columns:1.4fr 1fr;
+      gap:22px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    @media(max-width:800px){
+      .card{
+        grid-template-columns:1fr;
+        padding:22px 18px 20px;
+      }
+    }
+
+    .headline{position:relative;z-index:1;}
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 13px;
+      border-radius:999px;
+      background:var(--accent-soft);
+      font-size:11px;
+      color:var(--text-soft);
+      margin-bottom:12px;
+    }
+
+    .badge span.emoji{font-size:14px;}
+
+    h1{
+      font-weight:700;
+      font-size:clamp(1.9rem,3vw,2.6rem);
+      letter-spacing:0.02em;
+      margin-bottom:10px;
+    }
+
+    .highlight{color:var(--accent);}
+
+    .subtitle{
+      font-size:.95rem;
+      color:var(--text-soft);
+      margin-bottom:18px;
+    }
+
+    .note-card{
+      display:flex;
+      align-items:flex-start;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:16px;
+      background:rgba(255,255,255,0.78);
+      border:1px solid rgba(255,255,255,0.95);
+      font-size:.8rem;
+      color:var(--text-soft);
+      max-width:360px;
+      margin-bottom:24px;
+      transition:opacity .2s ease;
+    }
+
+    .note-dot{
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background:var(--accent);
+      margin-top:4px;
+    }
+
+    .button-row{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+
+    .primary-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:11px 24px;
+      border-radius:999px;
+      border:none;
+      background:radial-gradient(circle at 30% 0%, #f8cad6 0, #8b2234 65%);
+      color:#fff;
+      font-size:.98rem;
+      font-weight:500;
+      cursor:pointer;
+      text-decoration:none;
+      box-shadow:0 14px 32px rgba(139,34,52,0.55);
+      transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
+    }
+
+    .primary-btn:hover{
+      transform:translateY(-1px) scale(1.02);
+      box-shadow:0 18px 40px rgba(139,34,52,0.75);
+      filter:brightness(1.02);
+    }
+
+    .primary-btn:active{
+      transform:translateY(0) scale(.99);
+      box-shadow:0 8px 22px rgba(139,34,52,0.6);
+    }
+
+    .primary-btn .arrow{
+      display:inline-block;
+      transition:transform .18s ease;
+    }
+
+    .primary-btn:hover .arrow{transform:translateX(1px);}
+
+    .mini-text{
+      font-size:.78rem;
+      color:rgba(90,15,29,0.76);
+    }
+
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:10px;
+    }
+
+    .chip{
+      font-size:.75rem;
+      padding:6px 10px;
+      border-radius:999px;
+      background:var(--chip-bg);
+      border:1px solid rgba(255,255,255,0.85);
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+
+    .chip .icon{font-size:12px;}
+
+    .side-visual{
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .circle{
+      width:210px;
+      height:210px;
+      border-radius:999px;
+      background:radial-gradient(circle at 20% 0%, #ffe6ee 0, #f09aa9 40%, #8b2234 100%);
+      box-shadow:0 22px 60px rgba(117,20,40,0.6);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .circle-inner{
+      position:absolute;
+      inset:26px;
+      border-radius:inherit;
+      border:2px dashed rgba(255,255,255,0.78);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      color:#fff;
+      font-size:.9rem;
+      padding:10px;
+      line-height:1.4;
+    }
+
+    .circle-inner .big-heart{
+      display:block;
+      font-size:1.8rem;
+      margin-bottom:4px;
+    }
+
+    .side-tag{
+      position:absolute;
+      bottom:10px;
+      right:10px;
+      padding:5px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.75);
+      font-size:.7rem;
+      color:var(--text-soft);
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+    }
+
+    .side-tag .dot{
+      width:7px;
+      height:7px;
+      border-radius:999px;
+      background:var(--accent);
+    }
+
+    /* floating hearts (same behaviour as before) */
+    @keyframes floatUp{
+      0%{transform:translateY(0) scale(1);opacity:.95;}
+      100%{transform:translateY(-110vh) scale(1.45);opacity:0;}
+    }
+
+    .floating-heart{
+      position:fixed;
+      bottom:-10px;
+      left:0;
+      font-size:18px;
+      opacity:.9;
+      pointer-events:none;
+      animation:floatUp linear forwards;
+      filter:drop-shadow(0 4px 10px rgba(255,120,140,.18));
+      z-index:1;
+      user-select:none;
+    }
+
+    footer{
+      position:fixed;
+      bottom:10px;
+      left:50%;
+      transform:translateX(-50%);
+      font-size:.72rem;
+      color:rgba(90,15,29,.7);
+      text-align:center;
+      pointer-events:none;
+      z-index:1;
+    }
+
+    /* music heart + volume UI (same as old) */
+    #musicHeartWrap{
+      position:fixed;
+      right:18px;
+      bottom:18px;
+      z-index:10;
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    #musicHeartBtn{
+      width:56px;
+      height:56px;
+      border:none;
+      border-radius:50%;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:22px;
+      line-height:1;
+      background:radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0);
+      box-shadow:0 8px 28px rgba(220,80,110,0.18);
+      transition:transform .16s ease, box-shadow .16s ease, opacity .18s ease;
+    }
+
+    #musicHeartBtn:active{transform:scale(.96);}
+    #musicHeartBtn.playing{box-shadow:0 14px 42px rgba(220,80,110,0.28);transform:scale(1.04);}
+    #musicHeartBtn .heart{pointer-events:none;user-select:none;}
+
     .vol-dot{
-      width:18px;height:18px;border-radius:50%;
-      background: linear-gradient(150deg,#ffd76d,#ffc96a);
+      width:18px;
+      height:18px;
+      border-radius:50%;
+      background:linear-gradient(150deg,#ffd76d,#ffc96a);
       box-shadow:0 6px 10px rgba(255,170,100,0.22);
       border:2px solid rgba(255,255,255,0.95);
-      cursor:pointer; margin-left:-8px;
+      cursor:pointer;
+      margin-left:-8px;
     }
+
     .vol-pop{
-      position:absolute; right:72px; bottom:10px; width:220px; padding:10px 12px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
-      border-radius:12px; box-shadow:0 12px 30px rgba(0,0,0,0.12);
-      display:none; gap:10px; align-items:center;
+      position:absolute;
+      right:72px;
+      bottom:10px;
+      width:220px;
+      padding:10px 12px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));
+      border-radius:12px;
+      box-shadow:0 12px 30px rgba(0,0,0,0.12);
+      display:none;
+      gap:10px;
+      align-items:center;
     }
-    .vol-pop.show{ display:flex; }
-    .vol-range{ -webkit-appearance:none; width:130px;height:7px;border-radius:999px;background:linear-gradient(90deg,#ffc1c1,#ffd88a); outline:none;}
-    .vol-range::-webkit-slider-thumb{ -webkit-appearance:none; width:14px;height:14px;border-radius:50%; background:#fff; box-shadow:0 4px 10px rgba(0,0,0,.12); border:3px solid #ffb0a0; }
-    #warm-btn{ display:none; margin-top:16px; padding:10px 22px; font-size:16px; border:none; border-radius:28px; background:#6e2430; color:#fff; box-shadow:0 4px 12px rgba(0,0,0,.2); cursor:pointer; }
+
+    .vol-pop.show{display:flex;}
+
+    .vol-range{
+      -webkit-appearance:none;
+      width:130px;
+      height:7px;
+      border-radius:999px;
+      background:linear-gradient(90deg,#ffc1c1,#ffd88a);
+      outline:none;
+    }
+
+    .vol-range::-webkit-slider-thumb{
+      -webkit-appearance:none;
+      width:14px;
+      height:14px;
+      border-radius:50%;
+      background:#fff;
+      box-shadow:0 4px 10px rgba(0,0,0,.12);
+      border:3px solid #ffb0a0;
+    }
+
+    #warm-btn{
+      display:none;
+      margin-top:10px;
+      padding:8px 18px;
+      font-size:13px;
+      border:none;
+      border-radius:999px;
+      background:rgba(90,15,29,0.08);
+      color:var(--text-soft);
+      cursor:pointer;
+    }
   </style>
 </head>
 <body>
 
+  <!-- floating hearts generator target -->
   <div class="wrap" role="main" aria-label="Welcome">
-    <h1>Welcome to Shreshtha’s Life of Happiness</h1>
-    <div class="tag">Sweet memories live here ✨</div><br/>
-    <a class="enter-btn" href="/life.html">Enter Memories</a>
-    <button id="warm-btn">Wake Up Server</button>
+    <div class="card">
+      <section class="headline">
+        <div class="badge">
+          <span class="emoji">✨</span>
+          <span>Welcome to a tiny world of Shreshtha’s smiles</span>
+        </div>
+
+        <h1>
+          Welcome to
+          <span class="highlight">Shreshtha’s Life of Happiness</span>
+        </h1>
+
+        <p class="subtitle">
+          Every picture, every small note, har chhoti si yaad yahan safe hai –
+          sirf tum dono ke liye. 💫
+        </p>
+
+        <div class="note-card" id="note-card">
+          <div class="note-dot"></div>
+          <div id="note-text">
+            Aaj ka mission: ek nayi yaad add karna. Even a simple smile counts. 🙂
+          </div>
+        </div>
+
+        <div class="button-row">
+          <!-- IMPORTANT: same Enter Memories link -->
+          <a href="/life.html" class="primary-btn">
+            <span>Enter Memories</span>
+            <span class="arrow">➜</span>
+          </a>
+
+          <div class="mini-text">
+            Private space, invite-only.<br/>
+            Bas asli moments… no filters needed.
+          </div>
+        </div>
+
+        <div class="chips">
+          <span class="chip"><span class="icon">📸</span> Moments</span>
+          <span class="chip"><span class="icon">💬</span> Little notes</span>
+          <span class="chip"><span class="icon">🎧</span> Feel-good vibes</span>
+        </div>
+
+        <!-- warm button (server wake) -->
+        <button id="warm-btn">Wake up server</button>
+      </section>
+
+      <section class="side-visual">
+        <div class="circle">
+          <div class="circle-inner">
+            <div>
+              <span class="big-heart">💝</span>
+              <div>“One secret corner on the internet, just for her.”</div>
+            </div>
+          </div>
+        </div>
+        <div class="side-tag">
+          <span class="dot"></span>
+          <span>Sweet memories live here</span>
+        </div>
+      </section>
+    </div>
   </div>
 
+  <footer>
+    Made with a lot of love &hearts; and a little bit of code.
+  </footer>
+
+  <!-- background music (same path, same settings) -->
   <audio id="bgMusic" loop preload="auto" style="display:none">
     <source src="/music/bg.mp3" type="audio/mpeg" />
   </audio>
 
+  <!-- music heart controls (unchanged logic) -->
   <div id="musicHeartWrap" aria-hidden="false">
     <button id="musicHeartBtn" aria-label="Toggle background music" title="Play / Pause background music" type="button">
       <span class="heart" aria-hidden="true">♡</span>
@@ -120,6 +499,7 @@
     </div>
   </div>
 
+  <!-- floating hearts JS (same privacy, no external calls) -->
   <script>
     (()=>{
       const COLORS=['var(--heart-1)','var(--heart-2)','var(--heart-3)','var(--heart-4)','var(--heart-5)','var(--heart-6)'];
@@ -127,101 +507,172 @@
         const h=document.createElement('div');
         h.className='floating-heart';
         h.textContent='❤';
-        h.style.left = (Math.random()*100) + 'vw';
-        h.style.color = COLORS[Math.floor(Math.random()*COLORS.length)];
-        h.style.fontSize = (16 + Math.random()*18) + 'px';
-        h.style.animationDuration = (8 + Math.random()*6) + 's';
+        h.style.left=(Math.random()*100)+'vw';
+        h.style.color=COLORS[Math.floor(Math.random()*COLORS.length)];
+        h.style.fontSize=(16+Math.random()*18)+'px';
+        h.style.animationDuration=(8+Math.random()*6)+'s';
         document.body.appendChild(h);
         setTimeout(()=>h.remove(),15000);
       }
       for(let i=0;i<10;i++) spawnHeart();
-      setInterval(spawnHeart, 900);
+      setInterval(spawnHeart,900);
     })();
   </script>
 
+  <!-- rotating tiny notes -->
+  <script>
+    (function(){
+      const notes=[
+        "Aaj ka mission: ek nayi yaad add karna. Even a simple smile counts. 🙂",
+        "Kabhi kabhi bas ek purani photo hi pura din theek kar deti hai. 💕",
+        "Yahan jo bhi moments hain, woh sirf tum dono ke liye special secret hai. 🔐",
+        "Thoda sa music, thodi si photos, aur bohot saara pyaar. 🎧📸",
+        "Har photo ke peeche ek chhoti si story hai – ready to relive? ✨"
+      ];
+      let index=0;
+      const card=document.getElementById("note-card");
+      const txt=document.getElementById("note-text");
+      if(!card||!txt) return;
+      setInterval(()=>{
+        index=(index+1)%notes.length;
+        card.style.opacity=0;
+        setTimeout(()=>{
+          txt.textContent=notes[index];
+          card.style.opacity=1;
+        },200);
+      },5500);
+    })();
+  </script>
+
+  <!-- health check / warm-up (same as old) -->
   <script>
     (async()=>{
-      try{ await fetch("/health",{mode:"no-cors"}); }
-      catch(e){ document.getElementById("warm-btn").style.display="inline-block"; }
+      try{
+        await fetch("/health",{mode:"no-cors"});
+      }catch(e){
+        const btn=document.getElementById("warm-btn");
+        if(btn) btn.style.display="inline-block";
+      }
     })();
+
     document.getElementById("warm-btn").addEventListener("click", async()=>{
-      try{ await fetch("/health",{mode:"no-cors"}); alert("Server warmed!"); }catch(e){ alert("Still waking"); }
+      try{
+        await fetch("/health",{mode:"no-cors"});
+        alert("Server warmed!");
+      }catch(e){
+        alert("Still waking");
+      }
     });
   </script>
 
+  <!-- silent auth check (privacy intact) -->
   <script>
     document.addEventListener("DOMContentLoaded", ()=>{
       try{
-        if(typeof requireAuth === "function"){
+        if(typeof requireAuth==="function"){
           Promise.resolve(requireAuth({silent:true})).catch(()=>{});
         }
       }catch(e){}
     });
   </script>
 
+  <!-- music behaviour (same logic as your old file) -->
   <script>
     (function(){
-      const audio = document.getElementById('bgMusic');
-      const btn = document.getElementById('musicHeartBtn');
-      const volDot = document.getElementById('musicVolDot');
-      const volPop = document.getElementById('musicVolPop');
-      const volRange = document.getElementById('musicVolRange');
-      const muteBtn = document.getElementById('musicMuteBtn');
+      const audio=document.getElementById('bgMusic');
+      const btn=document.getElementById('musicHeartBtn');
+      const volDot=document.getElementById('musicVolDot');
+      const volPop=document.getElementById('musicVolPop');
+      const volRange=document.getElementById('musicVolRange');
+      const muteBtn=document.getElementById('musicMuteBtn');
       if(!audio||!btn||!volDot||!volPop||!volRange||!muteBtn) return;
 
       function updateBtn(){
-        const heart = btn.querySelector('.heart');
+        const heart=btn.querySelector('.heart');
         if(!heart) return;
-        if(!audio.paused){ btn.classList.add('playing'); heart.textContent='❤'; btn.setAttribute('aria-pressed','true'); }
-        else{ btn.classList.remove('playing'); heart.textContent='♡'; btn.setAttribute('aria-pressed','false'); }
+        if(!audio.paused){
+          btn.classList.add('playing');
+          heart.textContent='❤';
+          btn.setAttribute('aria-pressed','true');
+        }else{
+          btn.classList.remove('playing');
+          heart.textContent='♡';
+          btn.setAttribute('aria-pressed','false');
+        }
       }
 
       try{
-        const sv = localStorage.getItem('shree_music_volume');
-        if(sv!==null){ const v=Math.max(0,Math.min(100,parseInt(sv,10))); audio.volume=v/100; volRange.value=v; }
-        else{ audio.volume=0.6; }
-      }catch(e){ audio.volume=0.6; }
+        const sv=localStorage.getItem('shree_music_volume');
+        if(sv!==null){
+          const v=Math.max(0,Math.min(100,parseInt(sv,10)));
+          audio.volume=v/100;
+          volRange.value=v;
+        }else{
+          audio.volume=0.6;
+        }
+      }catch(e){audio.volume=0.6;}
 
-      const savedPlaying = (()=>{ try{return localStorage.getItem('shree_music_playing')==='1';}catch(e){return false;} })();
+      const savedPlaying=(()=>{
+        try{return localStorage.getItem('shree_music_playing')==='1';}
+        catch(e){return false;}
+      })();
 
-      btn.addEventListener('click', e=>{
+      btn.addEventListener('click',e=>{
         e.preventDefault();
-        if(audio.paused){ audio.play().then(()=>{ localStorage.setItem('shree_music_playing','1'); updateBtn(); }).catch(()=>{}); }
-        else{ audio.pause(); localStorage.setItem('shree_music_playing','0'); updateBtn(); }
+        if(audio.paused){
+          audio.play().then(()=>{
+            try{localStorage.setItem('shree_music_playing','1');}catch(e){}
+            updateBtn();
+          }).catch(()=>{});
+        }else{
+          audio.pause();
+          try{localStorage.setItem('shree_music_playing','0');}catch(e){}
+          updateBtn();
+        }
       });
 
-      volDot.addEventListener('click', e=>{
+      volDot.addEventListener('click',e=>{
         e.stopPropagation();
-        const show = volPop.classList.toggle('show');
-        volPop.setAttribute('aria-hidden', show ? 'false' : 'true');
-        if(show) setTimeout(()=>volRange.focus(), 40);
+        const show=volPop.classList.toggle('show');
+        volPop.setAttribute('aria-hidden',show?'false':'true');
+        if(show) setTimeout(()=>volRange.focus(),40);
       });
-      volDot.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); volDot.click(); }});
+      volDot.addEventListener('keydown',e=>{
+        if(e.key==='Enter'||e.key===' '){
+          e.preventDefault();
+          volDot.click();
+        }
+      });
 
-      volRange.addEventListener('input', ()=>{
+      volRange.addEventListener('input',()=>{
         const v=Math.max(0,Math.min(100,parseInt(volRange.value||60,10)));
         audio.volume=v/100;
-        try{ localStorage.setItem('shree_music_volume', String(v)); }catch(e){}
-        muteBtn.setAttribute('aria-pressed', v===0 ? 'true':'false');
+        try{localStorage.setItem('shree_music_volume',String(v));}catch(e){}
+        muteBtn.setAttribute('aria-pressed',v===0?'true':'false');
       });
 
-      muteBtn.addEventListener('click', ()=>{
-        if(audio.volume>0){ volRange.dataset.prev=volRange.value; volRange.value=0; }
-        else{ volRange.value=volRange.dataset.prev||60; }
+      muteBtn.addEventListener('click',()=>{
+        if(audio.volume>0){
+          volRange.dataset.prev=volRange.value;
+          volRange.value=0;
+        }else{
+          volRange.value=volRange.dataset.prev||60;
+        }
         volRange.dispatchEvent(new Event('input'));
       });
 
-      document.addEventListener('click', e=>{
+      document.addEventListener('click',e=>{
         if(!e.target.closest('.vol-pop') && !e.target.closest('#musicVolDot')){
-          volPop.classList.remove('show'); volPop.setAttribute('aria-hidden','true');
+          volPop.classList.remove('show');
+          volPop.setAttribute('aria-hidden','true');
         }
       });
 
       if(savedPlaying){
         audio.play().then(updateBtn).catch(()=>{});
       }
-      audio.addEventListener('play', updateBtn);
-      audio.addEventListener('pause', updateBtn);
+      audio.addEventListener('play',updateBtn);
+      audio.addEventListener('pause',updateBtn);
       updateBtn();
     })();
   </script>
