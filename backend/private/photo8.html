@@ -1,73 +1,203 @@
-﻿<!doctype html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Shreshtha — Photo 7</title>
+  <meta charset="UTF-8" />
+  <title>Sweet Memory 8 – Shreshtha</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self';
-                 script-src 'self' 'unsafe-inline' 'unsafe-eval';
-                 connect-src 'self' https:;
-                 img-src 'self' data:;
-                 style-src 'self' 'unsafe-inline';
-                 media-src 'self';">
-
-  <script src="/auth0-spa-js.production.js" defer></script>
-  <script src="/auth-init.js" defer></script>
-  <script src="/guard-auth.js" defer></script>
-
-  <link rel="stylesheet" href="/assets/css/music-heart.css">
-  <script src="/assets/js/music-heart.js" defer></script>
+  <script src="js/auth-init.js"></script>
+  <script src="js/guard-auth.js"></script>
 
   <style>
-    :root{ --ink:#f6f6f6; --muted:#d5d5d5; --bg1:#0f2b35; --bg2:#153947; --bg3:#22495a; --accent:#f9cc63; }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:"Playfair Display",serif}
-    body{ background: radial-gradient(1000px 500px at 10% 10%, rgba(255,240,200,0.08), transparent 25%), linear-gradient(160deg, var(--bg1) 0%, var(--bg2) 45%, var(--bg3) 100%); background-attachment: fixed; color:var(--ink); overflow-y:auto; }
-    .wrap{max-width:1600px;margin:18px auto;padding:18px}
-    .photo-card{background:transparent;padding:8px 12px 40px;margin:8px 0}
-    .photo-wrap{width:min(1500px,98vw); margin:0 auto;text-align:center}
-    .photo-wrap img{display:block;width:100%;height:auto;max-height:240vh;object-fit:contain;border-radius:8px;box-shadow:0 30px 70px rgba(0,0,0,0.35)}
-    .caption{text-align:center;margin:20px 0 10px}
-    .pill{display:inline-block;background:linear-gradient(180deg,#1d3a48,#1a313d);padding:14px 24px;border-radius:999px;color:var(--muted);font-style:italic;box-shadow:0 10px 22px rgba(0,0,0,0.4)}
-    .bottom-nav{display:flex;gap:14px;justify-content:center;margin-top:14px}
-    .bottom-nav a{ text-decoration:none;padding:8px 16px;border-radius:999px;background:rgba(255,255,255,0.1);color:var(--ink);box-shadow:0 8px 22px rgba(0,0,0,0.3);font-weight:600}
-    .nav-heart{position:fixed;top:50%;transform:translateY(-50%);width:56px;height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;z-index:150;cursor:pointer;background:linear-gradient(180deg,#1e404c,#102933);box-shadow:0 14px 32px rgba(0,0,0,0.35)}
-    .nav-left{left:14px}.nav-right{right:14px}
-    .nav-inner{width:40px;height:40px;border-radius:999px;background:var(--accent);color:#202020;display:flex;align-items:center;justify-content:center;font-weight:700}
-    #heartsCanvas{position:fixed;inset:0;pointer-events:none;z-index:15}
-    @media (max-width:900px){ .photo-wrap{width:min(760px,94vw)} .nav-heart{width:48px;height:48px} .nav-inner{width:34px;height:34px} }
+    :root{
+      --bg1:#fff2dd;
+      --bg2:#f0c9a1;
+      --card-bg:#fff7eb;
+      --accent:#e29b63;
+      --accent-dark:#b96e33;
+      --text-main:#4c3523;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      min-height:100vh;
+      background:radial-gradient(circle at top,var(--bg1),var(--bg2));
+      display:flex;align-items:center;justify-content:center;
+      color:var(--text-main);overflow:hidden;position:relative;
+    }
+    #protected-content{opacity:0;transition:opacity .4s ease;}
+    body.auth-ready #protected-content{opacity:1;}
+    canvas#heart-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+    .memory-wrapper{
+      position:relative;z-index:1;
+      background:rgba(255,247,235,.94);
+      border-radius:32px;
+      padding:26px 24px 30px;
+      box-shadow:0 18px 45px rgba(201,132,74,.4);
+      max-width:420px;width:90%;text-align:center;
+      backdrop-filter:blur(6px);
+    }
+    .header-text{
+      font-size:1.05rem;letter-spacing:.08em;
+      text-transform:uppercase;color:var(--accent-dark);
+      margin-bottom:6px;
+    }
+    .title{font-size:1.6rem;font-weight:700;margin-bottom:14px;}
+    .nav-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+    .nav-heart{
+      width:34px;height:34px;border-radius:50%;
+      border:2px solid var(--accent);
+      display:flex;align-items:center;justify-content:center;
+      text-decoration:none;font-size:.9rem;
+      background:#fff6ea;color:var(--accent-dark);
+      box-shadow:0 6px 16px rgba(205,137,78,.28);
+      transition:transform .2s ease,box-shadow .2s ease,background .2s ease;
+    }
+    .nav-heart:hover{
+      transform:translateY(-2px) scale(1.03);
+      background:#f7e0c8;
+      box-shadow:0 8px 20px rgba(205,137,78,.42);
+    }
+    .nav-label{font-size:.8rem;color:#7d5b3b;}
+    .photo-frame{
+      position:relative;border-radius:26px;padding:8px;
+      background:linear-gradient(135deg,#ffd9b1,#f1b078);
+      box-shadow:0 16px 28px rgba(190,117,63,.38);
+      margin-bottom:14px;
+    }
+    .photo-frame img{
+      display:block;width:100%;
+      border-radius:20px;object-fit:cover;max-height:420px;
+    }
+    .quote{
+      margin-top:10px;background:var(--card-bg);
+      border-radius:999px;padding:8px 16px;font-size:.9rem;
+      color:#5b3c24;box-shadow:inset 0 0 0 1px rgba(241,190,132,.9);
+    }
+    .footer-row{
+      margin-top:14px;display:flex;justify-content:space-between;align-items:center;
+      font-size:.8rem;color:#7a5633;
+    }
+    .logout-link{text-decoration:none;color:var(--accent-dark);font-weight:600;}
+    .logout-link:hover{text-decoration:underline;}
+
+    .music-heart{
+      position:fixed;right:18px;bottom:18px;
+      width:46px;height:46px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      background:radial-gradient(circle at 30% 30%,#ffe7cf,#f29c63);
+      box-shadow:0 14px 26px rgba(178,104,55,.6);
+      cursor:pointer;z-index:5;border:none;outline:none;
+      transition:transform .2s ease,box-shadow .2s ease;
+    }
+    .music-heart:hover{
+      transform:translateY(-2px) scale(1.04);
+      box-shadow:0 18px 34px rgba(178,104,55,.78);
+    }
+    .music-heart::before,
+    .music-heart::after{
+      content:"";position:absolute;
+      width:16px;height:24px;background:#ffffff;
+      border-radius:50% 50% 0 0;
+      transform:rotate(-45deg);transform-origin:50% 100%;
+      top:12px;left:15px;
+    }
+    .music-heart::after{left:auto;right:15px;transform:rotate(45deg);}
+    .music-heart.playing{animation:pulse 1s infinite;}
+    @keyframes pulse{0%{transform:scale(1);}50%{transform:scale(1.11);}100%{transform:scale(1);}}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+
+    @media (max-width:480px){
+      .memory-wrapper{padding:22px 18px 24px;border-radius:26px;}
+      .title{font-size:1.4rem;}
+      .photo-frame img{max-height:none;}
+    }
   </style>
 </head>
 <body>
+  <canvas id="heart-canvas"></canvas>
 
-  <a id="prevHeart" class="nav-heart nav-left" href="photo6.html"><span class="nav-inner">❤</span></a>
-  <a id="nextHeart" class="nav-heart nav-right" href="photo8.html"><span class="nav-inner">❤</span></a>
+  <div id="protected-content">
+    <div class="memory-wrapper">
+      <div class="header-text">Sweet Memories of Shreshtha's Life</div>
+      <div class="title">Close-Up of Pure Heart</div>
 
-  <canvas id="heartsCanvas" aria-hidden="true"></canvas>
-
-  <main class="wrap">
-    <article class="photo-card" aria-label="Photo 8">
-      <div class="photo-wrap">
-        <img id="mainPhoto" src="/photos/photo8.jpg" alt="Memory 8 — Shreshtha">
+      <div class="nav-row">
+        <div>
+          <a href="photo7.html" class="nav-heart" aria-label="Previous memory">&#10094;</a>
+          <div class="nav-label">Prev</div>
+        </div>
+        <div>
+          <a href="photo9.html" class="nav-heart" aria-label="Next memory">&#10095;</a>
+          <div class="nav-label">Next</div>
+        </div>
       </div>
 
-      <div class="caption"><div class="pill">"Quiet corners and soft conversations."</div></div>
+      <div class="photo-frame">
+        <img src="photo8.jpg" alt="Close-up portrait of Shreshtha" />
+      </div>
 
-      <nav class="bottom-nav">
-        <a href="life.html">Life</a><a href="gallery.html">Gallery</a><a href="/auth/logout">Logout</a>
-      </nav>
-    </article>
-  </main>
+      <div class="quote">
+        “Even without a smile, your eyes still tell the softest stories.”
+      </div>
+
+      <div class="footer-row">
+        <span>Memory 8 of 9</span>
+        <a href="logout.html" class="logout-link">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <audio id="bg-music" loop preload="auto">
+    <source src="assets/music.mp3" type="audio/mpeg" />
+  </audio>
+
+  <button class="music-heart" id="music-toggle">
+    <span class="sr-only">Toggle background music</span>
+  </button>
 
   <script>
-    (function(){ const total=9; function getIndex(){const m=(location.pathname||'').match(/photo(\d+)\.html/i);return m?parseInt(m[1],10):7;} const cur=getIndex(), prev=cur>1?cur-1:total, next=cur<total?cur+1:1; const pl=document.getElementById('prevHeart'), nl=document.getElementById('nextHeart'); if(pl) pl.href='photo'+prev+'.html'; if(nl) nl.href='photo'+next+'.html'; })();
-  </script>
+    (function(){
+      const c=document.getElementById("heart-canvas");
+      const ctx=c.getContext("2d");
+      let w,h;let hearts=[];
+      function resize(){w=c.width=window.innerWidth;h=c.height=window.innerHeight;}
+      window.addEventListener("resize",resize);resize();
+      function mk(){return{x:Math.random()*w,y:h+Math.random()*60,size:5+Math.random()*7,speed:.45+Math.random()*1,alpha:.45+Math.random()*.4};}
+      for(let i=0;i<30;i++)hearts.push(mk());
+      function draw(xp,yp,s,a){
+        ctx.save();ctx.translate(xp,yp);ctx.scale(s/12,s/12);
+        ctx.beginPath();ctx.globalAlpha=a;
+        ctx.moveTo(0,4);
+        ctx.bezierCurveTo(-6,-4,-6,4,0,10);
+        ctx.bezierCurveTo(6,4,6,-4,0,4);
+        ctx.fillStyle="#ffb588";ctx.fill();ctx.restore();
+      }
+      function step(){
+        ctx.clearRect(0,0,w,h);
+        hearts.forEach(h=>{
+          h.y-=h.speed;
+          if(h.y<-20){h.x=Math.random()*w;h.y=h+Math.random()*40;}
+          draw(h.x,h.y,h.size,h.alpha);
+        });
+        requestAnimationFrame(step);
+      }
+      step();
+    })();
 
-  <script>
-    (function(){ const c=document.getElementById('heartsCanvas'); if(!c) return; const ctx=c.getContext('2d'); const DPR=Math.max(1,window.devicePixelRatio||1); let W=0,H=0,hearts=[]; const COLORS=['#f9cc63','#f6e7b5','#e8f4ff','#bcd9d0','#f2f2f2']; const R=(a,b)=>Math.random()*(b-a)+a; function resize(){W=innerWidth*DPR;H=innerHeight*DPR;c.width=W;c.height=H;c.style.width='100vw';c.style.height='100vh'} function spawn(){ if(hearts.length>60) return; hearts.push({x:R(0,W),y:H+R(20*DPR,160*DPR),s:R(10,26)*DPR,vx:R(-0.2,0.2)*DPR,vy:-R(0.4,1.4)*DPR,a:R(0.5,0.9),r:R(-0.6,0.6),vr:R(-0.01,0.01),color:COLORS[(Math.random()*COLORS.length)|0]}); } function drawHeart(px,py,scale,rot,alpha,color){ ctx.save();ctx.translate(px,py);ctx.rotate(rot);ctx.scale(scale,scale);ctx.globalAlpha=Math.min(1,alpha);ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(0,-0.5);ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);ctx.fill();ctx.restore(); } function tick(){ ctx.clearRect(0,0,W,H); if(Math.random()<0.2) spawn(); hearts.forEach(h=>{ h.x+=h.vx*0.016; h.y+=h.vy*0.016; h.r+=h.vr; h.a-=0.001; drawHeart(h.x,h.y,(h.s/52)*DPR,h.r,h.a,h.color); }); hearts=hearts.filter(h=>h.y>-120*DPR&&h.a>0.02); requestAnimationFrame(tick); } addEventListener('resize',resize,{passive:true}); resize(); tick(); })();
+    (function(){
+      const audio=document.getElementById("bg-music");
+      const btn=document.getElementById("music-toggle");
+      function toggle(){
+        if(audio.paused){
+          audio.play().then(()=>btn.classList.add("playing")).catch(()=>{});
+        }else{
+          audio.pause();btn.classList.remove("playing");
+        }
+      }
+      btn.addEventListener("click",toggle);
+    })();
   </script>
-
 </body>
 </html>
