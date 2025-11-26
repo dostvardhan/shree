@@ -4,10 +4,10 @@
   <!-- CSP -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self';
-                 script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;
+                 script-src 'self' 'unsafe-inline' 'unsafe-eval';
                  connect-src 'self' https:;
-                 img-src 'self' data:;
-                 style-src 'self' 'unsafe-inline' https:;
+                 img-src 'self' data: blob:;
+                 style-src 'self' 'unsafe-inline';
                  media-src 'self';">
 
   <meta charset="utf-8" />
@@ -19,30 +19,40 @@
   <script src="/auth-init.js" defer></script>
   <script src="/guard-auth.js" defer></script>
 
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-
-  <!-- Music UI (same as life.html) -->
-  <link rel="stylesheet" href="/assets/css/music-heart.css">
-  <script src="/assets/js/music-heart.js" defer></script>
-
   <style>
   :root {
     --text:#5a3740;
     --muted:#7a5a5f;
-    --bg-card:rgba(255,255,255,0.92);
-    --shadow:0 14px 35px rgba(0,0,0,0.18);
-    --radius:18px;
+    --bg-card:rgba(255,255,255,0.94);
+    --shadow-soft:0 20px 40px rgba(29, 7, 12, 0.22);
+    --radius-big:26px;
+    --radius-card:20px;
+    --accent:#8b2234;
+    --accent-soft:rgba(139,34,52,0.14);
   }
 
   html.guard-hide body{visibility:hidden}
 
   body {
     margin:0;
-    font-family:Inter,system-ui,sans-serif;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Comic Sans MS", cursive;
     color:var(--text);
-    background:url("assets/img/gallery-bg-hearts.png") center/cover no-repeat fixed;
+    background:url("/assets/img/gallery-bg-hearts.png") center/cover no-repeat fixed, #f6e4dd;
     overflow-x:hidden;
+  }
+
+  #guardLoader{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:inherit; color:#7a2a39; z-index:9999;
+    background:radial-gradient(circle at 30% 10%,rgba(255,255,255,0.9),rgba(255,240,240,0.9));
+  }
+  html:not(.guard-hide) #guardLoader{display:none}
+
+  .page-wrap{
+    position:relative;
+    z-index:1;
+    padding:18px 14px 70px;
   }
 
   nav.topbar{
@@ -50,7 +60,7 @@
     justify-content:center;
     gap:10px;
     position:sticky;
-    top:14px;
+    top:10px;
     z-index:10;
   }
 
@@ -64,14 +74,88 @@
     background:linear-gradient(180deg,#ffeef2,#ffdee8);
     border:1px solid #f2c3d1;
     box-shadow:0 8px 20px -12px rgba(0,0,0,.3);
+    backdrop-filter:blur(10px);
+  }
+
+  .hero-card{
+    max-width:1150px;
+    margin:16px auto 8px;
+    padding:18px 18px 14px;
+    border-radius:var(--radius-big);
+    background:linear-gradient(135deg, rgba(255,255,255,0.96), rgba(255,244,246,0.96));
+    box-shadow:var(--shadow-soft);
+    border:1px solid rgba(255,255,255,0.9);
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+  }
+
+  .hero-main{
+    min-width:260px;
   }
 
   h1{
-    font-family:"Playfair Display",serif;
-    text-align:center;
-    font-size:clamp(22px,3vw,34px);
-    margin:26px 0 12px;
-    text-shadow:0 1px 0 rgba(255,255,255,0.7);
+    font-weight:700;
+    font-size:clamp(22px,3vw,30px);
+    margin:0 0 6px;
+  }
+
+  .hero-sub{
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  .hero-note{
+    margin-top:10px;
+    font-size:12px;
+    padding:8px 10px;
+    border-radius:14px;
+    background:rgba(255,240,244,0.9);
+    border:1px solid rgba(255,220,230,0.9);
+    display:flex;
+    gap:8px;
+    align-items:flex-start;
+  }
+
+  .hero-note-dot{
+    width:8px;height:8px;border-radius:999px;background:var(--accent);
+    margin-top:4px;
+  }
+
+  .hero-pill{
+    font-size:11px;
+    padding:6px 10px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.9);
+    border:1px solid rgba(255,220,230,0.9);
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:6px;
+    color:var(--muted);
+  }
+
+  .hero-right{
+    min-width:200px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:8px;
+    text-align:right;
+    font-size:11px;
+    color:var(--muted);
+  }
+
+  .hero-right span.dot{
+    width:7px;height:7px;border-radius:999px;background:var(--accent);
+    display:inline-block;margin-right:6px;
+  }
+
+  @media(max-width:720px){
+    .hero-card{align-items:flex-start;}
+    .hero-right{align-items:flex-start;text-align:left;}
   }
 
   .grid{
@@ -79,35 +163,40 @@
     grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
     gap:22px;
     max-width:1150px;
-    margin:0 auto;
-    padding:10px 20px 60px;
+    margin:10px auto 0;
+    padding:0 6px;
   }
 
   .card{
-    background: transparent;
-    border-radius: 22px;
-    padding: 10px;
-    transition: transform .28s cubic-bezier(.2,.9,.25,1), box-shadow .28s;
-    cursor:pointer;
+    background:transparent;
+    border-radius:var(--radius-card);
+    padding:11px;
     position:relative;
-    box-shadow:0 20px 50px rgba(20,10,20,0.14), inset 0 1px 0 rgba(255,255,255,0.35);
+    box-shadow:0 20px 46px rgba(20,10,20,0.16), inset 0 1px 0 rgba(255,255,255,0.45);
+    cursor:pointer;
+    transition:transform .26s cubic-bezier(.2,.9,.25,1), box-shadow .26s;
   }
 
   .card::before{
     content:"";
     position:absolute;
     inset:0;
-    border-radius:20px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(250,246,245,0.55));
-    box-shadow: 0 8px 18px rgba(0,0,0,0.06);
-    transform: translateY(2px);
+    border-radius:inherit;
+    background:linear-gradient(180deg, rgba(255,255,255,0.8), rgba(250,245,242,0.9));
+    box-shadow:0 12px 24px rgba(0,0,0,0.06);
+    transform:translateY(1px);
+  }
+
+  .card-inner{
+    position:relative;
+    z-index:1;
   }
 
   .poster{
     position:relative;
     width:100%;
     aspect-ratio:3/4;
-    border-radius:12px;
+    border-radius:13px;
     overflow:hidden;
   }
 
@@ -116,47 +205,80 @@
     inset:0;
     background-size:cover;
     background-position:center;
-    filter: blur(12px) brightness(.92) saturate(.96);
+    filter:blur(14px) brightness(.95) saturate(.96);
     transform:scale(1.06);
-    opacity:0.86;
+    opacity:0.85;
   }
 
   .photo{
     position:absolute;
-    inset:12px;
+    inset:10px;
     display:flex;
     align-items:center;
     justify-content:center;
-    border-radius:10px;
+    border-radius:11px;
     overflow:hidden;
+    background:radial-gradient(circle at 50% 0%, rgba(255,255,255,0.8), rgba(255,240,246,0.9));
   }
 
   .photo img{
     max-width:100%;
     max-height:100%;
-    transition:.3s;
     object-fit:contain;
-    box-shadow:0 8px 30px rgba(60,30,40,0.06);
+    transition:transform .28s ease, box-shadow .28s ease;
+    box-shadow:0 10px 40px rgba(60,30,40,0.16);
+  }
+
+  .card:hover .photo img{
+    transform:scale(1.03);
+    box-shadow:0 14px 50px rgba(60,30,40,0.26);
+  }
+
+  .meta{
+    margin-top:8px;
+    font-size:11px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+  }
+
+  .meta .caption{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .meta .timestamp{
+    opacity:0.75;
+    font-size:10px;
   }
 
   .pager{
     display:flex;
     justify-content:center;
     gap:10px;
-    padding:20px 0 40px;
+    padding:22px 0 10px;
   }
 
   .pbtn{
-    width:42px;height:42px;
+    width:38px;height:38px;
     border-radius:50%;
     border:none;
-    background:white;
+    background:#fff;
     cursor:pointer;
     font-weight:700;
     box-shadow:0 10px 24px -16px rgba(0,0,0,0.4);
   }
 
-  /* small heart */
+  .pbtn:disabled{
+    opacity:.45;
+    cursor:default;
+    box-shadow:none;
+  }
+
+  /* heart tap (small) */
   .fab{
     width:48px;height:48px;
     border-radius:50%;
@@ -170,16 +292,16 @@
     justify-content:center;
     cursor:pointer;
     z-index:9998;
+    backdrop-filter:blur(10px);
   }
 
-  #guardLoader{
-    position:fixed; inset:0;
-    display:flex; align-items:center; justify-content:center;
-    font-family:system-ui; color:#7a2a39; z-index:9999;
+  footer{
+    text-align:center;
+    font-size:11px;
+    color:rgba(90,55,60,0.82);
+    padding-bottom:10px;
   }
-  html:not(.guard-hide) #guardLoader{display:none}
   </style>
-
 </head>
 <body>
 
@@ -194,25 +316,51 @@ window.addEventListener('shree:auth-ready',(e)=>{
 setTimeout(()=>document.documentElement.classList.remove('guard-hide'),2000);
 </script>
 
-<nav class="topbar">
- <a href="/life.html">Life</a>
- <a href="/upload.html">Upload</a>
- <a href="/auth/logout">Logout</a>
-</nav>
+<div class="page-wrap">
+  <nav class="topbar">
+    <a href="/life.html">Life</a>
+    <a href="/upload.html">Upload</a>
+    <a href="/auth/logout">Logout</a>
+  </nav>
 
-<h1>Sweet Memories of Shreshtha’s Life</h1>
+  <section class="hero-card">
+    <div class="hero-main">
+      <h1>Sweet Memories of Shreshtha’s Life</h1>
+      <div class="hero-sub">
+        Yahan sab ki sab casual selfies, cute moments aur chhoti chhoti baatein safe hain —
+        sirf tum dono ke liye. 💫
+      </div>
+      <div class="hero-note">
+        <div class="hero-note-dot"></div>
+        <div id="hero-note-text">
+          Thoda sa music, thodi si photos, aur bohot saara pyaar. 🎧📸
+        </div>
+      </div>
+      <div class="hero-pill">
+        <span>📸</span> Latest uploads sabse pehle upar dikhte hain.
+      </div>
+    </div>
+    <div class="hero-right">
+      <div><span class="dot"></span>Private space, invite-only — no public links.</div>
+      <div><span class="dot"></span>Photos Drive pe locked hain, yahan sirf safe view.</div>
+    </div>
+  </section>
 
-<section id="grid" class="grid">
-  <div class="card" style="opacity:.4;height:200px;"></div>
-</section>
+  <section id="grid" class="grid">
+    <div class="card" style="opacity:.3;height:220px;"></div>
+  </section>
 
-<div class="pager">
-  <button id="prevBtn" class="pbtn">‹</button>
-  <button id="nextBtn" class="pbtn">›</button>
+  <div class="pager">
+    <button id="prevBtn" class="pbtn">‹</button>
+    <button id="nextBtn" class="pbtn">›</button>
+  </div>
+
+  <footer>Made with a lot of love ♥ and a little bit of code.</footer>
 </div>
 
 <button class="fab" id="heartBtn">❤</button>
 
+<!-- small heart tap animation -->
 <script>
 document.getElementById("heartBtn").onclick=()=>{
   const h=document.createElement("div");
@@ -223,8 +371,13 @@ document.getElementById("heartBtn").onclick=()=>{
   h.style.fontSize="22px";
   h.style.opacity="0.95";
   h.style.zIndex=9999;
+  h.style.transition="transform .6s ease, opacity .6s ease";
   document.body.appendChild(h);
-  setTimeout(()=>h.remove(),900);
+  requestAnimationFrame(()=>{
+    h.style.transform="translateY(-32px)";
+    h.style.opacity="0";
+  });
+  setTimeout(()=>h.remove(),650);
 };
 </script>
 
@@ -234,18 +387,14 @@ const Lightbox=(()=>{
   const c=document.createElement("div");
   c.style.cssText="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;align-items:center;justify-content:center;";
   c.innerHTML=`<div style="position:relative;max-width:98vw;max-height:96vh;">
-    <button id="lbClose" style="position:absolute;top:8px;right:8px;background:#fff;padding:8px;border:none;border-radius:8px;">✕</button>
-    <a id="lbDownload" download style="position:absolute;top:8px;left:8px;background:#fff;padding:8px;border-radius:8px;text-decoration:none;color:#222;">Download</a>
+    <button id="lbClose" style="position:absolute;top:8px;right:8px;background:#fff;padding:8px;border:none;border-radius:8px;cursor:pointer;">✕</button>
+    <a id="lbDownload" download style="position:absolute;top:8px;left:8px;background:#fff;padding:8px;border-radius:8px;text-decoration:none;color:#222;font-size:12px;">Download</a>
     <img id="lbImg" style="max-width:98vw;max-height:96vh;object-fit:contain;border-radius:8px;">
   </div>`;
   document.body.appendChild(c);
   c.querySelector("#lbClose").onclick=()=>c.style.display="none";
   return{
-    open:(src,n)=>{
-      c.querySelector("#lbImg").src=src;
-      c.querySelector("#lbDownload").href=src;
-      c.style.display="flex";
-    }
+    open:(src)=>{ c.querySelector("#lbImg").src=src; c.querySelector("#lbDownload").href=src; c.style.display="flex"; }
   };
 })();
 </script>
@@ -253,61 +402,236 @@ const Lightbox=(()=>{
 <!-- Gallery Loader -->
 <script>
 (async()=>{
- const grid=document.getElementById('grid'),
-       prev=document.getElementById('prevBtn'),
-       next=document.getElementById('nextBtn');
- const PAGE=24;
+  const grid=document.getElementById('grid'),
+        prev=document.getElementById('prevBtn'),
+        next=document.getElementById('nextBtn');
+  const PAGE=24;
 
- function getTime(i){
-  for(let k of ['createdAt','uploadedAt','time','date','timestamp'])
-    if(i?.[k]) return new Date(i[k]).getTime();
-  return 0;
- }
+  function getTime(i){
+    for(let k of ['createdAt','uploadedAt','time','date','timestamp'])
+      if(i && i[k]) return new Date(i[k]).getTime();
+    return 0;
+  }
 
- async function createCard(it){
-   const el=document.createElement("div"); el.className="card";
-   el.innerHTML=`<div class="frame-inner"></div>
-     <div class="poster">
-       <div class="fill"></div>
-       <div class="photo"><img loading="lazy"></div>
-     </div>`;
+  function formatShort(ts){
+    if(!ts) return "";
+    try{
+      const d=new Date(ts);
+      return d.toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"});
+    }catch{ return ""; }
+  }
 
-   const id=it.id||it._id;
-   if(id){
-     try{
-       const res=await fetch("/api/file/"+id,{credentials:"include"});
-       const blob=await res.blob();
-       const url=URL.createObjectURL(blob);
-       el.querySelector("img").src=url;
-       el.querySelector(".fill").style.backgroundImage=`url('${url}')`;
-       el.onclick=()=>Lightbox.open(url,it.name||"photo.jpg");
-     }catch{}
-   }
-   return el;
- }
+  async function createCard(it){
+    const el=document.createElement("div");
+    el.className="card";
+    el.innerHTML=`<div class="card-inner">
+        <div class="poster">
+          <div class="fill"></div>
+          <div class="photo"><img loading="lazy" alt="memory photo"></div>
+        </div>
+        <div class="meta">
+          <div class="caption">${(it.caption || it.name || "Sweet memory").replace(/</g,"&lt;")}</div>
+          <div class="timestamp">${formatShort(getTime(it))}</div>
+        </div>
+      </div>`;
 
- function render(list,page){
-   grid.innerHTML="";
-   const pages=Math.ceil(list.length/PAGE)||1;
-   if(page>pages)page=pages;
-   list.slice((page-1)*PAGE,page*PAGE)
-       .forEach(async i=>grid.appendChild(await createCard(i)));
-   prev.disabled=page<=1;
-   next.disabled=page>=pages;
- }
+    const id=it.id || it._id;
+    if(id){
+      try{
+        const res=await fetch("/api/file/"+encodeURIComponent(id),{credentials:"include"});
+        if(!res.ok) throw new Error("file not ok");
+        const blob=await res.blob();
+        const url=URL.createObjectURL(blob);
+        const img=el.querySelector("img");
+        const fill=el.querySelector(".fill");
+        img.src=url;
+        fill.style.backgroundImage=`url('${url}')`;
+        el.onclick=()=>Lightbox.open(url);
+      }catch(e){
+        el.style.opacity="0.45";
+      }
+    }
+    return el;
+  }
 
- try{
-   const res=await fetch("/api/list",{credentials:"include"});
-   const data=await res.json();
-   let items=Array.isArray(data)?data:(data.items||[]);
-   items=items.sort((a,b)=>getTime(b)-getTime(a));
-   let page=1;
-   render(items,page);
-   prev.onclick=()=>{if(page>1){page--;render(items,page)}};
-   next.onclick=()=>{page++;render(items,page)};
- }catch{
-   grid.innerHTML="<p style='text-align:center;color:#603a3b;'>Unable to load photos.</p>";
- }
+  function render(list,page){
+    grid.innerHTML="";
+    const pages=Math.ceil(list.length/PAGE)||1;
+    if(page>pages) page=pages;
+    const start=(page-1)*PAGE;
+    const end=page*PAGE;
+    (async()=>{
+      for(let i=start;i<end && i<list.length;i++){
+        const card=await createCard(list[i]);
+        grid.appendChild(card);
+      }
+    })();
+    prev.disabled=page<=1;
+    next.disabled=page>=pages;
+  }
+
+  try{
+    const res=await fetch("/api/list",{credentials:"include"});
+    const data=await res.json();
+    let items=Array.isArray(data)?data:(data.items||[]);
+    items=items.sort((a,b)=>getTime(b)-getTime(a));
+    let page=1;
+    render(items,page);
+    prev.onclick=()=>{if(page>1){page--;render(items,page)}};
+    next.onclick=()=>{page++;render(items,page)};
+  }catch(e){
+    grid.innerHTML="<p style='text-align:center;color:#603a3b;padding:30px 0;'>Unable to load photos.</p>";
+  }
+})();
+</script>
+
+<!-- Rotating hero note -->
+<script>
+(function(){
+  const notes=[
+    "Thoda sa music, thodi si photos, aur bohot saara pyaar. 🎧📸",
+    "Latest photos hamesha sabse pehle yahan upar aate hain. ✨",
+    "Koi bhi photo delete nahi hoti, sirf safe memories ban jaati hain. 💕",
+    "Kabhi mood off ho to bas yahan aa kar 2–3 photos dekh lena. 🙂",
+    "Yeh pura gallery sirf tum dono ke liye private hai. 🔐"
+  ];
+  let i=0;
+  const el=document.getElementById("hero-note-text");
+  if(!el) return;
+  setInterval(()=>{
+    i=(i+1)%notes.length;
+    el.style.opacity="0";
+    setTimeout(()=>{ el.textContent=notes[i]; el.style.opacity="1"; },180);
+  },5600);
+})();
+</script>
+
+<!-- MUSIC: same behaviour as welcome page -->
+<audio id="bgMusic" loop preload="auto" style="display:none">
+  <source src="/music/bg.mp3" type="audio/mpeg" />
+</audio>
+
+<div id="musicHeartWrap" aria-hidden="false" style="position:fixed;right:18px;bottom:18px;z-index:10;display:flex;gap:8px;align-items:center;">
+  <button id="musicHeartBtn" aria-label="Toggle background music" title="Play / Pause background music" type="button"
+          style="width:56px;height:56px;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1;background:radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0);box-shadow:0 8px 28px rgba(220,80,110,0.18);transition:transform .16s ease, box-shadow .16s ease, opacity .18s ease;">
+    <span class="heart" aria-hidden="true">♡</span>
+  </button>
+  <div class="vol-dot" id="musicVolDot" role="button" tabindex="0" aria-label="Volume control" title="Volume"
+       style="width:18px;height:18px;border-radius:50%;background:linear-gradient(150deg,#ffd76d,#ffc96a);box-shadow:0 6px 10px rgba(255,170,100,0.22);border:2px solid rgba(255,255,255,0.95);cursor:pointer;margin-left:-8px;"></div>
+  <div class="vol-pop" id="musicVolPop" role="dialog" aria-hidden="true"
+       style="position:absolute;right:72px;bottom:10px;width:220px;padding:10px 12px;background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.12);display:none;gap:10px;align-items:center;">
+    <div style="font-size:13px;color:#6b2b2b;">Vol</div>
+    <input id="musicVolRange" class="vol-range" type="range" min="0" max="100" step="1" value="60" aria-label="Volume slider"
+           style="-webkit-appearance:none;width:130px;height:7px;border-radius:999px;background:linear-gradient(90deg,#ffc1c1,#ffd88a);outline:none;">
+    <button id="musicMuteBtn"
+            style="border:none;background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.06);cursor:pointer"
+            aria-pressed="false" title="Mute/unmute">M</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const audio=document.getElementById('bgMusic');
+  const btn=document.getElementById('musicHeartBtn');
+  const volDot=document.getElementById('musicVolDot');
+  const volPop=document.getElementById('musicVolPop');
+  const volRange=document.getElementById('musicVolRange');
+  const muteBtn=document.getElementById('musicMuteBtn');
+  if(!audio||!btn||!volDot||!volPop||!volRange||!muteBtn) return;
+
+  function updateBtn(){
+    const heart=btn.querySelector('.heart');
+    if(!heart) return;
+    if(!audio.paused){
+      btn.classList.add('playing');
+      btn.style.boxShadow="0 14px 42px rgba(220,80,110,0.28)";
+      btn.style.transform="scale(1.04)";
+      heart.textContent='❤';
+      btn.setAttribute('aria-pressed','true');
+    }else{
+      btn.classList.remove('playing');
+      btn.style.boxShadow="0 8px 28px rgba(220,80,110,0.18)";
+      btn.style.transform="scale(1)";
+      heart.textContent='♡';
+      btn.setAttribute('aria-pressed','false');
+    }
+  }
+
+  try{
+    const sv=localStorage.getItem('shree_music_volume');
+    if(sv!==null){
+      const v=Math.max(0,Math.min(100,parseInt(sv,10)));
+      audio.volume=v/100;
+      volRange.value=v;
+    }else{
+      audio.volume=0.6;
+    }
+  }catch(e){audio.volume=0.6;}
+
+  const savedPlaying=(()=>{
+    try{return localStorage.getItem('shree_music_playing')==='1';}
+    catch(e){return false;}
+  })();
+
+  btn.addEventListener('click',e=>{
+    e.preventDefault();
+    if(audio.paused){
+      audio.play().then(()=>{
+        try{localStorage.setItem('shree_music_playing','1');}catch(e){}
+        updateBtn();
+      }).catch(()=>{});
+    }else{
+      audio.pause();
+      try{localStorage.setItem('shree_music_playing','0');}catch(e){}
+      updateBtn();
+    }
+  });
+
+  volDot.addEventListener('click',e=>{
+    e.stopPropagation();
+    const show=volPop.classList.toggle('show');
+    volPop.style.display=show?"flex":"none";
+    volPop.setAttribute('aria-hidden',show?'false':'true');
+    if(show) setTimeout(()=>volRange.focus(),40);
+  });
+  volDot.addEventListener('keydown',e=>{
+    if(e.key==='Enter'||e.key===' '){
+      e.preventDefault();
+      volDot.click();
+    }
+  });
+
+  volRange.addEventListener('input',()=>{
+    const v=Math.max(0,Math.min(100,parseInt(volRange.value||60,10)));
+    audio.volume=v/100;
+    try{localStorage.setItem('shree_music_volume',String(v));}catch(e){}
+    muteBtn.setAttribute('aria-pressed',v===0?'true':'false');
+  });
+
+  muteBtn.addEventListener('click',()=>{
+    if(audio.volume>0){
+      volRange.dataset.prev=volRange.value;
+      volRange.value=0;
+    }else{
+      volRange.value=volRange.dataset.prev||60;
+    }
+    volRange.dispatchEvent(new Event('input'));
+  });
+
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('.vol-pop') && !e.target.closest('#musicVolDot')){
+      volPop.classList.remove('show');
+      volPop.style.display="none";
+      volPop.setAttribute('aria-hidden','true');
+    }
+  });
+
+  if(savedPlaying){
+    audio.play().then(updateBtn).catch(()=>{});
+  }
+  audio.addEventListener('play',updateBtn);
+  audio.addEventListener('pause',updateBtn);
+  updateBtn();
 })();
 </script>
 
