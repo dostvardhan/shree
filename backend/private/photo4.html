@@ -20,110 +20,111 @@
 
   <style>
     :root{
-      --ink:#3a2f23;
-      --muted:#6c5a3a;
-      --bg1:#fff4d6;
-      --bg2:#ffe4a8;
-      --bg3:#ffd180;
-      --accent:#ffbb44;
+      --ink:#3b2c1f;
+      --muted:#6b5533;
+      --bg1:#fff6da;
+      --bg2:#ffe3a8;
+      --bg3:#ffcf7a;
+      --accent:#ffba3c;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:"Playfair Display",serif}
     body{
       background:
-        radial-gradient(900px 500px at 12% 14%, rgba(255,255,255,0.9), transparent 40%),
+        radial-gradient(900px 500px at 10% 12%, rgba(255,255,255,0.9), transparent 40%),
         linear-gradient(155deg, var(--bg1) 0%, var(--bg2) 45%, var(--bg3) 100%);
       background-attachment: fixed;
       color:var(--ink);
       overflow-y:auto;
     }
-    .wrap{max-width:1600px;margin:18px auto;padding:18px;display:block}
-    .photo-card{padding:8px 12px 40px;margin:8px 0;position:relative}
-    .photo-area{display:flex;justify-content:center;align-items:flex-start}
+    .wrap{max-width:1600px;margin:18px auto;padding:18px;}
+    .photo-card{padding:8px 12px 40px;margin:8px 0;position:relative;}
+    .photo-area{display:flex;justify-content:center;align-items:flex-start;}
     .photo-wrap{
       width:min(1500px,98vw);
-      background:rgba(255,248,225,0.85);
-      border-radius:18px;
-      padding:18px;
-      box-shadow:0 26px 70px rgba(180,130,60,0.28);
+      background:rgba(255,247,224,0.9);
+      border-radius:20px;
+      padding:20px;
+      box-shadow:0 26px 70px rgba(180,135,70,0.26);
       margin:0 auto;
       text-align:center;
     }
     .photo-wrap img{
-      display:block;
       width:100%;
       max-height:220vh;
       object-fit:contain;
-      border-radius:14px;
+      border-radius:16px;
       box-shadow:0 18px 50px rgba(120,90,50,0.35);
       -webkit-user-drag:none;
     }
-    .caption{text-align:center;margin:20px 0 10px}
+    .caption{text-align:center;margin:22px 0 10px;}
     .pill{
       display:inline-block;
-      background:linear-gradient(180deg,#fff3cf,#ffe1a8);
-      padding:12px 22px;
+      background:linear-gradient(180deg,#fff1c8,#ffe2a1);
+      padding:12px 24px;
       border-radius:999px;
-      box-shadow:0 10px 26px rgba(150,120,60,0.35);
+      box-shadow:0 10px 26px rgba(160,120,60,0.35);
       font-style:italic;
       color:var(--muted);
-      border:1px solid rgba(255,255,255,0.9);
+      border:1px solid rgba(255,255,255,0.95);
     }
-    .bottom-nav{display:flex;gap:14px;justify-content:center;margin-top:14px}
+    .bottom-nav{display:flex;gap:14px;justify-content:center;margin-top:16px;}
     .bottom-nav a{
       text-decoration:none;
       padding:8px 16px;
       border-radius:999px;
-      background:rgba(255,248,230,0.9);
+      background:rgba(255,248,228,0.95);
       color:var(--ink);
-      box-shadow:0 8px 22px rgba(140,100,60,0.3);
+      box-shadow:0 8px 22px rgba(145,105,60,0.3);
       font-weight:600;
       backdrop-filter:blur(6px);
       transition:all .2s;
     }
-    .bottom-nav a:hover{background:#fff;color:#3a2f23}
+    .bottom-nav a:hover{background:#fff;color:#3b2c1f;}
     .nav-heart{
       position:fixed;top:50%;transform:translateY(-50%);
       width:56px;height:56px;border-radius:999px;
       display:flex;align-items:center;justify-content:center;
       z-index:150;cursor:pointer;
-      box-shadow:0 14px 32px rgba(150,110,50,0.4);
-      background:linear-gradient(180deg,#ffeab5,#ffd27a);
+      box-shadow:0 14px 32px rgba(150,110,60,0.4);
+      background:linear-gradient(180deg,#ffe4aa,#ffcd76);
     }
-    .nav-left{left:14px}
-    .nav-right{right:14px}
+    .nav-left{left:14px;}
+    .nav-right{right:14px;}
     .nav-inner{
       width:40px;height:40px;border-radius:999px;
-      background:#fff8e8;
-      color:#8a6a32;
-      display:flex;align-items:center;justify-content:center;font-size:18px;
-      font-weight:700;
+      background:#fff8e6;
+      color:#845f2d;
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;font-weight:700;
       box-shadow:0 2px 6px rgba(0,0,0,0.25);
     }
-    #heartsCanvas{position:fixed;inset:0;pointer-events:none;z-index:15}
+    #heartsCanvas{position:fixed;inset:0;pointer-events:none;z-index:15;}
     @media (max-width:900px){
-      .photo-wrap{width:min(760px,94vw)}
-      .nav-heart{width:48px;height:48px}
-      .nav-inner{width:34px;height:34px}
+      .photo-wrap{width:min(760px,94vw);}
+      .nav-heart{width:48px;height:48px;}
+      .nav-inner{width:34px;height:34px;}
     }
     @media (max-width:420px){
-      .photo-wrap{width:96vw}
-      .photo-wrap img{max-height:140vh}
+      .photo-wrap{width:96vw;}
+      .photo-wrap img{max-height:140vh;}
     }
   </style>
 </head>
 <body>
 
+  <!-- side hearts nav -->
   <a id="prevHeart" class="nav-heart nav-left" href="photo3.html"><span class="nav-inner">❤</span></a>
   <a id="nextHeart" class="nav-heart nav-right" href="photo5.html"><span class="nav-inner">❤</span></a>
 
+  <!-- floating hearts -->
   <canvas id="heartsCanvas" aria-hidden="true"></canvas>
 
   <main class="wrap" role="main">
     <article class="photo-card" aria-label="Photo 4">
       <div class="photo-area">
         <div class="photo-wrap">
-          <img id="mainPhoto" src="/photos/photo4.jpg" alt="Memory 4 — Shreshtha">
+          <img src="/photos/photo4.jpg" alt="Memory 4 — Shreshtha">
         </div>
       </div>
 
@@ -139,23 +140,42 @@
     </article>
   </main>
 
-  <!-- floating hearts -->
+  <!-- generic prev/next logic -->
   <script>
   (function(){
-    const c=document.getElementById('heartsCanvas');
-    if(!c)return;
-    const ctx=c.getContext('2d');
-    const DPR=Math.max(1,window.devicePixelRatio||1);
-    let W=0,H=0,hearts=[];
-    const COLORS=['#ffbb44','#ffe6b0','#fff4df','#ffe2a2','#ffffff'];
-    const R=(a,b)=>Math.random()*(b-a)+a;
+    const total = 9;
+    function getIndex(){
+      const m = (location.pathname||"").match(/photo(\d+)\.html/i);
+      return m ? parseInt(m[1],10) : 4;
+    }
+    const cur = getIndex();
+    const prev = cur>1 ? cur-1 : total;
+    const next = cur<total ? cur+1 : 1;
+    const pl = document.getElementById("prevHeart");
+    const nl = document.getElementById("nextHeart");
+    if(pl) pl.href = (cur===1 ? "life.html" : "photo"+prev+".html");
+    if(nl) nl.href = "photo"+next+".html";
+  })();
+  </script>
+
+  <!-- floating hearts animation -->
+  <script>
+  (function(){
+    const c = document.getElementById('heartsCanvas');
+    if(!c) return;
+    const ctx = c.getContext('2d');
+    const DPR = Math.max(1, window.devicePixelRatio || 1);
+    let W=0,H=0, hearts=[];
+    const COLORS = ['#ffba3c','#ffe5a8','#fff3dd','#ffe2a1','#ffffff'];
+    const R = (a,b)=>Math.random()*(b-a)+a;
+
     function resize(){
-      W=innerWidth*DPR;H=innerHeight*DPR;
-      c.width=W;c.height=H;
-      c.style.width='100vw';c.style.height='100vh';
+      W = innerWidth*DPR; H = innerHeight*DPR;
+      c.width = W; c.height = H;
+      c.style.width='100vw'; c.style.height='100vh';
     }
     function spawn(){
-      if(hearts.length>60)return;
+      if(hearts.length>60) return;
       hearts.push({
         x:R(0,W),
         y:H+R(20*DPR,160*DPR),
@@ -169,45 +189,153 @@
       });
     }
     function drawHeart(px,py,scale,rot,alpha,color){
-      ctx.save();ctx.translate(px,py);ctx.rotate(rot);ctx.scale(scale,scale);
-      ctx.globalAlpha=Math.min(1,alpha);
-      ctx.fillStyle=color;
-      ctx.beginPath();ctx.moveTo(0,-0.5);
+      ctx.save();
+      ctx.translate(px,py);
+      ctx.rotate(rot);
+      ctx.scale(scale,scale);
+      ctx.globalAlpha = Math.min(1,alpha);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(0,-0.5);
       ctx.bezierCurveTo(0.45,-1.05,1.15,-0.05,0,0.8);
       ctx.bezierCurveTo(-1.15,-0.05,-0.45,-1.05,0,-0.5);
-      ctx.fill();ctx.restore();
+      ctx.fill();
+      ctx.restore();
     }
     function tick(){
       ctx.clearRect(0,0,W,H);
-      if(Math.random()<0.2)spawn();
+      if(Math.random() < 0.2) spawn();
       hearts.forEach(h=>{
-        h.x+=h.vx*0.016;
-        h.y+=h.vy*0.016;
-        h.r+=h.vr;
-        h.a-=0.001;
+        h.x += h.vx*0.016;
+        h.y += h.vy*0.016;
+        h.r += h.vr;
+        h.a -= 0.001;
         drawHeart(h.x,h.y,(h.s/52)*DPR,h.r,h.a,h.color);
       });
-      hearts=hearts.filter(h=>h.y>-120*DPR&&h.a>0.02);
+      hearts = hearts.filter(h=>h.y>-120*DPR && h.a>0.02);
       requestAnimationFrame(tick);
     }
     addEventListener('resize',resize,{passive:true});
-    resize();tick();
+    resize(); tick();
   })();
   </script>
 
-  <!-- MUSIC (continuous across site) -->
+  <!-- MUSIC: same heart UI as welcome -->
   <audio id="bgMusic" loop preload="auto" style="display:none">
     <source src="/music/bg.mp3" type="audio/mpeg" />
   </audio>
 
+  <div id="musicHeartWrap" aria-hidden="false"
+       style="position:fixed;right:18px;bottom:18px;z-index:160;display:flex;gap:8px;align-items:center;">
+    <button id="musicHeartBtn" type="button"
+            aria-label="Toggle background music" title="Play / Pause background music"
+            style="width:56px;height:56px;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1;background:radial-gradient(circle at 30% 30%, #ffd6e0, #ff9fb0);box-shadow:0 8px 28px rgba(220,80,110,0.18);transition:transform .16s ease, box-shadow .16s ease, opacity .18s ease;">
+      <span class="heart" aria-hidden="true">♡</span>
+    </button>
+    <div id="musicVolDot"
+         style="width:18px;height:18px;border-radius:50%;background:linear-gradient(150deg,#ffd76d,#ffc96a);box-shadow:0 6px 10px rgba(255,170,100,0.22);border:2px solid rgba(255,255,255,0.95);cursor:pointer;margin-left:-8px;"></div>
+    <div id="musicVolPop"
+         style="position:absolute;right:72px;bottom:10px;width:220px;padding:10px 12px;background:linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,250,248,0.95));border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,0.12);display:none;gap:10px;align-items:center;">
+      <div style="font-size:13px;color:#6b2b2b;">Vol</div>
+      <input id="musicVolRange" type="range" min="0" max="100" step="1" value="60"
+             style="-webkit-appearance:none;width:130px;height:7px;border-radius:999px;background:linear-gradient(90deg,#ffc1c1,#ffd88a);outline:none;">
+      <button id="musicMuteBtn"
+              style="border:none;background:#fff;padding:6px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,0.06);cursor:pointer"
+              aria-pressed="false">M</button>
+    </div>
+  </div>
+
   <script>
   (function(){
-    const audio=document.getElementById('bgMusic');
-    if(!audio)return;
-    const savedVol=localStorage.getItem('shree_music_volume');
-    const savedPlay=localStorage.getItem('shree_music_playing');
-    audio.volume = savedVol?parseInt(savedVol,10)/100:0.6;
-    if(savedPlay==='1'){ audio.play(); }
+    const audio = document.getElementById('bgMusic');
+    const btn = document.getElementById('musicHeartBtn');
+    const volDot = document.getElementById('musicVolDot');
+    const volPop = document.getElementById('musicVolPop');
+    const volRange = document.getElementById('musicVolRange');
+    const muteBtn = document.getElementById('musicMuteBtn');
+    if(!audio||!btn||!volDot||!volPop||!volRange||!muteBtn) return;
+
+    function updateBtn(){
+      const heart = btn.querySelector('.heart');
+      if(!heart) return;
+      if(!audio.paused){
+        btn.style.boxShadow="0 14px 42px rgba(220,80,110,0.28)";
+        btn.style.transform="scale(1.04)";
+        heart.textContent='❤';
+        btn.setAttribute('aria-pressed','true');
+      }else{
+        btn.style.boxShadow="0 8px 28px rgba(220,80,110,0.18)";
+        btn.style.transform="scale(1)";
+        heart.textContent='♡';
+        btn.setAttribute('aria-pressed','false');
+      }
+    }
+
+    try{
+      const sv = localStorage.getItem('shree_music_volume');
+      if(sv!==null){
+        const v = Math.max(0,Math.min(100,parseInt(sv,10)));
+        audio.volume = v/100;
+        volRange.value = v;
+      }else{
+        audio.volume = 0.6;
+      }
+    }catch(e){ audio.volume = 0.6; }
+
+    const savedPlaying = (()=> {
+      try{ return localStorage.getItem('shree_music_playing') === '1'; }
+      catch(e){ return false; }
+    })();
+
+    btn.addEventListener('click', e=>{
+      e.preventDefault();
+      if(audio.paused){
+        audio.play().then(()=>{
+          try{localStorage.setItem('shree_music_playing','1');}catch(e){}
+          updateBtn();
+        }).catch(()=>{});
+      }else{
+        audio.pause();
+        try{localStorage.setItem('shree_music_playing','0');}catch(e){}
+        updateBtn();
+      }
+    });
+
+    volDot.addEventListener('click', e=>{
+      e.stopPropagation();
+      const show = volPop.style.display !== 'flex';
+      volPop.style.display = show ? 'flex' : 'none';
+    });
+
+    volRange.addEventListener('input', ()=>{
+      const v = Math.max(0,Math.min(100,parseInt(volRange.value||60,10)));
+      audio.volume = v/100;
+      try{localStorage.setItem('shree_music_volume',String(v));}catch(e){}
+      muteBtn.setAttribute('aria-pressed', v===0 ? 'true':'false');
+    });
+
+    muteBtn.addEventListener('click', ()=>{
+      if(audio.volume>0){
+        volRange.dataset.prev = volRange.value;
+        volRange.value = 0;
+      }else{
+        volRange.value = volRange.dataset.prev || 60;
+      }
+      volRange.dispatchEvent(new Event('input'));
+    });
+
+    document.addEventListener('click', e=>{
+      if(!e.target.closest('#musicVolPop') && !e.target.closest('#musicVolDot')){
+        volPop.style.display = 'none';
+      }
+    });
+
+    if(savedPlaying){
+      audio.play().then(updateBtn).catch(()=>{});
+    }
+    audio.addEventListener('play',updateBtn);
+    audio.addEventListener('pause',updateBtn);
+    updateBtn();
   })();
   </script>
 
